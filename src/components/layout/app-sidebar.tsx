@@ -8,7 +8,7 @@ import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import {
   Telescope, Compass, Briefcase, Zap, Activity,
   LayoutGrid, Users, Search, Sun, Moon, ShoppingBag,
-  BookOpen, ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useUnreadOffers } from "@/hooks/use-unread-offers";
@@ -22,111 +22,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { MedialaneLogo } from "../brand/medialane-logo";
 import { MedialaneIcon } from "../brand/medialane-icon";
 import { NotificationsItem } from "@/components/layout/notifications-sheet";
-
-// ── Sub-menu data ────────────────────────────────────────────────────────────
-
-const EXPLORE_SUB = [
-  { href: "/collections", label: "Collections", icon: LayoutGrid, external: false },
-  { href: "/creators",    label: "Creators",    icon: Users,      external: false },
-  { href: "/activities",  label: "Activity",    icon: Activity,   external: false },
-];
-
-// ── Collapsible nav group ────────────────────────────────────────────────────
-
-interface CollapsibleNavItemProps {
-  label: string;
-  icon: React.ElementType;
-  sub: { href: string; label: string; icon: React.ElementType; external: boolean }[];
-  defaultOpen?: boolean;
-  tooltip?: string;
-  onClose: () => void;
-}
-
-function CollapsibleNavItem({
-  label, icon: Icon, sub, defaultOpen = false, tooltip, onClose,
-}: CollapsibleNavItemProps) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(defaultOpen);
-  const { state, isMobile, setOpen: setSidebarOpen } = useSidebar();
-  const collapsed = !isMobile && state === "collapsed";
-
-  const isAnySubActive = sub.some(
-    (s) => !s.external && (pathname === s.href || pathname?.startsWith(s.href + "/"))
-  );
-
-  if (collapsed) {
-    return (
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={tooltip ?? label}
-          isActive={isAnySubActive}
-          onClick={() => {
-            setSidebarOpen(true);
-            setOpen(true);
-          }}
-        >
-          <Icon />
-          <span>{label}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  }
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen} className="group/collapsible">
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            tooltip={tooltip ?? label}
-            isActive={isAnySubActive && !open}
-          >
-            <Icon />
-            <span>{label}</span>
-            <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {sub.map(({ href, label: subLabel, icon: SubIcon, external }) => {
-              const active = !external && (pathname === href || pathname?.startsWith(href + "/"));
-              return (
-                <SidebarMenuSubItem key={href}>
-                  <SidebarMenuSubButton
-                    asChild
-                    isActive={active}
-                    onClick={external ? undefined : onClose}
-                  >
-                    <Link
-                      href={href}
-                      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    >
-                      <SubIcon className="h-3.5 w-3.5" />
-                      {subLabel}
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              );
-            })}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
-  );
-}
 
 // ── Utility items ─────────────────────────────────────────────────────────────
 
@@ -174,18 +75,13 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { address: walletAddress, isConnected } = useUnifiedWallet();
   const unreadOffers = useUnreadOffers(isConnected ? walletAddress : null);
-  const { setOpen, setOpenMobile, isMobile, state } = useSidebar();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
 
   const closeSidebar = () => {
     if (isMobile) setOpenMobile(false);
     else setOpen(false);
   };
 
-  const onExplore = !!(
-    pathname === "/collections" ||
-    pathname?.startsWith("/creators") ||
-    pathname === "/activities"
-  );
   return (
     <Sidebar collapsible="icon">
 
@@ -193,7 +89,7 @@ export function AppSidebar() {
       <SidebarMenu className="p-2">
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" asChild onClick={closeSidebar}>
-            {isMobile || state === "expanded" ? <MedialaneLogo /> : <MedialaneIcon />}
+            {isMobile ? <MedialaneLogo /> : <MedialaneIcon />}
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -273,34 +169,51 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-          </SidebarMenu>
-        </SidebarGroup>
-
-        {/* ── Explore (Collections, Creators, Activity) ────── */}
-        <SidebarGroup>
-          <SidebarMenu>
-            <CollapsibleNavItem
-              label="Explore"
-              icon={Compass}
-              sub={EXPLORE_SUB}
-              defaultOpen={onExplore}
-              tooltip="Explore"
-              onClose={closeSidebar}
-            />
-          </SidebarMenu>
-        </SidebarGroup>
-
-        {/* ── Docs ─────────────────────────────────────────── */}
-        <SidebarGroup>
-          <SidebarMenu>
+            {/* Collections */}
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Docs">
-                <a href="https://docs.medialane.io" target="_blank" rel="noopener noreferrer">
-                  <BookOpen />
-                  <span>Docs</span>
-                </a>
+              <SidebarMenuButton
+                asChild
+                isActive={!!pathname?.startsWith("/collections")}
+                tooltip="Collections"
+                onClick={closeSidebar}
+              >
+                <Link href="/collections">
+                  <LayoutGrid />
+                  <span>Collections</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+            {/* Creators */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={!!pathname?.startsWith("/creators")}
+                tooltip="Creators"
+                onClick={closeSidebar}
+              >
+                <Link href="/creators">
+                  <Users />
+                  <span>Creators</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* Activity */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === "/activities"}
+                tooltip="Activity"
+                onClick={closeSidebar}
+              >
+                <Link href="/activities">
+                  <Activity />
+                  <span>Activity</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
           </SidebarMenu>
         </SidebarGroup>
 
@@ -320,6 +233,14 @@ export function AppSidebar() {
             <ThemeToggleItem />
             <CartItem />
             <NotificationsItem />
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Docs">
+                <a href="https://docs.medialane.io" target="_blank" rel="noopener noreferrer">
+                  <BookOpen />
+                  <span>Docs</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 
@@ -332,7 +253,7 @@ export function AppSidebar() {
             <div
               className={cn(
                 "flex items-center py-1.5",
-                !isMobile && state === "collapsed" ? "justify-center px-0" : "px-1"
+                !isMobile ? "justify-center px-0" : "px-1"
               )}
             >
               <ConnectWallet />
