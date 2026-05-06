@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-
+import { useSiwsToken } from "@/hooks/use-siws-token";
 
 export type ReportTarget =
   | { type: "TOKEN"; contract: string; tokenId: string; name?: string }
@@ -39,8 +39,7 @@ interface ReportDialogProps {
 }
 
 export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) {
-  
-  
+  const { getValidToken } = useSiwsToken();
   const [categories, setCategories] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -83,9 +82,12 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
     }
 
     try {
+      const token = await getValidToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["X-Siws-Token"] = token;
       const res = await fetch("/api/reports", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(payload),
       });
 

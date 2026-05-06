@@ -62,12 +62,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const backendHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-api-key": API_KEY,
+  };
+  const siwsToken = req.headers.get("X-Siws-Token");
+  if (siwsToken) backendHeaders["Authorization"] = `Bearer ${siwsToken}`;
+
   const res = await fetch(`${BACKEND_URL}/v1/reports`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": API_KEY,
-    },
+    headers: backendHeaders,
     body: JSON.stringify({
       targetType: body.targetType,
       targetKey,
@@ -75,7 +79,6 @@ export async function POST(req: NextRequest) {
       targetTokenId: body.targetTokenId,
       targetAddress: normalizedAddress,
       targetId: body.targetId,
-      reporterUserId: null,
       categories: body.categories,
       description: body.description,
     }),
