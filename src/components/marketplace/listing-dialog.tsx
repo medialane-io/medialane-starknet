@@ -84,8 +84,8 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
       <DialogContent className="sm:max-w-md">
         {txStatus === "confirmed" ? (
           <MarketplaceSuccessState
-            title="Listing live!"
-            description={`${tokenName || `#${tokenId}`} is now listed for sale.`}
+            title="Listing registered"
+            description={`${tokenName || `#${tokenId}`} will appear for sale shortly.`}
             txHash={txHash}
             explorerUrl={EXPLORER_URL}
             name={tokenName || `#${tokenId}`}
