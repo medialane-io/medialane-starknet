@@ -1,16 +1,14 @@
 "use client";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { sepolia, mainnet } from "@starknet-react/chains";
 import {
   StarknetConfig,
-  argent,
-  braavos,
-  publicProvider,
   useInjectedConnectors,
   voyager,
   avnuPaymasterProvider,
 } from "@starknet-react/core";
 import { RpcProvider } from "starknet";
+import { idResolvedBraavos, idResolvedReady } from "@/lib/starknet-connectors";
 
 interface NetworkContextType {
   currentNetwork: 'mainnet' | 'sepolia';
@@ -38,8 +36,13 @@ export const useNetwork = () => {
 };
 
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
+  const recommendedConnectors = useMemo(
+    () => [idResolvedReady(), idResolvedBraavos()],
+    [],
+  );
+
   const { connectors } = useInjectedConnectors({
-    recommended: [argent(), braavos()],
+    recommended: recommendedConnectors,
     includeRecommended: "always",
     order: "alphabetical",
   });
