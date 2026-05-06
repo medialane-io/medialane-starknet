@@ -185,7 +185,7 @@ export default function CreateNFTEditionsCollectionPage() {
               image: imageUri,
               external_link: values.external_link || "",
             }),
-          });
+          }));
           const d = await r.json();
           if (d.uri) collectionMetaUri = d.uri;
         } catch { /* non-fatal */ }

@@ -107,7 +107,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(metadata),
-      });
+      }));
       const pinData = await pinRes.json().catch(() => ({}));
       if (!pinRes.ok || !pinData.uri) throw new Error(pinData.error ?? "Metadata upload failed");
 

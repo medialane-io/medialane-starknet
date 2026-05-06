@@ -165,7 +165,7 @@ export default function CreateCollectionPage() {
               image: imageUri,
               external_link: values.external_link || "https://medialane.io",
             }),
-          });
+          }));
           const metaData = await metaRes.json().catch(() => ({}));
           if (metaRes.ok && metaData.uri) baseUri = metaData.uri;
         } catch {

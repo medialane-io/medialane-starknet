@@ -185,7 +185,7 @@ export default function MintNFTEditionsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(metadata),
-      });
+      }));
       const d = await r.json();
       if (d.uri) tokenUri = d.uri;
     } catch { /* fall back to raw image URI */ }

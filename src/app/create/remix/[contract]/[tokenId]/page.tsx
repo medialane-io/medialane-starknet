@@ -275,7 +275,7 @@ export default function CreateRemixPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(metadata),
-        });
+        }));
         const pinData = await pinRes.json();
         if (!pinRes.ok || !pinData.uri) throw new Error(pinData.error ?? "Metadata upload failed");
         tokenUri = pinData.uri;

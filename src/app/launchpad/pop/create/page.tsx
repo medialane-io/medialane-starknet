@@ -119,7 +119,7 @@ export default function CreatePOPPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(metadata),
-      });
+      }));
       const d = await r.json();
       if (d.uri) baseUri = d.uri;
     } catch { /* non-fatal — proceed with empty baseUri */ }
