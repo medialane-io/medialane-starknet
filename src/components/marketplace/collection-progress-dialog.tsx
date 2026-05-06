@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { EXPLORER_URL } from "@/lib/constants";
@@ -90,6 +91,13 @@ export function CollectionProgressDialog({
         <DialogTitle className="sr-only">
           {isProcessing ? "Creating collection…" : isSuccess ? "Collection created!" : "Creation failed"}
         </DialogTitle>
+        <DialogDescription className="sr-only">
+          {isProcessing
+            ? "Your collection deployment transaction is being submitted and confirmed on Starknet."
+            : isSuccess
+            ? "Your collection has been deployed successfully."
+            : "Your collection deployment failed."}
+        </DialogDescription>
 
         {/* ── Processing ── */}
         {isProcessing && (

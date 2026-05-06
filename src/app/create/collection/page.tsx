@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,6 +23,7 @@ import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { useTx } from "@/hooks/use-tx";
 import { useSessionKey } from "@/hooks/use-session-key";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { useSiwsToken } from "@/hooks/use-siws-token";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -52,6 +52,7 @@ export default function CreateCollectionPage() {
   const { execute: executeTransaction, status, txHash } = useTx();
   const { walletAddress, hasWallet } = useSessionKey();
   const client = useMedialaneClient();
+  const { getValidToken } = useSiwsToken();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
@@ -104,8 +105,13 @@ export default function CreateCollectionPage() {
     setImageUri(null);
     setImageUploading(true);
     try {
+      const siwsToken = await getValidToken();
+      if (!siwsToken) throw new Error("Please sign in with your wallet to upload images.");
       // Upload directly to Pinata via signed URL (bypasses Next.js 4 MB body limit)
-      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth({ method: "POST" }));
+      const signedRes = await fetch("/api/pinata/signed-url", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${siwsToken}` },
+      });
       const signedData = await signedRes.json();
       if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
       const imgFormData = new FormData();
@@ -156,16 +162,21 @@ export default function CreateCollectionPage() {
       let baseUri: string | undefined;
       if (imageUri) {
         try {
-          const metaRes = await fetch("/api/pinata/json", withSiwsAuth({
+          const siwsToken = await getValidToken();
+          if (!siwsToken) throw new Error("Please sign in with your wallet to upload collection metadata.");
+          const metaRes = await fetch("/api/pinata/json", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${siwsToken}`,
+            },
             body: JSON.stringify({
               name: values.name,
               description: values.description || "",
               image: imageUri,
               external_link: values.external_link || "https://medialane.io",
             }),
-          }));
+          });
           const metaData = await metaRes.json().catch(() => ({}));
           if (metaRes.ok && metaData.uri) baseUri = metaData.uri;
         } catch {
