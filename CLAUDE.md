@@ -29,9 +29,8 @@ The app is deployed at [medialane.io](https://medialane.io) on Starknet Mainnet.
 NEXT_PUBLIC_STARKNET_NETWORK          # "mainnet" or "sepolia" (defaults to mainnet)
 NEXT_PUBLIC_RPC_URL                   # Starknet RPC endpoint (for write/execution only)
 
-# Contracts (all default to mainnet values from @medialane/sdk if unset)
-NEXT_PUBLIC_MARKETPLACE_CONTRACT      # ERC-721 marketplace contract
-NEXT_PUBLIC_MARKETPLACE_1155_CONTRACT # ERC-1155 marketplace contract
+# Contracts
+# Marketplace contract addresses come from @medialane/sdk only.
 NEXT_PUBLIC_COLLECTION_CONTRACT       # ERC-721 collection registry
 NEXT_PUBLIC_COLLECTION_1155_CONTRACT  # ERC-1155 collection registry
 NEXT_PUBLIC_NFTCOMMENTS_CONTRACT      # NFT comments contract

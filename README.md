@@ -193,9 +193,7 @@ cp .env.example .env.local
 |---|---|
 | `NEXT_PUBLIC_STARKNET_NETWORK` | `mainnet` or `sepolia` |
 | `NEXT_PUBLIC_RPC_URL` | Alchemy or custom RPC endpoint |
-| `NEXT_PUBLIC_COLLECTION_CONTRACT_ADDRESS` | Mediolano collection registry |
-| `NEXT_PUBLIC_MEDIALANE_CONTRACT_ADDRESS` | Marketplace contract |
-| `NEXT_PUBLIC_COLLECTIONS_CONTRACT_START_BLOCK` | Starting block for event queries |
+| `NEXT_PUBLIC_COLLECTION_CONTRACT` | Optional collection registry override |
 | `NEXT_PUBLIC_EXPLORER_URL` | Block explorer base URL |
 | `NEXT_PUBLIC_GATEWAY_URL` | IPFS gateway URL |
 | `PINATA_JWT` | Pinata JWT for server-side uploads |
@@ -204,6 +202,8 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY` | AVNU API key for sponsored gas |
 | `NEXT_PUBLIC_MEDIALANE_API_URL` | Backend API base URL |
 | `NEXT_PUBLIC_MEDIALANE_API_KEY` | Backend API key |
+
+Marketplace contract addresses are sourced from `@medialane/sdk`; do not configure marketplace addresses in dapp env files.
 
 ---
 
