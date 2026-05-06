@@ -458,9 +458,8 @@ export function useMarketplace(): UseMarketplaceReturn {
             const hash = await executeDirect([approveCall, registerCall]);
             setTxHash(hash);
             const receipt = await provider.waitForTransaction(hash);
-            if ((receipt as any).execution_status === "REVERTED") {
-                throw new Error((receipt as any).revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
-            }
+            assertTransactionSucceeded(receipt);
+            assertOrderCreated(receipt, contract.address);
             toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             return hash;
         });

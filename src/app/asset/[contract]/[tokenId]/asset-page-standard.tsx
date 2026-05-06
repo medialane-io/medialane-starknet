@@ -846,6 +846,7 @@ export function AssetPageStandard() {
         assetContract={contract}
         tokenId={tokenId}
         tokenName={name}
+        tokenStandard={collection?.standard}
       />
 
       <CancelOrderDialog

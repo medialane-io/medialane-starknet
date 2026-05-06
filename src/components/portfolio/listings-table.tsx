@@ -100,7 +100,7 @@ export function ListingsTable({ address }: ListingsTableProps) {
   const { orders, isLoading, error, mutate } = useUserOrders(address);
   const { cancelOrder, isProcessing } = useMarketplace();
   const myListings = orders.filter(
-    (o) => o.offer.itemType === "ERC721" && o.status === "ACTIVE"
+    (o) => (o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155") && o.status === "ACTIVE"
   );
 
   // Per-currency totals
@@ -115,7 +115,7 @@ export function ListingsTable({ address }: ListingsTableProps) {
     .join(" · ");
 
   const handleCancel = async (order: ApiOrder) => {
-    await cancelOrder(order.orderHash);
+    await cancelOrder(order.orderHash, order.offer.itemType);
     mutate();
   };
 

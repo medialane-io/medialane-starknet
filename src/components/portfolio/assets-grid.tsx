@@ -57,9 +57,9 @@ export function AssetsGrid({ address }: AssetsGridProps) {
 
   const handleCancelPin = async (pin: string) => {
     setCancelPinOpen(false);
-    const orderHash = cancelToken?.activeOrders?.[0]?.orderHash;
-    if (!orderHash) return;
-    await cancelOrder(orderHash);
+    const activeOrder = cancelToken?.activeOrders?.[0];
+    if (!activeOrder) return;
+    await cancelOrder(activeOrder.orderHash, activeOrder.offer.itemType);
     setCancelToken(null);
     handleSuccess();
   };
@@ -135,6 +135,7 @@ export function AssetsGrid({ address }: AssetsGridProps) {
           assetContract={selectedToken.contractAddress}
           tokenId={selectedToken.tokenId}
           tokenName={selectedToken.metadata?.name ?? undefined}
+          tokenStandard={(selectedToken as any).standard}
           onSuccess={handleSuccess}
         />
       )}

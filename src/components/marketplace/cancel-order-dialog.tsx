@@ -67,7 +67,10 @@ export function CancelOrderDialog({
   const resolvedVariant: "listing" | "offer" =
     variant ?? (order?.offer.itemType === "ERC721" || order?.offer.itemType === "ERC1155" ? "listing" : "offer");
 
-  const tokenStandard = order?.offer.itemType === "ERC1155" ? "ERC1155" : "ERC721";
+  const tokenStandard =
+    order?.offer.itemType === "ERC1155" || order?.consideration.itemType === "ERC1155"
+      ? "ERC1155"
+      : "ERC721";
 
   useEffect(() => {
     if (open) resetState();

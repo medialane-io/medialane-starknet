@@ -33,6 +33,10 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
   const image = ipfsToHttp(token.metadata?.image);
   const name = token.metadata?.name ?? `#${token.tokenId}`;
   const activeOrder = token.activeOrders?.[0];
+  const tokenStandard =
+    (token as any).standard ??
+    (token as any).collection?.standard ??
+    (activeOrder?.offer.itemType === "ERC1155" ? "ERC1155" : undefined);
   const price = activeOrder?.price;
   const ipType = token.metadata?.ipType;
   const typeConfig = ipType
@@ -120,6 +124,7 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
         assetContract={token.contractAddress}
         tokenId={token.tokenId}
         tokenName={token.metadata?.name ?? `#${token.tokenId}`}
+        tokenStandard={tokenStandard}
       />
     </div>
   );
