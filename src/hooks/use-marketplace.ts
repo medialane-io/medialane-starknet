@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useAccount, useContract, useNetwork, useProvider } from "@starknet-react/core";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { Abi, shortString, constants } from "starknet";
+import { useSWRConfig } from "swr";
 import { IPMarketplaceABI } from "@/abis/ip_market";
 import { IPMarketplace1155ABI } from "@/abis/ip_market_1155";
 import { toast } from "sonner";
@@ -51,7 +52,7 @@ interface UseMarketplaceReturn {
 }
 
 // Module-level helpers
-import { SUPPORTED_TOKENS, MARKETPLACE_721_CONTRACT, MARKETPLACE_1155_CONTRACT } from "@/lib/constants";
+import { SUPPORTED_TOKENS, MARKETPLACE_721_CONTRACT, MARKETPLACE_1155_CONTRACT, INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 const getDecimals = (currencySymbol: string) =>
     SUPPORTED_TOKENS.find((t) => t.symbol === currencySymbol)?.decimals ?? 18;
 
@@ -92,6 +93,7 @@ export function useMarketplace(): UseMarketplaceReturn {
     const { account } = useAccount();
     const { chain } = useNetwork();
     const { provider } = useProvider();
+    const { mutate } = useSWRConfig();
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [txHash, setTxHash] = useState<string | null>(null);
@@ -112,6 +114,30 @@ export function useMarketplace(): UseMarketplaceReturn {
         setError(null);
         setIsProcessing(false);
     }, []);
+
+    const invalidateMarketplaceCaches = useCallback(() => {
+        mutate(
+            (key) => {
+                if (typeof key !== "string") return false;
+                if (key.startsWith("listings-")) return true;
+                if (key.startsWith("user-orders-")) return true;
+                if (key.startsWith("order-")) return true;
+                if (key.startsWith("tokens-owned-")) return true;
+                if (key.startsWith("token-")) return true;
+                if (key.startsWith("counter-offers-")) return true;
+                if (key.startsWith("floor-listings-")) return true;
+                if (key.startsWith("tokens-by-type-")) return true;
+                return key.includes('"op":"orders"');
+            },
+            undefined,
+            { revalidate: true }
+        );
+    }, [mutate]);
+
+    const refreshMarketplaceCaches = useCallback(() => {
+        invalidateMarketplaceCaches();
+        window.setTimeout(invalidateMarketplaceCaches, INDEXER_REVALIDATION_DELAY_MS);
+    }, [invalidateMarketplaceCaches]);
 
     // Wraps an async operation with isProcessing state and unified error handling.
     const withProcessing = useCallback(async <T>(
@@ -302,6 +328,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 const receipt1155 = await provider.waitForTransaction(hash1155);
                 assertTransactionSucceeded(receipt1155);
                 assertOrderCreated(receipt1155, contract.address);
+                refreshMarketplaceCaches();
                 toast.success("Listing Created", { description: "Your edition has been listed successfully." });
                 return hash1155;
             }
@@ -360,10 +387,11 @@ export function useMarketplace(): UseMarketplaceReturn {
             const receipt = await provider.waitForTransaction(hash);
             assertTransactionSucceeded(receipt);
             assertOrderCreated(receipt, contract.address);
+            refreshMarketplaceCaches();
             toast.success("Listing Created", { description: "Your asset has been listed successfully." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect]);
+    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches]);
 
     const makeOffer = useCallback(async (
         assetContractAddress: string,
@@ -460,10 +488,11 @@ export function useMarketplace(): UseMarketplaceReturn {
             const receipt = await provider.waitForTransaction(hash);
             assertTransactionSucceeded(receipt);
             assertOrderCreated(receipt, contract.address);
+            refreshMarketplaceCaches();
             toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect]);
+    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: any[]) => {
         if (!walletAddress || !medialaneContract || !chain || items.length === 0) {
@@ -584,10 +613,11 @@ export function useMarketplace(): UseMarketplaceReturn {
             if ((receipt as any).execution_status === "REVERTED") {
                 throw new Error((receipt as any).revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
             }
+            refreshMarketplaceCaches();
             toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect]);
+    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
 
     const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string) => {
         const is1155 = tokenStandard === "ERC1155";
@@ -639,10 +669,11 @@ export function useMarketplace(): UseMarketplaceReturn {
             if ((receipt as any).execution_status === "REVERTED") {
                 throw new Error((receipt as any).revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
             }
+            refreshMarketplaceCaches();
             toast.success("Listing Cancelled", { description: "The listing has been successfully cancelled on-chain." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect]);
+    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
 
     /**
      * Asset owner accepts an incoming bid. Signs OrderFulfillment typed data,
@@ -722,10 +753,11 @@ export function useMarketplace(): UseMarketplaceReturn {
             if ((receipt as any).execution_status === "REVERTED") {
                 throw new Error((receipt as any).revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
             }
+            refreshMarketplaceCaches();
             toast.success("Offer Accepted", { description: "The offer has been accepted and the asset transferred." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect]);
+    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
 
     return {
         createListing,
