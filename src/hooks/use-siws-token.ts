@@ -37,6 +37,21 @@ function storeToken(address: string, token: string): void {
   }
 }
 
+function normalizeSignature(signature: unknown): string[] {
+  if (Array.isArray(signature)) {
+    return signature.map(String);
+  }
+
+  if (signature && typeof signature === "object") {
+    const { r, s } = signature as { r?: unknown; s?: unknown };
+    if (r !== undefined && s !== undefined) {
+      return [String(r), String(s)];
+    }
+  }
+
+  return [String(signature)];
+}
+
 export function useSiwsToken() {
   const { account, address } = useAccount();
   const [token, setToken] = useState<string | null>(null);
@@ -67,11 +82,7 @@ export function useSiwsToken() {
 
       // Step 2: Prompt wallet to sign — user will see the typed data popup
       const signature = await account.signMessage(typedData);
-
-      // Normalise to [r, s] string tuple — starknet.js returns string[] for standard accounts
-      const sig: [string, string] = Array.isArray(signature)
-        ? [String(signature[0]), String(signature[1])]
-        : [String((signature as { r: bigint }).r), String((signature as { s: bigint }).s)];
+      const sig = normalizeSignature(signature);
 
       // Step 3: Backend verifies the signature and issues a 24h siws_ token
       const verifyRes = await fetch(`${MEDIALANE_BACKEND_URL}/v1/auth/siws/verify`, {
