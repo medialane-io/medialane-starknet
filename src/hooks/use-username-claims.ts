@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useSiwsToken } from "@/hooks/use-siws-token";
 import { type ApiCreatorProfile } from "@medialane/sdk";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
@@ -21,16 +22,15 @@ export type { ApiCreatorProfile as CreatorByUsername };
 /** Fetch the current user's username claim status. */
 export function useMyUsernameClaim() {
   const { address, isConnected } = useUnifiedWallet();
+  const { getValidToken } = useSiwsToken();
 
   const { data, error, isLoading, mutate } = useSWR(
     isConnected && address ? `username-claim-me-${address}` : null,
     async () => {
-      const res = await fetch(`${MEDIALANE_BACKEND_URL}/v1/username-claims/me`, {
-        headers: {
-          "x-api-key": MEDIALANE_API_KEY,
-          "x-wallet-address": address ?? "",
-        },
-      });
+      const token = await getValidToken();
+      const headers: Record<string, string> = { "x-api-key": MEDIALANE_API_KEY };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${MEDIALANE_BACKEND_URL}/v1/username-claims/me`, { headers });
       if (!res.ok) throw new Error("Failed to fetch username claim");
       return res.json() as Promise<{ username: string | null; claim: UsernameClaim | null }>;
     },
@@ -53,16 +53,17 @@ export async function checkUsernameAvailability(
 /** Submit a username claim. */
 export async function submitUsernameClaim(
   username: string,
-  walletAddress: string,
+  siwsToken: string | null,
   notifyEmail?: string
 ): Promise<{ claim?: UsernameClaim; error?: string }> {
+  const headers: Record<string, string> = {
+    "x-api-key": MEDIALANE_API_KEY,
+    "Content-Type": "application/json",
+  };
+  if (siwsToken) headers["Authorization"] = `Bearer ${siwsToken}`;
   const res = await fetch(`${MEDIALANE_BACKEND_URL}/v1/username-claims`, {
     method: "POST",
-    headers: {
-      "x-api-key": MEDIALANE_API_KEY,
-      "x-wallet-address": walletAddress,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({ username, ...(notifyEmail ? { notifyEmail } : {}) }),
   });
   const json = await res.json();

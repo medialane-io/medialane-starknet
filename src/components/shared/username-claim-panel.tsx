@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
+import { useSiwsToken } from "@/hooks/use-siws-token";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ function UsernameInput({ value, onChange, onCheck, onSubmit, checkState, checkRe
  */
 export function UsernameClaimPanel() {
   const { address: walletAddress } = useUnifiedWallet();
+  const { getValidToken } = useSiwsToken();
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
   const [claimInput, setClaimInput] = useState("");
   const [claiming, setClaiming] = useState(false);
@@ -86,7 +88,7 @@ export function UsernameClaimPanel() {
     if (!claimInput.trim()) return;
     setClaiming(true);
     try {
-      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), "", undefined);
+      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), await getValidToken(), undefined);
       if (result.error) {
         toast.error(result.error);
       } else {

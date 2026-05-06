@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { useCreatorProfile } from "@/hooks/use-profiles";
 import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
+import { useSiwsToken } from "@/hooks/use-siws-token";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +80,7 @@ function UsernameClaimInput({
 
 export default function ProfileSettingsPage() {
   const { address: walletAddress, disconnect } = useUnifiedWallet();
+  const { getValidToken } = useSiwsToken();
   const router = useRouter();
   const { profile, isLoading: profileLoading, mutate } = useCreatorProfile(walletAddress ?? undefined);
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
@@ -123,7 +125,7 @@ export default function ProfileSettingsPage() {
     if (!claimInput.trim()) return;
     setClaiming(true);
     try {
-      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), "", undefined);
+      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), await getValidToken(), undefined);
       if (result.error) {
         toast.error(result.error);
       } else {
