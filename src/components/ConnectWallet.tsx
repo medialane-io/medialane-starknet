@@ -102,7 +102,12 @@ function getWalletBadge(
 // Main component
 // ---------------------------------------------------------------------------
 
-export function ConnectWallet() {
+interface ConnectWalletProps {
+  label?: string;
+  className?: string;
+}
+
+export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
   const { connectAsync, connectors } = useConnect();
   const { address: injectedAddress, isConnected: injectedConnected, chainId } = useAccount();
   const { disconnect: injectedDisconnect } = useDisconnect();
@@ -372,11 +377,17 @@ export function ConnectWallet() {
     <>
       <Button
         variant="ghost"
-        size="icon"
-        className="rounded-full h-9 w-9 bg-black/5 dark:bg-foreground/5 hover:bg-black/10 dark:hover:bg-foreground/10 border border-black/5 dark:border-foreground/5 transition-all text-foreground"
+        size={label ? "default" : "icon"}
+        className={
+          className ??
+          (label
+            ? "h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            : "rounded-full h-9 w-9 bg-black/5 dark:bg-foreground/5 hover:bg-black/10 dark:hover:bg-foreground/10 border border-black/5 dark:border-foreground/5 transition-all text-foreground")
+        }
         onClick={() => setConnectDialogOpen(true)}
       >
         <Wallet className="h-4 w-4" />
+        {label && <span>{label}</span>}
       </Button>
 
       <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>

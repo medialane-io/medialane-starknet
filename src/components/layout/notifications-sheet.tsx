@@ -60,7 +60,7 @@ function EmptyState() {
 export function NotificationsItem() {
   const [open, setOpen] = useState(false);
   const { address: walletAddress, isConnected } = useUnifiedWallet();
-  const { notifications, unreadCount, markAllRead } = useNotifications(
+  const { notifications, unreadCount, markAllRead, markRead } = useNotifications(
     isConnected ? walletAddress : null
   );
 
@@ -150,7 +150,10 @@ export function NotificationsItem() {
                         key={n.id}
                         notification={n}
                         compact
-                        onNavigate={() => setOpen(false)}
+                        onNavigate={() => {
+                          markRead(n.id);
+                          setOpen(false);
+                        }}
                       />
                     ))}
                   </div>

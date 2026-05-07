@@ -45,7 +45,7 @@ function groupByDay(items: Notification[]): [string, Notification[]][] {
 
 export function NotificationsFeed() {
   const { address: walletAddress, isConnected } = useUnifiedWallet();
-  const { notifications, unreadCount, markAllRead } = useNotifications(
+  const { notifications, unreadCount, markAllRead, markRead } = useNotifications(
     isConnected ? walletAddress : null
   );
   const [typeFilter, setTypeFilter] = useState<NotificationType | "">("");
@@ -129,7 +129,11 @@ export function NotificationsFeed() {
               </p>
               <div className="rounded-2xl border border-border/40 overflow-hidden divide-y divide-border/30 bg-card/30">
                 {items.map((n) => (
-                  <NotificationRow key={n.id} notification={n} />
+                  <NotificationRow
+                    key={n.id}
+                    notification={n}
+                    onNavigate={() => markRead(n.id)}
+                  />
                 ))}
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import { useUserOrders } from "./use-orders";
 import { useActivitiesByAddress } from "./use-activities";
@@ -16,6 +16,7 @@ async function fetchAnnouncements(): Promise<Announcement[]> {
 }
 
 export function useNotifications(address: string | null | undefined) {
+  const [readIds, setReadIds] = useState<Set<string>>(() => getReadIds());
   const { orders } = useUserOrders(address ?? null);
   const { activities } = useActivitiesByAddress(address ?? null);
   const { data: announcements = [] } = useSWR<Announcement[]>(
@@ -25,7 +26,6 @@ export function useNotifications(address: string | null | undefined) {
   );
 
   const notifications: Notification[] = useMemo(() => {
-    const readIds = getReadIds();
     const items: Notification[] = [];
 
     // Received offers (ACTIVE ERC20 bids not placed by this user)
@@ -85,14 +85,18 @@ export function useNotifications(address: string | null | undefined) {
     );
 
     return items;
-  }, [orders, activities, announcements, address]);
+  }, [orders, activities, announcements, address, readIds]);
 
   const unreadCount = notifications.filter((n) => n.isUnread).length;
+  const markNotificationsRead = useCallback((ids: string[]) => {
+    markRead(ids);
+    setReadIds(getReadIds());
+  }, []);
 
   return {
     notifications,
     unreadCount,
-    markAllRead: () => markRead(notifications.map((n) => n.id)),
-    markRead:    (id: string) => markRead([id]),
+    markAllRead: () => markNotificationsRead(notifications.map((n) => n.id)),
+    markRead:    (id: string) => markNotificationsRead([id]),
   };
 }

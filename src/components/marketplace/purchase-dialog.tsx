@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
@@ -90,8 +91,12 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Complete purchase</DialogTitle>
-              <DialogDescription>Confirm the details below to buy this asset.</DialogDescription>
+              <DialogTitle>{isConnected ? "Complete purchase" : "Connect wallet to trade"}</DialogTitle>
+              <DialogDescription>
+                {isConnected
+                  ? "Confirm the details below to buy this asset."
+                  : "Connect your wallet first, then you can confirm this purchase."}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               {tokenImg && (
@@ -129,15 +134,27 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 </div>
               )}
               {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
-              <div className="btn-border-animated p-[1px] rounded-xl">
-                <Button
-                  className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30"
-                  onClick={handleBuy}
-                  disabled={isProcessing || !isConnected}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />Buy now
-                </Button>
-              </div>
+              {isConnected ? (
+                <div className="btn-border-animated p-[1px] rounded-xl">
+                  <Button
+                    className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30"
+                    onClick={handleBuy}
+                    disabled={isProcessing}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />Buy now
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <ConnectWallet
+                    label="Connect wallet to trade"
+                    className="w-full h-12 text-base font-semibold rounded-[11px] bg-primary text-primary-foreground hover:bg-primary/90"
+                  />
+                  <p className="text-center text-xs text-muted-foreground">
+                    Your wallet is required to sign and complete the trade.
+                  </p>
+                </div>
+              )}
             </div>
           </>
         )}
