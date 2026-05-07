@@ -1,7 +1,9 @@
 import type { Config } from "tailwindcss";
+import medialanePreset from "@medialane/ui/preset";
 
 const config: Config = {
 	darkMode: ["class"],
+	presets: [medialanePreset],
 	content: [
 		"./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
 		"./src/components/**/*.{js,ts,jsx,tsx,mdx}",

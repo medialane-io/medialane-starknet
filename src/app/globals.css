@@ -91,6 +91,10 @@
   h1, h2, h3, h4 { @apply tracking-tight; }
 }
 
+.container {
+  max-width: none;
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
