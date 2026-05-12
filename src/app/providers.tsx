@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { PrivyProvider } from "@privy-io/react-auth";
 
@@ -58,6 +59,9 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isStandalone = pathname === "/mint" || pathname.startsWith("/br/");
+
   return (
     <PrivyProvider
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
@@ -85,7 +89,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StarknetProvider>
           <StarkZapWalletProvider>
             <Aurora />
-            <Shell>{children}</Shell>
+            {isStandalone ? children : <Shell>{children}</Shell>}
             <CartDrawer />
             <NotificationSpotlight />
             <Toaster richColors position="bottom-right" />
