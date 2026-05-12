@@ -59,6 +59,15 @@ export const GENESIS_NFT_URI =
 export const GENESIS_NFT_IMAGE_URL =
   process.env.NEXT_PUBLIC_GENESIS_NFT_IMAGE_URL || "";
 
+export const BR_MINT_CONTRACT =
+  (process.env.NEXT_PUBLIC_BR_MINT_CONTRACT as `0x${string}`) || ("" as `0x${string}`);
+
+export const BR_NFT_URI =
+  process.env.NEXT_PUBLIC_BR_NFT_URI || "";
+
+export const BR_NFT_IMAGE_URL =
+  process.env.NEXT_PUBLIC_BR_NFT_IMAGE_URL || "";
+
 export const INDEXER_REVALIDATION_DELAY_MS = 10_000;
 
 export const REGISTRY_START_BLOCK = Number(
