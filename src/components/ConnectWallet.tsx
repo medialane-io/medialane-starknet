@@ -37,6 +37,7 @@ import {
   Gamepad2,
   Loader2,
   AlertCircle,
+  Mail,
 } from "lucide-react";
 import { useNetwork } from "@/components/starknet-provider";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +79,7 @@ type WalletBadgeInfo = {
 };
 
 function getWalletBadge(
-  walletType: "injected" | "cartridge" | null
+  walletType: "injected" | "cartridge" | "privy" | null
 ): WalletBadgeInfo | null {
   if (walletType === "cartridge") {
     return {
@@ -86,6 +87,14 @@ function getWalletBadge(
       icon: <Gamepad2 className="h-3 w-3" />,
       className: "border-purple-500/30 text-purple-400 bg-purple-500/5",
       hint: "Auto-gasless",
+    };
+  }
+  if (walletType === "privy") {
+    return {
+      label: "Social Login",
+      icon: <Mail className="h-3 w-3" />,
+      className: "border-blue-500/30 text-blue-400 bg-blue-500/5",
+      hint: "Gasless",
     };
   }
   if (walletType === "injected") {
@@ -121,6 +130,8 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
     isConnecting,
     error: szError,
     connectCartridge,
+    connectPrivy,
+    privyUser,
     disconnect: szDisconnect,
   } = useStarkZapWallet();
 
@@ -132,7 +143,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
   const isConnected = hasStarkZap || injectedConnected;
   const address = hasStarkZap ? szAddress : injectedAddress;
   const activeWalletType = hasStarkZap
-    ? ("cartridge" as const)
+    ? (szType as "cartridge" | "privy")
     : injectedConnected
       ? ("injected" as const)
       : null;
@@ -279,6 +290,14 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                     {isWrongNetwork ? "Connection Restricted" : "Securely Connected"}
                   </span>
                 </div>
+                {activeWalletType === "privy" && privyUser && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {privyUser.email?.address ??
+                      privyUser.google?.name ??
+                      privyUser.twitter?.name ??
+                      "Social Account"}
+                  </p>
+                )}
               </div>
               <Link
                 href={`${networkConfig.explorerUrl}/address/${address}`}
@@ -462,6 +481,37 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 <Gamepad2 className="h-4 w-4 shrink-0 text-purple-400" />
                 <span>
                   {isConnecting ? "Connecting…" : "Connect with Cartridge"}
+                </span>
+                {isConnecting && <Loader2 className="ml-auto h-3 w-3 animate-spin" />}
+              </Button>
+            </section>
+
+            <div className="border-t border-border/50" />
+
+            {/* ── Social Login (Privy) ─────────────────────── */}
+            <section>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Social Login
+              </p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Email · Google · Twitter — no seed phrase required
+              </p>
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3"
+                onClick={async () => {
+                  setConnectDialogOpen(false);
+                  try {
+                    await connectPrivy();
+                  } catch {
+                    // error surfaced via szError
+                  }
+                }}
+                disabled={isConnecting}
+              >
+                <Mail className="h-4 w-4 shrink-0 text-blue-400" />
+                <span>
+                  {isConnecting ? "Connecting…" : "Sign in with Email or Social"}
                 </span>
                 {isConnecting && <Loader2 className="ml-auto h-3 w-3 animate-spin" />}
               </Button>
