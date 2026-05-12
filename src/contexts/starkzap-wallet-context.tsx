@@ -98,24 +98,38 @@ export function StarkZapWalletProvider({
     };
 
     const sdk = getStarkZapSdk();
-    const result = await sdk.onboard({
-      strategy: OnboardStrategy.Privy,
-      accountPreset: "argentXV050",
-      feeMode: "sponsored",
-      privy: {
-        resolve: async () => ({
-          walletId: walletData.id,
-          publicKey: walletData.publicKey,
-          serverUrl: `${window.location.origin}/api/wallet/sign`,
-          headers: async (): Promise<Record<string, string>> => {
-            const freshToken = await getAccessToken();
-            if (!freshToken) return {};
-            return { Authorization: `Bearer ${freshToken}` };
-          },
-        }),
+    const privyResolve = async () => ({
+      walletId: walletData.id,
+      publicKey: walletData.publicKey,
+      serverUrl: `${window.location.origin}/api/wallet/sign`,
+      headers: async (): Promise<Record<string, string>> => {
+        const freshToken = await getAccessToken();
+        if (!freshToken) return {};
+        return { Authorization: `Bearer ${freshToken}` };
       },
-      deploy: "if_needed",
     });
+
+    let result;
+    try {
+      result = await sdk.onboard({
+        strategy: OnboardStrategy.Privy,
+        accountPreset: "argentXV050",
+        feeMode: "sponsored",
+        privy: { resolve: privyResolve },
+        deploy: "if_needed",
+      });
+    } catch (deployErr) {
+      const msg = deployErr instanceof Error ? deployErr.message : String(deployErr);
+      if (!msg.includes("already deployed")) throw deployErr;
+      // Account is already on-chain — retry without attempting deploy
+      result = await sdk.onboard({
+        strategy: OnboardStrategy.Privy,
+        accountPreset: "argentXV050",
+        feeMode: "sponsored",
+        privy: { resolve: privyResolve },
+        deploy: "never",
+      });
+    }
 
     setWallet(result.wallet);
     setWalletType("privy");
