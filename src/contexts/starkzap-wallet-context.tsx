@@ -101,6 +101,7 @@ export function StarkZapWalletProvider({
     const result = await sdk.onboard({
       strategy: OnboardStrategy.Privy,
       accountPreset: "argentXV050",
+      feeMode: "sponsored",
       privy: {
         resolve: async () => ({
           walletId: walletData.id,
@@ -113,7 +114,7 @@ export function StarkZapWalletProvider({
           },
         }),
       },
-      deploy: "never",
+      deploy: "if_needed",
     });
 
     setWallet(result.wallet);
