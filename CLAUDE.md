@@ -75,6 +75,7 @@ ThemeProvider
 - `src/lib/starkzap.ts` — SDK singleton (`getStarkZapSdk()`), token presets, staking config
 - `src/contexts/starkzap-wallet-context.tsx` — `StarkZapWalletProvider` + `useStarkZapWallet()`
 - `src/hooks/use-unified-wallet.ts` — normalises all wallet types into one interface
+- `src/hooks/use-wallet.ts` — **normalized identity hook**: wraps `useUnifiedWallet()`, returns `{ address, isConnected }`. Use this in any component that only needs to know who the user is. Use `useUnifiedWallet` directly only when you also need signing, execution, or wallet-type detection.
 - `src/components/providers.tsx` — PrivyProvider + StarkZapWalletProvider client wrapper
 - `src/app/api/wallet/starknet/route.ts` — Privy wallet get-or-create (server)
 - `src/app/api/wallet/sign/route.ts` — Privy raw signing endpoint (server)
@@ -175,6 +176,28 @@ Multi-gateway fallback: Pinata → ipfs.io → Cloudflare → dweb.link. 24h loc
 
 ---
 
+## Notification System (added 2026-05-12)
+
+**Types** (`src/types/notification.ts`): `offer`, `offer_accepted`, `sale`, `listing`, `mint`, `transfer`, `asset_received`, `cancelled`, `announcement`. Priority: `"normal" | "spotlight"`. Celebratory flag drives confetti.
+
+**`NotificationSpotlight`** (`src/components/shared/notification-spotlight.tsx`): Modal panel shown once per wallet session for all unread spotlight-priority notifications. Animated dot pagination, confetti on celebratory items, marks only seen items as read on close. Mounted globally in `providers.tsx`.
+
+**`useNotifications`** (`src/hooks/use-notifications.ts`): Aggregates offer_accepted (fulfilled ERC20 orders), received offers (`useReceivedOffers`), activity events, and announcements into a unified list. Read state persisted in localStorage via `src/lib/notification-storage.ts`.
+
+**Shared meta** (`src/lib/notification-meta.ts`): `NOTIFICATION_ICON`, `NOTIFICATION_COLOR`, `NOTIFICATION_LABEL` — used by both `notification-row.tsx` and `notification-spotlight.tsx`. Add new types here first.
+
+**`AcceptOfferDialog`** (`src/components/marketplace/accept-offer-dialog.tsx`): Full accept flow with success state + confetti. Wired into `ReceivedOffersTable` via `acceptOrder` state pattern (replaces the old toast).
+
+## Rewards System (added 2026-05-12)
+
+50-level DAO-managed XP + badge system. Scores live on the backend; frontend reads them via SWR hooks.
+
+**Hooks**: `useRewards(address)`, `useLeaderboard(page, limit)` in `src/hooks/use-rewards.ts`.
+
+**Components**: `LevelBadge` (`src/components/rewards/level-badge.tsx`) — color-coded level chip in sm/md/lg sizes. `BadgeShelf` (`src/components/rewards/badge-shelf.tsx`) — lazy-loaded Lucide icon badges with tooltips.
+
+**Page**: `/rewards` — My Rank tab (level card with ambient glow, XP progress bar, badge shelf, breakdown table) + Leaderboard tab. Uses `useWallet()` for address resolution.
+
 ## Conventions
 
 - Filenames: `kebab-case`; components: `PascalCase`
@@ -184,3 +207,4 @@ Multi-gateway fallback: Pinata → ipfs.io → Cloudflare → dweb.link. 24h loc
 - Token IDs are represented as `bigint` in contract calls and decoded as `u256` (low + high << 128)
 - All contract calls that modify state go through `executeAuto` (paymaster) or `account.execute()` — never call contracts directly in server code
 - New transaction flows should default to `executeAuto` from `usePaymasterTransaction` or the feature-specific paymaster hook
+- **Wallet identity**: use `useWallet()` → `{ address, isConnected }` in components that only need to know who the user is. Use `useUnifiedWallet()` only when you need signing, wallet type, or execution capabilities.
