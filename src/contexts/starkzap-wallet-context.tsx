@@ -112,7 +112,9 @@ export function StarkZapWalletProvider({
 
     let deployMode: "if_needed" | "never" = "if_needed";
     try {
-      await starknetProvider.getClassHashAt(walletData.address);
+      // Check pending state — AVNU simulates against pending, so a deploy
+      // that's in the mempool but not yet confirmed must be treated as deployed.
+      await starknetProvider.getClassHashAt(walletData.address, "pending");
       deployMode = "never";
     } catch {
       // account not yet deployed — proceed with deploy:"if_needed"
