@@ -191,7 +191,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         orderParams: any,
         contract: NonNullable<typeof medialaneContract>
     ) => {
-        const chainId = chain!.id as any as constants.StarknetChainId;
+        const chainId = ('0x' + chain!.id.toString(16)) as constants.StarknetChainId;
         const typedData = stringifyBigInts(getOrderParametersTypedData(orderParams, chainId));
 
         const signature = await account!.signMessage(typedData);
@@ -284,7 +284,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                     salt,
                     nonce,
                 };
-                const chainId = chain!.id as any as constants.StarknetChainId;
+                const chainId = ('0x' + chain!.id.toString(16)) as constants.StarknetChainId;
                 const typedData1155 = stringifyBigInts(
                     get1155OrderParametersTypedData(orderParams1155 as Record<string, unknown>, chainId)
                 );
@@ -448,7 +448,7 @@ export function useMarketplace(): UseMarketplaceReturn {
 
             let registerCall: any;
             if (is1155) {
-                const chainId = chain!.id as any as constants.StarknetChainId;
+                const chainId = ('0x' + chain!.id.toString(16)) as constants.StarknetChainId;
                 const typedData = stringifyBigInts(
                     get1155OrderParametersTypedData(orderParams as Record<string, unknown>, chainId)
                 );
@@ -546,7 +546,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 ? BigInt(await medialane1155Contract.nonces(walletAddress))
                 : 0n;
 
-            const chainId = chain.id as any as constants.StarknetChainId;
+            const chainId = ('0x' + chain.id.toString(16)) as constants.StarknetChainId;
             const fulfillCalls: any[] = [];
             let counter721 = 0;
             let counter1155 = 0;
@@ -645,7 +645,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 nonce: currentNonce.toString(),
             };
 
-            const chainId = chain.id as any as constants.StarknetChainId;
+            const chainId = ('0x' + chain.id.toString(16)) as constants.StarknetChainId;
             const typedData = stringifyBigInts(
                 is1155
                     ? get1155OrderCancellationTypedData(cancelParams as Record<string, unknown>, chainId)
@@ -712,7 +712,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 ...(is1155 ? { quantity: "1" } : {}),
             };
 
-            const chainId = chain.id as any as constants.StarknetChainId;
+            const chainId = ('0x' + chain.id.toString(16)) as constants.StarknetChainId;
             const typedData = stringifyBigInts(
                 is1155
                     ? get1155OrderFulfillmentTypedData(fulfillmentParams, chainId)
