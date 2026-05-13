@@ -20,6 +20,7 @@ import { CurrencyIcon } from "@/components/shared/currency-icon";
 import {
   CurrencyPicker,
   DurationPicker,
+  MarketplaceErrorState,
   MarketplaceSuccessState,
   MarketplaceProcessingState,
   MarketplaceDialogHero,
@@ -53,6 +54,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
   const [txStatus, setTxStatus] = useState<"idle" | "confirmed">("idle");
   const is1155 = tokenStandard === "ERC1155";
   const name = tokenName || `Token #${tokenId}`;
+  const isTerminalError = !isProcessing && !!error && !!txHash;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -91,19 +93,46 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+      <DialogContent className="max-w-[calc(100%-6px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl flex flex-col max-h-[92svh]">
+        <DialogTitle className="sr-only">List {name} for sale</DialogTitle>
+        <DialogDescription className="sr-only">
+          Set pricing, currency, duration, and quantity to create an onchain marketplace listing.
+        </DialogDescription>
         {txStatus === "confirmed" ? (
           <MarketplaceSuccessState
-            title="Listing registered"
-            description={`${name} will appear for sale shortly.`}
+            title="Listing live!"
+            description={
+              <>
+                <span className="font-medium text-foreground">{name}</span> will appear for sale shortly.
+              </>
+            }
             txHash={txHash}
             explorerUrl={EXPLORER_URL}
             tokenImage={tokenImage}
             name={name}
             onDone={() => { onOpenChange(false); onSuccess?.(); }}
           />
+        ) : isTerminalError ? (
+          <MarketplaceErrorState
+            tokenImage={tokenImage}
+            name={name}
+            title="Listing failed"
+            description="The transaction was submitted, but the listing could not be completed."
+            error={error}
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+            onRetry={() => resetState()}
+            onDone={() => onOpenChange(false)}
+          />
         ) : isProcessing ? (
-          <MarketplaceProcessingState title="Submitting listing..." imageUrl={tokenImage} imageAlt={name} />
+          <MarketplaceProcessingState
+            title="Submitting listing..."
+            description="Approve the marketplace interaction in your wallet and keep this window open."
+            imageUrl={tokenImage}
+            imageAlt={name}
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+          />
         ) : (
           <div className="flex flex-col">
             <MarketplaceDialogHero
@@ -185,7 +214,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                     <div className="flex items-start justify-center gap-1.5">
                       <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                       <p className="text-[10px] text-center text-muted-foreground">
-                        Listings are signed onchain and can be cancelled from your portfolio at any time.
+                        Listings are signed onchain and can be cancelled from your portfolio at any time. Gas is sponsored when available.
                       </p>
                     </div>
                   </div>

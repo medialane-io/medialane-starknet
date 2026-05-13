@@ -7,6 +7,9 @@ import { queryKeys } from "@/lib/query-keys";
 import { normalizeAddress } from "@/lib/utils";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
+const ACTIVE_ORDER_REFRESH_INTERVAL = 60_000;
+const ACTIVE_ORDER_DEDUPING_INTERVAL = 10_000;
+
 export function useOrders(query: ApiOrdersQuery = {}) {
   const client = useMedialaneClient();
   const key = queryKeys.orders(query);
@@ -44,7 +47,11 @@ export function useTokenListings(contract: string | null, tokenId: string | null
   const { data, error, isLoading, mutate } = useSWR(
     contract && tokenId ? queryKeys.listings(contract, tokenId) : null,
     () => client.api.getActiveOrdersForToken(contract!, tokenId!),
-    { revalidateOnFocus: false, refreshInterval: 20000, dedupingInterval: 5000 }
+    {
+      revalidateOnFocus: false,
+      refreshInterval: ACTIVE_ORDER_REFRESH_INTERVAL,
+      dedupingInterval: ACTIVE_ORDER_DEDUPING_INTERVAL,
+    }
   );
 
   return { listings: data?.data ?? [], isLoading, error, mutate };
@@ -57,7 +64,11 @@ export function useUserOrders(address: string | null) {
   const { data, error, isLoading, mutate } = useSWR(
     normalized ? queryKeys.userOrders(normalized) : null,
     () => client.api.getOrdersByUser(normalized!),
-    { revalidateOnFocus: false, refreshInterval: 20000, dedupingInterval: 5000 }
+    {
+      revalidateOnFocus: false,
+      refreshInterval: ACTIVE_ORDER_REFRESH_INTERVAL,
+      dedupingInterval: ACTIVE_ORDER_DEDUPING_INTERVAL,
+    }
   );
 
   return { orders: data?.data ?? [], isLoading, error, mutate };
@@ -86,7 +97,11 @@ export function useCounterOffers({
       ...(originalOrderHash ? { originalOrderHash } : {}),
       ...(normalized ? { sellerAddress: normalized } : {}),
     }),
-    { revalidateOnFocus: false, refreshInterval: 20000, dedupingInterval: 5000 }
+    {
+      revalidateOnFocus: false,
+      refreshInterval: ACTIVE_ORDER_REFRESH_INTERVAL,
+      dedupingInterval: ACTIVE_ORDER_DEDUPING_INTERVAL,
+    }
   );
 
   return {
@@ -114,7 +129,11 @@ export function useReceivedOffers(address: string | null) {
       if (!res.ok) throw new Error("Failed to fetch received offers");
       return res.json();
     },
-    { revalidateOnFocus: false, refreshInterval: 20000, dedupingInterval: 5000 }
+    {
+      revalidateOnFocus: false,
+      refreshInterval: ACTIVE_ORDER_REFRESH_INTERVAL,
+      dedupingInterval: ACTIVE_ORDER_DEDUPING_INTERVAL,
+    }
   );
 
   return { orders: data?.data ?? [], isLoading, error, mutate };
@@ -133,7 +152,7 @@ export function useCollectionFloorListings(contract: string | null, limit = 20) 
         sort: "price_asc",
         limit,
       }),
-    { refreshInterval: 30000 }
+    { revalidateOnFocus: false, refreshInterval: ACTIVE_ORDER_REFRESH_INTERVAL }
   );
 
   return {

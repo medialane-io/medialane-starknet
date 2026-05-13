@@ -1,20 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { Toaster, toast } from "sonner";
 import Link from "next/link";
+import { Menu } from "lucide-react";
+import { NavCommandMenu, useNavCommandMenu } from "@medialane/ui";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { CartDrawer } from "@/components/layout/cart-drawer";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
 import { Aurora } from "@/components/ui/aurora";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
+import { NAV_COMMANDS } from "@/lib/nav-commands";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
 import { StarkZapWalletProvider } from "@/contexts/starkzap-wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
+
+function NavTrigger() {
+  const { open } = useNavCommandMenu();
+
+  return (
+    <button
+      type="button"
+      onClick={open}
+      aria-label="Open navigation"
+      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border/70 bg-background/80 px-1.5 pr-2.5 text-muted-foreground shadow-sm backdrop-blur transition hover:border-primary/40 hover:text-foreground hover:shadow-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+    >
+      <Image
+        src="/icon.png"
+        alt=""
+        width={28}
+        height={28}
+        className="h-7 w-7 rounded-full"
+        priority
+      />
+      <Menu className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
 
 function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -28,9 +55,13 @@ function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={false}>
+      <NavCommandMenu commands={NAV_COMMANDS} />
       <AppSidebar />
       <SidebarInset>
-        <SidebarTrigger className="absolute top-3 left-3 z-50" />
+        <div className="absolute top-3 left-3 z-50 flex items-center gap-2">
+          <SidebarTrigger />
+          <NavTrigger />
+        </div>
         <main className="min-w-0 flex-1 bg-background overflow-x-hidden">{children}</main>
         <footer className="bg-background border-t border-border/60 px-6 py-8 mt-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
@@ -41,8 +72,8 @@ function Shell({ children }: { children: React.ReactNode }) {
               <Link href="/marketplace" className="hover:text-foreground transition-colors">Trade</Link>
               <Link href="/launchpad" className="hover:text-foreground transition-colors">Launch</Link>
               <a href="https://docs.medialane.io" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docs</a>
-              <a href="https://docs.medialane.io/terms-of-use" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Terms</a>
-              <a href="https://docs.medialane.io/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Privacy</a>
+              <a href="https://docs.medialane.io/guidelines/terms" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Terms</a>
+              <a href="https://docs.medialane.io/guidelines/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Privacy</a>
               <a href="https://x.com/medialane_io" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">X</a>
             </nav>
             <p className="text-xs">© {new Date().getFullYear()} Medialane DAO</p>
@@ -126,7 +157,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
             {isStandalone ? children : <Shell>{children}</Shell>}
             <CartDrawer />
             <NotificationSpotlight />
-            <Toaster richColors position="bottom-right" />
+            <Toaster
+              richColors
+              position="bottom-right"
+              duration={3500}
+              gap={4}
+              toastOptions={{
+                classNames: {
+                  toast: "rounded-xl shadow-lg border border-border/50 font-sans text-[13px] px-4 py-3",
+                  title: "font-medium",
+                  description: "text-xs opacity-70 mt-0.5",
+                  actionButton: "rounded-lg text-xs font-medium",
+                  cancelButton: "rounded-lg text-xs",
+                },
+              }}
+            />
           </StarkZapWalletProvider>
         </StarknetProvider>
       </SWRConfig>

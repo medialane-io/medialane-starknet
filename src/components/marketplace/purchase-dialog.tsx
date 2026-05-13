@@ -10,7 +10,7 @@ import {
   RefreshCw, ShieldCheck, ShoppingCart, Zap,
 } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,7 +20,10 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
-import { MarketplaceTxLink } from "@/components/marketplace/marketplace-dialog-primitives";
+import {
+  MarketplaceErrorState,
+  MarketplaceTxLink,
+} from "@/components/marketplace/marketplace-dialog-primitives";
 import type { ApiOrder } from "@medialane/sdk";
 
 interface PurchaseDialogProps {
@@ -227,24 +230,44 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
 
   const handleViewPortfolio = () => {
     onOpenChange(false);
-    router.push("/portfolio");
+    router.push("/portfolio/assets");
     onSuccess?.();
   };
 
+  const isTerminalError = !isProcessing && !!error && !!txHash && step !== "success";
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+      <DialogContent className="max-w-[calc(100%-12px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl">
         <DialogTitle className="sr-only">Complete purchase</DialogTitle>
+        <DialogDescription className="sr-only">
+          Review the asset, price, quantity, and transaction status for this marketplace purchase.
+        </DialogDescription>
         {step === "success" ? (
           <SuccessScreen order={order} quantity={quantity} txHash={successTxHash ?? txHash} onClose={handleDone} onViewPortfolio={handleViewPortfolio} />
+        ) : isTerminalError ? (
+          <MarketplaceErrorState
+            tokenImage={order.token?.image ? ipfsToHttp(order.token.image) : null}
+            name={order.token?.name || `Token #${order.nftTokenId}`}
+            title="Purchase failed"
+            description="The transaction was submitted, but the purchase could not be completed."
+            error={error}
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+            onRetry={() => {
+              resetState();
+              setStep("details");
+            }}
+            onDone={() => onOpenChange(false)}
+          />
         ) : step === "processing" || isProcessing ? (
           <div className="flex flex-col">
             <TokenHero order={order} quantity={quantity} />
             <div className="px-5 py-8 flex flex-col items-center text-center gap-4">
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
               <div>
-                <p className="font-bold text-lg">Processing purchase...</p>
-                <p className="text-sm text-muted-foreground mt-1">Confirm in your wallet and keep this window open.</p>
+                <p className="font-bold text-lg">Confirming purchase...</p>
+                <p className="text-sm text-muted-foreground mt-1">Approve the wallet prompts and keep this window open.</p>
               </div>
               {txHash ? <MarketplaceTxLink txHash={txHash} explorerUrl={EXPLORER_URL} /> : null}
             </div>
@@ -298,9 +321,9 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                     </Button>
                   </div>
                   <div className="flex items-start justify-center gap-1.5">
-                    <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-center text-muted-foreground">
-                      The asset transfers atomically after your wallet confirms the trade.
+                      <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-center text-muted-foreground">
+                      The asset transfers atomically after your wallet confirms the trade. Gas is sponsored when available.
                     </p>
                   </div>
                 </div>

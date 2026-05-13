@@ -20,6 +20,7 @@ import { CurrencyIcon } from "@/components/shared/currency-icon";
 import {
   CurrencyPicker,
   DurationPicker,
+  MarketplaceErrorState,
   MarketplaceSuccessState,
   MarketplaceProcessingState,
   MarketplaceDialogHero,
@@ -52,6 +53,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
   const [txStatus, setTxStatus] = useState<"idle" | "confirmed">("idle");
   const name = tokenName || `Token #${tokenId}`;
   const isCancelled = error?.toLowerCase().includes("request cancelled") ?? false;
+  const isTerminalError = !isProcessing && !!error && !!txHash;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -75,19 +77,46 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+      <DialogContent className="max-w-[calc(100%-6px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl flex flex-col max-h-[92svh]">
+        <DialogTitle className="sr-only">Make an offer on {name}</DialogTitle>
+        <DialogDescription className="sr-only">
+          Set an amount, currency, and expiry to submit an onchain marketplace offer.
+        </DialogDescription>
         {txStatus === "confirmed" ? (
           <MarketplaceSuccessState
-            title="Offer submitted!"
-            description={`Your offer on ${name} is live.`}
+            title="Offer live!"
+            description={
+              <>
+                Your offer on <span className="font-medium text-foreground">{name}</span> is now active.
+              </>
+            }
             txHash={txHash}
             explorerUrl={EXPLORER_URL}
             tokenImage={tokenImage}
             name={name}
             onDone={() => { onOpenChange(false); onSuccess?.(); }}
           />
+        ) : isTerminalError ? (
+          <MarketplaceErrorState
+            tokenImage={tokenImage}
+            name={name}
+            title="Offer failed"
+            description="The transaction was submitted, but the offer could not be completed."
+            error={error}
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+            onRetry={() => resetState()}
+            onDone={() => onOpenChange(false)}
+          />
         ) : isProcessing ? (
-          <MarketplaceProcessingState title="Submitting offer..." imageUrl={tokenImage} imageAlt={name} />
+          <MarketplaceProcessingState
+            title="Submitting offer..."
+            description="Confirm the signatures in your wallet and keep this window open."
+            imageUrl={tokenImage}
+            imageAlt={name}
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+          />
         ) : (
           <div className="flex flex-col">
             <MarketplaceDialogHero
@@ -166,7 +195,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                     <div className="flex items-start justify-center gap-1.5">
                       <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                       <p className="text-[10px] text-center text-muted-foreground">
-                        Offers can be cancelled before acceptance and settle atomically if the owner accepts.
+                        Offers can be cancelled before acceptance and settle atomically if the owner accepts. Gas is sponsored when available.
                       </p>
                     </div>
                   </div>

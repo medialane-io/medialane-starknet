@@ -4,18 +4,18 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, DollarSign } from "lucide-react";
+import { CheckCircle2, DollarSign } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
 import {
-  MarketplaceTxLink,
-  MarketplaceSuccessState,
   MarketplaceErrorState,
+  MarketplaceProcessingState,
+  MarketplaceSuccessState,
 } from "@/components/marketplace/marketplace-dialog-primitives";
 import type { ApiOrder } from "@medialane/sdk";
 
@@ -95,7 +95,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="sm:max-w-sm p-0 overflow-hidden"
+        className="max-w-[calc(100%-12px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl"
         onInteractOutside={step === "processing" ? (e) => e.preventDefault() : undefined}
         onEscapeKeyDown={step === "processing" ? (e) => e.preventDefault() : undefined}
         {...(step === "processing" ? { hideClose: true } : {})}
@@ -103,6 +103,9 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
         <DialogTitle className="sr-only">
           {step === "success" ? "Offer accepted!" : step === "error" ? "Offer acceptance failed" : "Accept offer"}
         </DialogTitle>
+        <DialogDescription className="sr-only">
+          Review the offer price and transaction status before accepting this marketplace offer.
+        </DialogDescription>
 
         {/* ── Confirm ── */}
         {step === "confirm" && (
@@ -157,23 +160,14 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
 
         {/* ── Processing ── */}
         {step === "processing" && (
-          <div className="flex flex-col items-center gap-5 p-6 py-10">
-            {image ? (
-              <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-border shadow-md">
-                <Image src={image} alt={name} width={80} height={80} className="h-full w-full object-cover" unoptimized />
-                <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-                  <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                </div>
-              </div>
-            ) : (
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            )}
-            <div className="text-center space-y-1">
-              <p className="font-bold text-lg">Accepting offer…</p>
-              <p className="text-sm text-muted-foreground">Sign in your wallet and keep this window open.</p>
-            </div>
-            {txHash ? <MarketplaceTxLink txHash={txHash} explorerUrl={EXPLORER_URL} /> : null}
-          </div>
+          <MarketplaceProcessingState
+            title="Accepting offer..."
+            description="Approve the wallet prompts and keep this window open."
+            imageUrl={image}
+            imageAlt={name}
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+          />
         )}
 
         {/* ── Success ── */}
@@ -206,8 +200,8 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
           <MarketplaceErrorState
             tokenImage={image}
             name={name}
-            title="Transaction failed"
-            description="The offer could not be accepted. Please try again."
+            title="Offer acceptance failed"
+            description="The transaction could not be completed. Your asset is still yours."
             error={localError ?? error}
             txHash={resolvedTxHash}
             explorerUrl={EXPLORER_URL}

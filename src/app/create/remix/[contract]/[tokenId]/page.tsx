@@ -100,9 +100,13 @@ export default function CreateRemixPage() {
     useCollectionsByOwner(walletAddress ?? null);
   const eligibleCollections = allCollections.filter((c) => c.collectionId != null);
 
+  const walletAddressLower = walletAddress?.toLowerCase() ?? null;
   const isOwner = !!(
-    token && walletAddress &&
-    token.owner.toLowerCase() === walletAddress.toLowerCase()
+    token && walletAddressLower &&
+    (
+      token.owner?.toLowerCase() === walletAddressLower ||
+      token.balances?.some((balance) => balance.owner.toLowerCase() === walletAddressLower)
+    )
   );
 
   const originalName = token?.metadata?.name ?? `Token #${tokenId}`;
@@ -235,12 +239,12 @@ export default function CreateRemixPage() {
 
       let tokenUri: string;
 
-      const token = await getValidToken();
+      const siwsToken = await getValidToken();
       if (imageFile) {
         // Upload via /api/pinata (image + metadata)
         const formData = new FormData();
         // Upload image directly to Pinata via signed URL (bypasses Next.js 4 MB body limit)
-        const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
+        const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(siwsToken, { method: "POST" }));
         const signedData = await signedRes.json();
         if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
         const imgFormData = new FormData();
@@ -266,13 +270,13 @@ export default function CreateRemixPage() {
         formData.set("royalty", royalty || "0");
         formData.append("tmpl_Parent Contract", contract);
         formData.append("tmpl_Parent Token ID", tokenId);
-        const uploadRes = await fetch("/api/pinata", withSiwsAuth(token, { method: "POST", body: formData }));
+        const uploadRes = await fetch("/api/pinata", withSiwsAuth(siwsToken, { method: "POST", body: formData }));
         const uploadData = await uploadRes.json();
         if (!uploadRes.ok || !uploadData.uri) throw new Error(uploadData.error ?? "Upload failed");
         tokenUri = uploadData.uri;
       } else {
         // Upload metadata JSON only
-        const pinRes = await fetch("/api/pinata/json", withSiwsAuth(token, {
+        const pinRes = await fetch("/api/pinata/json", withSiwsAuth(siwsToken, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(metadata),

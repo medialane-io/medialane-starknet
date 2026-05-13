@@ -3,13 +3,17 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
-import { MarketplaceProcessingState } from "@/components/marketplace/marketplace-dialog-primitives";
+import {
+  MarketplaceProcessingState,
+  MarketplaceTxLink,
+} from "@/components/marketplace/marketplace-dialog-primitives";
+import { EXPLORER_URL } from "@/lib/constants";
 import type { ApiOrder } from "@medialane/sdk";
 
 interface CancelOrderDialogProps {
@@ -87,7 +91,11 @@ export function CancelOrderDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0">
+      <DialogContent className="max-w-[calc(100%-12px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl">
+        <DialogTitle className="sr-only">Cancel marketplace {resolvedVariant}</DialogTitle>
+        <DialogDescription className="sr-only">
+          Cancel this onchain marketplace {resolvedVariant} and remove it from active trading.
+        </DialogDescription>
 
         {/* ── Success ── */}
         {isSuccess ? (
@@ -117,12 +125,18 @@ export function CancelOrderDialog({
                 has been removed.
               </p>
             </div>
+            {txHash ? <MarketplaceTxLink txHash={txHash} explorerUrl={EXPLORER_URL} /> : null}
             <Button className="w-full" onClick={() => onOpenChange(false)}>Done</Button>
           </div>
 
         ) : isProcessing ? (
           /* ── Processing ── */
-          <MarketplaceProcessingState title="Submitting cancellation…" />
+          <MarketplaceProcessingState
+            title="Submitting cancellation..."
+            description="Confirm the wallet prompt and keep this window open."
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+          />
 
         ) : (
           /* ── Confirm ── */
