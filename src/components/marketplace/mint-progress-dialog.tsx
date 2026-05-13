@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { fireConfetti } from "@/lib/confetti";
 import {
   Dialog,
@@ -216,7 +217,7 @@ export function MintProgressDialog({
             </div>
             {imagePreview && (
               <div className="h-28 w-28 rounded-xl overflow-hidden border border-border shadow-md">
-                <img src={imagePreview} alt={assetName} className="h-full w-full object-cover" />
+                <Image src={imagePreview} alt={assetName} width={112} height={112} className="h-full w-full object-cover" unoptimized />
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-2 w-full pt-1">
@@ -250,7 +251,7 @@ export function MintProgressDialog({
             </div>
             {imagePreview && (
               <div className="h-28 w-28 rounded-xl overflow-hidden border border-border shadow-md">
-                <img src={imagePreview} alt={assetName} className="h-full w-full object-cover" />
+                <Image src={imagePreview} alt={assetName} width={112} height={112} className="h-full w-full object-cover" unoptimized />
               </div>
             )}
             {listingError && (

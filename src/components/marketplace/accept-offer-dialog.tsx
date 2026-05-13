@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, DollarSign } from "lucide-react";
@@ -109,7 +110,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
             {/* Asset hero */}
             <div className="relative h-40 w-full bg-muted overflow-hidden shrink-0">
               {image ? (
-                <img src={image} alt={name} className="h-full w-full object-cover" />
+                <Image src={image} alt={name} fill sizes="384px" className="h-full w-full object-cover" unoptimized />
               ) : (
                 <div className="h-full w-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-transparent flex items-center justify-center">
                   <DollarSign className="h-12 w-12 text-muted-foreground/30" />
@@ -159,7 +160,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
           <div className="flex flex-col items-center gap-5 p-6 py-10">
             {image ? (
               <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-border shadow-md">
-                <img src={image} alt={name} className="h-full w-full object-cover" />
+                <Image src={image} alt={name} width={80} height={80} className="h-full w-full object-cover" unoptimized />
                 <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
                   <Loader2 className="h-7 w-7 animate-spin text-primary" />
                 </div>

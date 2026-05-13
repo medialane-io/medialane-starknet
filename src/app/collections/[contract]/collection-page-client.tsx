@@ -279,12 +279,15 @@ export default function CollectionPageClient() {
       {/* Atmospheric blur background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         {bannerUrl && (
-          <img
+          <Image
             src={bannerUrl}
             alt=""
             aria-hidden
+            fill
+            sizes="100vw"
             className="absolute inset-0 w-full h-full object-cover opacity-20 scale-110"
             style={{ filter: "blur(60px) saturate(1.5)" }}
+            unoptimized
           />
         )}
         <div
@@ -301,12 +304,15 @@ export default function CollectionPageClient() {
 
       {/* Hidden extraction img for dominant color */}
       {bannerUrl && (
-        <img
+        <Image
           ref={imgRef}
           src={bannerUrl}
           crossOrigin="anonymous"
           aria-hidden
           alt=""
+          width={1}
+          height={1}
+          unoptimized
           style={{ display: "none" }}
         />
       )}

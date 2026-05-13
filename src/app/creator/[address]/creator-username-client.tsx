@@ -117,8 +117,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
     <div className="pb-20 min-h-screen" style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}>
       {/* Hidden extraction image for dominant color */}
       {bannerUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img ref={imgRef} src={bannerUrl} crossOrigin="anonymous" aria-hidden alt="" style={{ display: "none" }} />
+        <NextImage ref={imgRef} src={bannerUrl} crossOrigin="anonymous" aria-hidden alt="" width={1} height={1} unoptimized style={{ display: "none" }} />
       )}
 
       {/* ── Hero banner ───────────────────────────────────────────────────────── */}

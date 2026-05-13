@@ -47,16 +47,16 @@ export function useIpfsUpload() {
   const [error, setError] = useState<Error | null>(null);
   const [progress, setProgress] = useState(0);
 
-  const simulateProgress = () => {
+  const simulateProgress = useCallback(() => {
     let value = 0;
     const interval = setInterval(() => {
       value += Math.random() * 10; // simulate irregular speed
       setProgress((prev) => Math.min(prev + value, 95));
     }, 200);
     return interval;
-  };
+  }, []);
 
-  const uploadMetadataToIpfs = async (metadata: IpfsMetadata) => {
+  const uploadMetadataToIpfs = useCallback(async (metadata: IpfsMetadata) => {
     try {
       const metadataSignedUrl = await getSignedUrl();
       const metadataUpload = await pinata.upload.public
@@ -82,7 +82,7 @@ export function useIpfsUpload() {
       setError(error);
       throw error;
     }
-  };
+  }, []);
 
   const uploadToIpfs = useCallback(
     async (
@@ -150,7 +150,7 @@ export function useIpfsUpload() {
         setTimeout(() => setProgress(0), 1000); // optional: reset progress after delay
       }
     },
-    []
+    [simulateProgress, uploadMetadataToIpfs]
   );
 
   const uploadImageFromUrl = useCallback(
@@ -235,7 +235,7 @@ export function useIpfsUpload() {
         setTimeout(() => setProgress(0), 1000);
       }
     },
-    [uploadMetadataToIpfs]
+    [simulateProgress, uploadMetadataToIpfs]
   );
 
   return {

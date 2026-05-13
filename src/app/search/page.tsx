@@ -97,7 +97,7 @@ function CreatorCard({ creator }: { creator: ApiSearchCreatorResult }) {
     >
       <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center shrink-0 overflow-hidden">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+          <Image src={avatarUrl} alt={displayName} width={36} height={36} className="h-full w-full object-cover" unoptimized />
         ) : (
           <span className="text-sm font-bold text-primary-foreground">{displayName.charAt(0).toUpperCase()}</span>
         )}

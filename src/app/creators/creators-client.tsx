@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCreators } from "@/hooks/use-creators";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { Input } from "@/components/ui/input";
@@ -38,11 +39,14 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
     >
       {/* Full-bleed background */}
       {resolvedBanner ? (
-        <img
+        <Image
           src={resolvedBanner}
           alt=""
           aria-hidden
+          fill
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
           className="absolute inset-0 w-full h-full object-cover"
+          unoptimized
         />
       ) : (
         <div className="absolute inset-0" style={{ background: fallbackGradient }} />
@@ -75,7 +79,7 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
           style={!resolvedAvatar ? { background: fallbackGradient } : {}}
         >
           {resolvedAvatar ? (
-            <img src={resolvedAvatar} alt={displayName} className="h-full w-full object-cover" />
+            <Image src={resolvedAvatar} alt={displayName} width={44} height={44} className="h-full w-full object-cover" unoptimized />
           ) : (
             <span className="text-base font-black text-white select-none">
               {displayName.charAt(0).toUpperCase()}

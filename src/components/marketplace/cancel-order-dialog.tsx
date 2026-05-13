@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ function TokenHero({ order, variant }: { order: ApiOrder; variant: "listing" | "
     <div>
       <div className="relative h-44 w-full bg-muted overflow-hidden">
         {image ? (
-          <img src={image} alt={name} className="h-full w-full object-cover" />
+          <Image src={image} alt={name} fill sizes="448px" className="h-full w-full object-cover" unoptimized />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-destructive/20 via-rose-500/10 to-transparent flex items-center justify-center text-4xl font-bold text-muted-foreground/30">
             #{order.nftTokenId}
@@ -96,10 +97,13 @@ export function CancelOrderDialog({
             </div>
             {order?.token?.image && (
               <div className="h-24 w-24 rounded-2xl overflow-hidden border border-border shadow-md">
-                <img
+                <Image
                   src={ipfsToHttp(order.token.image)}
                   alt={order.token?.name || `Token #${order?.nftTokenId}`}
+                  width={96}
+                  height={96}
                   className="h-full w-full object-cover"
+                  unoptimized
                 />
               </div>
             )}

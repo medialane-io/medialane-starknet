@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useOrders } from "@/hooks/use-orders";
 import { ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
@@ -19,12 +20,14 @@ function ActivityPill({ listing }: { listing: ApiOrder }) {
     >
       <div className="h-8 w-8 rounded-lg overflow-hidden bg-muted shrink-0">
         {image ? (
-          <img
+          <Image
             src={image}
             alt=""
-            loading="lazy"
+            width={32}
+            height={32}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImgError(true)}
+            unoptimized
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-brand-purple/20 to-brand-blue/20" />

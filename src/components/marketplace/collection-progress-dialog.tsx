@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { fireConfetti } from "@/lib/confetti";
 import {
   Dialog,
@@ -186,7 +187,7 @@ export function CollectionProgressDialog({
 
             {imagePreview && (
               <div className="h-24 w-24 rounded-xl overflow-hidden border border-border shadow-md">
-                <img src={imagePreview} alt={collectionName} className="h-full w-full object-cover" />
+                <Image src={imagePreview} alt={collectionName} width={96} height={96} className="h-full w-full object-cover" unoptimized />
               </div>
             )}
 

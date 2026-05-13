@@ -271,13 +271,15 @@ export default function CreatorPageClient() {
     >
       {/* Hidden extraction image for dominant color */}
       {bannerImage && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <NextImage
           ref={imgRef}
           src={bannerImage}
           crossOrigin="anonymous"
           aria-hidden
           alt=""
+          width={1}
+          height={1}
+          unoptimized
           style={{ display: "none" }}
         />
       )}

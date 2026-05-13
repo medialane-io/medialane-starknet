@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ function TokenHero({ order, quantity }: { order: ApiOrder; quantity: number }) {
     <div>
       <div className="relative h-32 w-full bg-muted overflow-hidden shrink-0">
         {image ? (
-          <img src={image} alt={name} className="h-full w-full object-cover" />
+          <Image src={image} alt={name} fill sizes="448px" className="h-full w-full object-cover" unoptimized />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-transparent flex items-center justify-center text-4xl font-bold text-muted-foreground/30">
             #{order.nftTokenId}
@@ -104,7 +105,7 @@ function SuccessScreen({
     <div className="flex flex-col">
       <div className="relative h-56 w-full bg-muted overflow-hidden shrink-0">
         {image ? (
-          <img src={image} alt={name ?? ""} className="h-full w-full object-cover" />
+          <Image src={image} alt={name ?? ""} fill sizes="448px" className="h-full w-full object-cover" unoptimized />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-emerald-500/10 flex items-center justify-center">
             <CheckCircle2 className="h-16 w-16 text-emerald-500/40" />

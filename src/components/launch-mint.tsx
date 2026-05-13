@@ -182,7 +182,7 @@ export function LaunchMint() {
       setMintStep("error");
       setMintError(err instanceof Error ? err.message : "Mint failed. Please try again.");
     }
-  }, [mintPin, recipientAddress, userId, executeTransaction]);
+  }, [mintPin, recipientAddress, userId, executeTransaction, getValidToken]);
 
   const handleRetry = () => {
     reset();

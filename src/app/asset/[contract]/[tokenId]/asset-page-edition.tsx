@@ -202,11 +202,11 @@ export function AssetPageEdition() {
     >
       {(token as any).isHidden && <HiddenContentBanner />}
       {imageUrl && (
-        <img ref={imgRef} src={imageUrl} crossOrigin="anonymous" aria-hidden alt="" fetchPriority="high" style={{ display: "none" }} />
+        <Image ref={imgRef} src={imageUrl} crossOrigin="anonymous" aria-hidden alt="" width={1} height={1} fetchPriority="high" unoptimized style={{ display: "none" }} />
       )}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         {imageUrl && (
-          <img src={imageUrl} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-20 scale-110" style={{ filter: "blur(60px) saturate(1.5)" }} />
+          <Image src={imageUrl} alt="" aria-hidden fill sizes="100vw" className="absolute inset-0 w-full h-full object-cover opacity-20 scale-110" style={{ filter: "blur(60px) saturate(1.5)" }} unoptimized />
         )}
       </div>
 

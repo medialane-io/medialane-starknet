@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useConnect, useAccount, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { Button } from "@/components/ui/button";
@@ -446,7 +447,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                         disabled={isConnecting}
                       >
                         {iconSrc ? (
-                          <img src={iconSrc} alt="" className="h-5 w-5 rounded shrink-0" />
+                          <Image src={iconSrc} alt="" width={20} height={20} className="h-5 w-5 rounded shrink-0" unoptimized />
                         ) : (
                           <Wallet className="h-4 w-4 shrink-0" />
                         )}

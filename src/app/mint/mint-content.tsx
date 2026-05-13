@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Sparkles,
   CheckCircle2,
@@ -35,12 +36,14 @@ function EventCard() {
           <p className="text-sm text-muted-foreground font-medium">Medialane Airdrop 2026</p>
         </div>
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={src}
           alt="Medialane Creator's Airdrop"
+          fill
+          sizes="(min-width: 1024px) 50vw, 100vw"
           className="w-full h-full object-cover"
           onError={() => setErrored(true)}
+          unoptimized
         />
       )}
     </div>
