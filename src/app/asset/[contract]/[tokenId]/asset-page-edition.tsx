@@ -210,7 +210,7 @@ export function AssetPageEdition() {
         )}
       </div>
 
-      <div className="container mx-auto px-4 space-y-8 pb-8">
+      <div className="container mx-auto px-4 pt-14 space-y-8 pb-8">
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
           <Link href={`/collections/${contract}`} className="hover:text-foreground transition-colors truncate max-w-[140px] shrink-0">
             {collection?.name ?? contract.slice(0, 8) + "…"}
