@@ -3,6 +3,7 @@ import { createContext, useContext, useMemo } from "react";
 import { sepolia, mainnet } from "@starknet-react/chains";
 import {
   StarknetConfig,
+  avnuPaymasterProvider,
   useInjectedConnectors,
   voyager,
 } from "@starknet-react/core";
@@ -70,6 +71,9 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
   const customRpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
   const providerFactory = (chain: any) => new RpcProvider({ nodeUrl: customRpcUrl || "" });
+  const paymasterProvider = avnuPaymasterProvider({
+    apiKey: process.env.NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY,
+  });
 
   return (
     <NetworkContext.Provider value={{
@@ -79,6 +83,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
       <StarknetConfig
         chains={[mainnet, sepolia]}
         provider={providerFactory}
+        paymasterProvider={paymasterProvider}
         connectors={connectors}
         explorer={voyager}
         defaultChainId={currentNetwork === 'mainnet' ? mainnet.id : sepolia.id}

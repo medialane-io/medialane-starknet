@@ -354,7 +354,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 <div className="grid gap-1">
                   {[
                     { label: "Mint IP Asset", icon: PlusCircle, href: "/create/asset" },
-                    { label: "Deploy Collection", icon: Rocket, href: "/launchpad/collection-drop" },
+                    { label: "Deploy Collection", icon: Rocket, href: "/create/collection" },
                     { label: "IP Templates", icon: ShieldCheck, href: "/create/templates" },
                     { label: "Account Settings", icon: Settings, href: "/portfolio/settings" },
                   ].map((item) => (

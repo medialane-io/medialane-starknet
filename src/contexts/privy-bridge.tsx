@@ -8,8 +8,7 @@
 import { useCallback, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { OnboardStrategy } from "starkzap";
-import { getStarkZapSdk } from "@/lib/starkzap";
-import { starknetProvider } from "@/lib/starknet";
+import { getStarkZapSdk, isStarkZapSponsorshipEnabled } from "@/lib/starkzap";
 import { useStarkZapPrivyBridge } from "./starkzap-wallet-context";
 
 export function PrivyBridge() {
@@ -42,17 +41,8 @@ export function PrivyBridge() {
       },
     });
 
-    let deployMode: "if_needed" | "never" = "if_needed";
-    try {
-      await starknetProvider.getClassHashAt(walletData.address, "pending");
-      deployMode = "never";
-    } catch {
-      try {
-        await starknetProvider.getClassHashAt(walletData.address, "latest");
-        deployMode = "never";
-      } catch {
-        // not yet deployed
-      }
+    if (!isStarkZapSponsorshipEnabled()) {
+      throw new Error("Privy onboarding requires AVNU paymaster sponsorship to deploy the Starknet account.");
     }
 
     const result = await sdk.onboard({
@@ -60,7 +50,12 @@ export function PrivyBridge() {
       accountPreset: "argentXV050",
       feeMode: "sponsored",
       privy: { resolve: privyResolve },
-      deploy: deployMode,
+      deploy: "never",
+    });
+
+    await result.wallet.ensureReady({
+      deploy: "if_needed",
+      feeMode: "sponsored",
     });
 
     bridge?.onPrivyConnected(result.wallet, result.wallet.address as unknown as string, user ?? null);

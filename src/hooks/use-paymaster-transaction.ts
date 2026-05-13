@@ -19,7 +19,7 @@
  * ```
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useAccount } from "@starknet-react/core";
 import type { Call } from "starknet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
@@ -27,7 +27,6 @@ import {
   checkAccountCompatibility,
   getGasTokenPrices,
   executeGaslessTransaction,
-  executeSponsoredTransaction,
   canSponsor,
 } from "@/utils/paymaster";
 import type { GasTokenPrice } from "@/types/paymaster";
@@ -91,20 +90,6 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
     }
   }, []);
 
-  useEffect(() => {
-    refreshGasTokenPrices();
-  }, [refreshGasTokenPrices]);
-
-  useEffect(() => {
-    if (!address) {
-      setIsGaslessCompatible(false);
-      return;
-    }
-    checkAccountCompatibility(address).then((c) =>
-      setIsGaslessCompatible(c.isCompatible)
-    );
-  }, [address]);
-
   // ---------------------------------------------------------------------------
   // Gasless — user pays with alt token
   // ---------------------------------------------------------------------------
@@ -115,11 +100,14 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
       gasTokenAddress: string,
       maxGasTokenAmount: bigint
     ): Promise<string | null> => {
-      if (!account) {
+      if (!account || !address) {
         setError("Wallet not connected");
         return null;
       }
-      if (!isGaslessCompatible) {
+
+      const compatibility = await checkAccountCompatibility(address);
+      setIsGaslessCompatible(compatibility.isCompatible);
+      if (!compatibility.isCompatible) {
         setError("Account is not compatible with gasless transactions");
         return null;
       }
@@ -148,7 +136,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         setIsLoading(false);
       }
     },
-    [account, isGaslessCompatible]
+    [account, address]
   );
 
   // ---------------------------------------------------------------------------

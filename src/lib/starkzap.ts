@@ -43,7 +43,12 @@ export function getStarkZapSdk(): StarkZap {
   // Pass the AVNU API key so sponsored (feeMode: "sponsored") deployments
   // and transactions are accepted by the paymaster.
   const paymaster = avnuApiKey
-    ? { headers: { "x-paymaster-api-key": avnuApiKey } }
+    ? {
+        nodeUrl: IS_SEPOLIA
+          ? "https://sepolia.paymaster.avnu.fi"
+          : "https://starknet.paymaster.avnu.fi",
+        headers: { "x-paymaster-api-key": avnuApiKey },
+      }
     : undefined;
 
   _sdk = rpcUrl
@@ -51,6 +56,10 @@ export function getStarkZapSdk(): StarkZap {
     : new StarkZap({ network: IS_SEPOLIA ? "sepolia" : "mainnet", paymaster });
 
   return _sdk;
+}
+
+export function isStarkZapSponsorshipEnabled(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY);
 }
 
 // ---------------------------------------------------------------------------
