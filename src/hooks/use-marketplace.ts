@@ -70,6 +70,15 @@ const sameAddress = (a?: string, b?: string) => {
     }
 };
 
+const U256_BASE = 1n << 128n;
+
+const parseU256Result = (result: string[]): bigint => {
+    if (!Array.isArray(result) || result.length === 0) return 0n;
+    const low = BigInt(result[0] ?? 0);
+    const high = BigInt(result[1] ?? 0);
+    return low + high * U256_BASE;
+};
+
 const assertTransactionSucceeded = (receipt: any) => {
     if (receipt?.execution_status === "REVERTED") {
         throw new Error(receipt.revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
@@ -101,11 +110,11 @@ export function useMarketplace(): UseMarketplaceReturn {
 
     const { contract: medialaneContract } = useContract({
         address: MARKETPLACE_721_CONTRACT,
-        abi: IPMarketplaceABI as any[],
+        abi: IPMarketplaceABI as unknown as Abi,
     });
     const { contract: medialane1155Contract } = useContract({
         address: MARKETPLACE_1155_CONTRACT,
-        abi: IPMarketplace1155ABI as any[],
+        abi: IPMarketplace1155ABI as unknown as Abi,
     });
     const { address: walletAddress } = useUnifiedWallet();
 
@@ -163,6 +172,24 @@ export function useMarketplace(): UseMarketplaceReturn {
         const tx = await account!.execute(calls as any);
         return tx.transaction_hash;
     }, [account]);
+
+    const getErc20Allowance = useCallback(async (
+        tokenAddress: string,
+        owner: string,
+        spender: string
+    ): Promise<bigint> => {
+        try {
+            const result = await provider.callContract({
+                contractAddress: tokenAddress,
+                entrypoint: "allowance",
+                calldata: [owner, spender],
+            });
+            return parseU256Result(result);
+        } catch (err) {
+            console.warn("Failed to check ERC20 allowance", err);
+            return 0n;
+        }
+    }, [provider]);
 
     // Builds shared timing/nonce/currency fields for an order.
     const buildBaseOrderParams = useCallback(async (
@@ -475,15 +502,20 @@ export function useMarketplace(): UseMarketplaceReturn {
             }
 
             const { cairo } = await import("starknet");
-            const amountUint256 = cairo.uint256(priceWei);
-            const approveCall = {
-                contractAddress: currencyAddress,
-                entrypoint: "approve",
-                calldata: [contract.address, amountUint256.low.toString(), amountUint256.high.toString()],
-            };
+            const requiredAllowance = BigInt(priceWei);
+            const currentAllowance = await getErc20Allowance(currencyAddress, walletAddress, contract.address);
+            const calls = [registerCall];
 
-            // ERC20 approve + register_order as atomic multicall
-            const hash = await executeDirect([approveCall, registerCall]);
+            if (currentAllowance < requiredAllowance) {
+                const amountUint256 = cairo.uint256(priceWei);
+                calls.unshift({
+                    contractAddress: currencyAddress,
+                    entrypoint: "approve",
+                    calldata: [contract.address, amountUint256.low.toString(), amountUint256.high.toString()],
+                });
+            }
+
+            const hash = await executeDirect(calls);
             setTxHash(hash);
             const receipt = await provider.waitForTransaction(hash);
             assertTransactionSucceeded(receipt);
@@ -492,7 +524,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches]);
+    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, getErc20Allowance, executeDirect, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: any[]) => {
         if (!walletAddress || !medialaneContract || !chain || items.length === 0) {
