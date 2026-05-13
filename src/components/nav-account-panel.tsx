@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useConnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
-import { useNavCommandMenu } from "@medialane/ui";
+import { shortenAddress, useNavCommandMenu } from "@medialane/ui";
 import {
   Briefcase,
   Gamepad2,
@@ -20,10 +20,6 @@ import { useNetwork } from "@/components/starknet-provider";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useUnifiedWallet, type UnifiedWalletType } from "@/hooks/use-unified-wallet";
 import { useWalletSession } from "@/hooks/use-wallet-session";
-
-function shortenAddress(address: string) {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
 
 function getWalletLabel(walletType: UnifiedWalletType) {
   if (walletType === "cartridge") return "Cartridge";
