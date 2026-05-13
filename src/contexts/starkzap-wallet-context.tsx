@@ -175,6 +175,8 @@ export function StarkZapWalletProvider({
         await login();
       }
       await initPrivyWallet();
+      // Mark that the user explicitly chose Privy so auto-reconnect fires on reload.
+      localStorage.setItem("ml_privy_session", "1");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to connect with Privy"
@@ -185,11 +187,14 @@ export function StarkZapWalletProvider({
   }, [authenticated, login, initPrivyWallet]);
 
   // ---------------------------------------------------------------------------
-  // Auto-reconnect: restore Privy wallet on page reload if session is active
+  // Auto-reconnect: restore Privy wallet on page reload if session is active.
+  // Guard with ml_privy_session so injected-wallet users with a stale Privy
+  // auth cookie don't trigger a silent reconnect attempt in the background.
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    if (authenticated && !wallet && walletType !== "cartridge") {
+    const hadPrivySession = typeof window !== "undefined" && localStorage.getItem("ml_privy_session");
+    if (authenticated && !wallet && walletType !== "cartridge" && hadPrivySession) {
       initPrivyWallet(true).catch((err) => {
         console.error("Privy auto-reconnect failed:", err);
       });
@@ -205,6 +210,7 @@ export function StarkZapWalletProvider({
   const disconnect = useCallback(() => {
     if (walletType === "privy") {
       logout().catch(console.error);
+      localStorage.removeItem("ml_privy_session");
     }
     setWallet(null);
     setWalletType(null);
