@@ -1,6 +1,26 @@
 import type { NextConfig } from "next";
 
+// Privy bundles static imports for optional Farcaster/Solana features we don't use.
+// Stub the entire dependency tree so webpack doesn't chase transitive Solana packages.
+const PRIVY_UNUSED_OPTIONAL_MODULES = [
+  "@farcaster/mini-app-solana",
+  "@farcaster/miniapp-sdk",
+  "@solana/wallet-adapter-react",
+  "@solana/kit",
+  "@solana-program/memo",
+  "@solana-program/system",
+  "@solana-program/token",
+  "@abstract-foundation/agw-client",
+  "permissionless",
+];
+
 const nextConfig: NextConfig = {
+  webpack(config) {
+    for (const mod of PRIVY_UNUSED_OPTIONAL_MODULES) {
+      config.resolve.alias[mod] = false;
+    }
+    return config;
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
