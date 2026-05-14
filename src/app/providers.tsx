@@ -80,27 +80,28 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-// PrivyProvider and PrivyBridge are dynamically imported so they are never
-// bundled or executed for users who don't use Privy.
+// PrivyProvider and PrivyConnector are dynamically imported so they are
+// never bundled or executed for users who don't use Privy.
 //
-// Note: PrivyBridge MUST render inside StarkZapWalletProvider (it consumes that
-// context), but it ALSO needs to be inside PrivyProvider (it calls usePrivy()).
-// So PrivyProvider wraps the whole tree, and PrivyBridge is mounted as a
-// sibling inside StarkZapWalletProvider below.
+// PrivyConnector renders inside StarkZapWalletProvider (passed in as a prop)
+// so it has access to the provider's setters. PrivyProvider wraps the whole
+// tree so usePrivy() inside PrivyConnector resolves.
+import type { PrivyConnectorProps } from "@/contexts/privy-connector";
+
 let PrivyStack: React.ComponentType<{ children: React.ReactNode }> | null = null;
-let PrivyBridgeComponent: React.ComponentType | null = null;
+let PrivyConnectorComponent: React.ComponentType<PrivyConnectorProps> | null = null;
 
 async function loadPrivyStack() {
-  if (PrivyStack && PrivyBridgeComponent) return;
+  if (PrivyStack && PrivyConnectorComponent) return;
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
   if (!appId) {
     throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is not set — Privy onboarding cannot start.");
   }
-  const [{ PrivyProvider }, bridgeMod] = await Promise.all([
+  const [{ PrivyProvider }, connectorMod] = await Promise.all([
     import("@privy-io/react-auth"),
-    import("@/contexts/privy-bridge"),
+    import("@/contexts/privy-connector"),
   ]);
-  PrivyBridgeComponent = bridgeMod.PrivyBridge;
+  PrivyConnectorComponent = connectorMod.PrivyConnector;
   const PRIVY_CONFIG = {
     loginMethods: ["email", "google", "twitter"] as Array<"email" | "google" | "twitter">,
     appearance: { theme: "dark" as const },
@@ -122,11 +123,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // Privy is only mounted if the user has previously chosen it as their wallet.
   const [privyActive, setPrivyActive] = useState(false);
   const [PrivyWrapper, setPrivyWrapper] = useState<React.ComponentType<{ children: React.ReactNode }> | null>(null);
-  const [PrivyBridgeMount, setPrivyBridgeMount] = useState<React.ComponentType | null>(null);
+  const [PrivyConnectorMount, setPrivyConnectorMount] = useState<React.ComponentType<PrivyConnectorProps> | null>(null);
 
   const activatePrivy = () => {
     setPrivyWrapper(() => PrivyStack);
-    setPrivyBridgeMount(() => PrivyBridgeComponent);
+    setPrivyConnectorMount(() => PrivyConnectorComponent);
     setPrivyActive(true);
   };
 
@@ -167,8 +168,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         }}
       >
         <StarknetProvider>
-          <StarkZapWalletProvider onRequestPrivy={handleRequestPrivy}>
-            {PrivyBridgeMount ? <PrivyBridgeMount /> : null}
+          <StarkZapWalletProvider onRequestPrivy={handleRequestPrivy} PrivyConnector={PrivyConnectorMount}>
             <Aurora />
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
