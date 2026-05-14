@@ -168,20 +168,28 @@ The original brainstorm proposed converting session state to a discriminated uni
 
 ---
 
+## Cross-cutting: user registration
+
+Every wallet that connects on medialane-dapp is silently registered with the backend via `<UserRegistration />` (see memory: `arch-user-registry`, shipped 2026-05-12). This happens for injected wallets, Cartridge, and Privy by watching `useWallet()` and firing `POST /v1/users/register` with the correct `walletType`.
+
+**This spec does not touch `<UserRegistration />` or `useWallet()`.** The collapse is internal to the Privy connect flow; once `setSession(walletReady("privy", addr))` is called, `useWallet()` exposes the address and registration fires as today. The refactor must preserve this — see Success criteria #4 and the verification step below.
+
 ## Success criteria
 
 1. The disconnected-state nav panel shows a 2×2 grid of identically-styled wallet cards.
 2. Privy card has a "Recommended" pill; no other visual difference.
 3. Clicking any card runs the existing connect flow with no regressions.
-4. The Privy connect flow (login → preparing → deploying → ready) still works end-to-end on mainnet, including auto-reconnect on reload.
-5. `src/contexts/privy-bridge.tsx` no longer exists.
-6. `StarkZapPrivyBridgeContext` and `useStarkZapPrivyBridge` are removed.
-7. `npx tsc --noEmit` and `npm run lint` are clean.
-8. `npm run build` succeeds.
+4. The Privy connect flow (login → preparing → deploying → ready) still works end-to-end on mainnet, **and a fresh Privy address appears in the backend `users` table with `walletType=PRIVY` and `appSource=MEDIALANE_DAPP`** (proves `<UserRegistration />` still fires).
+5. Auto-reconnect on reload still works.
+6. `src/contexts/privy-bridge.tsx` no longer exists.
+7. `StarkZapPrivyBridgeContext` and `useStarkZapPrivyBridge` are removed.
+8. `npx tsc --noEmit` and `npm run lint` are clean.
+9. `npm run build` succeeds.
 
 ## Verification
 
 - Manual: open the dapp, verify the new grid, complete a Privy connect end-to-end (fresh email).
+- Manual: confirm the backend `users` table has a row for the new Privy address with the correct `walletType` + `appSource` (via `GET /v1/users/me` with the SIWS token, or direct DB query).
 - Manual: reload the page, verify auto-reconnect still works.
-- Manual: try an injected wallet (Ready or Braavos) — the connecting state should show the ring + spinner inside that card.
+- Manual: try an injected wallet (Ready or Braavos) — the connecting state should show the ring + spinner inside that card, and registration should fire as before.
 - `npx tsc --noEmit`, `npm run lint`, `npm run build` all clean.
