@@ -12,9 +12,13 @@ import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddressDisplay } from "@/components/shared/address-display";
-import { ArrowLeft, Loader2, Flag, Inbox, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Flag, Inbox, Sparkles, Lock, Unlock, ShoppingBag, Play, Music, Radio, FileText, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReportDialog } from "@/components/report-dialog";
+import { useCollectionProfile } from "@/hooks/use-profiles";
+import { useGatedContent, type GatedContentState } from "@/hooks/use-gated-content";
+import { GatedContentHero } from "@/components/collection/gated-content-hero";
+import { OwnerSetupPanel } from "@/components/collection/owner-setup-panel";
 import { ShareButton } from "@/components/shared/share-button";
 import { TraitFilter } from "@/components/collection/trait-filter";
 import { SweepBar } from "@/components/collection/sweep-bar";
@@ -237,8 +241,13 @@ export default function CollectionPageClient() {
   const [descOverflows, setDescOverflows] = useState(false);
   const descRef = useRef<HTMLParagraphElement>(null);
 
+  const [activeTab, setActiveTab] = useState("items");
   const { address: walletAddress } = useUnifiedWallet();
   const { collection, isLoading: colLoading } = useCollection(contract);
+  const { profile } = useCollectionProfile(contract);
+  const gatedState = useGatedContent(
+    (profile as any)?.hasGatedContent ? contract : undefined
+  );
   const { orders, isLoading: ordersLoading } = useOrders({
     collection: contract,
     status: "ACTIVE",
@@ -469,9 +478,27 @@ export default function CollectionPageClient() {
         </div>
       )}
 
+      {/* Gated content hero — shown to all visitors when collection has exclusive content */}
+      {!colLoading && collection && profile && (
+        <GatedContentHero
+          profile={profile as any}
+          gatedState={gatedState}
+          onViewExclusive={() => setActiveTab("exclusive")}
+        />
+      )}
+
+      {/* Owner setup checklist — shown only to the collection owner */}
+      {!colLoading && collection && walletAddress &&
+        collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
+        <OwnerSetupPanel
+          contract={contract}
+          profile={profile as any ?? null}
+        />
+      )}
+
       {/* ── Tabs ── */}
       <div className="px-4 sm:px-6 pb-12">
-        <Tabs defaultValue="items">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="sticky top-0 z-10 pt-3 pb-1">
             <TabsList className="w-full sm:w-auto">
               <TabsTrigger value="items" className="flex-1 sm:flex-none">
@@ -483,6 +510,12 @@ export default function CollectionPageClient() {
               <TabsTrigger value="offers" className="flex-1 sm:flex-none">
                 Offers{!ordersLoading && activeBids.length > 0 && ` (${activeBids.length})`}
               </TabsTrigger>
+              {(profile as any)?.hasGatedContent && (
+                <TabsTrigger value="exclusive" className="flex-1 sm:flex-none gap-1.5">
+                  <Lock className="h-3.5 w-3.5" />
+                  Exclusive
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -524,6 +557,12 @@ export default function CollectionPageClient() {
               </div>
             )}
           </TabsContent>
+
+          {(profile as any)?.hasGatedContent && (
+            <TabsContent value="exclusive" className="mt-4">
+              <GatedContentPanel state={gatedState} contract={contract} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
@@ -568,6 +607,115 @@ function EmptyState({ title, body }: { title: string; body: string }) {
       <Inbox className="h-10 w-10 text-muted-foreground/40" />
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
       <p className="text-xs text-muted-foreground/70 max-w-xs">{body}</p>
+    </div>
+  );
+}
+
+const CONTENT_TYPE_CONFIG: Record<string, { icon: React.ReactNode; cta: string }> = {
+  VIDEO:    { icon: <Play className="h-5 w-5" />,     cta: "Watch now" },
+  AUDIO:    { icon: <Music className="h-5 w-5" />,    cta: "Listen now" },
+  STREAM:   { icon: <Radio className="h-5 w-5" />,    cta: "Watch live" },
+  DOCUMENT: { icon: <FileText className="h-5 w-5" />, cta: "Open document" },
+  LINK:     { icon: <Link2 className="h-5 w-5" />,    cta: "Access content" },
+};
+
+function GatedContentPanel({ state, contract: _contract }: { state: GatedContentState; contract: string }) {
+  if (state.status === "not_connected") {
+    return (
+      <div className="py-16 flex flex-col items-center gap-4 text-center max-w-sm mx-auto">
+        <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
+          <Lock className="h-8 w-8 text-muted-foreground/50" />
+        </div>
+        <div>
+          <p className="text-base font-semibold">Connect wallet to unlock</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+            This collection has exclusive content for holders. Connect your wallet so we can verify.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.status === "loading") {
+    return (
+      <div className="py-16 flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/40" />
+        <p className="text-xs text-muted-foreground">Verifying your holdings…</p>
+      </div>
+    );
+  }
+
+  if (state.status === "not_holder") {
+    return (
+      <div className="py-16 flex flex-col items-center gap-5 text-center max-w-sm mx-auto">
+        <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
+          <Lock className="h-8 w-8 text-muted-foreground/50" />
+        </div>
+        <div>
+          <p className="text-base font-semibold">Holders only</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            You need at least one token from this collection to access exclusive content.
+          </p>
+        </div>
+        <button
+          onClick={() => document.querySelector<HTMLButtonElement>('[data-value="listings"]')?.click()}
+          className="inline-flex items-center gap-2 bg-foreground text-background hover:opacity-90 font-semibold px-5 py-2.5 rounded-xl transition-all text-sm"
+        >
+          <ShoppingBag className="h-4 w-4" />
+          Browse listings
+        </button>
+      </div>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="py-16 flex flex-col items-center gap-3 text-center max-w-sm mx-auto">
+        <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
+          <Lock className="h-8 w-8 text-muted-foreground/50" />
+        </div>
+        <p className="text-sm font-medium">Couldn&apos;t verify your holdings</p>
+        <p className="text-xs text-muted-foreground">Try refreshing the page.</p>
+      </div>
+    );
+  }
+
+  const { content } = state;
+  const typeConfig = content.type
+    ? (CONTENT_TYPE_CONFIG[content.type] ?? CONTENT_TYPE_CONFIG.LINK)
+    : CONTENT_TYPE_CONFIG.LINK;
+
+  return (
+    <div className="py-8 flex flex-col items-center gap-6 text-center max-w-md mx-auto">
+      <div className="relative">
+        <div className="h-20 w-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+          <Unlock className="h-10 w-10" />
+        </div>
+        <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-emerald-500 flex items-center justify-center">
+          <Sparkles className="h-3 w-3 text-white" />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-xl font-bold">You&apos;re in</p>
+        {content.title && (
+          <p className="text-sm text-muted-foreground">{content.title}</p>
+        )}
+      </div>
+
+      <a
+        href={content.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-3 rounded-xl transition-all text-sm active:scale-[0.98]"
+      >
+        {typeConfig.icon}
+        {typeConfig.cta}
+      </a>
+
+      <p className="text-xs text-muted-foreground/60">
+        This link is exclusive to holders of this collection.
+      </p>
     </div>
   );
 }
