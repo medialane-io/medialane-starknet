@@ -13,6 +13,7 @@ import { OnboardStrategy } from "starkzap";
 import type { WalletInterface } from "starkzap";
 import { toast } from "sonner";
 import { getStarkZapSdk } from "@/lib/starkzap";
+import type { PrivyConnectorProps } from "./privy-connector";
 import {
   IDLE_WALLET_SESSION,
   isWalletSessionBusy,
@@ -20,8 +21,6 @@ import {
   walletError,
   walletReady,
   walletAuthenticating,
-  walletPreparingWallet,
-  walletDeployingAccount,
   type WalletSession,
 } from "@/lib/wallet-session";
 import {
@@ -66,33 +65,24 @@ export interface StarkZapWalletCtx {
   disconnect: () => void;
 }
 
-/** Internal interface used only by PrivyBridge — not exported publicly. */
-export interface StarkZapPrivyBridge {
-  pendingPrivyConnect: boolean;
-  clearPendingPrivyConnect: () => void;
-  onPrivyConnecting: () => void;
-  onPrivyPreparingWallet: () => void;
-  onPrivyDeployingAccount: (address: string) => void;
-  onPrivyConnected: (wallet: WalletInterface, address: string, user: User | null) => void;
-  onPrivyError: (msg: string) => void;
-  onPrivyDisconnect: () => void;
-  walletType: StarkZapWalletType | null;
-}
-
 const StarkZapWalletContext = createContext<StarkZapWalletCtx | undefined>(undefined);
-const StarkZapPrivyBridgeContext = createContext<StarkZapPrivyBridge | undefined>(undefined);
 
 // ---------------------------------------------------------------------------
-// Provider — no Privy imports. Privy logic lives in PrivyBridge.
+// Provider — owns Privy onboarding state directly; renders an injected
+// PrivyConnector component (lazy-loaded by providers.tsx) when available.
 // ---------------------------------------------------------------------------
+
+interface ProviderProps {
+  children: React.ReactNode;
+  onRequestPrivy: () => void;
+  PrivyConnector?: React.ComponentType<PrivyConnectorProps> | null;
+}
 
 export function StarkZapWalletProvider({
   children,
   onRequestPrivy,
-}: {
-  children: React.ReactNode;
-  onRequestPrivy: () => void;
-}) {
+  PrivyConnector,
+}: ProviderProps) {
   const [wallet, setWallet] = useState<WalletInterface | null>(null);
   const [session, setSession] = useState<WalletSession>(IDLE_WALLET_SESSION);
   const [privyUser, setPrivyUser] = useState<User | null>(null);
@@ -103,10 +93,6 @@ export function StarkZapWalletProvider({
   const address = session.address;
   const isConnecting = isWalletSessionBusy(session);
   const error = session.error;
-
-  // ---------------------------------------------------------------------------
-  // Connect Cartridge
-  // ---------------------------------------------------------------------------
 
   const connectCartridge = useCallback(async () => {
     setSession(walletConnecting("cartridge"));
@@ -125,21 +111,12 @@ export function StarkZapWalletProvider({
     }
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Connect Privy — activates PrivyProvider if not yet mounted, then signals
-  // PrivyBridge to run login + wallet initialisation.
-  // ---------------------------------------------------------------------------
-
   const connectPrivy = useCallback(async () => {
     localStorage.setItem("ml_privy_session", "1");
     setSession(walletAuthenticating("privy"));
-    onRequestPrivy(); // mounts PrivyProvider + PrivyBridge in providers.tsx
+    onRequestPrivy();
     setPendingPrivyConnect(true);
   }, [onRequestPrivy]);
-
-  // ---------------------------------------------------------------------------
-  // Disconnect
-  // ---------------------------------------------------------------------------
 
   const disconnect = useCallback(() => {
     if (walletType === "privy") {
@@ -150,34 +127,8 @@ export function StarkZapWalletProvider({
     setPrivyUser(null);
   }, [walletType]);
 
-  // ---------------------------------------------------------------------------
-  // PrivyBridge callbacks
-  // ---------------------------------------------------------------------------
-
-  const bridge: StarkZapPrivyBridge = {
-    pendingPrivyConnect,
-    clearPendingPrivyConnect: () => setPendingPrivyConnect(false),
-    onPrivyConnecting: () => { setSession(walletAuthenticating("privy")); },
-    onPrivyPreparingWallet: () => { setSession(walletPreparingWallet("privy")); },
-    onPrivyDeployingAccount: (addr) => { setSession(walletDeployingAccount("privy", addr)); },
-    onPrivyConnected: (w, addr, u) => {
-      setWallet(w);
-      setSession(walletReady("privy", addr));
-      setPrivyUser(u);
-    },
-    onPrivyError: (msg) => {
-      setWallet(null);
-      setSession(walletError("privy", msg));
-    },
-    onPrivyDisconnect: () => {
-      setWallet(null);
-      setSession(IDLE_WALLET_SESSION);
-      setPrivyUser(null);
-      localStorage.removeItem("ml_privy_session");
-    },
-    walletType,
-  };
-
+  // Surface session errors as toasts (Privy-only — Cartridge errors are
+  // already shown inline in nav-account-panel).
   const lastShownError = useRef<string | null>(null);
   useEffect(() => {
     if (session.walletType !== "privy") return;
@@ -190,13 +141,23 @@ export function StarkZapWalletProvider({
     toast.error(session.error, { id: "privy-connect-error" });
   }, [session.status, session.walletType, session.error]);
 
+  const clearPending = useCallback(() => setPendingPrivyConnect(false), []);
+
   return (
     <StarkZapWalletContext.Provider
       value={{ wallet, session, walletType, address, isConnecting, error, privyUser, connectCartridge, connectPrivy, disconnect }}
     >
-      <StarkZapPrivyBridgeContext.Provider value={bridge}>
-        {children}
-      </StarkZapPrivyBridgeContext.Provider>
+      {PrivyConnector ? (
+        <PrivyConnector
+          pendingConnect={pendingPrivyConnect}
+          clearPending={clearPending}
+          walletType={walletType}
+          setSession={setSession}
+          setWallet={setWallet}
+          setPrivyUser={setPrivyUser}
+        />
+      ) : null}
+      {children}
     </StarkZapWalletContext.Provider>
   );
 }
@@ -215,8 +176,4 @@ const STARKZAP_DEFAULT_CTX: StarkZapWalletCtx = {
 
 export function useStarkZapWallet(): StarkZapWalletCtx {
   return useContext(StarkZapWalletContext) ?? STARKZAP_DEFAULT_CTX;
-}
-
-export function useStarkZapPrivyBridge(): StarkZapPrivyBridge | undefined {
-  return useContext(StarkZapPrivyBridgeContext);
 }
