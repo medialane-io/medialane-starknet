@@ -4,7 +4,7 @@ import * as React from "react";
 import { useConnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { shortenAddress, useNavCommandMenu } from "@medialane/ui";
-import { Gamepad2, LogOut, Mail, User, Wallet } from "lucide-react";
+import { Gamepad2, Loader2, LogOut, Mail, User, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useNetwork } from "@/components/starknet-provider";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
@@ -75,56 +75,83 @@ export function NavAccountPanel() {
     );
   }
 
+  type CardOption = {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    recommended?: boolean;
+    onClick: () => void;
+    isLoading: boolean;
+  };
+
+  const argent = connectors.find((c) => c.id === "argentX");
+  const braavos = connectors.find((c) => c.id === "braavos");
+
+  const cards: CardOption[] = [
+    {
+      key: "privy",
+      label: "Email or social",
+      icon: <Mail className="h-5 w-5" />,
+      recommended: true,
+      onClick: () => void connectStarkZap("privy"),
+      isLoading: isConnecting && !connectingId,
+    },
+    {
+      key: "argent",
+      label: argent ? getConnectorDisplayName(argent.id, argent.name) : "Ready",
+      icon: <Wallet className="h-5 w-5" />,
+      onClick: () => argent && void connectInjected(argent),
+      isLoading: connectingId === "argentX",
+    },
+    {
+      key: "braavos",
+      label: braavos ? getConnectorDisplayName(braavos.id, braavos.name) : "Braavos",
+      icon: <Wallet className="h-5 w-5" />,
+      onClick: () => braavos && void connectInjected(braavos),
+      isLoading: connectingId === "braavos",
+    },
+    {
+      key: "cartridge",
+      label: "Cartridge",
+      icon: <Gamepad2 className="h-5 w-5" />,
+      onClick: () => void connectStarkZap("cartridge"),
+      isLoading: false,
+    },
+  ];
+
+  const anyBusy = isConnecting || connectingId !== null;
+
   return (
     <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
-      <div className="mb-3 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background/70 text-muted-foreground">
-          <Wallet className="h-4 w-4" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground">Connect wallet</p>
-        </div>
+      <div className="grid grid-cols-2 gap-2">
+        {cards.map((card) => (
+          <button
+            key={card.key}
+            type="button"
+            onClick={card.onClick}
+            disabled={anyBusy && !card.isLoading}
+            className={`relative flex h-16 flex-col items-center justify-center gap-1 rounded-xl border border-border/50 bg-muted/30 px-3 text-xs font-medium transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-60 ${
+              card.isLoading ? "ring-1 ring-primary/40" : ""
+            }`}
+          >
+            {card.recommended && (
+              <span className="absolute right-2 top-2 rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
+                Recommended
+              </span>
+            )}
+            <span className="text-foreground/80">
+              {card.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : card.icon}
+            </span>
+            <span className="text-foreground">{card.label}</span>
+          </button>
+        ))}
       </div>
 
       {error && (
-        <p className="mb-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-xs text-destructive">
+        <p className="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-xs text-destructive">
           {error}
         </p>
       )}
-
-      <div className="grid gap-2">
-        {connectors.map((connector) => (
-          <button
-            key={connector.id}
-            onClick={() => void connectInjected(connector)}
-            disabled={isConnecting || connectingId !== null}
-            className="flex h-9 items-center justify-start gap-2 rounded-lg border border-border/50 px-3 text-xs font-medium transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>{getConnectorDisplayName(connector.id, connector.name)}</span>
-            {connectingId === connector.id && <span className="ml-auto text-[10px] text-muted-foreground">Connecting...</span>}
-          </button>
-        ))}
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => void connectStarkZap("cartridge")}
-            disabled={isConnecting}
-            className="flex h-9 items-center justify-center gap-2 rounded-lg border border-border/50 px-3 text-xs font-medium transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Gamepad2 className="h-3.5 w-3.5 text-purple-400" />
-            Cartridge
-          </button>
-          <button
-            onClick={() => void connectStarkZap("privy")}
-            disabled={isConnecting}
-            className="flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Mail className="h-3.5 w-3.5" />
-            Privy
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
