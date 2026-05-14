@@ -69,16 +69,27 @@ export function PrivyBridge() {
   // Explicit connect — gated on Privy `ready` so login() isn't called before init.
   useEffect(() => {
     if (!bridge?.pendingPrivyConnect) return;
-    if (!ready) return;
+    if (!ready) {
+      console.log("[Privy] pending connect but SDK not ready yet — waiting");
+      return;
+    }
+    console.log("[Privy] SDK ready, starting connect flow. authenticated=", authenticated);
     bridge.clearPendingPrivyConnect();
     bridge.onPrivyConnecting();
 
     const run = async () => {
-      if (!authenticated) await login();
+      if (!authenticated) {
+        console.log("[Privy] calling login()");
+        await login();
+        console.log("[Privy] login() resolved");
+      } else {
+        console.log("[Privy] already authenticated, skipping login()");
+      }
       await initPrivyWallet();
     };
 
     run().catch((err) => {
+      console.error("[Privy] connect flow failed:", err);
       bridge.onPrivyError(err instanceof Error ? err.message : "Failed to connect with Privy");
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps

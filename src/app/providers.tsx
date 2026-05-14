@@ -86,6 +86,10 @@ let PrivyStack: React.ComponentType<{ children: React.ReactNode }> | null = null
 
 async function loadPrivyStack() {
   if (PrivyStack) return;
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+  if (!appId) {
+    throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is not set — Privy onboarding cannot start.");
+  }
   const [{ PrivyProvider }, { PrivyBridge }] = await Promise.all([
     import("@privy-io/react-auth"),
     import("@/contexts/privy-bridge"),
@@ -96,7 +100,7 @@ async function loadPrivyStack() {
   };
   function PrivyStackInner({ children }: { children: React.ReactNode }) {
     return (
-      <PrivyProvider appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!} config={PRIVY_CONFIG}>
+      <PrivyProvider appId={appId!} config={PRIVY_CONFIG}>
         <PrivyBridge />
         {children}
       </PrivyProvider>
@@ -124,10 +128,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const handleRequestPrivy = () => {
     if (privyActive) return;
-    loadPrivyStack().then(() => {
-      setPrivyWrapper(() => PrivyStack);
-      setPrivyActive(true);
-    });
+    loadPrivyStack()
+      .then(() => {
+        setPrivyWrapper(() => PrivyStack);
+        setPrivyActive(true);
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : "Failed to load Privy";
+        console.error("[Privy] loadPrivyStack failed:", err);
+        toast.error(msg);
+      });
   };
 
   const content = (
