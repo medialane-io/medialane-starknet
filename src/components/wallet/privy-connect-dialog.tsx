@@ -52,6 +52,7 @@ export function PrivyConnectDialog() {
       return;
     }
     setOpen(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.status, session.walletType]);
 
   const isError = session.walletType === "privy" && session.status === "error";

@@ -18,6 +18,7 @@ import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
 import { StarkZapWalletProvider } from "@/contexts/starkzap-wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
+import { PrivyConnectDialog } from "@/components/wallet/privy-connect-dialog";
 
 function NavTrigger() {
   const { open } = useNavCommandMenu();
@@ -152,6 +153,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             {isStandalone ? children : <Shell>{children}</Shell>}
             <CartDrawer />
             <NotificationSpotlight />
+            <PrivyConnectDialog />
             <Toaster
               richColors
               position="bottom-center"
