@@ -12,7 +12,8 @@ interface OwnerActionPanelProps {
   onCancelListing: (order: ApiOrder) => void;
   onOpenList: () => void;
   onOpenTransfer: () => void;
-  onOpenRemix: () => void;
+  /** When omitted, the Remix button is not rendered (Collection Drops aren't remixable). */
+  onOpenRemix?: () => void;
 }
 
 /**
@@ -62,19 +63,21 @@ export function OwnerActionPanel({
           Transfer
         </button>
       </div>
-      <div className="btn-border-animated p-[1px] rounded-xl">
-        <button
-          className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-purple"
-          onClick={onOpenRemix}
-        >
-          <GitBranch className="h-4 w-4" />
-          Create a Remix
-          <HelpIcon
-            content="Build a licensed derivative of this IP asset — your remix is minted as a new onchain NFT linked to the original"
-            side="top"
-          />
-        </button>
-      </div>
+      {onOpenRemix && (
+        <div className="btn-border-animated p-[1px] rounded-xl">
+          <button
+            className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-purple"
+            onClick={onOpenRemix}
+          >
+            <GitBranch className="h-4 w-4" />
+            Create a Remix
+            <HelpIcon
+              content="Build a licensed derivative of this IP asset — your remix is minted as a new onchain NFT linked to the original"
+              side="top"
+            />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

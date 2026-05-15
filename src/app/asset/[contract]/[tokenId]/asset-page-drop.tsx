@@ -7,8 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Package, ChevronRight, ExternalLink, Clock, HandCoins,
-  Tag, ArrowRightLeft, ShoppingCart, X,
-  Loader2, Flag, GitBranch, DollarSign, Shield, Calendar,
+  ShoppingCart, X,
+  Flag, DollarSign, Shield, Calendar,
 } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
@@ -19,6 +19,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useCart } from "@/hooks/use-cart";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
+import { OwnerActionPanel } from "@/components/asset/owner-action-panel";
 import { ipfsToHttp, formatDisplayPrice, timeUntil, checkIsOwner, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -356,28 +357,14 @@ export function AssetPageDrop() {
                   <HelpIcon content={`${isOwner ? "Your listing" : "Current price"} · Expires ${timeUntil(cheapest.endTime)}`} side="top" />
                 </div>
                 {isOwner ? (
-                  <div className="space-y-2">
-                    {myListing && (
-                      <div className="btn-border-animated p-[1px] rounded-xl">
-                        <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-destructive disabled:opacity-50" disabled={isProcessing} onClick={() => handleCancelClick(myListing)}>
-                          {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                          Cancel listing
-                        </button>
-                      </div>
-                    )}
-                    <div className="btn-border-animated p-[1px] rounded-xl">
-                      <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue" onClick={() => setListOpen(true)}>
-                        <Tag className="h-4 w-4" />
-                        List for sale
-                      </button>
-                    </div>
-                    <div className="btn-border-animated p-[1px] rounded-xl">
-                      <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-orange" onClick={() => setTransferOpen(true)}>
-                        <ArrowRightLeft className="h-4 w-4" />
-                        Transfer
-                      </button>
-                    </div>
-                  </div>
+                  <OwnerActionPanel
+                    myListing={myListing ?? null}
+                    isERC1155={false}
+                    isProcessing={isProcessing}
+                    onCancelListing={handleCancelClick}
+                    onOpenList={() => setListOpen(true)}
+                    onOpenTransfer={() => setTransferOpen(true)}
+                  />
                 ) : isSignedIn ? (
                   <div className="space-y-2">
                     <div className="btn-border-animated p-[1px] rounded-xl">
@@ -412,20 +399,14 @@ export function AssetPageDrop() {
               <div className="rounded-xl border border-border p-5 space-y-3">
                 <p className="text-muted-foreground text-sm">Not listed on secondary market.</p>
                 {isOwner && (
-                  <div className="space-y-2">
-                    <div className="btn-border-animated p-[1px] rounded-xl">
-                      <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue" onClick={() => setListOpen(true)}>
-                        <Tag className="h-4 w-4" />
-                        List for sale
-                      </button>
-                    </div>
-                    <div className="btn-border-animated p-[1px] rounded-xl">
-                      <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-orange" onClick={() => setTransferOpen(true)}>
-                        <ArrowRightLeft className="h-4 w-4" />
-                        Transfer
-                      </button>
-                    </div>
-                  </div>
+                  <OwnerActionPanel
+                    myListing={null}
+                    isERC1155={false}
+                    isProcessing={isProcessing}
+                    onCancelListing={handleCancelClick}
+                    onOpenList={() => setListOpen(true)}
+                    onOpenTransfer={() => setTransferOpen(true)}
+                  />
                 )}
                 {!isOwner && isSignedIn && (
                   <div className="btn-border-animated p-[1px] rounded-xl">
