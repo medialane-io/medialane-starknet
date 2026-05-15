@@ -22,8 +22,7 @@ import { ShareButton } from "@/components/shared/share-button";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ipfsToHttp, timeUntil, formatDisplayPrice, checkIsOwner } from "@/lib/utils";
 import { ShoppingCart, Tag, ExternalLink, Clock, HandCoins, ArrowRightLeft, X, CheckCircle, DollarSign, GitBranch, UserCheck, Globe, Bot, Percent, Shield, Calendar, ChevronRight, Flag, Loader2, Layers } from "lucide-react";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { ReportDialog } from "@/components/report-dialog";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import { LICENSE_TRAIT_TYPES } from "@/types/ip";
@@ -60,18 +59,6 @@ export function AssetPageStandard() {
   const { history } = useTokenHistory(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
 
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
 
   const { addItem, items: cartItems, setIsOpen: setCartOpen } = useCart();
   const shouldReduce = useReducedMotion();
@@ -495,10 +482,10 @@ export function AssetPageStandard() {
                     )}
                   </div>
                 ) : (
-                  <Button className="w-full h-12 text-base" onClick={handleConnectWallet}>
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Connect wallet to trade
-                  </Button>
+                  <ConnectWallet
+                    label="Connect wallet to trade"
+                    className="w-full h-12 text-base bg-primary text-primary-foreground hover:bg-primary/90"
+                  />
                 )}
               </div>
             ) : (
@@ -572,9 +559,10 @@ export function AssetPageStandard() {
                     </div>
                   </div>
                 ) : (
-                  <Button variant="outline" className="w-full" onClick={handleConnectWallet}>
-                    Connect wallet to make an offer
-                  </Button>
+                  <ConnectWallet
+                    label="Connect wallet to make an offer"
+                    className="w-full h-10 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  />
                 )}
               </div>
             )}

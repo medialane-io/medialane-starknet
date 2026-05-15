@@ -50,8 +50,7 @@ import { IPTypeDisplay } from "@/components/ip-type-display";
 import { getListableTokens } from "@medialane/sdk";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { toast } from "sonner";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { CollectionDropMintButton } from "@/components/claim/collection-drop-mint-button";
 
@@ -153,18 +152,6 @@ export function AssetPageDrop() {
   const { history } = useTokenHistory(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
 
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
 
   const { addItem, items: cartItems, setIsOpen: setCartOpen } = useCart();
   const shouldReduce = useReducedMotion();
@@ -415,10 +402,10 @@ export function AssetPageDrop() {
                     </div>
                   </div>
                 ) : (
-                  <Button className="w-full h-12 text-base" onClick={handleConnectWallet}>
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Connect wallet to trade
-                  </Button>
+                  <ConnectWallet
+                    label="Connect wallet to trade"
+                    className="w-full h-12 text-base bg-primary text-primary-foreground hover:bg-primary/90"
+                  />
                 )}
               </div>
             ) : (
@@ -449,9 +436,10 @@ export function AssetPageDrop() {
                   </div>
                 )}
                 {!isOwner && !isSignedIn && (
-                  <Button variant="outline" className="w-full" onClick={handleConnectWallet}>
-                    Connect wallet to make an offer
-                  </Button>
+                  <ConnectWallet
+                    label="Connect wallet to make an offer"
+                    className="w-full h-10 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  />
                 )}
               </div>
             )}
