@@ -123,10 +123,11 @@ export default function CreateAssetPage() {
   const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
-  // Fetch user's collections from the API (collectionId field contains onchain registry ID)
+  // Fetch user's current Medialane ERC-721 collections from the API.
   const { collections: allCollections, isLoading: collectionsLoading } = useCollectionsByOwner(walletAddress ?? null);
-  // Only show collections that have been indexed with their onchain ID (required for minting)
-  const collections = allCollections.filter((c) => c.collectionId != null);
+  const collections = allCollections.filter(
+    (c) => (c.source as string) === "MEDIALANE_ERC721" && c.standard === "ERC721" && c.collectionId != null
+  );
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);

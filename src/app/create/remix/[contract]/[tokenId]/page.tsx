@@ -97,7 +97,9 @@ export default function CreateRemixPage() {
   const { token, isLoading: tokenLoading } = useToken(contract, tokenId);
   const { collections: allCollections, isLoading: collectionsLoading } =
     useCollectionsByOwner(walletAddress ?? null);
-  const eligibleCollections = allCollections.filter((c) => c.collectionId != null);
+  const eligibleCollections = allCollections.filter(
+    (c) => (c.source as string) === "MEDIALANE_ERC721" && c.standard === "ERC721" && c.collectionId != null
+  );
 
   const walletAddressLower = walletAddress?.toLowerCase() ?? null;
   const isOwner = !!(

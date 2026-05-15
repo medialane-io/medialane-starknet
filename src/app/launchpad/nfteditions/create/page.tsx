@@ -238,7 +238,7 @@ export default function CreateNFTEditionsCollectionPage() {
               contractAddress: addr,
               startBlock: 0,
               standard: "ERC1155",
-              source: "ERC1155_FACTORY",
+              source: "MEDIALANE_ERC1155",
             }),
           });
         } catch { /* non-fatal */ }

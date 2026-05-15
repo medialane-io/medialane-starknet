@@ -37,7 +37,9 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
   const client = useMedialaneClient();
 
   const { collections } = useCollectionsByOwner(walletAddress ?? null);
-  const eligibleCollections = collections.filter((c) => c.collectionId != null);
+  const eligibleCollections = collections.filter(
+    (c) => (c.source as string) === "MEDIALANE_ERC721" && c.standard === "ERC721" && c.collectionId != null
+  );
 
   const defaultCollectionId =
     eligibleCollections.find((c) => c.contractAddress === offer?.originalContract)?.collectionId ??
