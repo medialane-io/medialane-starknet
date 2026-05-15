@@ -3,8 +3,7 @@ import { useAccount, useContract, useNetwork, useProvider } from "@starknet-reac
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { Abi, shortString, constants } from "starknet";
 import { useSWRConfig } from "swr";
-import { IPMarketplaceABI } from "@/abis/ip_market";
-import { IPMarketplace1155ABI } from "@/abis/ip_market_1155";
+import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk";
 import { toast } from "sonner";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import {

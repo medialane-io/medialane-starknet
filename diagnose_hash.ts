@@ -1,5 +1,5 @@
 import { Contract, RpcProvider } from "starknet";
-import { IPMarketplaceABI } from "./src/abis/ip_market";
+import { IPMarketplaceABI } from "@medialane/sdk";
 
 const provider = new RpcProvider({ nodeUrl: "https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_10/tOTwt1ug3YNOsaPjinDvS" });
 const marketplaceAddress = "0x059deafbbafbf7051c315cf75a94b03c5547892bc0c6dfa36d7ac7290d4cc33a";
