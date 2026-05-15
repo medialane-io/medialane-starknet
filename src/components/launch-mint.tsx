@@ -6,7 +6,7 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import Image from "next/image";
 import { useConnect } from "@starknet-react/core";
 import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useSessionKey } from "@/hooks/use-session-key";
 import { byteArray, CallData } from "starknet";
 import {
@@ -90,7 +90,7 @@ function PerksGrid() {
 type MintStep = "ready" | "enter-pin" | "minting" | "success" | "error";
 
 export function LaunchMint() {
-  const { isConnected: isSignedIn, address: walletConnected } = useUnifiedWallet();
+  const { isConnected: isSignedIn, address: walletConnected } = useWallet();
   const isLoaded = true;
   const { walletAddress: sessionWalletAddress, hasWallet, isLoadingWallet } = useSessionKey();
   const { execute: executeTransaction, status, statusMessage, error: txError, reset } = useTx();

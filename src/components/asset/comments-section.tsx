@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { CallData } from "starknet";
 import { encodeTokenId } from "@/hooks/use-transfer";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTx } from "@/hooks/use-tx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -50,7 +50,7 @@ interface CommentsSectionProps {
 }
 
 export function CommentsSection({ contract, tokenId, className }: CommentsSectionProps) {
-  const { isConnected: isSignedIn, address: walletAddress } = useUnifiedWallet();
+  const { isConnected: isSignedIn, address: walletAddress } = useWallet();
   const hasWallet = !!walletAddress;
   const { comments, total, isLoading, mutate } = useComments(contract, tokenId);
   const { execute: executeTransaction } = useTx();

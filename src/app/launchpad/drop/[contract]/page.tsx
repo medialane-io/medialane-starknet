@@ -12,7 +12,7 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionDropMintButton } from "@/components/claim/collection-drop-mint-button";
 import { useDropInfo, getDropStatus, type DropConditions } from "@/hooks/use-drops";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { ipfsToHttp } from "@/lib/utils";
 import { getListableTokens } from "@medialane/sdk";
 import { cn } from "@/lib/utils";
@@ -100,7 +100,7 @@ export default function DropDetailPage({
   params: Promise<{ contract: string }>;
 }) {
   const { contract } = use(params);
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   const { dropInfo, isLoading } = useDropInfo(contract);
 
   if (isLoading) {

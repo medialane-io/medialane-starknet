@@ -1,9 +1,9 @@
 "use client";
 
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { PortfolioActivity } from "@/components/portfolio/portfolio-activity";
 
 export default function PortfolioActivityPage() {
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   return <PortfolioActivity address={walletAddress ?? null} />;
 }

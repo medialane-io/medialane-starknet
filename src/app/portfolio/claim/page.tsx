@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +42,7 @@ function StepIndicator({ step }: { step: Step }) {
 }
 
 export default function ClaimCollectionPage() {
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   const [contractAddress, setContractAddress] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useSwap, SWAP_TOKENS, type SwapToken } from "@/hooks/use-swap";
 import { EXPLORER_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -191,7 +191,7 @@ function RouteInfo({ label, value, className }: { label: string; value: string; 
 // ---------------------------------------------------------------------------
 
 export function SwapContent() {
-  const { isConnected } = useUnifiedWallet();
+  const { isConnected } = useWallet();
   const [showRouteDetails, setShowRouteDetails] = useState(false);
 
   const swap = useSwap();

@@ -7,7 +7,7 @@ import { Bell, ArrowRight, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { fireConfetti } from "@/lib/confetti";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NOTIFICATION_ICON, NOTIFICATION_COLOR, NOTIFICATION_LABEL } from "@/lib/notification-meta";
 import { cn } from "@/lib/utils";
@@ -128,7 +128,7 @@ function SpotlightCard({
 // ── Provider / watcher ────────────────────────────────────────────────────────
 
 export function NotificationSpotlight() {
-  const { address, isConnected } = useUnifiedWallet();
+  const { address, isConnected } = useWallet();
   const { notifications, markRead } = useNotifications(isConnected ? address : null);
 
   const [queue, setQueue] = useState<Notification[]>([]);

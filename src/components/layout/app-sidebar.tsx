@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import {
   Telescope, Compass, Store, Briefcase, Plus, Activity,
   LayoutGrid, Users, Search, Sun, Moon, ShoppingBag,
@@ -158,7 +158,7 @@ function CartItem() {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { address: walletAddress, isConnected } = useUnifiedWallet();
+  const { address: walletAddress, isConnected } = useWallet();
   const unreadOffers = useUnreadOffers(isConnected ? walletAddress : null);
   const { setOpen, setOpenMobile, isMobile, state } = useSidebar();
 

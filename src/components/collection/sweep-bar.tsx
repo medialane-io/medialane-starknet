@@ -5,7 +5,7 @@ import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { useCollectionFloorListings } from "@/hooks/use-orders";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { toast } from "sonner";
 import type { ApiOrder } from "@medialane/sdk";
 
@@ -35,7 +35,7 @@ export function SweepBar({ contract }: SweepBarProps) {
   const [count, setCount] = useState(1);
   const { listings, isLoading } = useCollectionFloorListings(contract, 20);
   const { addItem, items } = useCart();
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
 
   // Only show buyable listings (not owned by user)
   const buyable = listings.filter(

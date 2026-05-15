@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, Inbox, Filter } from "lucide-react";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationRow } from "@/components/shared/notification-row";
 import { ConnectWallet } from "@/components/ConnectWallet";
@@ -46,7 +46,7 @@ function groupByDay(items: Notification[]): [string, Notification[]][] {
 }
 
 export function NotificationsFeed() {
-  const { address: walletAddress, isConnected } = useUnifiedWallet();
+  const { address: walletAddress, isConnected } = useWallet();
   const { notifications, unreadCount, markAllRead, markRead } = useNotifications(
     isConnected ? walletAddress : null
   );

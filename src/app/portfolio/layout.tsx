@@ -9,7 +9,7 @@ import { useUserOrders } from "@/hooks/use-orders";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { markOffersAsSeen } from "@/hooks/use-unread-offers";
 import { useRemixOffers } from "@/hooks/use-remix-offers";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import Link from "next/link";
@@ -39,7 +39,7 @@ const NAV_GROUPS = [
 ];
 
 export default function PortfolioLayout({ children }: { children: React.ReactNode }) {
-  const { address: walletAddress, isConnected } = useUnifiedWallet();
+  const { address: walletAddress, isConnected } = useWallet();
   const pathname = usePathname();
   const address = walletAddress;
   const { orders } = useUserOrders(address ?? null);

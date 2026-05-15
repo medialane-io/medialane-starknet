@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { AnimatePresence, motion } from "framer-motion";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useRouter } from "next/navigation";
 import { useTokensByIpType } from "@/hooks/use-tokens-by-ip-type";
 import { IP_TYPE_MAP, IP_TYPE_CONFIG } from "@/lib/ip-type-config";
@@ -25,7 +25,7 @@ const PAGE_SIZE = 24;
 
 // ---- Single token card ----
 function TokenBrowseCard({ token }: { token: ApiToken }) {
-  const { isConnected: isSignedIn } = useUnifiedWallet();
+  const { isConnected: isSignedIn } = useWallet();
   const router = useRouter();
   const [offerOpen, setOfferOpen] = useState(false);
   const [imgError, setImgError] = useState(false);

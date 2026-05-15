@@ -1,10 +1,10 @@
 "use client";
 
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { AssetsGrid } from "@/components/portfolio/assets-grid";
 
 export default function PortfolioAssetsPage() {
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">

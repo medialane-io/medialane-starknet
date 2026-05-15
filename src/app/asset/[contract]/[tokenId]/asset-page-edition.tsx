@@ -13,7 +13,7 @@ import {
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
 import { useTokenListings } from "@/hooks/use-orders";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useCart } from "@/hooks/use-cart";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
@@ -51,7 +51,7 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 
 export function AssetPageEdition() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
-  const { isConnected: isSignedIn, address: walletAddress } = useUnifiedWallet();
+  const { isConnected: isSignedIn, address: walletAddress } = useWallet();
   const { collection } = useCollection(contract);
   const { token, isLoading } = useToken(contract, tokenId);
   const { listings, mutate: mutateListings } = useTokenListings(contract, tokenId);

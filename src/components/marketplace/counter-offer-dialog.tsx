@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
 import {
@@ -44,7 +44,7 @@ export function CounterOfferDialog({
   open, onOpenChange, nftContract, tokenId, tokenName,
   currentBid, currencySymbol, onSuccess,
 }: CounterOfferDialogProps) {
-  const { isConnected } = useUnifiedWallet();
+  const { isConnected } = useWallet();
   const { makeOffer, isProcessing, txHash, error, resetState } = useMarketplace();
   const [done, setDone] = useState(false);
 

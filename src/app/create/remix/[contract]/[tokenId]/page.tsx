@@ -5,7 +5,6 @@ import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useUnifiedWallet as _useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { useToken } from "@/hooks/use-tokens";
 import { useSessionKey } from "@/hooks/use-session-key";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";

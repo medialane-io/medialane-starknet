@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
 import { getListableTokens } from "@medialane/sdk";
@@ -47,7 +47,7 @@ interface OfferDialogProps {
 }
 
 export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenName, tokenStandard, tokenImage, onSuccess }: OfferDialogProps) {
-  const { isConnected } = useUnifiedWallet();
+  const { isConnected } = useWallet();
   const { makeOffer, isProcessing, txHash, error, resetState } = useMarketplace();
   const confettiFired = useRef(false);
   const [txStatus, setTxStatus] = useState<"idle" | "confirmed">("idle");

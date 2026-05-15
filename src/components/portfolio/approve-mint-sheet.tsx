@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props) {
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   const { getValidToken } = useSiwsToken();
   const { execute: executeTransaction } = useTx();
   const { createListing } = useMarketplace();

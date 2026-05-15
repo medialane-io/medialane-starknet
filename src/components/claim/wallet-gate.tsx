@@ -1,6 +1,6 @@
 "use client";
 
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useConnect } from "@starknet-react/core";
 import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ interface WalletGateProps {
 }
 
 export function WalletGate({ children }: WalletGateProps) {
-  const { isConnected } = useUnifiedWallet();
+  const { isConnected } = useWallet();
   const { connectAsync, connectors } = useConnect();
   const { starknetkitConnectModal } = useStarknetkitConnectModal({
     connectors: connectors as StarknetkitConnector[],

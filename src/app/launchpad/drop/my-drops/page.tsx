@@ -6,7 +6,7 @@ import { Package, Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { ipfsToHttp } from "@/lib/utils";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import useSWR from "swr";
@@ -68,7 +68,7 @@ function MyDropCard({ collection }: { collection: ApiCollection }) {
 }
 
 export default function MyDropsPage() {
-  const { isConnected, address: walletAddress } = useUnifiedWallet();
+  const { isConnected, address: walletAddress } = useWallet();
   const { data: collections, isLoading } = useMyDrops(walletAddress ?? null);
 
   if (!isConnected) {

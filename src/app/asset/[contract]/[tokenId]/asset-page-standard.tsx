@@ -35,7 +35,7 @@ import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { CommentsSection } from "@/components/asset/comments-section";
 import { useComments } from "@/hooks/use-comments";
 import { EXPLORER_URL } from "@/lib/constants";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
@@ -51,7 +51,7 @@ import { useFullTokenData } from "@/hooks/use-full-token-data";
 export function AssetPageStandard() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
-  const { isConnected: isSignedIn, address: walletAddress } = useUnifiedWallet();
+  const { isConnected: isSignedIn, address: walletAddress } = useWallet();
   const { collection } = useCollection(contract);
   const { token, isLoading } = useToken(contract, tokenId);
   const { listings, mutate: mutateListings } = useTokenListings(contract, tokenId);

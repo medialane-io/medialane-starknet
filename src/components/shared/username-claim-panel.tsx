@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,7 @@ function UsernameInput({ value, onChange, onCheck, onSubmit, checkState, checkRe
  * Safe to render on any page where a signed-in user might not have a username yet.
  */
 export function UsernameClaimPanel() {
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   const { getValidToken } = useSiwsToken();
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
   const [claimInput, setClaimInput] = useState("");

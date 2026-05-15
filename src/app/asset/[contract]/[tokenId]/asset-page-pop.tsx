@@ -9,7 +9,7 @@ import { Award, Users, Shield, CheckCircle2, ExternalLink, ChevronRight, Flag } 
 import { useToken } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
 import { usePopClaimStatus } from "@/hooks/use-pop";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { ipfsToHttp } from "@/lib/utils";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { PopClaimButton } from "@/components/claim/pop-claim-button";
@@ -20,7 +20,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 
 export function AssetPagePop() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   const { token } = useToken(contract, tokenId);
   const { collection } = useCollection(contract);
   const { claimStatus } = usePopClaimStatus(contract, walletAddress ?? null);

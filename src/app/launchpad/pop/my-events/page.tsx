@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useMyEvents } from "@/hooks/use-pop";
 import { ipfsToHttp } from "@/lib/utils";
 import type { ApiCollection } from "@medialane/sdk";
@@ -55,7 +55,7 @@ function MyEventCard({ collection }: { collection: ApiCollection }) {
 }
 
 export default function MyEventsPage() {
-  const { address, isConnected } = useUnifiedWallet();
+  const { address, isConnected } = useWallet();
   const { events, isLoading } = useMyEvents(address ?? null);
 
   if (!isConnected) {

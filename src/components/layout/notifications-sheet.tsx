@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { Bell, ArrowRight, Inbox, CheckCheck } from "lucide-react";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationRow } from "@/components/shared/notification-row";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -59,7 +59,7 @@ function EmptyState() {
 
 export function NotificationsItem() {
   const [open, setOpen] = useState(false);
-  const { address: walletAddress, isConnected } = useUnifiedWallet();
+  const { address: walletAddress, isConnected } = useWallet();
   const { notifications, unreadCount, markAllRead, markRead } = useNotifications(
     isConnected ? walletAddress : null
   );

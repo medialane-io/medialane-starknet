@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
@@ -162,7 +162,7 @@ function SuccessScreen({
 
 export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: PurchaseDialogProps) {
   const router = useRouter();
-  const { isConnected } = useUnifiedWallet();
+  const { isConnected } = useWallet();
   const { checkoutCart, isProcessing, txHash, error, resetState } = useMarketplace();
   const [step, setStep] = useState<Step>("details");
   const [quantity, setQuantity] = useState(1);
