@@ -17,12 +17,8 @@ import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listi
 import { CollectionCard, CollectionCardSkeleton } from "@/components/shared/collection-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { timeAgo, formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
+import { ipfsToHttp } from "@/lib/utils";
 import {
-  Tag,
-  Handshake,
-  TrendingUp,
-  ArrowRightLeft,
   Activity,
   Image as ImageIcon,
   LayoutGrid,
@@ -30,22 +26,12 @@ import {
   Share2,
   LayoutList,
   Flag,
-  Sparkles,
 } from "lucide-react";
 import { ReportDialog } from "@/components/report-dialog";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
-import type { ApiActivity } from "@medialane/sdk";
 import { cn } from "@/lib/utils";
-
-// ─── Address color identity ──────────────────────────────────────────────────
-
-function addressPalette(address: string) {
-  const seed = parseInt(address.slice(2, 10) || "a1b2c3d4", 16);
-  const h1 = seed % 360;
-  const h2 = (h1 + 137) % 360;
-  const h3 = (h1 + 73) % 360;
-  return { h1, h2, h3 };
-}
+import { addressPalette } from "@/lib/creator-utils";
+import { ActivityRow } from "@/components/creator/activity-row";
 
 function AddressAvatar({
   address,
@@ -95,92 +81,6 @@ function AddressAvatar({
   );
 }
 
-// ─── Activity feed ───────────────────────────────────────────────────────────
-
-const ACTIVITY_META: Record<
-  string,
-  { label: string; textColor: string; bg: string }
-> = {
-  mint:      { label: "Minted",    textColor: "text-yellow-400",  bg: "bg-yellow-500/8 border-yellow-500/15" },
-  listing:   { label: "Listed",    textColor: "text-violet-400",  bg: "bg-violet-500/8 border-violet-500/15" },
-  sale:      { label: "Sold",      textColor: "text-emerald-400", bg: "bg-emerald-500/8 border-emerald-500/15" },
-  offer:     { label: "Offer",     textColor: "text-amber-400",   bg: "bg-amber-500/8 border-amber-500/15" },
-  transfer:  { label: "Transfer",  textColor: "text-blue-400",    bg: "bg-blue-500/8 border-blue-500/15" },
-  cancelled: { label: "Cancelled", textColor: "text-muted-foreground", bg: "bg-muted/30 border-border" },
-};
-
-const ACTIVITY_ICONS: Record<string, React.ElementType> = {
-  mint:      Sparkles,
-  listing:   Tag,
-  sale:      Handshake,
-  offer:     TrendingUp,
-  transfer:  ArrowRightLeft,
-  cancelled: ArrowRightLeft,
-};
-
-function ActivityRow({ event, isLast }: { event: ApiActivity; isLast: boolean }) {
-  const meta = ACTIVITY_META[event.type] ?? ACTIVITY_META.transfer;
-  const Icon = ACTIVITY_ICONS[event.type] ?? ArrowRightLeft;
-  const tokenId = event.nftTokenId ?? event.tokenId;
-  const contract = event.nftContract ?? event.contractAddress;
-
-  return (
-    <div className="flex gap-4 group">
-      {/* Timeline spine */}
-      <div className="flex flex-col items-center shrink-0 w-9">
-        <div
-          className={cn(
-            "h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
-            meta.bg
-          )}
-        >
-          <Icon className={cn("h-3.5 w-3.5", meta.textColor)} />
-        </div>
-        {!isLast && <div className="flex-1 w-px bg-border/50 mt-1.5 min-h-4" />}
-      </div>
-
-      {/* Row body */}
-      <div className="flex-1 pb-5 min-w-0 pt-1">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={cn("text-[11px] font-bold uppercase tracking-wider", meta.textColor)}>
-                {meta.label}
-              </span>
-              {contract && tokenId ? (
-                <Link
-                  href={`/asset/${contract}/${tokenId}`}
-                  className="text-xs text-muted-foreground font-mono hover:text-foreground transition-colors"
-                >
-                  Token #{tokenId}
-                </Link>
-              ) : (
-                <span className="text-xs text-muted-foreground font-mono">
-                  Token #{tokenId ?? "—"}
-                </span>
-              )}
-            </div>
-            {contract && (
-              <p className="text-[11px] text-muted-foreground/60 font-mono mt-0.5 truncate">
-                {contract.slice(0, 10)}…{contract.slice(-6)}
-              </p>
-            )}
-          </div>
-          <div className="text-right shrink-0">
-            {event.price?.formatted && (
-              <p className="text-sm font-semibold price-value leading-none">
-                {formatDisplayPrice(event.price.formatted)}
-              </p>
-            )}
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {timeAgo(event.timestamp)}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Tab config ──────────────────────────────────────────────────────────────
 
