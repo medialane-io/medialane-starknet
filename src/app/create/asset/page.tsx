@@ -195,24 +195,6 @@ export default function CreateAssetPage() {
     setMintError(null);
     setMintStep("uploading");
 
-    // [TEMP-DEBUG service-model] mint-input snapshot for diagnosis. Remove after.
-    const _sel = collections.find((c) => c.collectionId === values.collectionId);
-    const mintDbg: Record<string, unknown> = {
-      wallet: walletAddress,
-      collectionIdInput: values.collectionId,
-      selectedCollection: _sel
-        ? {
-            contractAddress: _sel.contractAddress,
-            collectionId: _sel.collectionId,
-            service: _sel.service,
-            source: _sel.source,
-            standard: _sel.standard,
-            owner: _sel.owner,
-            name: _sel.name,
-          }
-        : null,
-    };
-
     try {
       // 1. Upload image + metadata to IPFS via /api/pinata
       const formData = new FormData();
@@ -257,7 +239,6 @@ export default function CreateAssetPage() {
         throw new Error(uploadData.error ?? "IPFS upload failed");
       }
       const tokenUri: string = uploadData.uri;
-      mintDbg.tokenUri = tokenUri;
       if (!tokenUri) throw new Error("IPFS upload returned no URI");
 
       setMintStep("processing");
@@ -271,8 +252,6 @@ export default function CreateAssetPage() {
       });
 
       const intentData = intentRes.data as { calls?: { contractAddress: string; [key: string]: unknown }[] } | undefined;
-      mintDbg.intentCalls = intentData?.calls ?? null;
-      mintDbg.intentCallsCount = intentData?.calls?.length ?? 0;
       if (!intentData?.calls?.length) {
         throw new Error("Mint intent returned no calls");
       }
@@ -287,18 +266,6 @@ export default function CreateAssetPage() {
       setMintStep("success");
       invalidatePortfolioCache(walletAddress);
     } catch (err: unknown) {
-      // [TEMP-DEBUG service-model] dump mint-input snapshot; pair with the
-      // [TX-DEBUG] block from use-tx.ts for the on-chain/submission reason.
-      mintDbg.executeResult =
-        mintStep === "processing" ? "executeTransaction returned null (see [TX-DEBUG])" : "failed before execute";
-      mintDbg.thrown = err instanceof Error ? err.message : String(err);
-      try {
-        // eslint-disable-next-line no-console
-        console.error(
-          "[MINT-DEBUG]\n" +
-            JSON.stringify(mintDbg, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2),
-        );
-      } catch { /* noop */ }
       setMintError(err instanceof Error ? err.message : "Something went wrong");
       setMintStep("error");
     }

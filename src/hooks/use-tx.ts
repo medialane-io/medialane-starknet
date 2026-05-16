@@ -54,28 +54,6 @@ export function useTx() {
       setStatusMessage("Transaction confirmed");
       return hash;
     } catch (err) {
-      // [TEMP-DEBUG service-model] surface the raw tx failure reason
-      // (revert/simulation/nonce/paymaster). Remove after diagnosis.
-      try {
-        const e = err as Record<string, unknown> & { message?: string; stack?: string };
-        // eslint-disable-next-line no-console
-        console.error(
-          "[TX-DEBUG]\n" +
-            JSON.stringify(
-              {
-                name: (e as { name?: string })?.name ?? null,
-                message: e?.message ?? String(err),
-                data: (e as { data?: unknown })?.data ?? null,
-                baseError: (e as { baseError?: unknown })?.baseError ?? null,
-                cause: (e as { cause?: unknown })?.cause ?? null,
-                keys: Object.keys(e ?? {}),
-                stack: e?.stack ?? null,
-              },
-              (_k, v) => (typeof v === "bigint" ? v.toString() : v),
-              2,
-            ),
-        );
-      } catch { /* never let debug logging mask the original error */ }
       const msg = err instanceof Error ? err.message : "Transaction failed";
       setError(msg);
       setStatus("error");
