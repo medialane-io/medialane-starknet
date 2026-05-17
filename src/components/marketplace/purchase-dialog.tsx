@@ -162,8 +162,15 @@ function SuccessScreen({
 
 export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: PurchaseDialogProps) {
   const router = useRouter();
-  const { isConnected } = useWallet();
+  const { address, isConnected } = useWallet();
   const { checkoutCart, isProcessing, txHash, error, resetState } = useMarketplace();
+  // The marketplace contract reverts ("Cannot fill own order") if the buyer
+  // is the order's offerer. Guard the buy path so users never submit a
+  // transaction that is guaranteed to fail.
+  const isOwnOrder =
+    isConnected &&
+    !!address &&
+    order.offerer.toLowerCase() === address.toLowerCase();
   const [step, setStep] = useState<Step>("details");
   const [quantity, setQuantity] = useState(1);
   const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
@@ -184,6 +191,10 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   const handleBuy = async () => {
     if (!isConnected) {
       toast.error("Connect your wallet first");
+      return;
+    }
+    if (isOwnOrder) {
+      toast.error("This is your own listing — you can't buy it.");
       return;
     }
 
@@ -308,7 +319,23 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 </Alert>
               ) : null}
 
-              {isConnected ? (
+              {isOwnOrder ? (
+                <div className="space-y-2">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      This is your own listing — you can&apos;t buy it. To take it off the market, cancel the listing instead.
+                    </AlertDescription>
+                  </Alert>
+                  <Button
+                    className="w-full h-12 text-base font-semibold rounded-[11px]"
+                    variant="secondary"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              ) : isConnected ? (
                 <div className="space-y-3">
                   <div className="btn-border-animated p-[1px] rounded-xl">
                     <Button
