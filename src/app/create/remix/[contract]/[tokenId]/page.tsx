@@ -137,8 +137,9 @@ export default function CreateRemixPage() {
   // Offer submit (non-owner)
   const [offerLoading, setOfferLoading] = useState(false);
 
-  // Owner mint flow
-  const [pinOpen, setPinOpen] = useState(false);
+  // Owner mint flow — mints directly with the connected wallet (no PIN dialog;
+  // dapp uses injected wallets, not ChipiPay). The previous setPinOpen gate was
+  // orphaned (no PinDialog rendered) so the owner mint never fired.
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -204,14 +205,13 @@ export default function CreateRemixPage() {
 
   // ── Owner: mint flow ───────────────────────────────────────────────────────
 
-  const handleOwnerSubmit = () => {
+  const handleOwnerSubmit = async () => {
     const err = validate();
     if (err) { toast.error(err); return; }
-    setPinOpen(true);
+    await runOwnerMint();
   };
 
-  const handlePin = async (pin: string) => {
-    setPinOpen(false);
+  const runOwnerMint = async () => {
     if (!walletAddress) return;
     setMintError(null);
     setMintStep("uploading");
@@ -628,9 +628,12 @@ export default function CreateRemixPage() {
               </Collapsible>
             </Section>
 
-            {/* Price */}
+            {/* License Fee Offer — non-owner only. The owner mint never lists
+                (handlePin/runOwnerMint has no listing call), so the old
+                "List for Sale (optional)" block was vestigial and removed. */}
+            {!isOwner && (
             <Section
-              title={isOwner ? "List for Sale (optional)" : "License Fee Offer"}
+              title="License Fee Offer"
               icon={<DollarSign className="h-4 w-4" />}
             >
               {!isOwner && (
@@ -676,6 +679,7 @@ export default function CreateRemixPage() {
                 </div>
               )}
             </Section>
+            )}
 
             {/* Submit */}
             <div className="btn-border-animated p-[1px] rounded-xl">
