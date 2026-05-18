@@ -80,7 +80,14 @@ export function GenesisMint({
     setPhase("minting");
     setError(null);
     try {
-      const calldata = [address, ...serializeByteArray(nftUri)];
+      // The mint_item contract requires an ipfs:// or ar:// scheme. The
+      // configured URI env var is a bare CID, so normalize it the same way
+      // medialane-io does before building calldata.
+      const tokenUri =
+        nftUri.startsWith("ipfs://") || nftUri.startsWith("ar://")
+          ? nftUri
+          : `ipfs://${nftUri}`;
+      const calldata = [address, ...serializeByteArray(tokenUri)];
       const hash = await executeAuto([
         { contractAddress: contract, entrypoint: "mint_item", calldata },
       ]);
