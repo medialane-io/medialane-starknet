@@ -9,6 +9,7 @@ import {
   Film,
   Gem,
   Gift,
+  Home,
   LayoutGrid,
   Layers,
   List,
@@ -30,11 +31,20 @@ import {
 } from "lucide-react";
 
 export const NAV_COMMANDS: NavCommandGroup[] = [
+  // Primary navigation — no heading: renders first and emphasized as the
+  // top-level menu. Keep this to the few most important destinations.
+  {
+    items: [
+      { id: "home",        label: "Home",        icon: Home,      href: "/",            keywords: ["frontpage", "start", "homepage", "main"] },
+      { id: "discover",    label: "Discover",    icon: Telescope, href: "/discover",    keywords: ["feed", "explore", "trending"] },
+      { id: "marketplace", label: "Marketplace", icon: Store,     href: "/marketplace", keywords: ["buy", "sell", "trade", "listings", "browse"] },
+      { id: "launchpad",   label: "Launchpad",   icon: Zap,       href: "/launchpad",   keywords: ["start", "launch", "creator", "mint", "create"] },
+      { id: "portfolio",   label: "Portfolio",   icon: Briefcase, href: "/portfolio",   keywords: ["owned", "my nfts", "wallet", "account"] },
+    ],
+  },
   {
     heading: "Navigate",
     items: [
-      { id: "discover", label: "Discover", icon: Telescope, href: "/discover", keywords: ["home", "feed", "explore"] },
-      { id: "marketplace", label: "Marketplace", icon: Store, href: "/marketplace", keywords: ["buy", "sell", "trade", "listings", "browse"] },
       { id: "collections", label: "Collections", icon: LayoutGrid, href: "/collections", keywords: ["nft", "drops", "browse"] },
       { id: "creators", label: "Creators", icon: Users, href: "/creators", keywords: ["artists", "profiles", "community"] },
       { id: "activities", label: "Activity", icon: Activity, href: "/activities", keywords: ["history", "transactions", "feed", "events"] },
@@ -47,7 +57,6 @@ export const NAV_COMMANDS: NavCommandGroup[] = [
   {
     heading: "Create & Mint",
     items: [
-      { id: "launchpad", label: "Launchpad", icon: Zap, href: "/launchpad", keywords: ["start", "launch", "creator", "overview"] },
       { id: "mint-ip-asset", label: "Mint Unique NFT", icon: Plus, href: "/create/asset", keywords: ["mint", "upload", "publish", "token", "erc721", "unique", "original"] },
       { id: "create-collection", label: "Create NFT Collection", icon: LayoutGrid, href: "/create/collection", keywords: ["deploy", "series", "erc721", "collection"] },
       { id: "mint-editions", label: "Mint Limited Edition", icon: Layers, href: "/launchpad/nfteditions", keywords: ["mint", "edition", "erc1155", "copies", "limited"] },
@@ -64,7 +73,6 @@ export const NAV_COMMANDS: NavCommandGroup[] = [
   {
     heading: "Portfolio",
     items: [
-      { id: "portfolio", label: "My Portfolio", icon: Briefcase, href: "/portfolio", keywords: ["owned", "my nfts", "wallet", "account"] },
       { id: "portfolio-assets", label: "My Assets", icon: Gem, href: "/portfolio/assets", keywords: ["owned", "nfts", "tokens", "collected"] },
       { id: "portfolio-listings", label: "My Listings", icon: Tag, href: "/portfolio/listings", keywords: ["sell", "listed", "active listings"] },
       { id: "portfolio-offers", label: "My Offers", icon: List, href: "/portfolio/offers", keywords: ["bids", "made", "sent offers"] },

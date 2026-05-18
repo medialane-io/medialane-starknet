@@ -14,6 +14,7 @@ import { Aurora } from "@/components/ui/aurora";
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
 import { NavAccountPanel } from "@/components/nav-account-panel";
+import { NavThemeToggle } from "@/components/nav-theme-toggle";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
 import { StarkZapWalletProvider } from "@/contexts/starkzap-wallet-context";
@@ -55,7 +56,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
-      <NavCommandMenu commands={NAV_COMMANDS} accountSlot={<NavAccountPanel />} />
+      <NavCommandMenu commands={NAV_COMMANDS} accountSlot={<NavAccountPanel />} footerSlot={<NavThemeToggle />} />
       <div className="fixed top-4 left-4 sm:left-6 lg:left-8 z-50 flex items-center gap-1.5">
         <NavTrigger />
       </div>
