@@ -97,9 +97,22 @@ ThemeProvider
 
 **Constants** (`src/lib/constants.ts`): contract addresses, supported tokens (USDC, USDT, ETH, STRK with decimals), and `AVNU_PAYMASTER_CONFIG`.
 
+## Platform fee — creators fund (added 2026-05-20)
+
+Configurable platform fee (default **1%**) on marketplace + launchpad
+settlement, routed to a single creators-fund address. Defined once in
+`@medialane/sdk` (`buildFeeCall`); the dapp resolves config via `src/lib/fee.ts`
+(`dappFeeConfig`, env: `NEXT_PUBLIC_FEE_FUND_ADDRESS`,
+`NEXT_PUBLIC_FEE_MARKETPLACE_BPS`/`_LAUNCHPAD_BPS`, `NEXT_PUBLIC_FEE_ENABLED`)
+and splices the fee `Call` into `use-marketplace.ts` cart checkout and the
+drop-mint button. Fee is platform-layer only — never on-chain (`00 §12`).
+**Fail-safe:** no fund address ⇒ no fee. The dapp executes atomically
+(`account.execute` via AVNU), so a failed buy reverts the fee too.
+
 ## AVNU Paymaster (Gasless Transactions)
 
-Medialane collects a 1% fee on all marketplace and launchpad transactions, so gas costs are absorbed for users via AVNU.
+Medialane absorbs gas costs for users via AVNU; the 1% platform fee (above) is
+charged on top of the trade.
 
 **Core hook**: `usePaymasterTransaction` (`src/hooks/use-paymaster-transaction.ts`)
 - `executeAuto(calls)` — **primary path**: tries sponsored gas first, silently falls back to `account.execute()` if AVNU rejects. Use this everywhere.
@@ -130,7 +143,8 @@ Medialane collects a 1% fee on all marketplace and launchpad transactions, so ga
 
 ## Directory Structure
 
-- `src/app/` — App Router pages/layouts. Key routes: `/marketplace`, `/launchpad`, `/create`, `/asset`, `/collections`, `/creator`, `/portfolio`, `/provenance`, `/licensing`
+- `src/app/` — App Router pages/layouts. Key routes: `/marketplace`, `/launchpad`, `/create`, `/asset`, `/collections`, `/creator`, `/portfolio`, `/provenance`, `/licensing`, `/airdrop`, `/mint`
+  - `/airdrop` (added 2026-05-20) — Creator's Airdrop **info** page (rewards, tiers, distribution phases, rules); uses `GenesisMint`. `/mint` is the separate, generic current-mint-event page. Two distinct pages — same airdrop content for now, intended to diverge. Do not couple them.
   - `src/app/api/wallet/` — Privy signing endpoints (server-side)
 - `src/components/` — All UI components. `src/components/ui/` contains shadcn/ui base components
   - `src/components/providers.tsx` — PrivyProvider + StarkZapWalletProvider
