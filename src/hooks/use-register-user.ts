@@ -32,7 +32,10 @@ export function useRegisterUser(
   useEffect(() => {
     if (!address || !MEDIALANE_API_KEY) return;
 
-    const sessionKey = `${SESSION_KEY_PREFIX}${address}`;
+    // Key on (address, walletType) so that switching connectors (e.g. Argent → Braavos
+    // pointing at the same address) re-registers and lets the backend upgrade the
+    // walletType. Address alone would skip the second registration.
+    const sessionKey = `${SESSION_KEY_PREFIX}${address}:${walletType ?? "null"}`;
     if (sessionStorage.getItem(sessionKey)) return;
 
     fetch(`${MEDIALANE_BACKEND_URL}/v1/users/register`, {
