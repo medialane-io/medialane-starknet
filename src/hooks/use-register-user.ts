@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-
-type BackendWalletType =
-  | "ARGENT" | "BRAAVOS" | "CARTRIDGE" | "PRIVY" | "INJECTED" | "UNKNOWN";
+import type { ApiWalletType } from "@medialane/sdk";
+import { MEDIALANE_API_KEY } from "@/lib/constants";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 type FrontendWalletType =
   | "argent" | "braavos" | "injected" | "cartridge" | "privy" | null;
 
-function toBackendWalletType(walletType: FrontendWalletType): BackendWalletType {
+function toBackendWalletType(walletType: FrontendWalletType): ApiWalletType {
   if (walletType === "argent") return "ARGENT";
   if (walletType === "braavos") return "BRAAVOS";
   if (walletType === "cartridge") return "CARTRIDGE";
@@ -22,8 +21,9 @@ const SESSION_KEY_PREFIX = "ml_registered_";
 
 /**
  * Silently registers a wallet address with the Medialane backend.
- * Fires once per address per browser session — never adds user-visible friction.
- * Errors are swallowed — registration must never block the user.
+ * Fires once per (address, walletType) per browser session — never adds
+ * user-visible friction. Errors are swallowed — registration must never
+ * block the user.
  */
 export function useRegisterUser(
   address: string | null,
@@ -32,22 +32,19 @@ export function useRegisterUser(
   useEffect(() => {
     if (!address || !MEDIALANE_API_KEY) return;
 
-    const sessionKey = `${SESSION_KEY_PREFIX}${address}`;
+    // Key on (address, walletType) so switching connectors (e.g. Argent → Braavos
+    // on the same smart-account address) re-registers and the backend can upgrade
+    // walletType. Address alone would skip the second registration.
+    const sessionKey = `${SESSION_KEY_PREFIX}${address}:${walletType ?? "null"}`;
     if (sessionStorage.getItem(sessionKey)) return;
 
-    fetch(`${MEDIALANE_BACKEND_URL}/v1/users/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": MEDIALANE_API_KEY,
-      },
-      body: JSON.stringify({
+    getMedialaneClient()
+      .api.registerUser({
         walletAddress: address,
         walletType: toBackendWalletType(walletType),
         appSource: "MEDIALANE_DAPP",
         chain: "STARKNET",
-      }),
-    })
+      })
       .then(() => sessionStorage.setItem(sessionKey, "1"))
       .catch(() => {
         // non-fatal: registration failure never surfaces to the user

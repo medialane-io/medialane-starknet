@@ -11,7 +11,7 @@
   "dependencies": {
     "@avnu/gasless-sdk": "^0.1.8",
     "@hookform/resolvers": "^3",
-    "@medialane/sdk": "0.14.0",
+    "@medialane/sdk": "0.14.2",
     "@medialane/ui": "0.5.4",
     "@privy-io/node": "^0.18.0",
     "@privy-io/react-auth": "^3.25.0",
