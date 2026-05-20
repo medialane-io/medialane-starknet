@@ -47,6 +47,7 @@ import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useWalletSession } from "@/hooks/use-wallet-session";
+import type { WalletSessionType } from "@/lib/wallet-session";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -81,7 +82,7 @@ type WalletBadgeInfo = {
 };
 
 function getWalletBadge(
-  walletType: "injected" | "cartridge" | "privy" | null
+  walletType: WalletSessionType | null
 ): WalletBadgeInfo | null {
   if (walletType === "cartridge") {
     return {
@@ -99,7 +100,14 @@ function getWalletBadge(
       hint: "Gasless",
     };
   }
-  if (walletType === "injected") {
+  // argent / braavos are injected browser wallets — same badge as a generic
+  // injected connection. (Argent rebranded to "Ready"; "argent" here is the
+  // technical wallet-type id, not a user-facing label — the label stays generic.)
+  if (
+    walletType === "injected" ||
+    walletType === "argent" ||
+    walletType === "braavos"
+  ) {
     return {
       label: "Browser Wallet",
       icon: <Wallet className="h-3 w-3" />,
