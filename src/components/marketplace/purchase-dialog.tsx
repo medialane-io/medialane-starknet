@@ -200,11 +200,13 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
 
     try {
       setStep("processing");
+      // For ERC-1155, order.consideration.startAmount is the price PER edition
+      // (listing-dialog labels the field "Price per edition"). fulfill_order
+      // charges price × quantity, so the approval must be price × quantity —
+      // no division by the listing's edition count.
       let considerationAmount = order.consideration.startAmount;
       if (isERC1155 && quantity > 1) {
-        const totalUnits = parseInt(order.offer.startAmount || "1", 10) || 1;
-        const perUnitRaw = BigInt(order.consideration.startAmount) / BigInt(totalUnits);
-        considerationAmount = (perUnitRaw * BigInt(quantity)).toString();
+        considerationAmount = (BigInt(order.consideration.startAmount) * BigInt(quantity)).toString();
       }
 
       const item = {
