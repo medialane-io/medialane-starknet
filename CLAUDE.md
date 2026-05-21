@@ -93,6 +93,8 @@ ThemeProvider
 - Cart checkout: approve per-currency totals + sequential `fulfill_order` signatures, then one atomic multicall
 - Cancellations: sign typed cancellation data → `cancel_order`
 
+**Checkout totals — always via `orderTotal()` (`src/lib/checkout.ts`).** `order.consideration.startAmount` is the price **per edition** for ERC-1155 (the listing form labels it "Price per edition"); `fulfill_order` charges `price × quantity`. `orderTotal(order, quantity)` is the single source of truth for the ERC-20 amount to approve — never divide by `offer.startAmount`. `checkoutCart` takes a typed `CheckoutItem[]`; all three call sites (`purchase-dialog`, `listing-card`, `counter-offers-table`) build items through `orderTotal`. A prior bug under-approved ERC-1155 multi-buys by dividing by the edition count → `ERC20: insufficient allowance`.
+
 **Event/provenance queries** (`src/hooks/use-events.ts`): `useAssetProvenanceEvents` fetches transfer/mint history from the Medialane backend API (`client.api.getTokenHistory()`). Lower-level `useAssetTransferEvents` / `useMyTransferEvents` still use starknet-react `useEvents` for real-time transfer monitoring.
 
 **Constants** (`src/lib/constants.ts`): contract addresses, supported tokens (USDC, USDT, ETH, STRK with decimals), and `AVNU_PAYMASTER_CONFIG`.
