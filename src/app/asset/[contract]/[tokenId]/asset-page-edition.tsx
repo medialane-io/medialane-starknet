@@ -246,28 +246,33 @@ export function AssetPageEdition() {
                   <span className="text-3xl font-bold">{formatDisplayPrice(cheapest.price.formatted)}</span>
                   <HelpIcon content={`${isOwner ? "Your listing" : "Current price"} · Expires ${timeUntil(cheapest.endTime)}`} side="top" />
                 </div>
-                {isOwner ? (
-                  <OwnerActionPanel
-                    myListing={myListing ?? null}
-                    isERC1155={true}
-                    isProcessing={isProcessing}
-                    onCancelListing={handleCancelClick}
-                    onOpenList={() => setListOpen(true)}
-                    onOpenTransfer={() => setTransferOpen(true)}
-                  />
-                ) : isSignedIn ? (
-                  <div className="space-y-2">
-                    <div className="btn-border-animated p-[1px] rounded-xl">
-                      <button className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30" onClick={() => setPurchaseOrder(cheapest)}>
-                        <ShoppingCart className="h-5 w-5" />
-                        Buy Edition
-                      </button>
-                    </div>
-                    <div className="btn-border-animated p-[1px] rounded-xl">
-                      <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-orange" onClick={() => setOfferOpen(true)}>
-                        <HandCoins className="h-4 w-4" />
-                        Make offer
-                      </button>
+                {isSignedIn ? (
+                  <div className="space-y-3">
+                    {/* Owners manage their editions — and can still buy more
+                        from other sellers, since ERC-1155 ownership is shared. */}
+                    {isOwner && (
+                      <OwnerActionPanel
+                        myListing={myListing ?? null}
+                        isERC1155={true}
+                        isProcessing={isProcessing}
+                        onCancelListing={handleCancelClick}
+                        onOpenList={() => setListOpen(true)}
+                        onOpenTransfer={() => setTransferOpen(true)}
+                      />
+                    )}
+                    <div className="space-y-2">
+                      <div className="btn-border-animated p-[1px] rounded-xl">
+                        <button className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30" onClick={() => setPurchaseOrder(cheapest)}>
+                          <ShoppingCart className="h-5 w-5" />
+                          Buy Edition
+                        </button>
+                      </div>
+                      <div className="btn-border-animated p-[1px] rounded-xl">
+                        <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-orange" onClick={() => setOfferOpen(true)}>
+                          <HandCoins className="h-4 w-4" />
+                          Make offer
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
