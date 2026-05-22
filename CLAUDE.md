@@ -147,6 +147,7 @@ charged on top of the trade.
 
 - `src/app/` — App Router pages/layouts. Key routes: `/marketplace`, `/launchpad`, `/create`, `/asset`, `/collections`, `/creator`, `/portfolio`, `/provenance`, `/licensing`, `/airdrop`, `/mint`
   - `/airdrop` (added 2026-05-20) — Creator's Airdrop **info** page (rewards, tiers, distribution phases, rules); uses `GenesisMint`. `/mint` is the separate, generic current-mint-event page. Two distinct pages — same airdrop content for now, intended to diverge. Do not couple them.
+  - `/` — Homepage (`src/components/home/`): hero slider, activity ticker, trending collections, new-on-marketplace, `CreatorAirdropBanner`, and the Launchpad `AirdropSection` service cards. At parity with medialane.io as of 2026-05-22. Kept deliberately lean for load speed — community/activity feeds live on the discover page, not the homepage.
   - `src/app/api/wallet/` — Privy signing endpoints (server-side)
 - `src/components/` — All UI components. `src/components/ui/` contains shadcn/ui base components
   - `src/components/providers.tsx` — PrivyProvider + StarkZapWalletProvider
@@ -189,6 +190,34 @@ Multi-gateway fallback: Pinata → ipfs.io → Cloudflare → dweb.link. 24h loc
 - Token metadata: `{ name, description, image, external_url, attributes: [{ trait_type, value }] }`
 - Collection metadata: `{ name, description, image, external_link }`
 - `IPFSMetadata` interface in `src/utils/ipfs.ts` includes all standard OpenSea collection and token fields
+
+---
+
+## Asset Detail Pages (modernized 2026-05-22)
+
+`/asset/[contract]/[tokenId]` resolves the asset type and renders one of four
+variant pages, all built on a shared component set ported to match medialane.io.
+
+**Dispatcher:** `asset-page-client.tsx` → `asset-page-{standard,edition,drop,pop}.tsx`
+- `standard` — ERC-721 IP asset (license, remix, full marketplace)
+- `edition` — ERC-1155 multi-edition (edition stats, holders grid)
+- `drop` — Collection Drop (drop info panel + primary `CollectionDropMintButton` + secondary market)
+- `pop` — POP soulbound credential (claim-only, no marketplace)
+
+**Shared modules** (all under `src/app/asset/[contract]/[tokenId]/`):
+
+| File | Exports |
+|---|---|
+| `asset-shared.tsx` | `AssetToken` type (extends SDK `ApiToken` with `balances`/`isHidden`), `AssetAtmosphere` (blurred backdrop), `useAssetMarketState` (listing/bid/`cheapest`/ownership + metadata derivation) |
+| `asset-marketplace-dialogs.tsx` | `useAssetMarketplaceDialogState` (all dialog state + `handleCancelClick`) + `AssetMarketplaceDialogs` (buy/list/offer/transfer/cancel) |
+| `asset-marketplace-panel.tsx` | `AssetMarketplacePanel` — price + `ActionButton` grid. An ERC-1155 owner still sees Buy/Make-offer (`canBuyMore`) since edition ownership is shared |
+| `asset-top-sections.tsx` | `AssetMediaColumn`, `AssetHeaderBlock`, `buildEditionStats` |
+| `asset-side-panels.tsx` | `AssetOwnersPanel`, `AssetLinksRow`, `AssetCommentsDialog` |
+| `asset-overview-content.tsx` | `AssetOverviewContent` — license summary + attributes grid |
+
+Each page keeps the dapp's own wallet hooks (`useWallet`, `useMarketplace`) and
+dialog set — the shared modules are presentation + derivation only. Use the
+`AssetToken` type for page-level token state; never `(token as any)`.
 
 ---
 
