@@ -5,48 +5,37 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ChevronRight, ExternalLink, HandCoins,
-  ShoppingCart, X,
-  Flag, Layers, Users, TrendingUp,
-} from "lucide-react";
+import { ChevronRight, Layers } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
 import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { OwnerActionPanel } from "@/components/asset/owner-action-panel";
-import { ipfsToHttp, formatDisplayPrice, timeUntil, checkIsOwner } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { ipfsToHttp, checkIsOwner } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CurrencyIcon } from "@/components/shared/currency-icon";
-import { AddressDisplay } from "@/components/shared/address-display";
-import { IpTypeBadge } from "@/components/shared/ip-type-badge";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { OfferDialog } from "@/components/marketplace/offer-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
-import { ShareButton } from "@/components/shared/share-button";
-import { ReportDialog } from "@/components/report-dialog";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import { useDominantColor } from "@/hooks/use-dominant-color";
-import { HelpIcon } from "@/components/ui/help-icon";
 import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CommentsSection } from "@/components/asset/comments-section";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
+import { AssetMarketplacePanel } from "./asset-marketplace-panel";
+import { AssetOwnersPanel, AssetLinksRow } from "./asset-side-panels";
+import { AssetOverviewContent } from "./asset-overview-content";
+import { AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "./asset-top-sections";
 import { LICENSE_TRAIT_TYPES } from "@/types/ip";
 import type { IPType } from "@/types/ip";
 import { IP_TEMPLATES } from "@/lib/ip-templates";
-import { IPTypeDisplay } from "@/components/ip-type-display";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
-import { toast } from "sonner";
-import { ConnectWallet } from "@/components/ConnectWallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 
 export function AssetPageEdition() {
@@ -88,7 +77,7 @@ export function AssetPageEdition() {
 
   const isOwner = checkIsOwner(token as any, walletAddress);
   const myListing = isOwner
-    ? activeListings.find((l) => l.offerer.toLowerCase() === walletAddress!.toLowerCase())
+    ? activeListings.find((l) => l.offerer.toLowerCase() === walletAddress!.toLowerCase()) ?? null
     : null;
 
   const handleCancelClick = (order: ApiOrder) => {
@@ -147,11 +136,9 @@ export function AssetPageEdition() {
     !LICENSE_TRAIT_TYPES.has(a.trait_type ?? "") && !activeTemplateKeys.has(a.trait_type ?? "");
 
   const balances = (token as any).balances as { owner: string; amount: string }[] | undefined;
-  const uniqueHolders = balances?.length ?? 0;
-  const totalEditions = balances?.reduce((sum, b) => sum + parseInt(b.amount, 10), 0) ?? 0;
-  const floorListing = cheapest
-    ? `${formatDisplayPrice(cheapest.price.formatted)} ${cheapest.price.currency ?? ""}`
-    : null;
+  const holders = balances ?? [];
+  const uniqueHolders = holders.length;
+  const totalEditions = holders.reduce((sum, b) => sum + parseInt(b.amount, 10), 0);
 
   return (
     <div
@@ -178,22 +165,19 @@ export function AssetPageEdition() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
-          <motion.div
-            initial={shouldReduce ? false : { scale: 1.0, opacity: 0 }}
-            animate={{ scale: 1.02, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="overflow-hidden rounded-xl lg:sticky lg:top-16"
-          >
-            <div className="rounded-2xl overflow-hidden border border-border bg-muted">
-              {image && !imgError ? (
-                <Image src={image} alt={name} width={0} height={0} sizes="(max-width: 1024px) 100vw, 66vw" className="w-full h-auto" onError={() => setImgError(true)} priority />
-              ) : (
-                <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-violet-500/10 to-purple-500/10">
-                  <Layers className="h-16 w-16 text-violet-500/30" />
-                </div>
-              )}
-            </div>
-          </motion.div>
+          <AssetMediaColumn
+            shouldReduce={Boolean(shouldReduce)}
+            image={image}
+            imageAlt={name}
+            imgError={imgError}
+            onImageError={() => setImgError(true)}
+            fallback={(
+              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-violet-500/20 to-purple-600/20">
+                <Layers className="h-24 w-24 text-violet-500/40" />
+              </div>
+            )}
+            stats={buildEditionStats(totalEditions, uniqueHolders)}
+          />
 
           <motion.div
             initial={shouldReduce ? false : { opacity: 0, y: 16 }}
@@ -201,150 +185,41 @@ export function AssetPageEdition() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-6"
           >
-            <div>
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                {token.metadata?.ipType && <IpTypeBadge ipType={token.metadata.ipType} size="md" />}
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-500">
-                  <Layers className="h-3 w-3" />
-                  Multi-edition
-                </span>
-              </div>
-              <h1 className="text-3xl lg:text-5xl font-bold">{name}</h1>
-              {description && <p className="text-sm text-muted-foreground leading-relaxed mt-1">{description}</p>}
-            </div>
+            <AssetHeaderBlock
+              name={name}
+              description={description}
+              ipType={token.metadata?.ipType}
+              showMultiEditionBadge={true}
+            />
 
-            {/* Edition stats */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-border bg-muted/20 p-3 text-center">
-                <p className="text-xl font-black">{totalEditions}</p>
-                <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mt-0.5">
-                  <Layers className="h-3 w-3" />
-                  editions
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-muted/20 p-3 text-center">
-                <p className="text-xl font-black">{uniqueHolders}</p>
-                <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mt-0.5">
-                  <Users className="h-3 w-3" />
-                  holders
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-muted/20 p-3 text-center">
-                <p className="text-sm font-black truncate">{floorListing ?? "—"}</p>
-                <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mt-0.5">
-                  <TrendingUp className="h-3 w-3" />
-                  floor
-                </div>
-              </div>
-            </div>
+            <AssetMarketplacePanel
+              cheapest={cheapest}
+              isOwner={isOwner}
+              isSignedIn={isSignedIn}
+              isProcessing={isProcessing}
+              isERC1155
+              myListing={myListing}
+              activeBids={activeBids}
+              walletAddress={walletAddress}
+              onCancelClick={handleCancelClick}
+              onAcceptBid={handleAcceptClick}
+              onOpenListing={() => setListOpen(true)}
+              onOpenTransfer={() => setTransferOpen(true)}
+              onOpenPurchase={setPurchaseOrder}
+              onOpenOffer={() => setOfferOpen(true)}
+            />
 
-            {/* Marketplace action box */}
-            {cheapest ? (
-              <div className="rounded-2xl border border-border p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                  <CurrencyIcon symbol={cheapest.price.currency ?? ""} size={22} />
-                  <span className="text-3xl font-bold">{formatDisplayPrice(cheapest.price.formatted)}</span>
-                  <HelpIcon content={`${isOwner ? "Your listing" : "Current price"} · Expires ${timeUntil(cheapest.endTime)}`} side="top" />
-                </div>
-                {isSignedIn ? (
-                  <div className="space-y-3">
-                    {/* Owners manage their editions — and can still buy more
-                        from other sellers, since ERC-1155 ownership is shared. */}
-                    {isOwner && (
-                      <OwnerActionPanel
-                        myListing={myListing ?? null}
-                        isERC1155={true}
-                        isProcessing={isProcessing}
-                        onCancelListing={handleCancelClick}
-                        onOpenList={() => setListOpen(true)}
-                        onOpenTransfer={() => setTransferOpen(true)}
-                      />
-                    )}
-                    <div className="space-y-2">
-                      <div className="btn-border-animated p-[1px] rounded-xl">
-                        <button className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30" onClick={() => setPurchaseOrder(cheapest)}>
-                          <ShoppingCart className="h-5 w-5" />
-                          Buy Edition
-                        </button>
-                      </div>
-                      <div className="btn-border-animated p-[1px] rounded-xl">
-                        <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-orange" onClick={() => setOfferOpen(true)}>
-                          <HandCoins className="h-4 w-4" />
-                          Make offer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <ConnectWallet
-                    label="Connect wallet to trade"
-                    className="w-full h-12 text-base bg-primary text-primary-foreground hover:bg-primary/90"
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border p-5 space-y-3">
-                <p className="text-muted-foreground text-sm">Not listed for sale.</p>
-                {isOwner && (
-                  <OwnerActionPanel
-                    myListing={null}
-                    isERC1155={true}
-                    isProcessing={isProcessing}
-                    onCancelListing={handleCancelClick}
-                    onOpenList={() => setListOpen(true)}
-                    onOpenTransfer={() => setTransferOpen(true)}
-                  />
-                )}
-                {!isOwner && isSignedIn && (
-                  <div className="btn-border-animated p-[1px] rounded-xl">
-                    <button className="w-full h-10 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-orange" onClick={() => setOfferOpen(true)}>
-                      <HandCoins className="h-4 w-4" />
-                      Make offer
-                    </button>
-                  </div>
-                )}
-                {!isOwner && !isSignedIn && (
-                  <ConnectWallet
-                    label="Connect wallet to make an offer"
-                    className="w-full h-10 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                  />
-                )}
-              </div>
-            )}
+            <AssetOwnersPanel balances={holders} maxVisible={8} />
 
-            {/* Holders grid */}
-            {balances && balances.length > 0 && (
-              <div className="rounded-xl border border-border p-4 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {uniqueHolders === 1 ? "Owner" : `${uniqueHolders} holders`}
-                </p>
-                <div className="space-y-2">
-                  {balances.slice(0, 8).map((b) => (
-                    <div key={b.owner} className="flex items-center justify-between text-sm">
-                      <Link href={`/creator/${b.owner}`} className="hover:text-primary transition-colors font-medium">
-                        <AddressDisplay address={b.owner} chars={6} showCopy={false} />
-                      </Link>
-                      <span className="text-muted-foreground text-xs">× {b.amount}</span>
-                    </div>
-                  ))}
-                  {balances.length > 8 && (
-                    <p className="text-xs text-muted-foreground">+{balances.length - 8} more holders</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3 text-sm">
-              <a href={`${EXPLORER_URL}/contract/${token.contractAddress}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
-                Contract <ExternalLink className="h-3 w-3" />
-              </a>
-              <ShareButton title={name ?? `Token #${token?.tokenId}`} variant="ghost" size="icon" />
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => setReportOpen(true)} title="Report">
-                <Flag className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <ReportDialog target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name: name ?? undefined }} open={reportOpen} onOpenChange={setReportOpen} />
+            <AssetLinksRow
+              contractHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+              collectionHref={`/collections/${contract}`}
+              collection={collection}
+              shareTitle={name}
+              reportTarget={{ type: "TOKEN", contract, tokenId, name }}
+              reportOpen={reportOpen}
+              onReportOpenChange={setReportOpen}
+            />
           </motion.div>
         </div>
 
@@ -359,23 +234,12 @@ export function AssetPageEdition() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-4 space-y-6">
-            {hasTemplateData && (
-              <IPTypeDisplay attributes={token.metadata?.attributes as { trait_type?: string; value?: string }[] | null} />
-            )}
-            {attributes.filter((a) => isDisplayAttr(a)).length > 0 && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Attributes</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {attributes.filter((a) => isDisplayAttr(a)).map((attr, i) => (
-                    <div key={i} className="rounded-lg border border-border bg-muted/20 p-3 text-center overflow-hidden">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{attr.trait_type ?? "Trait"}</p>
-                      <p className="text-sm font-semibold mt-0.5 truncate">{attr.value ?? "—"}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <TabsContent value="overview">
+            <AssetOverviewContent
+              attributes={attributes}
+              hasTemplateData={hasTemplateData}
+              isDisplayAttr={isDisplayAttr}
+            />
           </TabsContent>
 
           <TabsContent value="markets">
