@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -54,6 +54,20 @@ function EventCard() {
 export function BrMintContent() {
   const { isConnected } = useWallet();
   const headerConnectRef = useRef<HTMLDivElement | null>(null);
+
+  // Google Ads conversion tracking — page-view goal for the /br/mint campaign.
+  // gtag is loaded globally in app/layout.tsx; we just fire the conversion
+  // event once on mount.
+  useEffect(() => {
+    const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+    if (typeof gtag === "function") {
+      gtag("event", "conversion", {
+        send_to: "AW-18112836088/WZg6CNHh6rEcEPjj77xD",
+        value: 0.1,
+        currency: "BRL",
+      });
+    }
+  }, []);
 
   const openWalletPicker = () => {
     const btn = headerConnectRef.current?.querySelector("button");
