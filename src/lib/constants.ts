@@ -33,11 +33,28 @@ export const STARKNET_RPC_URL =
   process.env.NEXT_PUBLIC_STARKNET_RPC_URL ||
   process.env.NEXT_PUBLIC_RPC_URL || "";
 
-export const MEDIALANE_BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL || "http://localhost:3001";
+/**
+ * `MEDIALANE_BACKEND_URL` + `MEDIALANE_API_KEY` are **environment-aware**:
+ *
+ * - **Server-side** (RSC, BFF routes, sitemap): real backend URL + real key.
+ * - **Browser**: `/api/proxy` + empty string. The same-origin proxy
+ *   (`src/app/api/proxy/v1/[...path]/route.ts`) injects the real key
+ *   server-side. The browser bundle never sees the key.
+ *
+ * Replaces the legacy `NEXT_PUBLIC_MEDIALANE_API_KEY` pattern that shipped
+ * the key in the JS bundle. Existing call sites that do
+ * `${MEDIALANE_BACKEND_URL}/v1/...` with `x-api-key: MEDIALANE_API_KEY`
+ * work unchanged — the empty header is stripped and replaced by the proxy.
+ */
+const isServer = typeof window === "undefined";
 
-export const MEDIALANE_API_KEY =
-  process.env.NEXT_PUBLIC_MEDIALANE_API_KEY || "";
+export const MEDIALANE_BACKEND_URL = isServer
+  ? (process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL || "http://localhost:3001")
+  : "/api/proxy";
+
+export const MEDIALANE_API_KEY = isServer
+  ? (process.env.MEDIALANE_API_KEY || "")
+  : "";
 
 export const PINATA_GATEWAY =
   process.env.NEXT_PUBLIC_PINATA_GATEWAY ||

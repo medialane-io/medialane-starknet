@@ -36,8 +36,12 @@ NEXT_PUBLIC_COLLECTION_1155_CONTRACT  # ERC-1155 collection registry
 NEXT_PUBLIC_NFTCOMMENTS_CONTRACT      # NFT comments contract
 
 # Medialane Backend API (indexed on-chain data — used for all reads)
-NEXT_PUBLIC_MEDIALANE_BACKEND_URL     # Backend base URL (default: http://localhost:3001)
-NEXT_PUBLIC_MEDIALANE_API_KEY         # API key for authenticated endpoints
+NEXT_PUBLIC_MEDIALANE_BACKEND_URL     # Backend base URL (default: http://localhost:3001) — public, used to construct URLs
+MEDIALANE_API_KEY                     # Server-only API key. The BFF proxy at
+                                      # /api/proxy/v1/[...path] injects this on
+                                      # outbound requests. NEVER set
+                                      # NEXT_PUBLIC_MEDIALANE_API_KEY (would
+                                      # ship the key in the browser bundle).
 
 # IPFS
 NEXT_PUBLIC_GATEWAY_URL               # Pinata IPFS gateway URL
