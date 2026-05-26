@@ -30,6 +30,9 @@ import {
   MARKETPLACE_721_CONTRACT,
   MARKETPLACE_1155_CONTRACT,
   NFTCOMMENTS_CONTRACT,
+  LAUNCH_MINT_CONTRACT,
+  MINT_CONTRACT,
+  BR_MINT_CONTRACT,
 } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
@@ -47,27 +50,38 @@ import {
 // an additional approval prompt — known UX gap, tracked as the next item
 // after this PR.
 
-export const CARTRIDGE_POLICIES = [
-  // ── MIP collection registry (ERC-721) ─────────────────────────────────
-  { target: COLLECTION_721_CONTRACT, method: "mint" },
-  { target: COLLECTION_721_CONTRACT, method: "create_collection" },
-  { target: COLLECTION_721_CONTRACT, method: "transfer_token" },
-  { target: COLLECTION_721_CONTRACT, method: "transfer_collection_ownership" },
-  // ── IP-Programmable ERC-1155 factory ──────────────────────────────────
-  { target: COLLECTION_1155_CONTRACT, method: "deploy_collection" },
-  // ── Marketplace contracts ─────────────────────────────────────────────
-  { target: MARKETPLACE_721_CONTRACT, method: "register_order" },
-  { target: MARKETPLACE_721_CONTRACT, method: "fulfill_order" },
-  { target: MARKETPLACE_721_CONTRACT, method: "cancel_order" },
-  { target: MARKETPLACE_1155_CONTRACT, method: "register_order" },
-  { target: MARKETPLACE_1155_CONTRACT, method: "fulfill_order" },
-  { target: MARKETPLACE_1155_CONTRACT, method: "cancel_order" },
-  // ── POP / Drop factories (collection creation) ────────────────────────
-  { target: POP_FACTORY_CONTRACT_MAINNET, method: "create_collection" },
-  { target: DROP_FACTORY_CONTRACT_MAINNET, method: "create_drop" },
-  // ── NFT comments ──────────────────────────────────────────────────────
-  { target: NFTCOMMENTS_CONTRACT, method: "add_comment" },
-] as { target: string; method: string }[];
+export const CARTRIDGE_POLICIES = (
+  [
+    // ── MIP collection registry (ERC-721) ───────────────────────────────
+    { target: COLLECTION_721_CONTRACT, method: "mint" },
+    { target: COLLECTION_721_CONTRACT, method: "create_collection" },
+    { target: COLLECTION_721_CONTRACT, method: "transfer_token" },
+    { target: COLLECTION_721_CONTRACT, method: "transfer_collection_ownership" },
+    // ── IP-Programmable ERC-1155 factory ────────────────────────────────
+    { target: COLLECTION_1155_CONTRACT, method: "deploy_collection" },
+    // ── Marketplace contracts ───────────────────────────────────────────
+    { target: MARKETPLACE_721_CONTRACT, method: "register_order" },
+    { target: MARKETPLACE_721_CONTRACT, method: "fulfill_order" },
+    { target: MARKETPLACE_721_CONTRACT, method: "cancel_order" },
+    { target: MARKETPLACE_1155_CONTRACT, method: "register_order" },
+    { target: MARKETPLACE_1155_CONTRACT, method: "fulfill_order" },
+    { target: MARKETPLACE_1155_CONTRACT, method: "cancel_order" },
+    // ── POP / Drop factories (collection creation) ──────────────────────
+    { target: POP_FACTORY_CONTRACT_MAINNET, method: "create_collection" },
+    { target: DROP_FACTORY_CONTRACT_MAINNET, method: "create_drop" },
+    // ── NFT comments ────────────────────────────────────────────────────
+    { target: NFTCOMMENTS_CONTRACT, method: "add_comment" },
+    // ── Static airdrop / launch mint contracts ──────────────────────────
+    // GenesisMint (used by /mint, /airdrop, /br/mint, /launch via
+    // launch-mint.tsx) calls mint_item on these fixed env-driven targets.
+    // Each may be unconfigured (empty string) in environments without
+    // the campaign — `.filter(Boolean)` below drops those entries so we
+    // never send `target: ""` to the Cartridge SDK.
+    { target: LAUNCH_MINT_CONTRACT, method: "mint_item" },
+    { target: MINT_CONTRACT, method: "mint_item" },
+    { target: BR_MINT_CONTRACT, method: "mint_item" },
+  ] as { target: string; method: string }[]
+).filter((p) => p.target);
 
 // ---------------------------------------------------------------------------
 // Context types
