@@ -155,7 +155,6 @@ export function useIpfsUpload() {
 
   const uploadImageFromUrl = useCallback(
     async (imageUrl: string, metadata: any, imageKey: string = "image") => {
-      console.log("uploadImageFromUrl called with:", { imageUrl, imageKey });
       setLoading(true);
       setError(null);
       setProgress(0);
@@ -175,7 +174,6 @@ export function useIpfsUpload() {
         // Only call server API if it's a full URL (not a relative path like /placeholder.svg)
         if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
           // Call server-side API to fetch and upload image
-          console.log("Calling server API to upload image from URL...");
           const response = await fetch("/api/upload-image-from-url", {
             method: "POST",
             headers: {
@@ -195,11 +193,8 @@ export function useIpfsUpload() {
           }
 
           const uploadResult = await response.json();
-          console.log("Server upload result:", uploadResult);
           uploadedFileUrl = uploadResult.ipfsUrl;
           setFileUrl(uploadedFileUrl);
-        } else {
-          console.log("Using relative URL as-is:", imageUrl);
         }
 
         // Upload metadata with image URL
@@ -209,8 +204,6 @@ export function useIpfsUpload() {
           [imageKey]: uploadedFileUrl,
           ...metadata,
         };
-
-        console.log("Uploading metadata with image URL:", metadataWithImage);
 
         const result = await uploadMetadataToIpfs(metadataWithImage);
 
