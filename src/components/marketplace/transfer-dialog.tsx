@@ -52,6 +52,9 @@ interface TransferDialogProps {
   contractAddress: string;
   tokenId: string;
   tokenName?: string;
+  /** ERC-721 default; pass "ERC1155" for edition assets so the hook
+   *  routes through `safe_transfer_from` instead of `transfer_from`. */
+  tokenStandard?: "ERC721" | "ERC1155";
   onSuccess?: () => void;
   hasActiveListing?: boolean;
 }
@@ -62,6 +65,7 @@ export function TransferDialog({
   contractAddress,
   tokenId,
   tokenName,
+  tokenStandard,
   onSuccess,
   hasActiveListing = false,
 }: TransferDialogProps) {
@@ -96,7 +100,12 @@ export function TransferDialog({
       }
     }
     setPendingAddress(values.toAddress);
-    await transferToken({ contractAddress, tokenId, toAddress: values.toAddress });
+    await transferToken({
+      contractAddress,
+      tokenId,
+      toAddress: values.toAddress,
+      tokenStandard,
+    });
   };
 
   const handleClose = (v: boolean) => {

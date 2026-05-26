@@ -117,6 +117,7 @@ export function AssetMarketplaceDialogs({
         contractAddress={contract}
         tokenId={tokenId}
         tokenName={tokenName}
+        tokenStandard={tokenStandard === "ERC1155" ? "ERC1155" : "ERC721"}
         hasActiveListing={hasActiveListing}
         onSuccess={mutateListings}
       />

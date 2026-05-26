@@ -228,6 +228,7 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
           contractAddress={transferToken.contractAddress}
           tokenId={transferToken.tokenId}
           tokenName={transferToken.metadata?.name ?? undefined}
+          tokenStandard={(transferToken.standard ?? collection?.standard) === "ERC1155" ? "ERC1155" : "ERC721"}
           hasActiveListing={!!transferToken.activeOrders?.[0]}
           onSuccess={() => { setTransferOpen(false); setTransferToken(null); setPage(1); setAllTokens([]); mutate(); }}
         />

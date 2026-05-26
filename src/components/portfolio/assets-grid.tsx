@@ -150,6 +150,7 @@ export function AssetsGrid({ address }: AssetsGridProps) {
           contractAddress={transferToken.contractAddress}
           tokenId={transferToken.tokenId}
           tokenName={transferToken.metadata?.name ?? undefined}
+          tokenStandard={transferToken.standard === "ERC1155" ? "ERC1155" : "ERC721"}
           hasActiveListing={!!transferToken.activeOrders?.[0]}
           onSuccess={handleSuccess}
         />

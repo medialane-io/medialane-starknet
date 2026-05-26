@@ -11,6 +11,17 @@ export interface TransferInput {
   contractAddress: string; // NFT contract address
   tokenId: string;         // Token ID — decimal ("42") or hex ("0x2a")
   toAddress: string;       // Recipient Starknet address
+  /** ERC-721 uses `transfer_from(from, to, id)`; ERC-1155 needs
+   *  `safe_transfer_from(from, to, id, value, data)`. Without this hint,
+   *  ERC-1155 transfers silently failed with the wrong entrypoint. */
+  tokenStandard?: "ERC721" | "ERC1155";
+}
+
+/** Returns true if addr is a valid non-zero Starknet address. */
+function isValidStarknetAddress(addr: string): boolean {
+  if (!/^0x[0-9a-fA-F]{1,64}$/.test(addr)) return false;
+  // Reject 0x0 (and any all-zeros padding).
+  return addr.replace(/^0x0*/, "").length > 0;
 }
 
 /**
@@ -59,13 +70,35 @@ export function useTransfer() {
       setTxStatus("submitting");
 
       try {
+        // Defensive validation — Zod on the dialog form catches most cases,
+        // but useTransfer is callable from anywhere; protect the calldata
+        // builder from malformed input.
+        if (!isValidStarknetAddress(input.toAddress)) {
+          throw new Error("Invalid recipient address.");
+        }
+        if (!isValidStarknetAddress(input.contractAddress)) {
+          throw new Error("Invalid token contract address.");
+        }
+
         const [tokenIdLow, tokenIdHigh] = encodeTokenId(input.tokenId);
 
-        const call: Call = {
-          contractAddress: input.contractAddress,
-          entrypoint: "transfer_from",
-          calldata: [address, input.toAddress, tokenIdLow, tokenIdHigh],
-        };
+        // Branch on token standard. ERC-721 uses transfer_from(from, to, id);
+        // ERC-1155 uses safe_transfer_from(from, to, id, value, data). The
+        // value defaults to 1 (single-unit transfer) and data is an empty
+        // Array<felt252> (`[0]` for length=0). Without this branch every
+        // ERC-1155 transfer fired the wrong entrypoint and silently failed.
+        const isERC1155 = input.tokenStandard === "ERC1155";
+        const call: Call = isERC1155
+          ? {
+              contractAddress: input.contractAddress,
+              entrypoint: "safe_transfer_from",
+              calldata: [address, input.toAddress, tokenIdLow, tokenIdHigh, "1", "0", "0"],
+            }
+          : {
+              contractAddress: input.contractAddress,
+              entrypoint: "transfer_from",
+              calldata: [address, input.toAddress, tokenIdLow, tokenIdHigh],
+            };
 
         const hash = await execute([call]);
         setTxHash(hash);
