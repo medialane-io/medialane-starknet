@@ -35,14 +35,19 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       // ── Docs ──────────────────────────────────────────────────────────────
+      // Knowledge hub lives on docs.medialane.io since the 2026-05 docs
+      // migration; redirect any stale /docs paths there. Direct in-app
+      // links should target docs.medialane.io as plain <a> so Next does
+      // not attempt an RSC prefetch (which would CORS-reject the
+      // cross-origin fetch).
       {
         source: "/docs",
-        destination: "https://www.medialane.io/docs",
+        destination: "https://docs.medialane.io/docs",
         permanent: true,
       },
       {
         source: "/docs/:path*",
-        destination: "https://www.medialane.io/docs/:path*",
+        destination: "https://docs.medialane.io/docs/:path*",
         permanent: true,
       },
       // ── ip1155 → nfteditions ──────────────────────────────────────────────
@@ -57,14 +62,15 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       // ── Learn ─────────────────────────────────────────────────────────────
+      // Same as /docs above — learn content moved to docs.medialane.io.
       {
         source: "/learn",
-        destination: "https://www.medialane.io/learn",
+        destination: "https://docs.medialane.io/learn",
         permanent: true,
       },
       {
         source: "/learn/:path*",
-        destination: "https://www.medialane.io/learn/:path*",
+        destination: "https://docs.medialane.io/learn/:path*",
         permanent: true,
       },
     ];

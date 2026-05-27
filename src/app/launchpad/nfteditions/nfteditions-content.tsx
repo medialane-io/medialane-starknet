@@ -182,9 +182,16 @@ export function NFTEditionsContent() {
                 New collection
               </Link>
               <Button variant="outline" size="sm" asChild>
-                <Link href="/learn/ip-collection-1155">
+                {/* Plain <a> + absolute URL to docs.medialane.io — Next/Link
+                    with a relative /learn path would trigger an RSC prefetch
+                    that then 301s cross-origin and CORS-rejects. */}
+                <a
+                  href="https://docs.medialane.io/learn/ip-collection-1155"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Learn more <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                </Link>
+                </a>
               </Button>
             </div>
           </FadeIn>
