@@ -79,7 +79,6 @@ export function NavAccountPanel() {
     key: string;
     label: string;
     icon: React.ReactNode;
-    recommended?: boolean;
     onClick: () => void;
     isLoading: boolean;
   };
@@ -92,7 +91,6 @@ export function NavAccountPanel() {
       key: "privy",
       label: "Email or social",
       icon: <Mail className="h-5 w-5" />,
-      recommended: true,
       onClick: () => void connectStarkZap("privy"),
       isLoading: isConnecting && !connectingId,
     },
@@ -134,11 +132,6 @@ export function NavAccountPanel() {
               card.isLoading ? "ring-1 ring-primary/40" : ""
             }`}
           >
-            {card.recommended && (
-              <span className="absolute right-2 top-2 rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
-                Recommended
-              </span>
-            )}
             <span className="text-foreground/80">
               {card.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : card.icon}
             </span>
