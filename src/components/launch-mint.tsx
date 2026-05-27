@@ -4,8 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import Image from "next/image";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { byteArray, CallData } from "starknet";
 import {
@@ -96,18 +95,6 @@ export function LaunchMint() {
   const { execute: executeTransaction, status, statusMessage, error: txError, reset } = useTx();
   const { getValidToken } = useSiwsToken();
 
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
 
   // Mint flow
   const [mintStep, setMintStep] = useState<MintStep>("ready");
@@ -230,14 +217,7 @@ export function LaunchMint() {
                 <PerksGrid />
 
                 <div className="space-y-2.5 pt-1">
-                  <Button
-                    size="lg"
-                    className="w-full rounded-xl h-12 text-base font-medium bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 shadow-lg shadow-primary/25"
-                    onClick={handleConnectWallet}
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Connect Wallet to Mint
-                  </Button>
+                  <ConnectWallet label="Connect Wallet to Mint" className="w-full" />
                 </div>
               </div>
             )}
@@ -261,14 +241,7 @@ export function LaunchMint() {
                   </p>
                 </div>
 
-                <Button
-                  size="lg"
-                  className="w-full rounded-xl h-12 font-bold gap-2 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 shadow-lg shadow-primary/25"
-                  onClick={handleConnectWallet}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Connect Wallet to Mint
-                </Button>
+                <ConnectWallet label="Connect Wallet to Mint" className="w-full" />
 
                 <p className="text-xs text-center text-muted-foreground">
                   Medialane uses wallet connection and SIWS. No separate app sign-up is required.

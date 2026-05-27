@@ -9,8 +9,7 @@ import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
 import { getListableTokens } from "@medialane/sdk";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 
 interface CollectionDropMintButtonProps {
   collectionAddress: string;
@@ -43,12 +42,6 @@ export function CollectionDropMintButton({
   );
   const { executeAuto, isLoading: isProcessing } = usePaymasterTransaction();
 
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
-
   const price = getPriceBigInt(conditions);
   const isPaid = price > 0n;
 
@@ -62,17 +55,9 @@ export function CollectionDropMintButton({
     ? `${Number(price * 10000n / BigInt(10 ** paymentToken.decimals)) / 10000} ${paymentToken.symbol}`
     : null;
 
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
-
   const handleMint = async () => {
     if (!isConnected) {
-      handleConnectWallet();
+      toast.error("Connect your wallet first");
       return;
     }
 
@@ -119,16 +104,7 @@ export function CollectionDropMintButton({
   };
 
   if (!isConnected) {
-    return (
-      <Button
-        size="lg"
-        className="w-full gap-1.5 bg-orange-600 hover:bg-orange-700 text-white"
-        onClick={handleConnectWallet}
-      >
-        <Package className="h-4 w-4" />
-        Connect wallet to mint
-      </Button>
-    );
+    return <ConnectWallet label="Connect wallet to mint" className="w-full" />;
   }
 
   if (isLoading) {

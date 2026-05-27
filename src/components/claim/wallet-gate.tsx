@@ -1,9 +1,7 @@
 "use client";
 
 import { useWallet } from "@/hooks/use-wallet";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
-import { Button } from "@/components/ui/button";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { Lock } from "lucide-react";
 
 interface WalletGateProps {
@@ -12,19 +10,6 @@ interface WalletGateProps {
 
 export function WalletGate({ children }: WalletGateProps) {
   const { isConnected } = useWallet();
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
-
-  const handleConnect = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
 
   if (isConnected) return <>{children}</>;
 
@@ -40,9 +25,7 @@ export function WalletGate({ children }: WalletGateProps) {
           <Lock className="h-5 w-5 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-center px-4">Connect wallet to access this claim</p>
-        <Button onClick={handleConnect} className="bg-violet-600 hover:bg-violet-700 text-white">
-          Connect wallet
-        </Button>
+        <ConnectWallet label="Connect wallet" />
       </div>
     </div>
   );

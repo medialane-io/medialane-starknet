@@ -20,8 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { getListableTokens } from "@medialane/sdk";
@@ -58,11 +57,6 @@ export default function CreateDropPage() {
   const { executeAuto, isLoading: isProcessing } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
 
   const [supplyPreset, setSupplyPreset] = useState<number | "custom">(1000);
   const [priceFree, setPriceFree] = useState(true);
@@ -90,14 +84,6 @@ export default function CreateDropPage() {
       maxPerWallet: "1",
     },
   });
-
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
 
   const handleImageSelect = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
@@ -169,7 +155,7 @@ export default function CreateDropPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { handleConnectWallet(); return; }
+    if (!isConnected) { toast.error("Connect your wallet first"); return; }
     if (resolvedSupply() <= 0n) { toast.error("Set a valid max supply"); return; }
 
     let baseUri = "";
@@ -296,12 +282,7 @@ export default function CreateDropPage() {
         <Package className="h-10 w-10 text-orange-500 mx-auto" />
         <h1 className="text-2xl font-bold">Connect wallet to launch a drop</h1>
         <p className="text-muted-foreground">Connect your Starknet wallet to deploy a limited-edition collection.</p>
-        <Button
-          onClick={handleConnectWallet}
-          className="bg-orange-600 hover:bg-orange-700 text-white"
-        >
-          Connect wallet
-        </Button>
+        <ConnectWallet label="Connect wallet" />
       </div>
     );
   }
