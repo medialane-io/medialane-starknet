@@ -74,6 +74,12 @@ function isUserRejected(error: unknown): boolean {
 // built-in connector resolves them later via window.starknet_${id}. Braavos and
 // some extension versions can be discoverable under a different window key, so
 // this adapter keeps the same connector behavior while resolving by wallet.id.
+//
+// `aliasIds` lets a connector match extensions that have changed their internal
+// wallet.id over time (e.g. Argent → Ready: the extension may expose itself as
+// "ready" instead of "argentX"). The connector's own .id stays fixed (the
+// canonical one we care about for backend attribution), but currentWallet()
+// scans all aliases when looking up the live extension.
 class IdResolvedInjectedConnector extends Connector {
   private wallet?: StarknetWallet;
   private accountPromise?: Promise<AccountInterface>;
@@ -83,6 +89,7 @@ class IdResolvedInjectedConnector extends Connector {
   constructor(
     private readonly walletId: string,
     private readonly fallbackName: string,
+    private readonly aliasIds: readonly string[] = [],
   ) {
     super();
   }
@@ -197,6 +204,12 @@ class IdResolvedInjectedConnector extends Connector {
 
   private currentWallet() {
     this.wallet = resolveInjectedWallet(this.walletId);
+    if (!this.wallet) {
+      for (const alias of this.aliasIds) {
+        this.wallet = resolveInjectedWallet(alias);
+        if (this.wallet) break;
+      }
+    }
     return this.wallet;
   }
 
@@ -245,9 +258,15 @@ class IdResolvedInjectedConnector extends Connector {
 }
 
 export function idResolvedReady() {
+  // Ready (formerly Argent) shipped under wallet.id "argentX" historically.
+  // Newer versions of the extension may expose themselves as "ready" — try
+  // both so the connector finds the extension regardless of which id it
+  // currently advertises. We keep our connector's external id as "argentX"
+  // so backend WalletType attribution stays stable across the rebrand.
   return new IdResolvedInjectedConnector(
     "argentX",
     "Ready Wallet (formerly Argent)",
+    ["ready"],
   );
 }
 
