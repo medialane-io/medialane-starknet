@@ -46,8 +46,14 @@ export function useRegisterUser(
         chain: "STARKNET",
       })
       .then(() => sessionStorage.setItem(sessionKey, "1"))
-      .catch(() => {
-        // non-fatal: registration failure never surfaces to the user
+      .catch((error: unknown) => {
+        // non-fatal toward the user, but log structured so silent drift in
+        // Account creation is observable (Vercel logs / future Sentry).
+        console.error("[ml-register] failed", {
+          appSource: "MEDIALANE_DAPP",
+          walletType: toBackendWalletType(walletType),
+          error: error instanceof Error ? error.message : String(error),
+        });
       });
   }, [address, walletType]);
 }
