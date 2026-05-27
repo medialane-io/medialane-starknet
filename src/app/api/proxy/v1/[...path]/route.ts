@@ -10,7 +10,7 @@
  * fetches (launchpad pages, `use-remix-offers`) should also hit
  * `/api/proxy/v1/...` instead of the backend origin.
  *
- * The user's Authorization header (Clerk JWT, if present) is passed
+ * The user's Authorization header (SIWS JWT, if present) is passed
  * through unchanged — the backend still uses it for identity-aware
  * routes (`/v1/users/me`, `/v1/creators/:wallet/profile`, …).
  */
@@ -35,6 +35,59 @@ const HOP_BY_HOP_HEADERS = new Set([
   "accept-encoding",
 ]);
 
+// ─── Method/path allowlist ────────────────────────────────────────────────
+//
+// The proxy injects the server-only `MEDIALANE_API_KEY` into every outbound
+// request. The key is a fully-privileged tenant key — backend layered auth
+// (SIWS JWT, SNIP-12 signatures, on-chain ownership checks) handles the real
+// authorisation per route, but defense-in-depth at this boundary limits the
+// surface a leaked key or a future backend route addition can reach through
+// the dapp BFF.
+//
+// Scope rationale (mirrors medialane-io's allowlist; audit:
+// `medialane-core/docs/audits/2026-05-25-medialane-io-bff-proxy-auth-audit.md`):
+//   - GET requests on /v1/* are ALL allowed — reads are public-equivalent
+//     and the backend has no admin GET surface on /v1/ (admin lives at
+//     /admin/* on a separate API_SECRET_KEY gate). Per-resource GET
+//     enumeration is a known footgun — when a new SDK method appears
+//     without a matching pattern, otherwise-fine pages 403 in production.
+//   - POST/PATCH/DELETE writes are an EXPLICIT enumeration. Any new
+//     mutating route used by the dapp requires a corresponding entry
+//     and a dapp PR.
+//
+// When adding a new mutating endpoint to the dapp, add the (method, regex)
+// pair below. Match against the path AFTER the `/v1/` prefix.
+
+const ALLOWED_ROUTES: Record<string, RegExp[]> = {
+  // ── Reads (all GET /v1/* allowed) ──────────────────────────────────────
+  GET: [/.+/],
+  // ── Mutations (explicit) ───────────────────────────────────────────────
+  POST: [
+    /^auth\/siws\/(nonce|verify)$/,                        // dapp SIWS sign-in
+    /^collections\/(register|sync-tx|claim)$/,             // launchpad create + on-chain claim
+    /^collections\/claim\/request$/,                       // manual-review claim request
+    /^collection-slug-claims$/,                            // collection settings slug claim
+    /^drop\/conditions$/,                                  // launchpad drop/create
+    /^intents\/(mint|create-collection)$/,                 // launchpad mint + create-collection
+                                                            // (marketplace intents live on-chain via SDK; not proxied here)
+    /^remix-offers(\/(auto|self\/confirm|[^/]+\/(confirm|reject|extend)))?$/,  // remix offer lifecycle
+    /^reports$/,                                           // /v1/reports
+    /^users\/register$/,                                   // useRegisterUser
+    /^username-claims$/,                                   // /v1/username-claims
+  ],
+  PATCH: [
+    /^collections\/[^/]+\/profile$/,                       // updateCollectionProfile
+    /^creators\/[^/]+\/profile$/,                          // updateCreatorProfile
+  ],
+  // DELETE intentionally empty — no dapp flow deletes through the proxy.
+};
+
+function isPathAllowed(method: string, path: string): boolean {
+  const patterns = ALLOWED_ROUTES[method.toUpperCase()];
+  if (!patterns) return false;
+  return patterns.some((re) => re.test(path));
+}
+
 async function handle(
   req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> },
@@ -48,7 +101,22 @@ async function handle(
   }
 
   const { path } = await ctx.params;
-  const target = `${BACKEND_URL.replace(/\/$/, "")}/v1/${path.join("/")}${req.nextUrl.search}`;
+  const joinedPath = path.join("/");
+
+  if (!isPathAllowed(req.method, joinedPath)) {
+    // Log enough to debug a legitimate route that needs adding to the
+    // allowlist — but don't leak the API key path to the response.
+    console.warn("[/api/proxy] blocked by allowlist", {
+      method: req.method,
+      path: joinedPath,
+    });
+    return NextResponse.json(
+      { error: `Path not allowed through dapp proxy: ${req.method} /v1/${joinedPath}` },
+      { status: 403 },
+    );
+  }
+
+  const target = `${BACKEND_URL.replace(/\/$/, "")}/v1/${joinedPath}${req.nextUrl.search}`;
 
   // Forward request headers except hop-by-hop + x-api-key (we set our own).
   const fwdHeaders = new Headers();
