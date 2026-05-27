@@ -27,8 +27,7 @@ import {
 import type { TxStatus } from "@/hooks/use-tx";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import {
   COLLECTION_1155_CONTRACT_MAINNET,
@@ -67,12 +66,6 @@ export default function CreateNFTEditionsCollectionPage() {
   const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
-
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
@@ -94,14 +87,6 @@ export default function CreateNFTEditionsCollectionPage() {
     resolver: zodResolver(schema),
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
-
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
 
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
@@ -161,7 +146,7 @@ export default function CreateNFTEditionsCollectionPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { handleConnectWallet(); return; }
+    if (!isConnected) { toast.error("Connect your wallet first"); return; }
     if (imageFile && !imageUri && !imageUploading) {
       toast.error("Image upload failed", { description: "Please re-upload your collection image." });
       return;
@@ -264,9 +249,7 @@ export default function CreateNFTEditionsCollectionPage() {
         <Layers className="h-10 w-10 text-violet-500 mx-auto" />
         <h1 className="text-2xl font-bold">Connect wallet to create a collection</h1>
         <p className="text-muted-foreground">Deploy a multi-edition ERC-1155 IP collection on Starknet.</p>
-        <Button onClick={handleConnectWallet} className="bg-violet-600 hover:bg-violet-700 text-white">
-          Connect wallet
-        </Button>
+        <ConnectWallet label="Connect wallet" />
       </div>
     );
   }

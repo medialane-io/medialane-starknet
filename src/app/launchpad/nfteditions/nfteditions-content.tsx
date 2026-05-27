@@ -9,8 +9,7 @@ import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives"
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ipfsToHttp } from "@/lib/utils";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import {
   Layers, Sparkles, Plus, ArrowRight, Package,
   ExternalLink, Inbox,
@@ -129,25 +128,12 @@ function CollectionRowSkeleton() {
 
 export function NFTEditionsContent() {
   const { isConnected, address: walletAddress } = useWallet();
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
   const { collections, isLoading } = useCollectionsByOwner(walletAddress ?? null);
 
   const erc1155 = useMemo(
     () => collections.filter((c) => c.standard === "ERC1155"),
     [collections]
   );
-
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
 
   return (
     <div className="pb-16">
@@ -210,7 +196,7 @@ export function NFTEditionsContent() {
                   Your deployed IP Collection 1155 contracts will appear here.
                 </p>
               </div>
-              <Button onClick={handleConnectWallet}>Connect wallet</Button>
+              <ConnectWallet label="Connect wallet" />
             </div>
           </FadeIn>
         ) : isLoading ? (

@@ -40,8 +40,7 @@ import {
 } from "@/components/marketplace/mint-progress-dialog";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
-import { useConnect } from "@starknet-react/core";
-import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { normalizeAddress } from "@medialane/sdk";
@@ -140,12 +139,6 @@ export default function MintNFTEditionsPage() {
   const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
-  const { connectAsync, connectors } = useConnect();
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as StarknetkitConnector[],
-    modalTheme: "dark",
-  });
-
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
   const [txStatus, setTxStatus] = useState<TxStatus>("idle");
@@ -217,14 +210,6 @@ export default function MintNFTEditionsPage() {
     }).catch(() => setOwnerCheck("ok"));
   }, [walletAddress, collectionAddress]);
 
-  const handleConnectWallet = async () => {
-    try {
-      const { connector } = await starknetkitConnectModal();
-      if (!connector) return;
-      await connectAsync({ connector });
-    } catch { /* user closed modal */ }
-  };
-
   const handleLicenseChange = (value: string) => {
     form.setValue("licenseType", value);
     const def = LICENSE_TYPES.find((l) => l.value === value);
@@ -264,7 +249,7 @@ export default function MintNFTEditionsPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { handleConnectWallet(); return; }
+    if (!isConnected) { toast.error("Connect your wallet first"); return; }
     if (!imageUri) { toast.error("Upload an image first"); return; }
 
     setMintStep("uploading");
@@ -374,9 +359,7 @@ export default function MintNFTEditionsPage() {
         <Sparkles className="h-10 w-10 text-violet-500 mx-auto" />
         <h1 className="text-2xl font-bold">Connect wallet to mint</h1>
         <p className="text-muted-foreground">Connect your Starknet wallet to mint tokens into your ERC-1155 collection.</p>
-        <Button onClick={handleConnectWallet} className="bg-violet-600 hover:bg-violet-700 text-white">
-          Connect wallet
-        </Button>
+        <ConnectWallet label="Connect wallet" />
       </div>
     );
   }
