@@ -172,6 +172,7 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
 
 - `src/app/` — App Router pages/layouts. Key routes: `/marketplace`, `/launchpad`, `/create`, `/asset`, `/collections`, `/creator`, `/portfolio`, `/provenance`, `/licensing`, `/airdrop`, `/mint`
   - `/airdrop` (added 2026-05-20) — Creator's Airdrop **info** page (rewards, tiers, distribution phases, rules); uses `GenesisMint`. `/mint` is the separate, generic current-mint-event page. Two distinct pages — same airdrop content for now, intended to diverge. Do not couple them.
+  - `/br/mint` (Portuguese airdrop landing, 2026-05-28 trim) — paid-ads entry point. Hero only above the fold (no badge, short headline "Participe do Airdrop", trust strip above the form, `PrivyInlineLogin` when not connected, `GenesisMint` when connected). All detail sections collapsed behind a single `<details>` "Saiba mais sobre a campanha". Match this shape on any new locale-specific landing — adding inline sections kills conversion. Google Ads conversion `gtag` fires on mount; do not remove. Header keeps a hidden `<ConnectWallet />` ref so `PrivyInlineLogin`'s "outras formas de entrar" link can open the wallet picker.
   - `/` — Homepage (`src/components/home/`): hero slider, activity ticker, trending collections, new-on-marketplace, `CreatorAirdropBanner`, and the Launchpad `AirdropSection` service cards. At parity with medialane.io as of 2026-05-22. Kept deliberately lean for load speed — community/activity feeds live on the discover page, not the homepage.
   - `src/app/api/wallet/` — Privy signing endpoints (server-side)
 - `src/components/` — All UI components. `src/components/ui/` contains shadcn/ui base components
@@ -250,7 +251,7 @@ dialog set — the shared modules are presentation + derivation only. Use the
 
 **Types** (`src/types/notification.ts`): `offer`, `offer_accepted`, `sale`, `listing`, `mint`, `transfer`, `asset_received`, `cancelled`, `announcement`. Priority: `"normal" | "spotlight"`. Celebratory flag drives confetti.
 
-**`NotificationSpotlight`** (`src/components/shared/notification-spotlight.tsx`): Modal panel shown once per wallet session for all unread spotlight-priority notifications. Animated dot pagination, confetti on celebratory items, marks only seen items as read on close. Mounted globally in `providers.tsx`.
+**`NotificationSpotlight`** (`src/components/shared/notification-spotlight.tsx`): Modal panel shown once per wallet session for all unread spotlight-priority notifications. Animated dot pagination, confetti on celebratory items, marks only seen items as read on close. Mounted in `providers.tsx`, **gated on `!isStandalone`** (2026-05-28) so it does not fire on `/br/*`, `/mint`, or `/airdrop` — firing "Creator's Airdrop is live" on the page the user just used to claim it was confusing new sign-ups.
 
 **`useNotifications`** (`src/hooks/use-notifications.ts`): Aggregates offer_accepted (fulfilled ERC20 orders), received offers (`useReceivedOffers`), activity events, and announcements into a unified list. Read state persisted in localStorage via `src/lib/notification-storage.ts`.
 
