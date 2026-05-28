@@ -13,7 +13,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
-import { GenesisMint } from "@/components/airdrop/genesis-mint";
+import { GenesisMint, AirdropEventCard } from "@/components/airdrop/genesis-mint";
 import { MINT_CONTRACT, GENESIS_NFT_URI } from "@/lib/constants";
 import { canonical } from "@/lib/seo";
 
@@ -62,26 +62,36 @@ export default function AirdropPage() {
 
           {/* ── Hero ── */}
           <section className="py-14 lg:py-20">
-            <div className="max-w-2xl space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/5 px-3 py-1">
-                <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
-                <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">Airdrop Campaign</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+
+              {/* Left: badge + title + description + CTA */}
+              <div className="space-y-5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/5 px-3 py-1">
+                  <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
+                  <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">Airdrop Campaign</span>
+                </div>
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
+                  Creator&apos;s{" "}
+                  <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                    Fund
+                  </span>
+                </h1>
+                <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">
+                  Join the Creator&apos;s Airdrop to earn rewards. Sign up, create, trade, and grow with us from day one.
+                </p>
+                <GenesisMint
+                  contract={MINT_CONTRACT}
+                  nftUri={GENESIS_NFT_URI}
+                  storageKey="ml_airdrop"
+                  locale="en"
+                />
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
-                Creator&apos;s{" "}
-                <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                  Fund
-                </span>
-              </h1>
-              <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">
-                Join the Creator&apos;s Airdrop to earn rewards. Sign up, create, trade, and grow with us from day one.
-              </p>
-              <GenesisMint
-                contract={MINT_CONTRACT}
-                nftUri={GENESIS_NFT_URI}
-                storageKey="ml_airdrop"
-                locale="en"
-              />
+
+              {/* Right: featured airdrop image */}
+              <div className="lg:top-24 space-y-4">
+                <AirdropEventCard />
+              </div>
+
             </div>
           </section>
 

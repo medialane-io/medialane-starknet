@@ -1,12 +1,40 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { serializeByteArray } from "@/lib/cairo-calldata";
+import { GENESIS_NFT_IMAGE_URL } from "@/lib/constants";
+
+// ─── Featured airdrop image ────────────────────────────────────────────────────
+
+export function AirdropEventCard() {
+  const [errored, setErrored] = useState(false);
+  const src = GENESIS_NFT_IMAGE_URL || "/genesis.jpg";
+  return (
+    <div className="relative rounded-2xl overflow-hidden border border-border/40 shadow-xl shadow-black/10 aspect-square w-full">
+      {errored ? (
+        <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-purple-500/10 flex flex-col items-center justify-center gap-3">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <ImageIcon className="h-7 w-7 text-primary/40" />
+          </div>
+          <p className="text-xs text-muted-foreground font-medium">Medialane Airdrop 2026</p>
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt="Medialane Creator's Airdrop"
+          className="w-full h-full object-cover"
+          onError={() => setErrored(true)}
+        />
+      )}
+    </div>
+  );
+}
 
 interface GenesisMintProps {
   contract: string;
@@ -114,7 +142,14 @@ export function GenesisMint({
   }
 
   if (phase === "idle") {
-    return <ConnectWallet label={copy.connect} />;
+    return (
+      <div className="btn-border-animated p-[1px] rounded-2xl inline-block">
+        <ConnectWallet
+          label={copy.connect}
+          className="h-12 px-6 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+        />
+      </div>
+    );
   }
 
   if (!contract) {
@@ -133,25 +168,27 @@ export function GenesisMint({
           <span>{error}</span>
         </div>
       )}
-      <Button
-        size="lg"
-        className="font-bold gap-2"
-        onClick={
-          phase === "error"
-            ? () => { setPhase("ready"); setError(null); }
-            : handleMint
-        }
-        disabled={phase === "minting" || isLoading}
-      >
-        {(phase === "minting" || isLoading) && (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        )}
-        {phase === "error"
-          ? copy.retry
-          : phase === "minting"
-          ? copy.minting
-          : copy.claim}
-      </Button>
+      <div className="btn-border-animated p-[1px] rounded-2xl inline-block">
+        <Button
+          size="lg"
+          className="font-bold gap-2 h-12 px-6 text-base bg-transparent text-white rounded-[15px] hover:bg-transparent hover:brightness-110 active:scale-[0.98] transition-all"
+          onClick={
+            phase === "error"
+              ? () => { setPhase("ready"); setError(null); }
+              : handleMint
+          }
+          disabled={phase === "minting" || isLoading}
+        >
+          {(phase === "minting" || isLoading) && (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          )}
+          {phase === "error"
+            ? copy.retry
+            : phase === "minting"
+            ? copy.minting
+            : copy.claim}
+        </Button>
+      </div>
     </div>
   );
 }

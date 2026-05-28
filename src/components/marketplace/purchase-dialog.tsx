@@ -351,10 +351,12 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <ConnectWallet
-                    label="Connect wallet to trade"
-                    className="w-full h-12 text-base font-semibold rounded-[11px] bg-primary text-primary-foreground hover:bg-primary/90"
-                  />
+                  <div className="btn-border-animated p-[1px] rounded-2xl">
+                    <ConnectWallet
+                      label="Connect wallet to trade"
+                      className="w-full h-12 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                    />
+                  </div>
                   <p className="text-center text-xs text-muted-foreground">
                     Your Starknet wallet is required to sign and complete the trade.
                   </p>
