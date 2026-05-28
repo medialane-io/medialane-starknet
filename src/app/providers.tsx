@@ -175,7 +175,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <Aurora />
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
-            <NotificationSpotlight />
+            {!isStandalone && <NotificationSpotlight />}
             <PrivyConnectDialog />
             <Toaster
               richColors
