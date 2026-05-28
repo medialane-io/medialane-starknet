@@ -118,7 +118,10 @@ async function loadPrivyStack() {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isStandalone = pathname === "/mint" || pathname.startsWith("/br/");
+  const isStandalone =
+    pathname === "/mint" ||
+    pathname === "/airdrop" ||
+    pathname.startsWith("/br/");
 
   // Privy is only mounted if the user has previously chosen it as their wallet.
   const [privyActive, setPrivyActive] = useState(false);

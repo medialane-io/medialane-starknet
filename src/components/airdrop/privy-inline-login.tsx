@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Mail } from "lucide-react";
-import { useLoginWithEmail, useLoginWithOAuth, usePrivy } from "@privy-io/react-auth";
+import { useLoginWithEmail, usePrivy } from "@privy-io/react-auth";
 import { useWallet } from "@/hooks/use-wallet";
 
 type Stage = "idle" | "otp" | "connecting";
@@ -86,7 +86,6 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
   const t = COPY[locale];
   const { ready, authenticated } = usePrivy();
   const { sendCode, loginWithCode } = useLoginWithEmail();
-  const { initOAuth, loading: oauthLoading } = useLoginWithOAuth();
   const { isConnected } = useWallet();
 
   const [stage, setStage] = useState<Stage>("idle");
@@ -141,18 +140,6 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
       setOtpError(err instanceof Error ? err.message : t.invalidCode);
       setCode("");
     } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleGoogle = async () => {
-    setEmailError(null);
-    setBusy(true);
-    try {
-      armAutoReconnect();
-      await initOAuth({ provider: "google" });
-    } catch (err) {
-      setEmailError(err instanceof Error ? err.message : t.googleError);
       setBusy(false);
     }
   };
@@ -250,13 +237,15 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
             className="h-12 flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
-        <button
-          type="submit"
-          disabled={busy}
-          className="flex h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {busy ? t.emailSending : t.emailSubmit}
-        </button>
+        <div className="btn-border-animated p-[1px] rounded-2xl">
+          <button
+            type="submit"
+            disabled={busy}
+            className="flex h-12 w-full items-center justify-center rounded-[15px] bg-transparent px-4 text-base font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {busy ? t.emailSending : t.emailSubmit}
+          </button>
+        </div>
       </form>
 
       <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -267,20 +256,8 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
 
       <button
         type="button"
-        onClick={() => void handleGoogle()}
-        disabled={busy || oauthLoading}
-        className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border/50 bg-background/60 px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
-          <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.7 4.2-5.5 4.2-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.9 3.5 14.7 2.5 12 2.5 6.7 2.5 2.4 6.8 2.4 12s4.3 9.5 9.6 9.5c5.5 0 9.2-3.9 9.2-9.3 0-.6-.1-1-.2-1.5H12z"/>
-        </svg>
-        {oauthLoading || busy ? t.googleLoading : t.googleButton}
-      </button>
-
-      <button
-        type="button"
         onClick={onOpenWalletPicker}
-        className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/60 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-muted/40"
       >
         {t.walletLink}
       </button>

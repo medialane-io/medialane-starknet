@@ -12,11 +12,15 @@ import { GENESIS_NFT_IMAGE_URL } from "@/lib/constants";
 // ─── Featured airdrop image ────────────────────────────────────────────────────
 
 export function AirdropEventCard() {
+  // Try env-configured URL first, then the local /genesis.jpg, then a placeholder.
+  const sources = [GENESIS_NFT_IMAGE_URL, "/genesis.jpg"].filter(Boolean) as string[];
+  const [srcIndex, setSrcIndex] = useState(0);
   const [errored, setErrored] = useState(false);
-  const src = GENESIS_NFT_IMAGE_URL || "/genesis.jpg";
+  const src = sources[srcIndex];
+
   return (
     <div className="relative rounded-2xl overflow-hidden border border-border/40 shadow-xl shadow-black/10 aspect-square w-full">
-      {errored ? (
+      {errored || !src ? (
         <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-purple-500/10 flex flex-col items-center justify-center gap-3">
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
             <ImageIcon className="h-7 w-7 text-primary/40" />
@@ -26,10 +30,17 @@ export function AirdropEventCard() {
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          key={src}
           src={src}
           alt="Medialane Creator's Airdrop"
           className="w-full h-full object-cover"
-          onError={() => setErrored(true)}
+          onError={() => {
+            if (srcIndex + 1 < sources.length) {
+              setSrcIndex(srcIndex + 1);
+            } else {
+              setErrored(true);
+            }
+          }}
         />
       )}
     </div>
@@ -126,9 +137,11 @@ export function GenesisMint({
     }
   }, [contract, address, nftUri, executeAuto, lsKey]);
 
+  const card = "rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-5 space-y-4 shadow-lg shadow-black/5";
+
   if (phase === "success" && txHash) {
     return (
-      <div className="flex flex-col gap-3">
+      <div className={card}>
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -143,35 +156,39 @@ export function GenesisMint({
 
   if (phase === "idle") {
     return (
-      <div className="btn-border-animated p-[1px] rounded-2xl inline-block">
-        <ConnectWallet
-          label={copy.connect}
-          className="h-12 px-6 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-        />
+      <div className={card}>
+        <div className="btn-border-animated p-[1px] rounded-2xl">
+          <ConnectWallet
+            label={copy.connect}
+            className="w-full h-12 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+          />
+        </div>
       </div>
     );
   }
 
   if (!contract) {
     return (
-      <Button disabled size="lg" className="font-bold">
-        {copy.noContract}
-      </Button>
+      <div className={card}>
+        <Button disabled size="lg" className="w-full h-12 font-bold">
+          {copy.noContract}
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={card}>
       {phase === "error" && error && (
         <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
-      <div className="btn-border-animated p-[1px] rounded-2xl inline-block">
+      <div className="btn-border-animated p-[1px] rounded-2xl">
         <Button
           size="lg"
-          className="font-bold gap-2 h-12 px-6 text-base bg-transparent text-white rounded-[15px] hover:bg-transparent hover:brightness-110 active:scale-[0.98] transition-all"
+          className="w-full font-bold gap-2 h-12 text-base bg-transparent text-white rounded-[15px] hover:bg-transparent hover:brightness-110 active:scale-[0.98] transition-all"
           onClick={
             phase === "error"
               ? () => { setPhase("ready"); setError(null); }
