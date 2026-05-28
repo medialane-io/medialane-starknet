@@ -53,7 +53,7 @@ export default function AirdropPage() {
     <div className="min-h-screen flex flex-col bg-background">
 
       {/* Header — logo only, no distractions */}
-      <header className="px-6 py-4 flex items-center border-b border-border/30 sticky top-0 bg-background/90 backdrop-blur-sm z-10">
+      <header className="px-6 py-4 flex items-center border-b border-border/30">
         <MedialaneLogo />
       </header>
 

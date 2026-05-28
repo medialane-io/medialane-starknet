@@ -86,13 +86,16 @@ export function MintContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-border/30 sticky top-0 bg-background/90 backdrop-blur-sm z-10">
+      {/* Header — logo only, no distractions */}
+      <header className="px-6 py-4 flex items-center border-b border-border/30">
         <Link href="/"><MedialaneLogo /></Link>
-        <div ref={headerConnectRef}>
-          <ConnectWallet />
-        </div>
       </header>
+
+      {/* Hidden ConnectWallet — programmatically triggered by the
+          "Other ways to sign in" link in PrivyInlineLogin. */}
+      <div ref={headerConnectRef} className="hidden">
+        <ConnectWallet />
+      </div>
 
       <div className="flex-1 w-full">
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
@@ -305,22 +308,6 @@ export function MintContent() {
               </div>
             </div>
           </section>
-
-          {/* Bottom CTA — not connected only */}
-          {!isConnected && (
-            <section className="py-10 border-t border-border/30">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-black">Ready to join?</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Free, instant, no card required.</p>
-                </div>
-                <ConnectWallet
-                  label="Claim my spot"
-                  className="h-11 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-6"
-                />
-              </div>
-            </section>
-          )}
 
           <div className="pb-12" />
         </div>
