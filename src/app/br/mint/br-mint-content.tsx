@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Sparkles,
   CheckCircle2,
   FileCheck,
   Coins,
@@ -16,6 +15,7 @@ import {
   ShoppingCart,
   UserCheck,
   XCircle,
+  ChevronDown,
 } from "lucide-react";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { GenesisMint } from "@/components/airdrop/genesis-mint";
@@ -91,21 +91,23 @@ export function BrMintContent() {
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
 
           {/* Hero */}
-          <section className="py-12 lg:py-20">
+          <section className="py-10 lg:py-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/5 px-3 py-1">
-                  <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
-                  <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
-                    Lançamento no Brasil
-                  </span>
-                </div>
+              <div className="space-y-5">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
                   Participe do{" "}
                   <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                    Airdrop de Prêmios
+                    Airdrop
                   </span>
                 </h1>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                  {["Gratuito", "Sem cartão", "Sem CPF"].map((t) => (
+                    <div key={t} className="flex items-center gap-1.5 text-xs text-muted-foreground/80">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-500/70" />
+                      {t}
+                    </div>
+                  ))}
+                </div>
                 {isConnected ? (
                   <GenesisMint
                     contract={BR_MINT_CONTRACT}
@@ -116,17 +118,6 @@ export function BrMintContent() {
                 ) : (
                   <PrivyInlineLogin onOpenWalletPicker={openWalletPicker} />
                 )}
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Medialane é uma plataforma para criadores publicarem, compartilharem e monetizarem conteúdo. Gratuito para participar.
-                </p>
-                <div className="flex items-center gap-4">
-                  {["Gratuito", "Sem cartão", "Instantâneo"].map((t) => (
-                    <div key={t} className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500/60" />
-                      {t}
-                    </div>
-                  ))}
-                </div>
               </div>
               <div className="lg:sticky lg:top-24">
                 <EventCard />
@@ -134,8 +125,17 @@ export function BrMintContent() {
             </div>
           </section>
 
+          {/* ── Saiba mais (collapsed by default) ── */}
+          <details className="group border-t border-border/30">
+            <summary className="flex items-center justify-center gap-2 py-6 cursor-pointer list-none text-sm font-medium text-muted-foreground hover:text-foreground transition-colors [&::-webkit-details-marker]:hidden">
+              Saiba mais sobre a campanha
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+            </summary>
+
+            <div className="pb-8 space-y-0">
+
           {/* Fundo dos Criadores */}
-          <section className="py-10 border-t border-border/30 space-y-6">
+          <section className="py-8 border-t border-border/30 space-y-6">
             <h2 className="text-2xl sm:text-3xl font-black">Fundo dos Criadores</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
@@ -157,7 +157,7 @@ export function BrMintContent() {
           </section>
 
           {/* Como funciona */}
-          <section className="py-10 border-t border-border/30 space-y-6">
+          <section className="py-8 border-t border-border/30 space-y-6">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Como funciona</p>
               <h2 className="text-2xl sm:text-3xl font-black">Entre em segundos.</h2>
@@ -216,7 +216,7 @@ export function BrMintContent() {
           </section>
 
           {/* Fases de distribuição */}
-          <section className="py-10 border-t border-border/30 space-y-6">
+          <section className="py-8 border-t border-border/30 space-y-6">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Distribuição</p>
               <h2 className="text-2xl sm:text-3xl font-black">Fases do fundo dos criadores</h2>
@@ -299,24 +299,8 @@ export function BrMintContent() {
             </div>
           </section>
 
-          {/* CTA final — apenas desconectado */}
-          {!isConnected && (
-            <section className="py-10 border-t border-border/30">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-black">Pronto para entrar?</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Gratuito, instantâneo, sem cartão.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                  className="h-11 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  Participar agora
-                </button>
-              </div>
-            </section>
-          )}
+            </div>
+          </details>
 
           <div className="pb-12" />
         </div>
