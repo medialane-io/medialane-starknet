@@ -13,26 +13,31 @@ import { useWallet } from "@/hooks/use-wallet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import Link from "next/link";
+import { HelpIcon } from "@/components/ui/help-icon";
 import { cn } from "@/lib/utils";
 
 const NAV_GROUPS = [
   {
-    label: "My Activity",
+    label: "My Items",
     items: [
       { label: "Assets",            href: "/portfolio/assets" },
-      { label: "Listings",          href: "/portfolio/listings" },
-      { label: "Offers sent",       href: "/portfolio/offers" },
-      { label: "Offers received",   href: "/portfolio/received", badge: "offers" as const },
-      { label: "Remixes",           href: "/portfolio/remix-offers", badge: "remixes" as const },
-      { label: "Counter-offers",    href: "/portfolio/counter-offers", badge: "counters" as const },
-      { label: "Activity",          href: "/portfolio/activity" },
+      { label: "Collections",       href: "/portfolio/collections" },
     ],
   },
   {
-    label: "Manage",
+    label: "Trading",
     items: [
-      { label: "Collections",       href: "/portfolio/collections" },
-      { label: "Claim Collection",  href: "/portfolio/claim" },
+      { label: "Listings",          href: "/portfolio/listings" },
+      { label: "Offers received",   href: "/portfolio/received", badge: "offers" as const },
+      { label: "Offers sent",       href: "/portfolio/offers" },
+      { label: "Counter-offers",    href: "/portfolio/counter-offers", badge: "counters" as const },
+      { label: "Remixes",           href: "/portfolio/remix-offers", badge: "remixes" as const },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { label: "Activity",          href: "/portfolio/activity" },
       { label: "Settings",          href: "/portfolio/settings" },
     ],
   },
@@ -137,12 +142,14 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
           ) : (
             <span className="bg-muted rounded-full px-3 py-1 w-20 h-6 animate-pulse inline-block" />
           )}
-          <span className="bg-muted rounded-full px-3 py-1 text-sm font-medium text-muted-foreground">
+          <span className="flex items-center gap-1 bg-muted rounded-full px-3 py-1 text-sm font-medium text-muted-foreground">
             {activeListingsCount} Listings
+            <HelpIcon content="Your active marketplace listings — assets currently for sale" side="bottom" />
           </span>
           {receivedCount > 0 && (
-            <span className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
+            <span className="flex items-center gap-1 bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
               {receivedCount} Offers received
+              <HelpIcon content="Buyers have made offers on your assets — go to Offers received to accept, counter, or decline" side="bottom" />
             </span>
           )}
         </div>
