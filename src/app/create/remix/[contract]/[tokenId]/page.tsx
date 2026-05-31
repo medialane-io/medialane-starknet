@@ -11,6 +11,7 @@ import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useTx } from "@/hooks/use-tx";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { MintProgressDialog } from "@/components/marketplace/mint-progress-dialog";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import type { MintStep } from "@/components/marketplace/mint-progress-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +91,7 @@ function Section({ title, icon, children }: {
 export default function CreateRemixPage() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
-  const { address: walletAddress } = useWallet();
+  const { address: walletAddress, isConnected, isConnecting } = useWallet();
   const { getValidToken } = useSiwsToken();
   const { execute: executeTransaction, status: txStatus } = useTx();
   const client = useMedialaneClient();
@@ -378,6 +379,32 @@ export default function CreateRemixPage() {
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  // Remixing creates a new asset — it needs a connected wallet. Distinguish the
+  // reload reconnect window (show "Connecting…") from a settled disconnected
+  // state (show the connect prompt) so the page never hangs on a dead spinner.
+  if (!isConnected) {
+    return (
+      <div className="container max-w-5xl mx-auto px-4 py-24">
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
+          {isConnecting ? (
+            <>
+              <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Connecting your wallet…</p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-bold">Connect your wallet to remix</h1>
+              <p className="text-muted-foreground text-sm max-w-sm">
+                Remixing creates a new asset on Medialane — connect your wallet to continue.
+              </p>
+              <ConnectWallet />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (tokenLoading) {
     return (

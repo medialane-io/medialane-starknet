@@ -36,6 +36,9 @@ export interface UnifiedWallet {
   /** Connected address (hex string) or undefined */
   address: string | undefined;
   isConnected: boolean;
+  /** True while a wallet is rehydrating on reload (injected autoConnect /
+   *  StarkZap session restore) — distinct from a settled disconnected state. */
+  isConnecting: boolean;
   /** Which wallet stack provided the connection */
   walletType: UnifiedWalletType;
   /**
@@ -55,6 +58,7 @@ export function useUnifiedWallet(): UnifiedWallet {
   const {
     address,
     isConnected,
+    isConnecting,
     walletType,
   } = useWalletSession();
 
@@ -93,6 +97,7 @@ export function useUnifiedWallet(): UnifiedWallet {
   return {
     address: address ?? undefined,
     isConnected,
+    isConnecting,
     walletType: walletType as UnifiedWalletType,
     execute,
     disconnect,

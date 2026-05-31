@@ -29,8 +29,15 @@ export function useWalletSession(): ActiveWalletSession {
     address: injectedAddress,
     isConnected: injectedConnectedRaw,
     connector: injectedConnector,
+    status: injectedStatus,
   } = useAccount();
   const injectedConnected = injectedConnectedRaw ?? false;
+  // On reload, starknet-react's autoConnect rehydrates the injected wallet
+  // asynchronously and surfaces here as "connecting"/"reconnecting". Surface it
+  // so wallet-gated pages can show a "Connecting…" state instead of flashing a
+  // disconnected/connect prompt that disappears a beat later.
+  const injectedConnecting =
+    injectedStatus === "connecting" || injectedStatus === "reconnecting";
 
   const injectedWalletType: WalletSessionType = (() => {
     const id = injectedConnector?.id?.toLowerCase();
@@ -80,8 +87,8 @@ export function useWalletSession(): ActiveWalletSession {
       address: null,
       walletType: null,
       isConnected: false,
-      isConnecting: false,
+      isConnecting: injectedConnecting,
       error: starkZapSession.error,
     };
-  }, [starkZapSession, starkZapAddress, injectedConnected, injectedAddress]);
+  }, [starkZapSession, starkZapAddress, injectedConnected, injectedAddress, injectedConnecting]);
 }

@@ -13,10 +13,11 @@ import { useUnifiedWallet } from "./use-unified-wallet";
  * not here — this hook stays a pure identity read.
  */
 export function useWallet() {
-  const { address, isConnected, walletType } = useUnifiedWallet();
+  const { address, isConnected, isConnecting, walletType } = useUnifiedWallet();
   return {
     address: address ?? null,
     isConnected,
+    isConnecting,
     walletType,
   };
 }
