@@ -107,14 +107,16 @@ Every page and component that prompts the user to connect renders the shared `<C
 
 ## Starknet Integration Patterns
 
-**Contract ABIs** come from `@medialane/sdk` (currently 0.25.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
+**Contract ABIs** come from `@medialane/sdk` (currently 0.27.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
 
-**Marketplace order flow** (in `src/hooks/use-marketplace.ts`):
-- Orders use **SNIP-12 typed data signing** (`getOrderParametersTypedData`, `getOrderFulfillmentTypedData` from `src/utils/marketplace-utils.ts`)
+**Marketplace order flow** (in `src/hooks/use-marketplace.ts`) — **redesigned venues, SDK 0.26.0** (client-signing migration, 2026-05-31):
+- Order params use the new schema: single `amount` (no start/end), plus `marketplace`, `royalty_max_bps` (live EIP-2981 via `royalty_info`), and `counter` (`get_counter()`, replaces the removed nonce). Salt is a **wide 248-bit** value (sole order-hash uniqueness source).
+- Typed data is delegated to the SDK builders via `src/utils/marketplace-utils.ts` (`getOrderParametersTypedData`→`buildOrderTypedData` v4, `get1155OrderParametersTypedData`→`build1155OrderTypedData` v3, cancellation builders). **There is no fulfillment builder — fulfilment is UNSIGNED.**
 - Listings: sign → ERC721 `approve` + `register_order` multicall
 - Offers: sign → ERC20 `approve` + `register_order` multicall
-- Buying a listing: approve the ERC-20 total + `fulfill_order` signature, executed as one atomic multicall
-- Cancellations: sign typed cancellation data → `cancel_order`
+- Buying a listing / accepting an offer: **unsigned** — `fulfill_order(orderHash[, quantity])`, no `signMessage`; approve + (fee) executed atomically via the paymaster
+- Cancellations: signed `{ order_hash, offerer }` (no nonce) → `cancel_order`
+- Execution stays on dapp's AVNU paymaster (`executeAuto`) + creators-fund fee splice.
 
 **Checkout totals — always via `orderTotal()` (`src/lib/checkout.ts`).** `order.consideration.startAmount` is the price **per edition** for ERC-1155 (the listing form labels it "Price per edition"); `fulfill_order` charges `price × quantity`. `orderTotal(order, quantity)` is the single source of truth for the ERC-20 amount to approve — never divide by `offer.startAmount`. `checkoutCart` takes a typed `CheckoutItem[]`; both call sites (`purchase-dialog`, `counter-offers-table`) build items through `orderTotal`. A prior bug under-approved ERC-1155 multi-buys by dividing by the edition count → `ERC20: insufficient allowance`.
 
