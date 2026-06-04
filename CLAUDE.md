@@ -136,6 +136,39 @@ drop-mint button. Fee is platform-layer only — never on-chain (`00 §12`).
 **Fail-safe:** no fund address ⇒ no fee. The dapp executes atomically
 (`account.execute` via AVNU), so a failed buy reverts the fee too.
 
+## RPC resilience (added 2026-06-03)
+
+Alchemy's Starknet endpoint intermittently 503s (`-32001 "Unable to complete
+request"`, ~1 in 6 calls). All Starknet RPC fails over to public endpoints
+(`lava.build`, …) via `@medialane/sdk`'s `createFailoverFetch` /
+`PUBLIC_RPC_FALLBACKS` — never re-copy that policy locally.
+
+**⚠️ The dapp has THREE RpcProviders — when a read fails, find which one the
+failing call uses** (this is documented in full at the top of `src/lib/starknet.ts`):
+1. `starknetProvider` singleton (`src/lib/starknet.ts`) — direct `Contract`
+   calls + `waitForTransaction` in **non-hook** contexts (launchpad
+   drop/pop/editions, transfer-ownership, `use-tx`, `use-paymaster-transaction`).
+2. **starknet-react's** provider (`components/starknet-provider.tsx`) — every
+   `useProvider()`/`useContract()` call, i.e. the whole marketplace flow
+   (`use-marketplace.ts`: `get_counter`, `royalty_info`, approvals).
+3. The SDK client's `getProvider` (`@medialane/sdk` ≥ 0.28.0) — SDK-routed ops.
+
+All three share one failover policy (#1 + #2 import `failoverFetch` from
+`lib/starknet`; #3 is internal to the SDK). **Never construct a bare
+`new RpcProvider({ nodeUrl })` without `baseFetch`.** The patch that fixed
+listings (`ab0f7e0`) was wiring `failoverFetch` into #2 — patching only #1 left
+the marketplace flow broken.
+
+`StarknetConfig` is given a tuned `QueryClient` (`refetchOnWindowFocus: false`,
+bounded retries, 10s `staleTime`) so tab focus doesn't fire read bursts.
+
+**User-facing errors:** `getFriendlyWalletError` (`src/lib/wallet-error.ts`) maps
+transient RPC failures → "Network busy, try again", insufficient-balance → a
+hint, and raw RPC blobs → a generic message. The raw error is logged to the
+console by `use-marketplace`'s catch — never surface it in the UI.
+
+Full incident + architecture: `medialane-core/docs/specs/2026-06-03-rpc-resilience-failover.md`.
+
 ## AVNU Paymaster (Gasless Transactions)
 
 Medialane absorbs gas costs for users via AVNU; the 1% platform fee (above) is
