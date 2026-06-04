@@ -8,10 +8,8 @@
  *   fetchSwapQuotes()  →  buildSwapCall()  →  execute([approveCall, swapCall])
  */
 
-const AVNU_API =
-  process.env.NEXT_PUBLIC_STARKNET_NETWORK === "sepolia"
-    ? "https://sepolia.api.avnu.fi"
-    : "https://starknet.api.avnu.fi";
+// Medialane is mainnet-only; AVNU runs on Starknet mainnet (no Sepolia).
+const AVNU_API = "https://starknet.api.avnu.fi";
 
 // ---------------------------------------------------------------------------
 // Types

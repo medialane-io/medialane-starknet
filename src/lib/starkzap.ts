@@ -16,12 +16,8 @@ import type { Token } from "starkzap";
 // Network resolution
 // ---------------------------------------------------------------------------
 
-const NETWORK_ENV = process.env.NEXT_PUBLIC_STARKNET_NETWORK;
-const IS_SEPOLIA = NETWORK_ENV === "sepolia";
-
-export const APP_CHAIN_ID: ChainId = IS_SEPOLIA
-  ? ChainId.SEPOLIA
-  : ChainId.MAINNET;
+// Medialane is mainnet-only. (Multichain later = add chains, never testnets.)
+export const APP_CHAIN_ID: ChainId = ChainId.MAINNET;
 
 // ---------------------------------------------------------------------------
 // SDK singleton
@@ -44,16 +40,14 @@ export function getStarkZapSdk(): StarkZap {
   // and transactions are accepted by the paymaster.
   const paymaster = avnuApiKey
     ? {
-        nodeUrl: IS_SEPOLIA
-          ? "https://sepolia.paymaster.avnu.fi"
-          : "https://starknet.paymaster.avnu.fi",
+        nodeUrl: "https://starknet.paymaster.avnu.fi",
         headers: { "x-paymaster-api-key": avnuApiKey },
       }
     : undefined;
 
   _sdk = rpcUrl
     ? new StarkZap({ rpcUrl, chainId: APP_CHAIN_ID, paymaster })
-    : new StarkZap({ network: IS_SEPOLIA ? "sepolia" : "mainnet", paymaster });
+    : new StarkZap({ network: "mainnet", paymaster });
 
   return _sdk;
 }

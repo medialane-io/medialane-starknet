@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useMemo } from "react";
-import { sepolia, mainnet } from "@starknet-react/chains";
+import { mainnet } from "@starknet-react/chains";
 import {
   StarknetConfig,
   avnuPaymasterProvider,
@@ -31,7 +31,7 @@ const queryClient = new QueryClient({
 });
 
 interface NetworkContextType {
-  currentNetwork: 'mainnet' | 'sepolia';
+  currentNetwork: 'starknet';
   networkConfig: {
     chainId: string;
     name: string;
@@ -42,10 +42,10 @@ interface NetworkContextType {
 const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
 const NETWORK_DEFAULT: NetworkContextType = {
-  currentNetwork: 'mainnet',
+  currentNetwork: 'starknet',
   networkConfig: {
     chainId: '23448594291968334',
-    name: 'Starknet Mainnet',
+    name: 'Starknet',
     explorerUrl: 'https://voyager.online',
   },
 };
@@ -56,7 +56,7 @@ export const useNetwork = () => {
 };
 
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
-  const chains = useMemo(() => [mainnet, sepolia], []);
+  const chains = useMemo(() => [mainnet], []);
   const recommendedConnectors = useMemo(
     () => [idResolvedReady(), idResolvedBraavos()],
     [],
@@ -68,24 +68,18 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
     order: "alphabetical",
   });
 
-  // Determine network from environment variable, default to mainnet
-  const networkEnv = process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'sepolia' ? 'sepolia' : 'mainnet';
-  const currentNetwork = networkEnv;
+  // Mainnet-only, identified by chain ("starknet"), not tier. When multichain
+  // ships, add real chains here — never testnets.
+  const currentNetwork = 'starknet' as const;
 
   const networkConfigs = {
-    mainnet: {
+    starknet: {
       chainId: mainnet.id.toString(),
-      name: 'Starknet Mainnet',
-      explorerUrl: 'https://voyager.online'
+      name: 'Starknet',
+      explorerUrl: 'https://voyager.online',
     },
-    sepolia: {
-      chainId: sepolia.id.toString(),
-      name: 'Starknet Sepolia',
-      explorerUrl: process.env.NEXT_PUBLIC_EXPLORER_URL || 'https://voyager.online'
-    }
   };
 
-  // Get current network config
   const networkConfig = networkConfigs[currentNetwork];
 
   // Retrieve your custom RPC URL from environment variables
@@ -115,7 +109,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
         connectors={connectors}
         explorer={voyager}
         queryClient={queryClient}
-        defaultChainId={currentNetwork === 'mainnet' ? mainnet.id : sepolia.id}
+        defaultChainId={mainnet.id}
         autoConnect={true}
       >
         {children}

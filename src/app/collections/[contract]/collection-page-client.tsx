@@ -33,7 +33,9 @@ import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { useWallet } from "@/hooks/use-wallet";
+import { getService } from "@medialane/sdk";
 import type { ApiToken, ApiOrder } from "@medialane/sdk";
+import { CoinPageClient } from "./coin-page-client";
 
 const PAGE_SIZE = 24;
 
@@ -293,6 +295,12 @@ export default function CollectionPageClient() {
     (o) => o.status === "ACTIVE" && (o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155")
   );
   const activeBids = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC20");
+
+  // Registry dispatch: Creator Coins (and external ERC-20s) get the coin view —
+  // an ERC-20 has no per-token grid/listings, just a price + embedded swap.
+  if (!colLoading && collection && getService(collection.service)?.uiVariant === "coin") {
+    return <CoinPageClient collection={collection} />;
+  }
 
   const floorParsed = parsePriceDisplay(collection?.floorPrice);
   const volumeParsed = parsePriceDisplay(collection?.totalVolume);
