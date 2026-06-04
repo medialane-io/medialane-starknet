@@ -13,6 +13,7 @@ import { OnboardStrategy } from "starkzap";
 import type { WalletInterface } from "starkzap";
 import { toast } from "sonner";
 import { getStarkZapSdk } from "@/lib/starkzap";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 import type { PrivyConnectorProps } from "./privy-connector";
 import {
   IDLE_WALLET_SESSION,
@@ -143,8 +144,10 @@ export function StarkZapWalletProvider({
       setWallet(result.wallet);
       setSession(walletReady("cartridge", result.wallet.address as unknown as string));
     } catch (err) {
+      // Raw detail → console only; user sees a friendly message.
+      console.error("[Cartridge] connect failed:", err);
       setWallet(null);
-      setSession(walletError("cartridge", err instanceof Error ? err.message : "Failed to connect Cartridge"));
+      setSession(walletError("cartridge", getFriendlyWalletError(err).message));
     }
   }, []);
 

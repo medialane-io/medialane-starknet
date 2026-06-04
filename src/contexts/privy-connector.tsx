@@ -22,6 +22,7 @@ import {
   walletPreparingWallet,
   walletReady,
 } from "@/lib/wallet-session";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export interface PrivyConnectorProps {
   pendingConnect: boolean;
@@ -138,9 +139,11 @@ export function PrivyConnector({
 
     runOnboarding(isAutoReconnect)
       .catch((err) => {
+        // Raw detail → console only; users see a friendly message (e.g. a
+        // transient RPC -32001 becomes "Network busy — try again").
         console.error("[Privy] onboarding failed:", err);
         setWallet(null);
-        setSession(walletError("privy", err instanceof Error ? err.message : "Failed to connect with Privy"));
+        setSession(walletError("privy", getFriendlyWalletError(err).message));
       })
       .finally(() => {
         onboardingRef.current = false;

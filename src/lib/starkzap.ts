@@ -11,6 +11,7 @@
 
 import { StarkZap, ChainId, getStakingPreset, fromAddress } from "starkzap";
 import type { Token } from "starkzap";
+import { DEFAULT_RPC_URL } from "@medialane/sdk";
 
 // ---------------------------------------------------------------------------
 // Network resolution
@@ -33,7 +34,14 @@ let _sdk: StarkZap | null = null;
 export function getStarkZapSdk(): StarkZap {
   if (_sdk) return _sdk;
 
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
+  // StarkZap builds its OWN internal RpcProvider from a single `rpcUrl` and its
+  // config (SDKConfig) exposes no baseFetch/provider hook — so it CANNOT use the
+  // dapp's multi-endpoint failover (see src/lib/starknet.ts: StarkZap is the 4th
+  // RPC path, outside the 3 failover-covered providers). Pointing it at Alchemy —
+  // the capped endpoint that intermittently -32001s, the whole reason failover
+  // exists — means its chainId/connect calls fail with nothing to fall back to.
+  // Pin it to the reliable Lava RPC (spec 0.8, used by every mainnet op).
+  const rpcUrl = DEFAULT_RPC_URL;
   const avnuApiKey = process.env.NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY;
 
   // Pass the AVNU API key so sponsored (feeMode: "sponsored") deployments
@@ -45,9 +53,7 @@ export function getStarkZapSdk(): StarkZap {
       }
     : undefined;
 
-  _sdk = rpcUrl
-    ? new StarkZap({ rpcUrl, chainId: APP_CHAIN_ID, paymaster })
-    : new StarkZap({ network: "mainnet", paymaster });
+  _sdk = new StarkZap({ rpcUrl, chainId: APP_CHAIN_ID, paymaster });
 
   return _sdk;
 }
