@@ -143,21 +143,37 @@ request"`, ~1 in 6 calls). All Starknet RPC fails over to public endpoints
 (`lava.build`, …) via `@medialane/sdk`'s `createFailoverFetch` /
 `PUBLIC_RPC_FALLBACKS` — never re-copy that policy locally.
 
-**⚠️ The dapp has THREE RpcProviders — when a read fails, find which one the
-failing call uses** (this is documented in full at the top of `src/lib/starknet.ts`):
+**⚠️ The dapp has FOUR RpcProviders — when a read fails, find which one the
+failing call uses** (the first three are documented in full at the top of
+`src/lib/starknet.ts`):
 1. `starknetProvider` singleton (`src/lib/starknet.ts`) — direct `Contract`
    calls + `waitForTransaction` in **non-hook** contexts (launchpad
-   drop/pop/editions, transfer-ownership, `use-tx`, `use-paymaster-transaction`).
+   drop/pop/editions, transfer-ownership, `use-tx`, `use-paymaster-transaction`),
+   plus `use-coin-price` (Creator Coin Ekubo price read).
 2. **starknet-react's** provider (`components/starknet-provider.tsx`) — every
    `useProvider()`/`useContract()` call, i.e. the whole marketplace flow
    (`use-marketplace.ts`: `get_counter`, `royalty_info`, approvals).
 3. The SDK client's `getProvider` (`@medialane/sdk` ≥ 0.28.0) — SDK-routed ops.
+4. **StarkZap's internal provider** (`lib/starkzap.ts`) — all wallet ops
+   (Privy/Cartridge connect, deploy, balances, staking). StarkZap bundles its
+   own starknet v9 and its `SDKConfig` exposes **no `baseFetch`/provider hook**,
+   so it **cannot use `failoverFetch`** — it's pinned to a single `rpcUrl`.
 
-All three share one failover policy (#1 + #2 import `failoverFetch` from
+Providers #1–#3 share one failover policy (#1 + #2 import `failoverFetch` from
 `lib/starknet`; #3 is internal to the SDK). **Never construct a bare
 `new RpcProvider({ nodeUrl })` without `baseFetch`.** The patch that fixed
 listings (`ab0f7e0`) was wiring `failoverFetch` into #2 — patching only #1 left
 the marketplace flow broken.
+
+**#4 (StarkZap) cannot fail over** — so it must be pinned to the *reliable*
+endpoint, NOT the capped Alchemy primary. It's set to `DEFAULT_RPC_URL` (Lava,
+spec 0.8.1) in `lib/starkzap.ts`. Giving it `NEXT_PUBLIC_RPC_URL` (Alchemy) made
+its `starknet_chainId` chain-match check hit the intermittent `-32001` with
+nothing to fall back to → "Connection failed" on wallet connect (fixed
+`ddb6484`). All wallet-connect errors now route through `getFriendlyWalletError`
+(`lib/wallet-error.ts`) at the set sites (`privy-connector.tsx`,
+`starkzap-wallet-context.tsx`): users see "Network busy — try again", the raw
+RPC blob is `console.error`-only.
 
 `StarknetConfig` is given a tuned `QueryClient` (`refetchOnWindowFocus: false`,
 bounded retries, 10s `staleTime`) so tab focus doesn't fire read bursts.
