@@ -71,12 +71,27 @@ The app supports three wallet connection strategies, unified by `useUnifiedWalle
 
 **Priority**: StarkZap wallet (Cartridge/Privy) takes priority over injected in `useUnifiedWallet`.
 
-**Provider tree** (in `src/app/layout.tsx`):
+**Provider tree** (actual nesting in `src/app/providers.tsx`, lines ~173–202):
 ```
 ThemeProvider
-  └─ Providers (PrivyProvider + StarkZapWalletProvider)  ← src/components/providers.tsx
-       └─ StarknetProvider                               ← src/components/starknet-provider.tsx
+  └─ PrivyProvider (lazy; only mounted when ml_privy_session set or on mint landings)
+       └─ StarknetProvider                  ← src/components/starknet-provider.tsx
+            └─ StarkZapWalletProvider        ← src/contexts/starkzap-wallet-context.tsx
+                 └─ PrivyConnector (rendered by StarkZapWalletProvider)
 ```
+**StarknetProvider is OUTER, StarkZapWalletProvider is INNER** — so `PrivyConnector`
+(and the StarkZap context) can call starknet-react's `useAccount()`/`useProvider()`.
+This matters for wallet coordination (see "Wallet priority" below).
+
+**Wallet priority — last explicit choice wins.** `useWalletSession` prioritizes a
+StarkZap session (Privy/Cartridge) over an injected one (Braavos/Ready). To keep
+that from letting a *stale* Privy session stomp an actively-connected injected
+wallet: (a) `PrivyConnector`'s auto-reconnect is gated on `!injectedConnected`
+(never restore Privy over an active injected wallet; re-restores if injected later
+disconnects); (b) an explicit injected pick (`ConnectWallet.handleConnectorClick`)
+calls `szDisconnect()` + clears `ml_privy_session` to retire any active/stale
+StarkZap session. Fixed `f7db36a`. The `ml_privy_session` localStorage flag is the
+Privy auto-reconnect token (set on connect, drives the `providers.tsx` lazy mount).
 
 **Key files**:
 - `src/lib/starkzap.ts` — SDK singleton (`getStarkZapSdk()`), token presets, staking config
