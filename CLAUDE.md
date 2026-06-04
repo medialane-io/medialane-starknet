@@ -313,6 +313,26 @@ dialog set — the shared modules are presentation + derivation only. Use the
 
 ---
 
+## Creator Coin pages (added 2026-06-04)
+
+A Creator Coin (and any `external-erc20`) is an **ERC-20 = a `Collection`**, not a token —
+so it has **no per-token `/asset/...` page**. It renders through the **collection page
+dispatcher**: `collections/[contract]/collection-page-client.tsx` early-returns
+`<CoinPageClient/>` when `getService(collection.service)?.uiVariant === "coin"` (the NFT
+items/listings/offers tabs don't apply to a fungible coin).
+
+- **`collections/[contract]/coin-page-client.tsx`** — `CoinPageClient`: live price card,
+  holder/supply stats, a renounce + locked-LP trust strip (hidden for `external-erc20`), and
+  an embedded **buy-swap** (`CoinSwapCard`, reuses `useSwap` → AVNU router → settles on Ekubo,
+  with a graceful "no router quote yet" state for fresh coins AVNU hasn't indexed). Service
+  display name via `getService(service)?.displayName` (NOT `.label`).
+- **`hooks/use-coin-price.ts`** — `useCoinPrice(coin)`: SWR over the SDK's
+  `getCreatorCoinPrice(coin, starknetProvider)` (30s refresh, read-only). The Ekubo price math
+  lives in `@medialane/sdk` (single source) — never reimplement it in the dapp. This call uses
+  the failover-covered `starknetProvider` singleton (RPC path #1).
+
+---
+
 ## Notification System (added 2026-05-12)
 
 **Types** (`src/types/notification.ts`): `offer`, `offer_accepted`, `sale`, `listing`, `mint`, `transfer`, `asset_received`, `cancelled`, `announcement`. Priority: `"normal" | "spotlight"`. Celebratory flag drives confetti.
