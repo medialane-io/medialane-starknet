@@ -180,6 +180,12 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
     setInjectedConnectingId(connector.id);
     try {
       await connectAsync({ connector });
+      // Explicit injected choice wins (both directions): retire any active or
+      // stale StarkZap (Privy/Cartridge) session + its auto-reconnect token so
+      // it can't take priority over — or silently restore over — the wallet the
+      // user just picked. Pairs with the auto-reconnect gate in privy-connector.
+      if (typeof window !== "undefined") localStorage.removeItem("ml_privy_session");
+      szDisconnect();
     } catch (err) {
       console.error("Failed to connect wallet", err);
       const message = err instanceof Error ? err.message : "Wallet connection failed";

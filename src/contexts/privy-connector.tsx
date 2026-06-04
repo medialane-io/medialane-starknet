@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAccount } from "@starknet-react/core";
 import { usePrivy } from "@privy-io/react-auth";
 import { OnboardStrategy } from "starkzap";
 import type { WalletInterface } from "starkzap";
@@ -42,6 +43,12 @@ export function PrivyConnector({
   setPrivyUser,
 }: PrivyConnectorProps) {
   const { ready, authenticated, login, logout, getAccessToken, user } = usePrivy();
+  // PrivyConnector renders inside StarknetProvider, so we can see whether an
+  // injected wallet (Braavos / Ready) is currently connected. A stale Privy
+  // session must NOT silently auto-reconnect over a wallet the user explicitly
+  // connected this session (useWalletSession prioritizes StarkZap > injected, so
+  // an auto-reconnect would drop the active injected wallet).
+  const { isConnected: injectedConnected } = useAccount();
 
   // Tracks an in-flight user-initiated onboarding so we can run it once
   // `authenticated` flips true after the Privy modal closes. login() can
@@ -129,6 +136,7 @@ export function PrivyConnector({
     const isExplicit = needsOnboard;
     const isAutoReconnect =
       !needsOnboard &&
+      !injectedConnected && // never restore Privy over an active injected wallet
       typeof window !== "undefined" &&
       !!localStorage.getItem("ml_privy_session");
 
@@ -149,7 +157,7 @@ export function PrivyConnector({
         onboardingRef.current = false;
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, authenticated, needsOnboard]);
+  }, [ready, authenticated, needsOnboard, injectedConnected]);
 
   // Sync logout when Privy session ends externally.
   useEffect(() => {
