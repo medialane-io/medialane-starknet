@@ -7,8 +7,8 @@
       "dependencies": {
         "@avnu/gasless-sdk": "^0.1.8",
         "@hookform/resolvers": "^3",
-        "@medialane/sdk": "0.24.1",
-        "@medialane/ui": "0.5.4",
+        "@medialane/sdk": "0.30.0",
+        "@medialane/ui": "0.6.0",
         "@privy-io/node": "^0.18.0",
         "@privy-io/react-auth": "^3.25.0",
         "@radix-ui/react-accordion": "latest",
@@ -271,9 +271,9 @@
 
     "@marsidev/react-turnstile": ["@marsidev/react-turnstile@1.5.2", "", { "peerDependencies": { "react": "^17.0.2 || ^18.0.0 || ^19.0", "react-dom": "^17.0.2 || ^18.0.0 || ^19.0" } }, "sha512-+3aBPxp86JzSC0ZmgyonoGoUEENcUkH3LGahXSpkV87ArvD2DzRCmPgh0FyQk6PQRmJwQJDAfwNavFsxUxMQWA=="],
 
-    "@medialane/sdk": ["@medialane/sdk@0.24.1", "", { "dependencies": { "zod": "^3.23.8" }, "peerDependencies": { "starknet": ">=6.0.0" } }, "sha512-4hB7E74/f2xbdwnjvTs4GNLPuWSsNHu4/EOulQs07wMtzvnI9nwdZtJRuy8R2utZ/F0LEZjxF4qB3cwYZStJOQ=="],
+    "@medialane/sdk": ["@medialane/sdk@0.30.0", "", { "dependencies": { "zod": "^3.23.8" }, "peerDependencies": { "starknet": ">=6.0.0" } }, "sha512-QWqOPeLZAp//awSP8QjtnVUiaBLd07unygVPYVh4L05kzmDsQ4e+NAp59/QofYRIA9Tt80yni/C8MY9fWw+eUw=="],
 
-    "@medialane/ui": ["@medialane/ui@0.5.4", "", { "peerDependencies": { "@medialane/sdk": ">=0.6.0", "clsx": ">=2.0.0", "cmdk": ">=1.0.0", "framer-motion": ">=10.0.0", "lucide-react": ">=0.400.0", "next": ">=14.0.0", "next-themes": ">=0.3.0", "react": ">=18.0.0", "react-dom": ">=18.0.0", "sonner": ">=1.0.0", "tailwind-merge": ">=2.0.0" } }, "sha512-KRbaCitC8bpT93B4GW3zHATOvafP4g/Wnfj/W4LdUQrdNaMwR5ghsWek1WUO1o/+4qRtsZoQbq5Wq1mU0ISzDA=="],
+    "@medialane/ui": ["@medialane/ui@0.6.0", "", { "peerDependencies": { "@medialane/sdk": ">=0.6.0", "clsx": ">=2.0.0", "cmdk": ">=1.0.0", "framer-motion": ">=10.0.0", "lucide-react": ">=0.400.0", "next": ">=14.0.0", "next-themes": ">=0.3.0", "react": ">=18.0.0", "react-dom": ">=18.0.0", "sonner": ">=1.0.0", "tailwind-merge": ">=2.0.0" } }, "sha512-cujXTsW//Ge3rcI9BRM69duXDDjzMBjaK0PQ+E8zvunRc9iNZV8uA2QjRwSCg+dVTTkqpa2tCMzE5jl/PUVuXw=="],
 
     "@metamask/eth-json-rpc-provider": ["@metamask/eth-json-rpc-provider@1.0.1", "", { "dependencies": { "@metamask/json-rpc-engine": "^7.0.0", "@metamask/safe-event-emitter": "^3.0.0", "@metamask/utils": "^5.0.1" } }, "sha512-whiUMPlAOrVGmX8aKYVPvlKyG4CpQXiNNyt74vE1xb5sPvmx5oA7B/kOi/JdBvhGQq97U1/AVdXEdk2zkP8qyA=="],
 
