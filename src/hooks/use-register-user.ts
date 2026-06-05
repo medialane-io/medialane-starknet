@@ -1,20 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import type { ApiWalletType } from "@medialane/sdk";
 import { getMedialaneClient } from "@/lib/medialane-client";
 
+// The connector id IS the wallet-software label the backend stores as
+// Identity.provider (lowercased, never gated — 07-identity §II). Send it
+// directly; no enum mapping. `null` is omitted and the backend records "unknown".
 type FrontendWalletType =
   | "argent" | "braavos" | "injected" | "cartridge" | "privy" | null;
-
-function toBackendWalletType(walletType: FrontendWalletType): ApiWalletType {
-  if (walletType === "argent") return "ARGENT";
-  if (walletType === "braavos") return "BRAAVOS";
-  if (walletType === "cartridge") return "CARTRIDGE";
-  if (walletType === "privy") return "PRIVY";
-  if (walletType === "injected") return "INJECTED";
-  return "UNKNOWN";
-}
 
 const SESSION_KEY_PREFIX = "ml_registered_";
 
@@ -40,7 +33,7 @@ export function useRegisterUser(
     getMedialaneClient()
       .api.registerUser({
         walletAddress: address,
-        walletType: toBackendWalletType(walletType),
+        walletType: walletType ?? undefined,
         appSource: "MEDIALANE_STARKNET",
         chain: "STARKNET",
       })
@@ -50,7 +43,7 @@ export function useRegisterUser(
         // Account creation is observable (Vercel logs / future Sentry).
         console.error("[ml-register] failed", {
           appSource: "MEDIALANE_STARKNET",
-          walletType: toBackendWalletType(walletType),
+          walletType: walletType ?? "unknown",
           error: error instanceof Error ? error.message : String(error),
         });
       });
