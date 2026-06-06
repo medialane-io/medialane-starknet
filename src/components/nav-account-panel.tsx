@@ -6,7 +6,10 @@ import type { Connector } from "@starknet-react/core";
 import { shortenAddress, useNavCommandMenu } from "@medialane/ui";
 import { Gamepad2, Loader2, LogOut, Mail, User, Wallet } from "lucide-react";
 import { toast } from "sonner";
-import { useWallet } from "@/wallet";
+import { useNetwork } from "@/components/starknet-provider";
+import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWalletSession } from "@/hooks/use-wallet-session";
 
 
 function getConnectorDisplayName(id: string, fallback: string) {
@@ -20,15 +23,18 @@ function getConnectorDisplayName(id: string, fallback: string) {
 
 
 export function NavAccountPanel() {
-  const { connectors } = useConnect();
-  const { address, isConnected, isConnecting, error, disconnect, connect } = useWallet();
+  const { connectAsync, connectors } = useConnect();
+  const { address, isConnected, walletType, disconnect } = useUnifiedWallet();
+  const { isConnecting, error } = useWalletSession();
+  const { connectCartridge, connectPrivy, privyUser } = useStarkZapWallet();
+  const { networkConfig } = useNetwork();
   const { close } = useNavCommandMenu();
   const [connectingId, setConnectingId] = React.useState<string | null>(null);
 
   const connectInjected = async (connector: Connector) => {
     setConnectingId(connector.id);
     try {
-      await connect(connector.id.toLowerCase() === "braavos" ? "braavos" : "argent");
+      await connectAsync({ connector });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Wallet connection failed";
       if (/user rejected|user aborted|aborted|rejected/i.test(message)) {
@@ -44,9 +50,10 @@ export function NavAccountPanel() {
   const connectStarkZap = async (type: "cartridge" | "privy") => {
     close();
     try {
-      await connect(type);
+      if (type === "cartridge") await connectCartridge();
+      else await connectPrivy();
     } catch {
-      // The wallet store exposes the user-facing error state.
+      // The StarkZap context exposes the user-facing error state.
     }
   };
 

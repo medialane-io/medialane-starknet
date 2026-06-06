@@ -25,7 +25,7 @@ export interface PrivyLeafProps {
 }
 
 export function PrivyLeaf({ store, pending, adopt, clearPending }: PrivyLeafProps) {
-  const { ready, authenticated, login, logout, getAccessToken, user } = usePrivy();
+  const { ready, authenticated, login, logout, getAccessToken } = usePrivy();
   const [needsOnboard, setNeedsOnboard] = useState(false);
   const onboardingRef = useRef(false);
 
@@ -96,9 +96,8 @@ export function PrivyLeaf({ store, pending, adopt, clearPending }: PrivyLeafProp
           },
           result.wallet,
         );
-      store.getState().setPrivyUser(user ?? null);
     },
-    [getAccessToken, store, user],
+    [getAccessToken, store],
   );
 
   // Step 1: explicit connect request → open Privy login modal.
@@ -113,10 +112,7 @@ export function PrivyLeaf({ store, pending, adopt, clearPending }: PrivyLeafProp
       error: null,
     });
     setNeedsOnboard(true);
-    // In adopt mode the caller already authenticated Privy (e.g. the airdrop inline
-    // email-OTP login) — never re-open the modal; just wait for `authenticated` and
-    // onboard in Step 2.
-    if (!authenticated && !adopt) login();
+    if (!authenticated) login();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, pending]);
 
