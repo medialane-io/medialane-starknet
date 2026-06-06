@@ -1,94 +1,33 @@
 "use client";
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+/**
+ * SHIM over the new wallet store (src/wallet). Preserves the old useStarkZapWallet()
+ * shape so the existing consumers keep working unchanged. Reads the store DIRECTLY
+ * (not via useWallet) — usePaymasterTransaction calls this hook, and useWallet calls
+ * usePaymasterTransaction, so going through useWallet here would recurse infinitely.
+ *
+ * The real provider is now <WalletProvider> (src/wallet). StarkZapWalletProvider is a
+ * passthrough kept only so any lingering import still renders.
+ */
+
+import { useCallback } from "react";
+import { useStore } from "zustand";
 import type { User } from "@privy-io/react-auth";
-import { OnboardStrategy } from "starkzap";
 import type { WalletInterface } from "starkzap";
-import { toast } from "sonner";
-import { getStarkZapSdk } from "@/lib/starkzap";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
-import type { PrivyConnectorProps } from "./privy-connector";
-import {
-  IDLE_WALLET_SESSION,
-  isWalletSessionBusy,
-  walletConnecting,
-  walletError,
-  walletReady,
-  walletAuthenticating,
-  type WalletSession,
-} from "@/lib/wallet-session";
-import { POP_FACTORY_CONTRACT_MAINNET, DROP_FACTORY_CONTRACT_MAINNET } from "@medialane/sdk";
-import {
-  COLLECTION_721_CONTRACT,
-  COLLECTION_1155_CONTRACT,
-  MARKETPLACE_721_CONTRACT,
-  MARKETPLACE_1155_CONTRACT,
-  NFTCOMMENTS_CONTRACT,
-  LAUNCH_MINT_CONTRACT,
-  MINT_CONTRACT,
-  BR_MINT_CONTRACT,
-} from "@/lib/constants";
-
-// ---------------------------------------------------------------------------
-// Cartridge session policies for Medialane contracts
-// ---------------------------------------------------------------------------
-//
-// Cartridge session keys authorise only the (target, method) pairs in this
-// list — anything outside triggers a fresh PIN/passkey prompt or, in some
-// SDK versions, a hard rejection. Adding a method to the dapp without a
-// matching policy entry silently breaks the feature for Cartridge users.
-//
-// Per-collection NFT / POP / Drop contracts have DYNAMIC addresses (one per
-// event / drop / minted collection). The static target list below cannot
-// cover them. Cartridge users hitting those flows currently fall back to
-// an additional approval prompt — known UX gap, tracked as the next item
-// after this PR.
-
-export const CARTRIDGE_POLICIES = (
-  [
-    // ── MIP collection registry (ERC-721) ───────────────────────────────
-    { target: COLLECTION_721_CONTRACT, method: "mint" },
-    { target: COLLECTION_721_CONTRACT, method: "create_collection" },
-    { target: COLLECTION_721_CONTRACT, method: "transfer_token" },
-    { target: COLLECTION_721_CONTRACT, method: "transfer_collection_ownership" },
-    // ── IP-Programmable ERC-1155 factory ────────────────────────────────
-    { target: COLLECTION_1155_CONTRACT, method: "deploy_collection" },
-    // ── Marketplace contracts ───────────────────────────────────────────
-    { target: MARKETPLACE_721_CONTRACT, method: "register_order" },
-    { target: MARKETPLACE_721_CONTRACT, method: "fulfill_order" },
-    { target: MARKETPLACE_721_CONTRACT, method: "cancel_order" },
-    { target: MARKETPLACE_1155_CONTRACT, method: "register_order" },
-    { target: MARKETPLACE_1155_CONTRACT, method: "fulfill_order" },
-    { target: MARKETPLACE_1155_CONTRACT, method: "cancel_order" },
-    // ── POP / Drop factories (collection creation) ──────────────────────
-    { target: POP_FACTORY_CONTRACT_MAINNET, method: "create_collection" },
-    { target: DROP_FACTORY_CONTRACT_MAINNET, method: "create_drop" },
-    // ── NFT comments ────────────────────────────────────────────────────
-    { target: NFTCOMMENTS_CONTRACT, method: "add_comment" },
-    // ── Static airdrop / launch mint contracts ──────────────────────────
-    // GenesisMint (used by /mint, /airdrop, /br/mint, /launch via
-    // launch-mint.tsx) calls mint_item on these fixed env-driven targets.
-    // Each may be unconfigured (empty string) in environments without
-    // the campaign — `.filter(Boolean)` below drops those entries so we
-    // never send `target: ""` to the Cartridge SDK.
-    { target: LAUNCH_MINT_CONTRACT, method: "mint_item" },
-    { target: MINT_CONTRACT, method: "mint_item" },
-    { target: BR_MINT_CONTRACT, method: "mint_item" },
-  ] as { target: string; method: string }[]
-).filter((p) => p.target);
-
-// ---------------------------------------------------------------------------
-// Context types
-// ---------------------------------------------------------------------------
+import { useWalletStore } from "@/wallet/WalletProvider";
+import { METHOD_BACKEND, type WalletMethod } from "@/wallet/types";
+import { writeLastChoice, clearLastChoice } from "@/wallet/persistence";
+import type { WalletSession, WalletSessionStatus } from "@/lib/wallet-session";
 
 export type StarkZapWalletType = "cartridge" | "privy";
+
+export function StarkZapWalletProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+function toOldStatus(s: string): WalletSessionStatus {
+  return (s === "deploying" ? "deploying-account" : s) as WalletSessionStatus;
+}
 
 export interface StarkZapWalletCtx {
   wallet: WalletInterface | null;
@@ -103,117 +42,50 @@ export interface StarkZapWalletCtx {
   disconnect: () => void;
 }
 
-const StarkZapWalletContext = createContext<StarkZapWalletCtx | undefined>(undefined);
+export function useStarkZapWallet(): StarkZapWalletCtx {
+  const store = useWalletStore();
+  const s = useStore(store, (st) => ({
+    status: st.status,
+    method: st.method,
+    address: st.address,
+    error: st.error,
+    signer: st.signer,
+    privyUser: st.privyUser,
+  }));
 
-// ---------------------------------------------------------------------------
-// Provider — owns Privy onboarding state directly; renders an injected
-// PrivyConnector component (lazy-loaded by providers.tsx) when available.
-// ---------------------------------------------------------------------------
-
-interface ProviderProps {
-  children: React.ReactNode;
-  onRequestPrivy: () => void;
-  PrivyConnector?: React.ComponentType<PrivyConnectorProps> | null;
-}
-
-export function StarkZapWalletProvider({
-  children,
-  onRequestPrivy,
-  PrivyConnector,
-}: ProviderProps) {
-  const [wallet, setWallet] = useState<WalletInterface | null>(null);
-  const [session, setSession] = useState<WalletSession>(IDLE_WALLET_SESSION);
-  const [privyUser, setPrivyUser] = useState<User | null>(null);
-  const [pendingPrivyConnect, setPendingPrivyConnect] = useState(false);
-  const walletType = session.walletType === "cartridge" || session.walletType === "privy"
-    ? session.walletType
-    : null;
-  const address = session.address;
-  const isConnecting = isWalletSessionBusy(session);
-  const error = session.error;
-
-  const connectCartridge = useCallback(async () => {
-    setSession(walletConnecting("cartridge"));
-    try {
-      const sdk = getStarkZapSdk();
-      const result = await sdk.onboard({
-        strategy: OnboardStrategy.Cartridge,
-        cartridge: { policies: CARTRIDGE_POLICIES },
-        deploy: "if_needed",
-      });
-      setWallet(result.wallet);
-      setSession(walletReady("cartridge", result.wallet.address as unknown as string));
-    } catch (err) {
-      // Raw detail → console only; user sees a friendly message.
-      console.error("[Cartridge] connect failed:", err);
-      setWallet(null);
-      setSession(walletError("cartridge", getFriendlyWalletError(err).message));
-    }
-  }, []);
-
-  const connectPrivy = useCallback(async () => {
-    localStorage.setItem("ml_privy_session", "1");
-    setSession(walletAuthenticating("privy"));
-    onRequestPrivy();
-    setPendingPrivyConnect(true);
-  }, [onRequestPrivy]);
+  const connect = useCallback(
+    async (method: WalletMethod) => {
+      store.getState().setActive(method);
+      writeLastChoice(method);
+      await store.getState().bridges[METHOD_BACKEND[method]]?.connect(method);
+    },
+    [store],
+  );
 
   const disconnect = useCallback(() => {
-    if (walletType === "privy") {
-      localStorage.removeItem("ml_privy_session");
-    }
-    setWallet(null);
-    setSession(IDLE_WALLET_SESSION);
-    setPrivyUser(null);
-  }, [walletType]);
+    const st = store.getState();
+    if (st.backend) st.bridges[st.backend]?.disconnect();
+    clearLastChoice();
+    st.clearActive();
+  }, [store]);
 
-  // Surface session errors as toasts (Privy-only — Cartridge errors are
-  // already shown inline in nav-account-panel).
-  const lastShownError = useRef<string | null>(null);
-  useEffect(() => {
-    if (session.walletType !== "privy") return;
-    if (session.status !== "error") {
-      lastShownError.current = null;
-      return;
-    }
-    if (!session.error || session.error === lastShownError.current) return;
-    lastShownError.current = session.error;
-    toast.error(session.error, { id: "privy-connect-error" });
-  }, [session.status, session.walletType, session.error]);
+  const isEmbedded = s.method === "cartridge" || s.method === "privy";
 
-  const clearPending = useCallback(() => setPendingPrivyConnect(false), []);
-
-  return (
-    <StarkZapWalletContext.Provider
-      value={{ wallet, session, walletType, address, isConnecting, error, privyUser, connectCartridge, connectPrivy, disconnect }}
-    >
-      {PrivyConnector ? (
-        <PrivyConnector
-          pendingConnect={pendingPrivyConnect}
-          clearPending={clearPending}
-          walletType={walletType}
-          setSession={setSession}
-          setWallet={setWallet}
-          setPrivyUser={setPrivyUser}
-        />
-      ) : null}
-      {children}
-    </StarkZapWalletContext.Provider>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Public hook
-// ---------------------------------------------------------------------------
-
-const STARKZAP_DEFAULT_CTX: StarkZapWalletCtx = {
-  wallet: null, session: IDLE_WALLET_SESSION, walletType: null, address: null,
-  isConnecting: false, error: null, privyUser: null,
-  connectCartridge: async () => {},
-  connectPrivy: async () => {},
-  disconnect: () => {},
-};
-
-export function useStarkZapWallet(): StarkZapWalletCtx {
-  return useContext(StarkZapWalletContext) ?? STARKZAP_DEFAULT_CTX;
+  return {
+    wallet: isEmbedded ? (s.signer as WalletInterface | null) : null,
+    session: {
+      status: toOldStatus(s.status),
+      walletType: (s.method ?? null) as WalletSession["walletType"],
+      address: s.address,
+      error: s.error,
+    },
+    walletType: isEmbedded ? (s.method as StarkZapWalletType) : null,
+    address: s.address,
+    isConnecting: s.status === "connecting" || s.status === "deploying",
+    error: s.error,
+    privyUser: (s.privyUser ?? null) as User | null,
+    connectCartridge: () => connect("cartridge"),
+    connectPrivy: () => connect("privy"),
+    disconnect,
+  };
 }

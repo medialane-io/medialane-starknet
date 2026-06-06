@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2, Mail } from "lucide-react";
 import { useLoginWithEmail, usePrivy } from "@privy-io/react-auth";
-import { useWallet } from "@/hooks/use-wallet";
+import { useWallet } from "@/wallet";
 
 type Stage = "idle" | "otp" | "connecting";
 
@@ -86,7 +86,7 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
   const t = COPY[locale];
   const { ready, authenticated } = usePrivy();
   const { sendCode, loginWithCode } = useLoginWithEmail();
-  const { isConnected } = useWallet();
+  const { isConnected, connect } = useWallet();
 
   const [stage, setStage] = useState<Stage>("idle");
   const [email, setEmail] = useState("");
@@ -100,12 +100,6 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
   // progress here instead of in the global dialog).
   const isOnboarding = authenticated && !isConnected;
 
-  const armAutoReconnect = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("ml_privy_session", "1");
-    }
-  };
-
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null);
@@ -115,7 +109,6 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
     }
     setBusy(true);
     try {
-      armAutoReconnect();
       await sendCode({ email: email.trim() });
       setStage("otp");
     } catch (err) {
@@ -136,6 +129,10 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
     try {
       await loginWithCode({ code: code.trim() });
       setStage("connecting");
+      // Hand off to the new wallet store: onboard + sponsored-deploy the Privy
+      // Starknet account. The user is already authenticated, so adopt the session
+      // (no re-opening the modal).
+      connect("privy", { adoptSession: true }).catch((err) => console.error(err));
     } catch (err) {
       setOtpError(err instanceof Error ? err.message : t.invalidCode);
       setCode("");

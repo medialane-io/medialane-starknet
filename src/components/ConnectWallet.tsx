@@ -47,6 +47,7 @@ import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useWalletSession } from "@/hooks/use-wallet-session";
+import { useWallet } from "@/wallet";
 import type { WalletSessionType } from "@/lib/wallet-session";
 
 // ---------------------------------------------------------------------------
@@ -142,12 +143,8 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
     error: sessionError,
   } = useWalletSession();
 
-  const {
-    connectCartridge,
-    connectPrivy,
-    privyUser,
-    disconnect: szDisconnect,
-  } = useStarkZapWallet();
+  const { privyUser } = useStarkZapWallet();
+  const { connect: walletConnect, disconnect: walletDisconnect } = useWallet();
 
   // ---------------------------------------------------------------------------
   // Unified state
@@ -179,13 +176,10 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
     setConnectDialogOpen(false);
     setInjectedConnectingId(connector.id);
     try {
-      await connectAsync({ connector });
-      // Explicit injected choice wins (both directions): retire any active or
-      // stale StarkZap (Privy/Cartridge) session + its auto-reconnect token so
-      // it can't take priority over — or silently restore over — the wallet the
-      // user just picked. Pairs with the auto-reconnect gate in privy-connector.
-      if (typeof window !== "undefined") localStorage.removeItem("ml_privy_session");
-      szDisconnect();
+      // Explicit choice → the new wallet store sets this the single active wallet
+      // and persists it; any prior Privy/Cartridge session is retired automatically
+      // (single-active-wallet model — no manual szDisconnect / ml_privy_session).
+      await walletConnect(connector.id?.toLowerCase() === "braavos" ? "braavos" : "argent");
     } catch (err) {
       console.error("Failed to connect wallet", err);
       const message = err instanceof Error ? err.message : "Wallet connection failed";
@@ -203,7 +197,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
   const handleCartridgeConnect = async () => {
     setConnectDialogOpen(false);
     try {
-      await connectCartridge();
+      await walletConnect("cartridge");
     } catch {
       // error surfaced via session state
     }
@@ -217,11 +211,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
   };
 
   const handleDisconnect = () => {
-    if (hasStarkZap) {
-      szDisconnect();
-    } else {
-      injectedDisconnect();
-    }
+    walletDisconnect();
     setOpen(false);
   };
 
@@ -526,7 +516,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 onClick={async () => {
                   setConnectDialogOpen(false);
                   try {
-                    await connectPrivy();
+                    await walletConnect("privy");
                   } catch {
                     // error surfaced via session state
                   }
