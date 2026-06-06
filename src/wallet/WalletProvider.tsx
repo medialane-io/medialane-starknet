@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useRef } from "react";
 import { createWalletStore, type WalletStoreApi } from "./store";
+import { useInjectedHost } from "./adapters/injected";
 
 const Ctx = createContext<WalletStoreApi | null>(null);
 
@@ -9,6 +10,12 @@ export function useWalletStore(): WalletStoreApi {
   const s = useContext(Ctx);
   if (!s) throw new Error("useWallet must be used within <WalletProvider>");
   return s;
+}
+
+/** Runs the injected (starknet-react) bridge. Must render inside StarknetProvider. */
+function InjectedHostMount({ store }: { store: WalletStoreApi }) {
+  useInjectedHost(store);
+  return null;
 }
 
 /**
@@ -22,5 +29,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const storeRef = useRef<WalletStoreApi>(undefined);
   if (!storeRef.current) storeRef.current = createWalletStore();
 
-  return <Ctx.Provider value={storeRef.current}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={storeRef.current}>
+      <InjectedHostMount store={storeRef.current} />
+      {children}
+    </Ctx.Provider>
+  );
 }
