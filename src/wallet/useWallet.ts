@@ -2,10 +2,12 @@
 
 import { useStore } from "zustand";
 import { useCallback } from "react";
+import type { WalletInterface } from "starkzap";
 import type { Call, WalletMethod, WalletStatus } from "./types";
 import { METHOD_BACKEND } from "./types";
 import { useWalletStore } from "./WalletProvider";
 import { writeLastChoice, clearLastChoice } from "./persistence";
+import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 
 export interface UseWallet {
   address: string | null;
@@ -21,6 +23,7 @@ export interface UseWallet {
 
 export function useWallet(): UseWallet {
   const store = useWalletStore();
+  const { executeAuto } = usePaymasterTransaction();
   const state = useStore(store, (s) => ({
     address: s.address,
     method: s.method,
@@ -46,10 +49,25 @@ export function useWallet(): UseWallet {
     st.clearActive();
   }, [store]);
 
-  // execute is wired in Task 8 (keeps the existing AVNU paymaster path).
-  const execute = useCallback<UseWallet["execute"]>(async () => {
-    throw new Error("execute() is wired in Task 8");
-  }, []);
+  const execute = useCallback<UseWallet["execute"]>(
+    async (calls) => {
+      const st = store.getState();
+      // Embedded (StarkZap Privy/Cartridge): the wallet handles its own gas
+      // (session keys / sponsored). Same path the old executeAuto used for szWallet.
+      if (st.backend === "embedded") {
+        const w = st.signer as WalletInterface | null;
+        if (!w) throw new Error("Wallet not connected");
+        const tx = await w.execute(calls);
+        await tx.wait();
+        return tx.hash;
+      }
+      // Injected: existing AVNU paymaster pipeline, unchanged.
+      const hash = await executeAuto(calls);
+      if (!hash) throw new Error("Transaction failed");
+      return hash;
+    },
+    [store, executeAuto],
+  );
 
   return {
     address: state.address,
