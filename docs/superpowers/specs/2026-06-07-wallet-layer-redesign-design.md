@@ -225,3 +225,32 @@ prod, so verification is staged:
   semantics so reverts aren't reported as success.
 - Lazy Privy mount timing on `/br/mint` (paid-ads funnel) must still render the
   inline login fast — keep the route pre-mount for the 3 mint/airdrop routes.
+
+## Shipped + post-deploy follow-ups (2026-06-07)
+
+Implemented per the plan and shipped to prod (`main`), then hardened from live
+testing (no local wallet harness — prod is the verification loop):
+
+- `af1bb3f`–`86f1f08` — the redesign: `ActiveWallet` types, adapters,
+  `WalletProvider` slot, `useWallet()`, compat shims, `executeAuto` via slot,
+  ConnectWallet/nav rewire, Privy explicit-connect, providers tree + `ml_wallet`
+  gating, dead-code removal.
+- `95aadcb` — **slot identity from `connected+address`, not the `account` object**
+  (asset page read "disconnected" for a live injected wallet; `account` hydrates
+  async). Account resolved lazily at `execute()`.
+- `d039e43` — **marketplace resolves `szWallet ?? account`** (StarkZap users can
+  trade; no `account!` crash; injected path byte-identical).
+- `6cbfd7d` — **connector: silent re-verify before disconnect** on empty
+  `accountsChanged` (extensions fire spurious empties during panel/lock UI).
+- `276a714` — **retried injected reconnect** in `WalletProvider` (~6s of
+  `connector.ready()` polling). Root cause proven via console: starknet-react
+  `autoConnect` is a one-shot and loses the race vs async `window.starknet_*`
+  injection on fresh loads. THIS was the real "disconnect on navigation" cause;
+  the earlier connector fix targeted a path that wasn't firing.
+- `e8ae5bc` — deleted the orphaned `src/wallet/*` unified-store leftovers +
+  `/wallet-debug` (a duplicate `WalletProvider`/`useWallet` footgun).
+
+**Method note:** the disconnect bug was only solved once we added `[ML-WALLET]`
+console diagnostics and read the actual event sequence from prod — three
+code-reasoning guesses before that were wrong. For unreproducible multi-component
+timing bugs, instrument first.

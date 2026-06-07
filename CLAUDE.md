@@ -60,7 +60,8 @@ NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY    # AVNU API key — all tx types sponsored 
 
 ## Wallet System
 
-The app supports three wallet connection strategies, unified by `useUnifiedWallet`:
+The app supports three wallet connection strategies, unified by a single
+active-wallet slot (`WalletProvider` + `useWallet()`):
 
 1. **Argent / Braavos** — injected browser wallets via `starknetkit` + `@starknet-react/core`
 2. **Cartridge Controller** — session-key gaming wallet via StarkZap SDK (`OnboardStrategy.Cartridge`). Auto-gasless, policies scoped via `CARTRIDGE_POLICIES` in `src/contexts/starkzap-wallet-context.tsx`.
@@ -69,40 +70,81 @@ The app supports three wallet connection strategies, unified by `useUnifiedWalle
    - **Audit methodology**: `grep -rEo 'entrypoint:\s*"[a-zA-Z_]+"' src/ | awk -F'"' '{print $2}' | sort -u` lists every called entrypoint. Diff against `CARTRIDGE_POLICIES`. Anything called on a static-address contract but not in the list is a silent-failure bug.
 3. **Privy** — email/social login via StarkZap SDK (`OnboardStrategy.Privy`). Keys managed server-side; no seed phrase required. Requires the two Privy API routes.
 
-**Priority**: StarkZap wallet (Cartridge/Privy) takes priority over injected in `useUnifiedWallet`.
+**Architecture — one active-wallet slot (redesigned 2026-06-07; spec:
+`docs/superpowers/specs/2026-06-07-wallet-layer-redesign-design.md`).** A single
+`WalletProvider` (`src/contexts/wallet-context.tsx`) owns one `ActiveWallet | null`
+slot, written **ONLY by an explicit user `connect(type)`**. There is NO priority
+referee — one slot, last-explicit-choice-wins by construction, so a background
+session cannot outrank the wallet the user is actually using. (This replaced the
+old `useWalletSession`/`useUnifiedWallet` "StarkZap > injected" priority that
+silently let a stale Privy session hijack an actively-connected injected wallet —
+the 2026-06-07 "Privy hijack" incident.)
 
-**Provider tree** (actual nesting in `src/app/providers.tsx`, lines ~173–202):
+**`useWallet()` is the single hook** (`src/hooks/use-wallet.ts`): reads the slot →
+`{ address, isConnected, isConnecting, walletType, error, connect, disconnect,
+execute }`. Use it everywhere — identity AND execution. `connect(type, connector?)`
+is the only thing that writes the slot. `useUnifiedWallet()` and `useWalletSession()`
+are kept as **thin compatibility shims** over `useWallet()` (same shapes) so legacy
+call sites keep working; new code uses `useWallet()`.
+
+**Identity is decoupled from the account object.** The slot exists whenever
+`injectedConnected && injectedAddress` — NEVER gated on starknet-react's `account`
+object, which can be momentarily `undefined` while connected (hydrates async,
+differs per page). The account is resolved lazily at `execute()` time. Coupling
+identity to `account` made the asset page read "disconnected" for an
+actively-connected wallet (fixed `95aadcb`).
+
+**Persistence + reconnect.** One key `localStorage["ml_wallet"]`
+(`argent|braavos|cartridge|privy`, replaces the old `ml_privy_session`) records the
+user's last explicit choice; only that wallet restores on reload.
+- **Injected**: `WalletProvider` owns a **retried** reconnect (~6s of
+  `connector.ready()` polling, keyed on `ml_wallet`). starknet-react's built-in
+  `autoConnect` is a single one-shot on mount and loses the race against async
+  `window.starknet_*` extension injection on fresh loads — never relied on alone
+  (fixed `276a714`).
+- **Cartridge**: silent `sdk.onboard({ strategy: Cartridge })` resume.
+- **Privy**: restores ONLY when `ml_wallet === "privy"` and Privy is still
+  authenticated — there is **NO silent background auto-reconnect** (the old one
+  hijacked injected wallets). Privy is lazy-mounted only when `ml_wallet === "privy"`
+  or on `/mint`,`/airdrop`,`/br/*`. First-ever connect eagerly deploys the mainnet
+  account (`deploy: "if_needed"`); later sign-ins are a light rehydrate.
+
+**Connector hardening** (`src/lib/starknet-connectors.ts`): on an empty
+`accountsChanged` the injected connector silently re-verifies (`wallet_getPermissions`
++ silent `wallet_requestAccounts`) **before** emitting `disconnect` — extensions
+fire spurious empty `accountsChanged` during panel refresh / lock UI, and treating
+that as a hard disconnect dropped live sessions.
+
+**Provider tree** (`src/app/providers.tsx`):
 ```
 ThemeProvider
-  └─ PrivyProvider (lazy; only mounted when ml_privy_session set or on mint landings)
-       └─ StarknetProvider                  ← src/components/starknet-provider.tsx
-            └─ StarkZapWalletProvider        ← src/contexts/starkzap-wallet-context.tsx
-                 └─ PrivyConnector (rendered by StarkZapWalletProvider)
+  └─ (lazy) PrivyProvider     ← only when ml_wallet=privy or on mint/airdrop/br routes
+       └─ StarknetProvider     ← src/components/starknet-provider.tsx
+            └─ StarkZapWalletProvider  ← src/contexts/starkzap-wallet-context.tsx (Cartridge/Privy onboarding + active WalletInterface)
+                 └─ WalletProvider     ← src/contexts/wallet-context.tsx (the active-wallet slot)
 ```
-**StarknetProvider is OUTER, StarkZapWalletProvider is INNER** — so `PrivyConnector`
-(and the StarkZap context) can call starknet-react's `useAccount()`/`useProvider()`.
-This matters for wallet coordination (see "Wallet priority" below).
-
-**Wallet priority — last explicit choice wins.** `useWalletSession` prioritizes a
-StarkZap session (Privy/Cartridge) over an injected one (Braavos/Ready). To keep
-that from letting a *stale* Privy session stomp an actively-connected injected
-wallet: (a) `PrivyConnector`'s auto-reconnect is gated on `!injectedConnected`
-(never restore Privy over an active injected wallet; re-restores if injected later
-disconnects); (b) an explicit injected pick (`ConnectWallet.handleConnectorClick`)
-calls `szDisconnect()` + clears `ml_privy_session` to retire any active/stale
-StarkZap session. Fixed `f7db36a`. The `ml_privy_session` localStorage flag is the
-Privy auto-reconnect token (set on connect, drives the `providers.tsx` lazy mount).
+`WalletProvider` is innermost so its injected adapter can read starknet-react's
+`useAccount()` and its StarkZap adapter the StarkZap context.
 
 **Key files**:
+- `src/contexts/wallet-context.tsx` — `WalletProvider` (the slot) + `useWalletContext()`
+- `src/hooks/use-wallet.ts` — `useWallet()`, the single public hook
+- `src/lib/wallet-types.ts` — `ActiveWallet`/`WalletType` + `ml_wallet` persistence helpers
+- `src/lib/wallet-adapters.ts` — `makeInjectedExecute` / `makeStarkzapExecute`
+- `src/lib/wait-for-receipt.ts` — shared on-chain confirmation + revert detection
+- `src/contexts/starkzap-wallet-context.tsx` — StarkZap SDK onboarding + `useStarkZapWallet()` (Cartridge/Privy)
 - `src/lib/starkzap.ts` — SDK singleton (`getStarkZapSdk()`), token presets, staking config
-- `src/contexts/starkzap-wallet-context.tsx` — `StarkZapWalletProvider` + `useStarkZapWallet()`
-- `src/hooks/use-unified-wallet.ts` — normalises all wallet types into one interface
-- `src/hooks/use-wallet.ts` — **normalized identity hook**: wraps `useUnifiedWallet()`, returns `{ address, isConnected, walletType }`. Use this in any component that only needs to know who the user is. Use `useUnifiedWallet` directly only when you also need signing or execution.
-- `src/components/providers.tsx` — PrivyProvider + StarkZapWalletProvider client wrapper
-- `src/app/api/wallet/starknet/route.ts` — Privy wallet get-or-create (server)
-- `src/app/api/wallet/sign/route.ts` — Privy raw signing endpoint (server)
+- `src/hooks/use-unified-wallet.ts`, `src/hooks/use-wallet-session.ts` — compat shims over `useWallet()`
+- `src/app/api/wallet/{starknet,sign}/route.ts` — Privy server wallet get-or-create + raw signing
 
-**Compat note**: StarkZap bundles starknet v9 internally; the app uses v8 via starknet-react. They coexist — share primitives (addresses, tx hashes) as plain strings only; never mix Account objects across stacks.
+**StarkZap stays.** It is the modern, valued Starknet SDK powering Cartridge, Privy,
+swaps, DeFi, and Creator Coins. Fix wallet bugs by **removing complexity** (referees,
+redundant hooks, auto-reconnect machinery), NOT by removing/replacing the SDK.
+Clerk + ChipiPay belong to **medialane-io**, not this dapp.
+
+**Compat note**: StarkZap bundles starknet v9 internally; the app uses v8 via
+starknet-react. They coexist — share primitives (addresses, tx hashes, typed-data
+signatures as `string`/`string[]`) only; never mix Account objects across stacks.
 
 ### Connect dialog — `<ConnectWallet />` is the single entry point (2026-05-27)
 
@@ -122,7 +164,7 @@ Every page and component that prompts the user to connect renders the shared `<C
 
 ## Starknet Integration Patterns
 
-**Contract ABIs** come from `@medialane/sdk` (currently 0.27.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
+**Contract ABIs** come from `@medialane/sdk` (currently 0.33.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
 
 **Marketplace order flow** (in `src/hooks/use-marketplace.ts`) — **redesigned venues, SDK 0.26.0** (client-signing migration, 2026-05-31):
 - Order params use the new schema: single `amount` (no start/end), plus `marketplace`, `royalty_max_bps` (live EIP-2981 via `royalty_info`), and `counter` (`get_counter()`, replaces the removed nonce). Salt is a **wide 248-bit** value (sole order-hash uniqueness source).
@@ -132,6 +174,10 @@ Every page and component that prompts the user to connect renders the shared `<C
 - Buying a listing / accepting an offer: **unsigned** — `fulfill_order(orderHash[, quantity])`, no `signMessage`; approve + (fee) executed atomically via the paymaster
 - Cancellations: signed `{ order_hash, offerer }` (no nonce) → `cancel_order`
 - Execution stays on dapp's AVNU paymaster (`executeAuto`) + creators-fund fee splice.
+- **Signer/executor resolution** (`d039e43`): the trade path resolves `szWallet ?? account`
+  (mirrors `use-tx`/`use-siws-token`) — so Cartridge/Privy users can list/buy/offer, and a
+  momentarily-`undefined` injected `account` never crashes the multicall (no more `account!`).
+  For injected users the path is byte-identical to the prior account-only flow.
 
 **Checkout totals — always via `orderTotal()` (`src/lib/checkout.ts`).** `order.consideration.startAmount` is the price **per edition** for ERC-1155 (the listing form labels it "Price per edition"); `fulfill_order` charges `price × quantity`. `orderTotal(order, quantity)` is the single source of truth for the ERC-20 amount to approve — never divide by `offer.startAmount`. `checkoutCart` takes a typed `CheckoutItem[]`; both call sites (`purchase-dialog`, `counter-offers-table`) build items through `orderTotal`. A prior bug under-approved ERC-1155 multi-buys by dividing by the edition count → `ERC20: insufficient allowance`.
 
@@ -364,4 +410,6 @@ items/listings/offers tabs don't apply to a fungible coin).
 - Token IDs are represented as `bigint` in contract calls and decoded as `u256` (low + high << 128)
 - All contract calls that modify state go through `executeAuto` (paymaster) or `account.execute()` — never call contracts directly in server code
 - New transaction flows should default to `executeAuto` from `usePaymasterTransaction` or the feature-specific paymaster hook
-- **Wallet identity**: use `useWallet()` → `{ address, isConnected }` in components that only need to know who the user is. Use `useUnifiedWallet()` only when you need signing, wallet type, or execution capabilities.
+- **Wallet**: `useWallet()` is the single hook for everything — `{ address, isConnected, isConnecting, walletType, error, connect, disconnect, execute }`. `useUnifiedWallet()`/`useWalletSession()` are legacy compat shims over it; don't reach for them in new code.
+- **Page layout**: top-level pages wrap content in `<PageContainer className="box-border max-w-full pt-20 …">` from `@medialane/ui` (full-width, content aligns with the logo) — do NOT use Tailwind's `container` (it caps width + centers → mismatched side gutters). `pt-20` clears the fixed logo/nav. Asset pages use `mx-auto w-full px-4 sm:px-6 lg:px-8` (full-width without PageContainer).
+- **No hover-only effects** on cards/grids (scale, lift-shadow, color-shift) — most users are on mobile where hover doesn't exist. Keep `active:` (touch) states; reserve `hover:` for non-essential desktop polish only.
