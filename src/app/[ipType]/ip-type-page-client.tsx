@@ -77,50 +77,36 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
             </div>
           )}
         </div>
-        <div className="p-3 space-y-1">
+        <div className="p-3">
           <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
             {name}
           </p>
-          {price?.formatted ? (
-            <p className="text-xs text-muted-foreground">
-              Listed · {formatDisplayPrice(price.formatted)}{" "}
-              <span className="text-muted-foreground/70">{price.currency}</span>
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">Not listed</p>
-          )}
         </div>
       </Link>
 
-      {/* Action row — outside Link to prevent navigation on button click */}
-      <div className="px-2 pb-2 pt-0 flex gap-1.5">
-        {isSignedIn ? (
-          <>
-            <div className="btn-border-animated p-[1px] rounded-lg flex-1">
-              <button
-                className="w-full h-8 rounded-[7px] flex items-center justify-center gap-1 text-xs font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-purple"
-                onClick={(e) => { e.preventDefault(); setOfferOpen(true); }}
-              >
-                <HandCoins className="h-3 w-3" />
-                Offer
-              </button>
-            </div>
-            <div className="btn-border-animated p-[1px] rounded-lg flex-1">
-              <button
-                className="w-full h-8 rounded-[7px] flex items-center justify-center gap-1 text-xs font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-rose"
-                onClick={(e) => { e.preventDefault(); router.push(`/create/remix/${token.contractAddress}/${token.tokenId}`); }}
-              >
-                <GitBranch className="h-3 w-3" />
-                Remix
-              </button>
-            </div>
-          </>
-        ) : (
-          <p className="text-[10px] text-muted-foreground text-center w-full py-1.5">
-            Connect wallet to trade
-          </p>
-        )}
-      </div>
+      {/* Action row — signed-in only; outside Link to prevent navigation on click */}
+      {isSignedIn && (
+        <div className="px-2 pb-2 pt-0 flex gap-1.5">
+          <div className="btn-border-animated p-[1px] rounded-lg flex-1">
+            <button
+              className="w-full h-8 rounded-[7px] flex items-center justify-center gap-1 text-xs font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-purple"
+              onClick={(e) => { e.preventDefault(); setOfferOpen(true); }}
+            >
+              <HandCoins className="h-3 w-3" />
+              Offer
+            </button>
+          </div>
+          <div className="btn-border-animated p-[1px] rounded-lg flex-1">
+            <button
+              className="w-full h-8 rounded-[7px] flex items-center justify-center gap-1 text-xs font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-rose"
+              onClick={(e) => { e.preventDefault(); router.push(`/create/remix/${token.contractAddress}/${token.tokenId}`); }}
+            >
+              <GitBranch className="h-3 w-3" />
+              Remix
+            </button>
+          </div>
+        </div>
+      )}
 
       <OfferDialog
         open={offerOpen}
