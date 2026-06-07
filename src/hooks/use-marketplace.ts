@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAccount, useContract, useNetwork, useProvider } from "@starknet-react/core";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { Abi, shortString, constants, num } from "starknet";
 import { useSWRConfig } from "swr";
 import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk";
@@ -110,6 +111,12 @@ const assertOrderCreated = (receipt: any, marketplaceAddress: string) => {
 
 export function useMarketplace(): UseMarketplaceReturn {
     const { account } = useAccount();
+    // StarkZap (Cartridge/Privy) wallet — for these users starknet-react's
+    // `account` is null, so the trade path resolves a signer/executor as
+    // `szWallet ?? account`. Both expose signMessage(typedData) + execute(calls);
+    // results are normalized. When szWallet is null (injected users) every path
+    // below is byte-identical to the previous account-only behavior.
+    const { wallet: szWallet } = useStarkZapWallet();
     const { chain } = useNetwork();
     const { provider } = useProvider();
     const { mutate } = useSWRConfig();
@@ -182,10 +189,29 @@ export function useMarketplace(): UseMarketplaceReturn {
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const executeDirect = useCallback(async (calls: any[]): Promise<string> => {
+        // StarkZap (Cartridge/Privy): its SDK handles gas/sponsorship + waits.
+        if (szWallet) {
+            const tx = await szWallet.execute(calls);
+            return tx.hash;
+        }
+        if (!account) {
+            throw new Error("Wallet not ready. Please reconnect and try again.");
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tx = await account!.execute(calls as any);
+        const tx = await account.execute(calls as any);
         return tx.transaction_hash;
-    }, [account]);
+    }, [szWallet, account]);
+
+    // Signs typed data with whichever wallet is active. starknet account and
+    // StarkZap WalletInterface both implement signMessage(typedData): Signature;
+    // callers normalize the result via signatureArray (handles [] or {r,s}).
+    const signTypedData = useCallback(async (typedData: any): Promise<any> => {
+        const signer = szWallet ?? account;
+        if (!signer) {
+            throw new Error("Wallet not ready. Please reconnect and try again.");
+        }
+        return signer.signMessage(typedData);
+    }, [szWallet, account]);
 
     const getErc20Allowance = useCallback(async (
         tokenAddress: string,
@@ -257,7 +283,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         const chainId = ('0x' + chain!.id.toString(16)) as constants.StarknetChainId;
         const typedData = stringifyBigInts(getOrderParametersTypedData(orderParams, chainId));
 
-        const signature = await account!.signMessage(typedData);
+        const signature = await signTypedData(typedData);
         const signatureArray = Array.isArray(signature)
             ? signature
             : [signature.r.toString(), signature.s.toString()];
@@ -277,20 +303,23 @@ export function useMarketplace(): UseMarketplaceReturn {
             signature: signatureArray,
         });
 
-        // Hash verification
+        // Hash verification (best-effort, account-only — StarkZap wallets don't
+        // expose hashMessage; the check is just a warning and never gates submit).
         try {
-            const localHash = await account!.hashMessage(typedData);
-            const contractHash = await contract.get_order_hash(registerPayload.parameters, walletAddress!);
-            const contractHashHex = "0x" + BigInt(contractHash).toString(16);
-            if (localHash !== contractHashHex) {
-                console.warn("[marketplace] Hash mismatch — signature may be rejected by contract");
+            if (account?.hashMessage) {
+                const localHash = await account.hashMessage(typedData);
+                const contractHash = await contract.get_order_hash(registerPayload.parameters, walletAddress!);
+                const contractHashHex = "0x" + BigInt(contractHash).toString(16);
+                if (localHash !== contractHashHex) {
+                    console.warn("[marketplace] Hash mismatch — signature may be rejected by contract");
+                }
             }
         } catch (hashErr) {
             console.warn("Could not verify hash:", hashErr);
         }
 
         return contract.populate("register_order", [registerPayload]);
-    }, [account, chain, walletAddress]);
+    }, [account, chain, walletAddress, signTypedData]);
 
     const createListing = useCallback(async (
         assetContractAddress: string,
@@ -310,7 +339,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error(msg);
             return undefined;
         }
-        if (!account) {
+        if (!szWallet && !account) {
             const msg = "Wallet not ready. Please reconnect and try again.";
             setError(msg);
             toast.error(msg);
@@ -352,7 +381,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 const typedData1155 = stringifyBigInts(
                     get1155OrderParametersTypedData(orderParams1155 as Record<string, unknown>, chainId)
                 );
-                const signature1155 = await account!.signMessage(typedData1155);
+                const signature1155 = await signTypedData(typedData1155);
                 const signatureArray1155 = Array.isArray(signature1155)
                     ? signature1155
                     : [signature1155.r.toString(), signature1155.s.toString()];
@@ -455,7 +484,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.success("Listing Created", { description: "Your asset has been listed successfully." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches]);
 
     const makeOffer = useCallback(async (
         assetContractAddress: string,
@@ -474,7 +503,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error(msg);
             return undefined;
         }
-        if (!account) {
+        if (!szWallet && !account) {
             const msg = "Wallet not ready. Please reconnect and try again.";
             setError(msg);
             toast.error(msg);
@@ -517,7 +546,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 const typedData = stringifyBigInts(
                     get1155OrderParametersTypedData(orderParams as Record<string, unknown>, chainId)
                 );
-                const signature = await account!.signMessage(typedData);
+                const signature = await signTypedData(typedData);
                 const signatureArray = Array.isArray(signature)
                     ? signature
                     : [signature.r.toString(), signature.s.toString()];
@@ -562,7 +591,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, getErc20Allowance, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, getErc20Allowance, executeDirect, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[]) => {
         if (!walletAddress || !medialaneContract || !chain || items.length === 0) {
@@ -571,7 +600,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error(msg);
             return undefined;
         }
-        if (!account) {
+        if (!szWallet && !account) {
             const msg = "Wallet not ready. Please reconnect and try again.";
             setError(msg);
             toast.error(msg);
@@ -642,7 +671,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
 
     const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string) => {
         const is1155 = tokenStandard === "ERC1155";
@@ -654,7 +683,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error(msg);
             return undefined;
         }
-        if (!account) {
+        if (!szWallet && !account) {
             const msg = "Wallet not ready. Please reconnect and try again.";
             setError(msg);
             toast.error(msg);
@@ -674,7 +703,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                     : getOrderCancellationTypedData(cancelParams, chainId)
             );
 
-            const signature = await account.signMessage(typedData);
+            const signature = await signTypedData(typedData);
             const signatureArray = Array.isArray(signature)
                 ? signature
                 : [signature.r.toString(), signature.s.toString()];
@@ -695,7 +724,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.success("Listing Cancelled", { description: "The listing has been successfully cancelled on-chain." });
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
 
     /**
      * Asset owner accepts an incoming bid. Signs OrderFulfillment typed data,
@@ -717,7 +746,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error(msg);
             return undefined;
         }
-        if (!account) {
+        if (!szWallet && !account) {
             const msg = "Wallet not ready. Please reconnect and try again.";
             setError(msg);
             toast.error(msg);
@@ -757,7 +786,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             refreshMarketplaceCaches();
             return hash;
         });
-    }, [account, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
 
     return {
         createListing,
