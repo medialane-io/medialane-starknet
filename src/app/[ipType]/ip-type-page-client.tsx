@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, Tag, SlidersHorizontal, HandCoins, GitBranch, Search, X as XIcon } from "lucide-react";
+import { Loader2, SlidersHorizontal, HandCoins, GitBranch, Search, X as XIcon } from "lucide-react";
+import { CurrencyIcon } from "@/components/shared/currency-icon";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -84,7 +85,7 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
           {price?.formatted && (
             <div className="absolute top-2 right-2">
               <Badge className="text-[10px] bg-black/70 text-white border-0 backdrop-blur-sm gap-1">
-                <Tag className="h-2.5 w-2.5" />
+                <CurrencyIcon symbol={price.currency ?? ""} size={12} />
                 {formatDisplayPrice(price.formatted)} {price.currency}
               </Badge>
             </div>
@@ -259,7 +260,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
   const listedCount = allTokens.filter((t) => (t.activeOrders?.length ?? 0) > 0).length;
 
   return (
-    <div className="container mx-auto px-5 sm:px-8 lg:px-12 pt-12 pb-16 space-y-8">
+    <div className="mx-auto w-full px-5 sm:px-8 lg:px-12 pt-20 pb-16 space-y-8">
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
