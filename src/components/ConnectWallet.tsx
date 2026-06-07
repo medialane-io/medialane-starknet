@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useConnect, useAccount, useDisconnect } from "@starknet-react/core";
+import { useConnect, useAccount } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +46,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
-import { useWalletSession } from "@/hooks/use-wallet-session";
+import { useWallet } from "@/hooks/use-wallet";
 import type { WalletSessionType } from "@/lib/wallet-session";
 
 // ---------------------------------------------------------------------------
@@ -127,9 +127,8 @@ interface ConnectWalletProps {
 }
 
 export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
-  const { connectAsync, connectors } = useConnect();
+  const { connectors } = useConnect();
   const { isConnected: injectedConnected, chainId } = useAccount();
-  const { disconnect: injectedDisconnect } = useDisconnect();
   const [open, setOpen] = useState(false);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [injectedConnectingId, setInjectedConnectingId] = useState<string | null>(null);
@@ -140,14 +139,12 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
     isConnecting: sessionConnecting,
     walletType: activeWalletType,
     error: sessionError,
-  } = useWalletSession();
+    connect,
+    disconnect,
+  } = useWallet();
 
-  const {
-    connectCartridge,
-    connectPrivy,
-    privyUser,
-    disconnect: szDisconnect,
-  } = useStarkZapWallet();
+  // privyUser is only needed for the email/social label in the connected sheet.
+  const { privyUser } = useStarkZapWallet();
 
   // ---------------------------------------------------------------------------
   // Unified state
@@ -179,13 +176,11 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
     setConnectDialogOpen(false);
     setInjectedConnectingId(connector.id);
     try {
-      await connectAsync({ connector });
-      // Explicit injected choice wins (both directions): retire any active or
-      // stale StarkZap (Privy/Cartridge) session + its auto-reconnect token so
-      // it can't take priority over — or silently restore over — the wallet the
-      // user just picked. Pairs with the auto-reconnect gate in privy-connector.
-      if (typeof window !== "undefined") localStorage.removeItem("ml_privy_session");
-      szDisconnect();
+      // connect() writes the single active-wallet slot, persists ml_wallet, and
+      // retires any active/stale StarkZap session so it can't outrank or
+      // silently restore over the wallet the user just picked.
+      const type = connector.id.toLowerCase() === "braavos" ? "braavos" : "argent";
+      await connect(type, connector);
     } catch (err) {
       console.error("Failed to connect wallet", err);
       const message = err instanceof Error ? err.message : "Wallet connection failed";
@@ -203,7 +198,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
   const handleCartridgeConnect = async () => {
     setConnectDialogOpen(false);
     try {
-      await connectCartridge();
+      await connect("cartridge");
     } catch {
       // error surfaced via session state
     }
@@ -217,11 +212,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
   };
 
   const handleDisconnect = () => {
-    if (hasStarkZap) {
-      szDisconnect();
-    } else {
-      injectedDisconnect();
-    }
+    disconnect();
     setOpen(false);
   };
 
@@ -526,7 +517,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 onClick={async () => {
                   setConnectDialogOpen(false);
                   try {
-                    await connectPrivy();
+                    await connect("privy");
                   } catch {
                     // error surfaced via session state
                   }
