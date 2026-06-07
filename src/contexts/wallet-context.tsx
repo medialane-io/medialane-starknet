@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useMemo, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
@@ -8,6 +8,7 @@ import { makeInjectedExecute, makeStarkzapExecute } from "@/lib/wallet-adapters"
 import {
   clearPersistedWallet,
   writePersistedWallet,
+  readPersistedWallet,
   type ActiveWallet,
   type WalletType,
 } from "@/lib/wallet-types";
@@ -33,7 +34,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     connector: injectedConnector,
     status: injectedStatus,
   } = useAccount();
-  const { connectAsync } = useConnect();
+  const { connectAsync, connectors } = useConnect();
   const { disconnect: injectedDisconnect } = useDisconnect();
   const injectedConnected = injectedConnectedRaw ?? false;
 
@@ -103,6 +104,62 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     szConnecting ||
     injectedStatus === "connecting" ||
     injectedStatus === "reconnecting";
+
+  // ── Robust injected reconnect ──────────────────────────────────────────────
+  // starknet-react's `autoConnect` makes a SINGLE one-shot attempt on mount.
+  // Browser wallet extensions inject `window.starknet_*` asynchronously, so on a
+  // fresh/slow page load the extension often isn't ready when that one shot
+  // fires — autoConnect silently gives up and never retries, leaving an
+  // actually-authorized wallet showing "disconnected" (reported as the dapp
+  // dropping the wallet on navigation). We retry the reconnect ourselves, keyed
+  // on the persisted choice (ml_wallet), until the connector reports ready.
+  // `ready()` only returns true when the extension is present AND the `accounts`
+  // permission is still granted, so this never prompts.
+  const liveConnectedRef = useRef(injectedConnected);
+  liveConnectedRef.current = injectedConnected;
+  const liveSzRef = useRef(Boolean(szWallet));
+  liveSzRef.current = Boolean(szWallet);
+  const reconnectRan = useRef(false);
+
+  useEffect(() => {
+    if (reconnectRan.current) return;
+    const persisted = readPersistedWallet();
+    if (persisted !== "argent" && persisted !== "braavos") return;
+    if (liveConnectedRef.current || liveSzRef.current) return;
+    reconnectRan.current = true;
+
+    let cancelled = false;
+    const targetId = persisted === "braavos" ? "braavos" : "argentX";
+
+    (async () => {
+      // Let starknet-react's own one-shot autoConnect try first (warm loads
+      // where the extension is already injected) so we don't double-connect.
+      await new Promise((r) => setTimeout(r, 500));
+      // Up to ~6s of retries (15 × 400ms) to outlast slow extension injection.
+      for (let i = 0; i < 15 && !cancelled; i++) {
+        if (liveConnectedRef.current || liveSzRef.current) return;
+        const connector = connectors.find((c) => c.id === targetId);
+        if (connector) {
+          try {
+            const ready = await connector.ready();
+            console.warn("[ML-WALLET] injected reconnect attempt", { i, targetId, ready });
+            if (ready) {
+              await connectAsync({ connector });
+              return;
+            }
+          } catch (err) {
+            console.warn("[ML-WALLET] injected reconnect error", { i, err });
+          }
+        }
+        await new Promise((r) => setTimeout(r, 400));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectors]);
 
   const connect = useCallback(
     async (type: WalletType, connector?: Connector) => {
