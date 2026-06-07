@@ -59,15 +59,27 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   // The slot. StarkZap is active ONLY because the user explicitly chose it (its
   // session is set exclusively by connectCartridge/connectPrivy + persisted
   // ml_wallet); there is no background path that sets szWallet anymore.
+  //
+  // IDENTITY (slot existence) depends only on connected + address — NEVER on the
+  // starknet-react `account` object, which can be momentarily undefined while
+  // the wallet is connected (connector/hydration timing, and it differs per
+  // page). Coupling identity to `account` made the asset page read "disconnected"
+  // for an actively-connected injected wallet. The account is resolved lazily at
+  // execute() time instead.
   const active: ActiveWallet | null = useMemo(() => {
     if (szWallet && szAddress && (szType === "cartridge" || szType === "privy")) {
       return { type: szType, address: szAddress, execute: makeStarkzapExecute(szWallet) };
     }
-    if (injectedConnected && injectedAddress && injectedAccount) {
+    if (injectedConnected && injectedAddress) {
       return {
         type: injectedType,
         address: injectedAddress,
-        execute: makeInjectedExecute(injectedAccount),
+        execute: async (calls) => {
+          if (!injectedAccount) {
+            throw new Error("Wallet not ready yet — please try again in a moment");
+          }
+          return makeInjectedExecute(injectedAccount)(calls);
+        },
       };
     }
     return null;
