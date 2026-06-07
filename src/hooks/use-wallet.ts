@@ -1,23 +1,34 @@
 "use client";
 
-import { useUnifiedWallet } from "./use-unified-wallet";
+import type { Call } from "starknet";
+import type { Connector } from "@starknet-react/core";
+import { useWalletContext } from "@/contexts/wallet-context";
+import type { WalletType } from "@/lib/wallet-types";
 
 /**
- * Normalized wallet hook — single interface across all wallet types.
- * Use this when a component only needs to know WHO the user is.
- *
- * For signing, session keys, paymaster, or execution — use the
- * platform-specific hooks (useUnifiedWallet, usePaymasterTransaction, etc.).
+ * The single wallet hook. Reads the one active-wallet slot owned by
+ * WalletProvider. Use this everywhere — identity AND execution.
  *
  * Registration side-effect lives in <UserRegistration /> mounted in Providers,
- * not here — this hook stays a pure identity read.
+ * not here — this hook stays a pure read of the slot (plus the user actions
+ * the provider exposes).
  */
 export function useWallet() {
-  const { address, isConnected, isConnecting, walletType } = useUnifiedWallet();
+  const { active, isConnecting, error, connect, disconnect } = useWalletContext();
+
+  const execute = async (calls: Call[]): Promise<string> => {
+    if (!active) throw new Error("Wallet not connected");
+    return active.execute(calls);
+  };
+
   return {
-    address: address ?? null,
-    isConnected,
+    address: active?.address ?? null,
+    isConnected: active !== null,
     isConnecting,
-    walletType,
+    walletType: (active?.type ?? null) as WalletType | null,
+    error,
+    connect: (type: WalletType, connector?: Connector) => connect(type, connector),
+    disconnect,
+    execute,
   };
 }
