@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Mail } from "lucide-react";
 import { useLoginWithEmail, usePrivy } from "@privy-io/react-auth";
 import { useWallet } from "@/hooks/use-wallet";
+import { writePersistedWallet } from "@/lib/wallet-types";
 
 type Stage = "idle" | "otp" | "connecting";
 
@@ -100,10 +101,11 @@ export function PrivyInlineLogin({ onOpenWalletPicker, locale = "br" }: Props) {
   // progress here instead of in the global dialog).
   const isOnboarding = authenticated && !isConnected;
 
+  // Persist Privy as the active wallet choice BEFORE auth completes, so the
+  // privy-connector restore effect runs onboarding once `authenticated` flips
+  // true on this inline surface (it keys off ml_wallet === "privy").
   const armAutoReconnect = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("ml_privy_session", "1");
-    }
+    writePersistedWallet("privy");
   };
 
   const handleSendCode = async (e: React.FormEvent) => {
