@@ -22,7 +22,7 @@
 import { useState, useCallback } from "react";
 import { useAccount } from "@starknet-react/core";
 import type { Call } from "starknet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useWalletContext } from "@/contexts/wallet-context";
 import {
   checkGaslessCompatibility,
   executeGaslessCalls,
@@ -68,8 +68,9 @@ export interface UsePaymasterTransactionResult {
 
 export function usePaymasterTransaction(): UsePaymasterTransactionResult {
   const { account, address } = useAccount();
-  // StarkZap wallet (Cartridge) — manages its own gas via session keys
-  const { wallet: szWallet } = useStarkZapWallet();
+  // Active wallet slot — owns execution routing (injected vs StarkZap), so
+  // executeAuto no longer decides via an `if (szWallet)` branch.
+  const { active } = useWalletContext();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -187,40 +188,17 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
 
   const executeAuto = useCallback(
     async (calls: Call[]): Promise<string | null> => {
-      // StarkZap wallet (Cartridge) handles gas via session keys — bypass paymaster
-      if (szWallet) {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const tx = await szWallet.execute(calls);
-          await tx.wait();
-          return tx.hash;
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : "Transaction failed";
-          setError(msg);
-          throw new Error(msg);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      if (!account || !address) {
+      // Routing lives in the active-wallet slot — injected executes through the
+      // AVNU paymaster, StarkZap (Cartridge/Privy) through its own session keys.
+      // executeAuto just delegates; no more `if (szWallet)` priority branch.
+      if (!active) {
         setError("Wallet not connected");
         return null;
       }
-
       setIsLoading(true);
       setError(null);
-
       try {
-        const response = await account.execute(calls as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-        const hash: string = response.transaction_hash;
-        const result = await waitForReceipt(hash);
-        if (!result.ok) {
-          setError(result.reason);
-          throw new Error(result.reason);
-        }
-        return hash;
+        return await active.execute(calls);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Transaction failed";
         setError(msg);
@@ -229,7 +207,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         setIsLoading(false);
       }
     },
-    [szWallet, account, address]
+    [active]
   );
 
   // ---------------------------------------------------------------------------
