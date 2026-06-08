@@ -45,7 +45,8 @@ export default function CollectionsPageClient() {
     featured ? true : undefined,
     sort,
     (service === "pop-protocol" || service === "drop-collection") ? false : hideEmpty,
-    service
+    service,
+    "ERC721,ERC1155"
   );
 
   // Reset accumulated list whenever filters change
