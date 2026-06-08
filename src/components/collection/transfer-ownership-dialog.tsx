@@ -21,6 +21,8 @@ import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk";
 import { COLLECTION_721_CONTRACT } from "@/lib/constants";
 import { normalizeAddress } from "@/lib/utils";
 import { toast } from "sonner";
+import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-dialog-primitives";
+import { EXPLORER_URL } from "@/lib/constants";
 
 interface TransferOwnershipDialogProps {
   /** On-chain numeric collection ID (decimal string). */
@@ -42,6 +44,9 @@ export function TransferCollectionOwnershipDialog({
   const [open, setOpen] = useState(false);
   const [newOwner, setNewOwner] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [transferredTo, setTransferredTo] = useState<string>("");
   const { executeAuto } = usePaymasterTransaction();
 
   const trimmed = newOwner.trim();
@@ -62,12 +67,10 @@ export function TransferCollectionOwnershipDialog({
         cairo.uint256(BigInt(collectionId)),
         trimmed,
       ]);
-      await executeAuto([call]);
-      toast.success("Collection ownership transferred", {
-        description: `New owner: ${trimmed.slice(0, 6)}…${trimmed.slice(-4)}`,
-      });
-      setOpen(false);
-      setNewOwner("");
+      const hash = await executeAuto([call]);
+      setTxHash(hash);
+      setTransferredTo(trimmed);
+      setDone(true);
       onTransferred?.();
     } catch (err) {
       toast.error("Transfer failed", {
@@ -79,57 +82,82 @@ export function TransferCollectionOwnershipDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) { setDone(false); setNewOwner(""); setTxHash(null); setTransferredTo(""); }
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <UserRoundCog className="h-4 w-4" /> Transfer ownership
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Transfer collection ownership</DialogTitle>
-          <DialogDescription>
-            The new owner will control minting and future ownership transfers
-            for this collection. Existing tokens are unaffected.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-2">
-          <Label htmlFor="new-owner">New owner address</Label>
-          <Input
-            id="new-owner"
-            placeholder="0x…"
-            value={newOwner}
-            onChange={(e) => setNewOwner(e.target.value)}
-            className="font-mono text-sm"
-            spellCheck={false}
-            autoComplete="off"
+        {done ? (
+          <MarketplaceSuccessState
+            name="Collection"
+            title="Ownership transferred"
+            description={`New owner: ${transferredTo.slice(0, 6)}…${transferredTo.slice(-4)}`}
+            txHash={txHash}
+            explorerUrl={EXPLORER_URL}
+            onDone={() => {
+              setOpen(false);
+              setDone(false);
+              setNewOwner("");
+              setTxHash(null);
+              setTransferredTo("");
+            }}
           />
-          {trimmed && !isValid && (
-            <p className="text-xs text-red-500">Not a valid Starknet address.</p>
-          )}
-          {wouldNoop && (
-            <p className="text-xs text-amber-500">
-              This is already the current owner.
-            </p>
-          )}
-        </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Transfer collection ownership</DialogTitle>
+              <DialogDescription>
+                The new owner will control minting and future ownership transfers
+                for this collection. Existing tokens are unaffected.
+              </DialogDescription>
+            </DialogHeader>
 
-        <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={() => setOpen(false)}
-            disabled={submitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleTransfer}
-            disabled={!isValid || wouldNoop || submitting}
-          >
-            {submitting ? "Transferring…" : "Transfer"}
-          </Button>
-        </DialogFooter>
+            <div className="space-y-2">
+              <Label htmlFor="new-owner">New owner address</Label>
+              <Input
+                id="new-owner"
+                placeholder="0x…"
+                value={newOwner}
+                onChange={(e) => setNewOwner(e.target.value)}
+                className="font-mono text-sm"
+                spellCheck={false}
+                autoComplete="off"
+              />
+              {trimmed && !isValid && (
+                <p className="text-xs text-red-500">Not a valid Starknet address.</p>
+              )}
+              {wouldNoop && (
+                <p className="text-xs text-amber-500">
+                  This is already the current owner.
+                </p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                onClick={() => setOpen(false)}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleTransfer}
+                disabled={!isValid || wouldNoop || submitting}
+              >
+                {submitting ? "Transferring…" : "Transfer"}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

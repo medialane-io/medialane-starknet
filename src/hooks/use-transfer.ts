@@ -104,9 +104,6 @@ export function useTransfer() {
         setTxHash(hash);
         setTxStatus("confirmed");
 
-        toast.success("Transfer complete!", {
-          description: `Token #${input.tokenId} sent successfully.`,
-        });
         invalidate();
         setTimeout(() => invalidate(), INDEXER_REVALIDATION_DELAY_MS);
         return hash;
