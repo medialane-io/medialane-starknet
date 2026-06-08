@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useSWRConfig } from "swr";
 import { toast } from "sonner";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 import type { Call } from "starknet";
@@ -111,10 +112,14 @@ export function useTransfer() {
         setTimeout(() => invalidate(), INDEXER_REVALIDATION_DELAY_MS);
         return hash;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Transfer failed";
-        setError(msg);
+        const friendly = getFriendlyWalletError(err);
+        setError(friendly.message);
         setTxStatus("failed");
-        toast.error("Transfer failed", { description: msg });
+        if (friendly.isUserRejection) {
+          toast.info(friendly.title, { description: friendly.description });
+        } else {
+          toast.error(friendly.title, { description: friendly.message });
+        }
       } finally {
         setIsProcessing(false);
       }

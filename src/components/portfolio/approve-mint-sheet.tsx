@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useTx } from "@/hooks/use-tx";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { confirmRemixOffer } from "@/hooks/use-remix-offers";
@@ -202,7 +203,12 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       setDone(true);
       setTimeout(() => onSuccess?.(), INDEXER_REVALIDATION_DELAY_MS);
     } catch (err: unknown) {
-      toast.error("Approval failed", { description: err instanceof Error ? err.message : "Unknown error" });
+      const friendly = getFriendlyWalletError(err);
+      if (friendly.isUserRejection) {
+        toast.info(friendly.title, { description: friendly.description });
+      } else {
+        toast.error(friendly.title, { description: friendly.message });
+      }
     } finally {
       setLoading(false);
     }
