@@ -105,7 +105,8 @@ export async function submitAutoRemixOffer(
   return (res as { data: RemixOffer }).data;
 }
 
-export async function confirmSelfRemix(
+/** Record a permissionless self-minted remix (provenance). */
+export async function registerRemix(
   body: {
     originalContract: string;
     originalTokenId: string;
