@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useWallet } from "@/hooks/use-wallet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -17,10 +17,12 @@ import { confirmRemixOffer } from "@/hooks/use-remix-offers";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { formatDisplayPrice } from "@/lib/utils";
 import { getTokenByAddress, getService } from "@medialane/sdk";
-import { Check, GitBranch, Loader2 } from "lucide-react";
+import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";
 import type { Call } from "starknet";
-import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
+import { INDEXER_REVALIDATION_DELAY_MS, EXPLORER_URL } from "@/lib/constants";
+import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-dialog-primitives";
+import { fireConfetti } from "@/lib/confetti";
 
 interface Props {
   offer: RemixOffer | null;
@@ -52,6 +54,11 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [newAssetLink, setNewAssetLink] = useState<string | null>(null);
+  const [mintHash, setMintHash] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (done) fireConfetti();
+  }, [done]);
 
   const effectiveCollectionId = selectedCollectionId ?? defaultCollectionId;
   const selectedCollection = eligibleCollections.find((c) => c.collectionId === effectiveCollectionId);
@@ -68,6 +75,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       setRemixName("");
       setDone(false);
       setNewAssetLink(null);
+      setMintHash(null);
     }
     onOpenChange(v);
   };
@@ -126,6 +134,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
       const mintResult = await executeTransaction(mintCalls);
       if (mintResult === null) throw new Error("Mint reverted");
+      setMintHash(mintResult);
 
       // 3. Poll for new tokenId
       let remixTokenId: string | undefined;
@@ -188,7 +197,6 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
       setNewAssetLink(`/asset/${selectedCollection.contractAddress}/${remixTokenId}`);
       setDone(true);
-      toast.success("Remix minted!", { description: "Buyer has been notified." });
       setTimeout(() => onSuccess?.(), INDEXER_REVALIDATION_DELAY_MS);
     } catch (err: unknown) {
       toast.error("Approval failed", { description: err instanceof Error ? err.message : "Unknown error" });
@@ -209,18 +217,21 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
           </SheetHeader>
 
           {done ? (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Check className="h-8 w-8 text-primary" />
-              </div>
-              <p className="text-lg font-semibold">Remix minted!</p>
-              <p className="text-sm text-muted-foreground">The buyer will see "Complete Purchase" in their portfolio.</p>
-              {newAssetLink && (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={newAssetLink}>View new asset</a>
-                </Button>
-              )}
-            </div>
+            <MarketplaceSuccessState
+              name="Remix"
+              title="Remix minted!"
+              description={'The buyer will see "Complete Purchase" in their portfolio.'}
+              txHash={mintHash}
+              explorerUrl={EXPLORER_URL}
+              onDone={() => handleOpenChange(false)}
+              footer={
+                newAssetLink ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={newAssetLink}>View new asset</a>
+                  </Button>
+                ) : undefined
+              }
+            />
           ) : (
             <div className="space-y-5 pt-4">
               {offer && (
