@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
 import { getListableTokens } from "@medialane/sdk";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import { ConnectWallet } from "@/components/ConnectWallet";
+import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
 
 interface CollectionDropMintButtonProps {
   collectionAddress: string;
@@ -41,6 +42,7 @@ export function CollectionDropMintButton({
     walletAddress ?? null
   );
   const { executeAuto, isLoading: isProcessing } = usePaymasterTransaction();
+  const [result, setResult] = useState<TxResult | null>(null);
 
   const price = getPriceBigInt(conditions);
   const isPaid = price > 0n;
@@ -95,54 +97,70 @@ export function CollectionDropMintButton({
         }
       }
 
-      await executeAuto(calls);
-      toast.success("Minted! Your drop token is on-chain.");
+      const hash = await executeAuto(calls);
+      setResult({
+        status: "success",
+        title: "Minted!",
+        description: "Your drop token is on-chain.",
+        txHash: hash,
+        name: "Drop token",
+      });
       mutate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Mint failed");
+      setResult({
+        status: "error",
+        title: "Mint failed",
+        description: "Something went wrong while minting.",
+        error: err instanceof Error ? err.message : "Mint failed",
+        onRetry: () => { setResult(null); void handleMint(); },
+      });
     }
   };
 
+  let content: ReactNode;
   if (!isConnected) {
-    return <ConnectWallet label="Connect wallet to mint" className="w-full" />;
-  }
-
-  if (isLoading) {
-    return (
+    content = <ConnectWallet label="Connect wallet to mint" className="w-full" />;
+  } else if (isLoading) {
+    content = (
       <Button variant="outline" size="sm" disabled className="w-full">
         <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
         Loading…
       </Button>
     );
-  }
-
-  if (mintStatus && mintStatus.mintedByWallet > 0) {
-    return (
+  } else if (mintStatus && mintStatus.mintedByWallet > 0) {
+    content = (
       <div className="flex items-center gap-1.5 text-sm text-orange-500 font-medium">
         <CheckCircle2 className="h-4 w-4 shrink-0" />
         Minted · {mintStatus.mintedByWallet} token{mintStatus.mintedByWallet !== 1 ? "s" : ""}
       </div>
     );
+  } else {
+    content = (
+      <Button
+        size="lg"
+        className="w-full gap-1.5 bg-orange-600 hover:bg-orange-700 text-white"
+        onClick={handleMint}
+        disabled={isProcessing}
+      >
+        {isProcessing ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Minting…
+          </>
+        ) : (
+          <>
+            <Package className="h-4 w-4" />
+            {priceDisplay ? `Mint for ${priceDisplay}` : "Mint free"}
+          </>
+        )}
+      </Button>
+    );
   }
 
   return (
-    <Button
-      size="lg"
-      className="w-full gap-1.5 bg-orange-600 hover:bg-orange-700 text-white"
-      onClick={handleMint}
-      disabled={isProcessing}
-    >
-      {isProcessing ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Minting…
-        </>
-      ) : (
-        <>
-          <Package className="h-4 w-4" />
-          {priceDisplay ? `Mint for ${priceDisplay}` : "Mint free"}
-        </>
-      )}
-    </Button>
+    <>
+      {content}
+      <TransactionResultDialog result={result} onClose={() => setResult(null)} />
+    </>
   );
 }
