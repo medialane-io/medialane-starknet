@@ -34,6 +34,7 @@ interface CounterOfferDialogProps {
   tokenId: string;
   originalOrderHash: string;
   tokenName?: string;
+  tokenImage?: string | null;
   currentBid?: string;
   currencySymbol: string;
   currencyDecimals: number;
@@ -41,7 +42,7 @@ interface CounterOfferDialogProps {
 }
 
 export function CounterOfferDialog({
-  open, onOpenChange, nftContract, tokenId, tokenName,
+  open, onOpenChange, nftContract, tokenId, tokenName, tokenImage,
   currentBid, currencySymbol, onSuccess,
 }: CounterOfferDialogProps) {
   const { isConnected } = useWallet();
@@ -77,6 +78,7 @@ export function CounterOfferDialog({
             txHash={txHash}
             explorerUrl={EXPLORER_URL}
             name={tokenName || `#${tokenId}`}
+            tokenImage={tokenImage}
             onDone={() => { onOpenChange(false); onSuccess?.(); }}
           />
         ) : isProcessing ? (
