@@ -1,0 +1,117 @@
+"use client";
+
+/**
+ * CoinCard — discovery tile for an ERC-20 Creator Coin / claimed memecoin.
+ * Sibling to CollectionCard (which is NFT-shaped). A coin has no per-token grid;
+ * the card shows live Ekubo spot price + FDV + holders and links to the coin page,
+ * whose embedded swap is the actual trade affordance.
+ */
+
+import Link from "next/link";
+import Image from "next/image";
+import { BadgeCheck, Users } from "lucide-react";
+import type { ApiCollection } from "@medialane/sdk";
+import { useCoinPrice } from "@/hooks/use-coin-price";
+import { coinKind, formatCoinPrice, formatFdv } from "@/lib/coins";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ipfsToHttp, cn } from "@/lib/utils";
+
+export function CoinCard({ collection }: { collection: ApiCollection }) {
+  const contract = collection.contractAddress;
+  const { price, isLoading: priceLoading } = useCoinPrice(contract);
+  const kind = coinKind(collection.service);
+  const verified = collection.claimedBy != null || kind === "creator";
+  const logo = collection.image ? ipfsToHttp(collection.image) : null;
+  const fdv = formatFdv(price?.quotePerCoin, collection.totalSupply, price?.quoteSymbol ?? null);
+
+  return (
+    <Link
+      href={`/collections/${contract}`}
+      className="group flex flex-col rounded-xl border border-border/60 bg-card overflow-hidden transition-colors hover:border-primary/50"
+    >
+      {/* Header: logo + identity */}
+      <div className="flex items-center gap-3 p-4">
+        <div className="relative h-12 w-12 shrink-0 rounded-full overflow-hidden bg-muted">
+          {logo ? (
+            <Image src={logo} alt="" fill sizes="48px" className="object-cover" unoptimized />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-primary/30 to-primary/5" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1">
+            <span className="truncate font-semibold">{collection.name ?? "Untitled coin"}</span>
+            {verified && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" aria-label="Verified" />}
+          </div>
+          <span className="text-sm text-muted-foreground">{collection.symbol ?? "—"}</span>
+        </div>
+        <span
+          className={cn(
+            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+            kind === "creator"
+              ? "border-purple-500/30 bg-purple-500/10 text-purple-400"
+              : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+          )}
+        >
+          {kind === "creator" ? "Creator Coin" : "Memecoin"}
+        </span>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 border-t border-border/60 px-4 py-3 text-sm">
+        <Stat label="Price">
+          {priceLoading ? (
+            <Skeleton className="h-4 w-12" />
+          ) : price ? (
+            <span className="font-semibold">{formatCoinPrice(price.quotePerCoin)}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </Stat>
+        <Stat label="FDV">
+          {priceLoading ? <Skeleton className="h-4 w-12" /> : <span className="font-semibold">{fdv ?? "—"}</span>}
+        </Stat>
+        <Stat label="Holders">
+          <span className="inline-flex items-center gap-1 font-semibold">
+            <Users className="h-3 w-3 text-muted-foreground" />
+            {collection.holderCount ?? "—"}
+          </span>
+        </Stat>
+      </div>
+
+      {/* Affordance */}
+      <div className="border-t border-border/60 px-4 py-2.5 text-center text-sm font-medium text-primary group-hover:underline">
+        Trade
+      </div>
+    </Link>
+  );
+}
+
+function Stat({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+export function CoinCardSkeleton() {
+  return (
+    <div className="flex flex-col rounded-xl border border-border/60 bg-card overflow-hidden">
+      <div className="flex items-center gap-3 p-4">
+        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="flex-1 space-y-1.5">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 border-t border-border/60 px-4 py-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-8 w-full" />
+        ))}
+      </div>
+      <Skeleton className="h-9 w-full" />
+    </div>
+  );
+}
