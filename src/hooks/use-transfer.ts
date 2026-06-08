@@ -45,13 +45,16 @@ export function useTransfer() {
   const [txStatus, setTxStatus] = useState<"idle" | "submitting" | "confirmed" | "failed">("idle");
 
   const invalidate = useCallback(() => {
+    // Filter-only mutate: revalidate matching keys WITHOUT clearing their data.
+    // Passing `undefined` would wipe the `token-<contract>-<id>` cache the asset
+    // page reads, flipping it into its loading skeleton — which unmounts the
+    // transfer dialog and destroys its success state before it can show. See the
+    // same fix in use-marketplace's invalidateMarketplaceCaches.
     mutate(
       (key) => {
         if (typeof key !== "string") return false;
         return key.startsWith("tokens-owned-") || key.startsWith("token-");
-      },
-      undefined,
-      { revalidate: true }
+      }
     );
   }, [mutate]);
 

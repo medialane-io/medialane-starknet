@@ -160,6 +160,9 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
         offer.proposedPrice ?? "0",
         currencySymbol,
         30 * 24 * 60 * 60, // 30 days
+        undefined,
+        undefined,
+        { silent: true }, // sheet shows its own success state for the whole flow
       );
 
       // 5. Poll for listing to get orderHash

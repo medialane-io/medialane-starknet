@@ -56,7 +56,7 @@ export function CounterOfferDialog({
   const onSubmit = async (values: FormValues) => {
     if (!isConnected) { toast.error("Connect your wallet first"); return; }
     try {
-      await makeOffer(nftContract, tokenId, values.price, currencySymbol, values.durationSeconds);
+      await makeOffer(nftContract, tokenId, values.price, currencySymbol, values.durationSeconds, undefined, { silent: true });
       setDone(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Counter-offer failed");

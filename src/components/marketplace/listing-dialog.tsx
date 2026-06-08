@@ -77,7 +77,8 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
       values.currency,
       values.durationSeconds,
       tokenStandard,
-      is1155 ? (values.amount?.trim() || "1") : undefined
+      is1155 ? (values.amount?.trim() || "1") : undefined,
+      { silent: true }
     );
     if (hash) setTxStatus("confirmed");
   };

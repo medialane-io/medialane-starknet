@@ -115,7 +115,7 @@ export function ListingsTable({ address }: ListingsTableProps) {
     .join(" · ");
 
   const handleCancel = async (order: ApiOrder) => {
-    await cancelOrder(order.orderHash, order.offer.itemType);
+    await cancelOrder(order.orderHash, order.offer.itemType, "listing");
     mutate();
   };
 

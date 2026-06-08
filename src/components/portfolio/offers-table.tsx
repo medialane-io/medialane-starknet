@@ -114,7 +114,7 @@ export function OffersTable({ address }: OffersTableProps) {
     .join(" · ");
 
   const handleCancel = async (order: ApiOrder) => {
-    await cancelOrder(order.orderHash, order.consideration.itemType);
+    await cancelOrder(order.orderHash, order.consideration.itemType, "offer");
     mutate();
   };
 

@@ -210,7 +210,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         isERC1155,
         quantity: quantity.toString(),
       };
-      const hash = await checkoutCart([item]);
+      const hash = await checkoutCart([item], { silent: true });
       if (hash) {
         setSuccessTxHash(hash);
         setStep("success");

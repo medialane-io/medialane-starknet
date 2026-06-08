@@ -59,7 +59,11 @@ export function AssetsGrid({ address }: AssetsGridProps) {
     setCancelPinOpen(false);
     const activeOrder = cancelToken?.activeOrders?.[0];
     if (!activeOrder) return;
-    await cancelOrder(activeOrder.orderHash, activeOrder.offer.itemType);
+    await cancelOrder(
+      activeOrder.orderHash,
+      activeOrder.offer.itemType,
+      activeOrder.offer.itemType === "ERC20" ? "offer" : "listing"
+    );
     setCancelToken(null);
     handleSuccess();
   };

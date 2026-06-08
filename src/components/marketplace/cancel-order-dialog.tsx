@@ -83,7 +83,7 @@ export function CancelOrderDialog({
 
   const handleConfirm = async () => {
     if (!order) return;
-    const hash = await cancelOrder(order.orderHash, tokenStandard);
+    const hash = await cancelOrder(order.orderHash, tokenStandard, resolvedVariant, { silent: true });
     if (hash) onSuccess?.();
   };
 
