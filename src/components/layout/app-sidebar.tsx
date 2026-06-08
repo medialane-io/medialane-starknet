@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useWallet } from "@/hooks/use-wallet";
 import {
-  Telescope, Compass, Store, Briefcase, Plus, Activity,
+  Telescope, Compass, Store, Coins, Briefcase, Plus, Activity,
   LayoutGrid, Users, Search, Sun, Moon,
   BookOpen, ChevronRight, Music, Palette, Film, Camera, Gem, Trophy,
 } from "lucide-react";
@@ -199,6 +199,21 @@ export function AppSidebar() {
                 <Link href="/marketplace">
                   <Store />
                   <span>Marketplace</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* Coins */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={!!pathname?.startsWith("/coins")}
+                tooltip="Coins"
+                onClick={closeSidebar}
+              >
+                <Link href="/coins">
+                  <Coins />
+                  <span>Coins</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
