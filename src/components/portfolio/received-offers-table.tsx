@@ -180,6 +180,7 @@ export function ReceivedOffersTable({ address }: ReceivedOffersTableProps) {
             tokenId={counterOrder.nftTokenId ?? ""}
             originalOrderHash={counterOrder.orderHash}
             tokenName={counterOrder.token?.name ?? undefined}
+            tokenImage={counterOrder.token?.image ? ipfsToHttp(counterOrder.token.image) : null}
             currentBid={`${formatDisplayPrice(counterOrder.price.formatted)} ${counterOrder.price.currency}`}
             currencySymbol={counterOrder.price.currency ?? ""}
             currencyDecimals={token?.decimals ?? 18}

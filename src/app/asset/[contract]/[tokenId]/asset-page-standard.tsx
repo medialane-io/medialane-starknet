@@ -112,7 +112,7 @@ export function AssetPageStandard() {
       className="relative z-0 min-h-screen"
     >
       {token.isHidden && <HiddenContentBanner />}
-      <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} />
+      <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} opacityClassName="opacity-30" />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
@@ -257,6 +257,7 @@ export function AssetPageStandard() {
         contract={contract}
         tokenId={tokenId}
         tokenName={name}
+        tokenImage={imageUrl}
         tokenStandard={collection?.standard}
         hasActiveListing={activeListings.length > 0}
         mutateListings={mutateListings}

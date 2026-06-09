@@ -329,6 +329,7 @@ export function AssetPageDrop() {
         contract={contract}
         tokenId={tokenId}
         tokenName={name}
+        tokenImage={imageUrl}
         tokenStandard={collection?.standard}
         hasActiveListing={activeListings.length > 0}
         mutateListings={mutateListings}

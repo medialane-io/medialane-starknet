@@ -219,6 +219,7 @@ export function AssetPageEdition() {
         contract={contract}
         tokenId={tokenId}
         tokenName={name}
+        tokenImage={imageUrl}
         tokenStandard="ERC1155"
         hasActiveListing={activeListings.length > 0}
         mutateListings={mutateListings}

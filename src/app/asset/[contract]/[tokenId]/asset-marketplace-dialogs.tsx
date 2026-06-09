@@ -47,6 +47,10 @@ interface AssetMarketplaceDialogsProps {
   contract: string;
   tokenId: string;
   tokenName: string;
+  /** Resolved (http) asset image — shown on the success/processing states so the
+   *  creator artwork is always front-and-centre. Buy/cancel derive theirs from
+   *  the order, so they don't need it passed. */
+  tokenImage?: string | null;
   tokenStandard?: TokenStandard;
   hasActiveListing: boolean;
   mutateListings: () => void;
@@ -58,6 +62,7 @@ export function AssetMarketplaceDialogs({
   contract,
   tokenId,
   tokenName,
+  tokenImage,
   tokenStandard,
   hasActiveListing,
   mutateListings,
@@ -94,6 +99,7 @@ export function AssetMarketplaceDialogs({
         assetContract={contract}
         tokenId={tokenId}
         tokenName={tokenName}
+        tokenImage={tokenImage}
         tokenStandard={tokenStandard}
         onSuccess={mutateListings}
       />
@@ -103,6 +109,7 @@ export function AssetMarketplaceDialogs({
         assetContract={contract}
         tokenId={tokenId}
         tokenName={tokenName}
+        tokenImage={tokenImage}
         tokenStandard={tokenStandard}
       />
       <CancelOrderDialog
@@ -117,6 +124,7 @@ export function AssetMarketplaceDialogs({
         contractAddress={contract}
         tokenId={tokenId}
         tokenName={tokenName}
+        tokenImage={tokenImage}
         tokenStandard={tokenStandard === "ERC1155" ? "ERC1155" : "ERC721"}
         hasActiveListing={hasActiveListing}
         onSuccess={mutateListings}

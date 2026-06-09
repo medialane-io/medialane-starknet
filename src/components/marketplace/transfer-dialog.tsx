@@ -52,6 +52,7 @@ interface TransferDialogProps {
   contractAddress: string;
   tokenId: string;
   tokenName?: string;
+  tokenImage?: string | null;
   /** ERC-721 default; pass "ERC1155" for edition assets so the hook
    *  routes through `safe_transfer_from` instead of `transfer_from`. */
   tokenStandard?: "ERC721" | "ERC1155";
@@ -65,6 +66,7 @@ export function TransferDialog({
   contractAddress,
   tokenId,
   tokenName,
+  tokenImage,
   tokenStandard,
   onSuccess,
   hasActiveListing = false,
@@ -135,6 +137,7 @@ export function TransferDialog({
               txHash={txHash}
               explorerUrl={EXPLORER_URL}
               name={displayName}
+              tokenImage={tokenImage}
               onDone={() => {
                 resetState();
                 form.reset();

@@ -25,9 +25,13 @@ type AssetAttribute = { trait_type?: string; value?: string };
 export function AssetAtmosphere({
   imageUrl,
   imgRef,
+  // Backdrop alpha. Standard (single IP asset) pages use the balanced
+  // `opacity-30` (matches medialane-io); pop/drop/edition keep `opacity-20`.
+  opacityClassName = "opacity-20",
 }: {
   imageUrl: string | null;
   imgRef: React.RefObject<HTMLImageElement>;
+  opacityClassName?: string;
 }) {
   if (!imageUrl) return null;
   return (
@@ -51,7 +55,7 @@ export function AssetAtmosphere({
           aria-hidden
           fill
           sizes="100vw"
-          className="absolute inset-0 w-full h-full object-cover opacity-20 scale-110"
+          className={`absolute inset-0 w-full h-full object-cover scale-110 ${opacityClassName}`}
           style={{ filter: "blur(60px) saturate(1.5)" }}
           unoptimized
         />
