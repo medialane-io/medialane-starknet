@@ -6,6 +6,7 @@ import { Loader2, CheckCircle2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
 import { getListableTokens } from "@medialane/sdk";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
@@ -107,11 +108,12 @@ export function CollectionDropMintButton({
       });
       mutate();
     } catch (err) {
+      const friendly = getFriendlyWalletError(err);
       setResult({
         status: "error",
-        title: "Mint failed",
-        description: "Something went wrong while minting.",
-        error: err instanceof Error ? err.message : "Mint failed",
+        title: friendly.title,
+        description: friendly.message,
+        error: friendly.isUserRejection ? null : (err instanceof Error ? err.message : "Mint failed"),
         onRetry: () => { setResult(null); void handleMint(); },
       });
     }

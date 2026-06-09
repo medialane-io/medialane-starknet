@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { usePopClaimStatus } from "@/hooks/use-pop";
 import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
 
@@ -36,11 +37,12 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
       });
       mutate();
     } catch (err) {
+      const friendly = getFriendlyWalletError(err);
       setResult({
         status: "error",
-        title: "Claim failed",
-        description: "Something went wrong while claiming.",
-        error: err instanceof Error ? err.message : "Claim failed",
+        title: friendly.title,
+        description: friendly.message,
+        error: friendly.isUserRejection ? null : (err instanceof Error ? err.message : "Claim failed"),
         onRetry: () => { setResult(null); void handleClaim(); },
       });
     }

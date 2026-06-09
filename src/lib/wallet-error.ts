@@ -36,11 +36,17 @@ export function isUserRejectedRequest(error: unknown): boolean {
     text.includes("user_refused_op") ||
     text.includes("user refused") ||
     text.includes("user rejected") ||
-    text.includes("user aborted") ||
+    text.includes("user abort") || // matches "User abort" / "User aborted" (Argent/Ready)
+    text.includes("user denied") ||
     text.includes("request rejected") ||
     text.includes("rejected by user") ||
     text.includes("cancelled") ||
-    text.includes("canceled")
+    text.includes("canceled") ||
+    // Braavos surfaces a bare "Execute failed" when the user declines the
+    // confirmation popup — there's no cleaner rejection code. Genuine on-chain
+    // reverts never reach here as a bare "execute failed": they carry a revert
+    // reason and are thrown from waitForTransaction, not account.execute.
+    text.trim() === "execute failed"
   );
 }
 
