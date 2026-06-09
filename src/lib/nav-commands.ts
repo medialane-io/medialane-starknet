@@ -79,7 +79,7 @@ export const NAV_COMMANDS: NavCommandGroup[] = [
       { id: "portfolio-offers", label: "My Offers", icon: List, href: "/portfolio/offers", keywords: ["bids", "made", "sent offers"] },
       { id: "portfolio-received", label: "Received Offers", icon: ScrollText, href: "/portfolio/received", keywords: ["incoming", "bids", "offers received"] },
       { id: "portfolio-counter-offers", label: "Counter Offers", icon: Repeat2, href: "/portfolio/counter-offers", keywords: ["counter", "negotiation", "offers"] },
-      { id: "portfolio-remix-offers", label: "Remix Offers", icon: Repeat2, href: "/portfolio/remix-offers", keywords: ["remix", "license", "offers"] },
+      { id: "portfolio-licensing", label: "Licensing", icon: Repeat2, href: "/portfolio/licensing", keywords: ["license", "licensing", "remix", "requests"] },
       { id: "portfolio-collections", label: "My Collections", icon: LayoutGrid, href: "/portfolio/collections", keywords: ["deployed", "created", "my contracts", "claim", "import"] },
       { id: "portfolio-activity", label: "My Activity", icon: Activity, href: "/portfolio/activity", keywords: ["history", "transactions", "events"] },
       { id: "portfolio-settings", label: "Account Settings", icon: Settings, href: "/portfolio/settings", keywords: ["profile", "username", "preferences"] },

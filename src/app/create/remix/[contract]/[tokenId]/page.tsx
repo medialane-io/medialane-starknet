@@ -25,66 +25,23 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { submitRemixOffer, confirmSelfRemix } from "@/hooks/use-remix-offers";
+import { registerRemix } from "@/hooks/use-remix-offers";
 import { useSiwsToken } from "@/hooks/use-siws-token";
-import { getListableTokens, getTokenBySymbol, getService } from "@medialane/sdk";
-import { IP_TYPES, LICENSE_TYPES, type IPType } from "@/types/ip";
-import { ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
+import { getListableTokens, getService } from "@medialane/sdk";
+import { IP_TYPES, LICENSE_TYPES } from "@/types/ip";
+import { ipfsToHttp } from "@/lib/utils";
 import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
   GitBranch, ChevronDown, ChevronLeft, ImagePlus, Upload,
-  Shield, DollarSign, Percent, Boxes, Plus, Info, Loader2,
+  Shield, Percent, Boxes, Plus, Info, Loader2,
 } from "lucide-react";
+import { ToggleGroup, Section } from "@/components/create/create-form-primitives";
+import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
 import { toast } from "sonner";
 import type { Call } from "starknet";
 
 const TOKENS = getListableTokens();
-
-// ── ToggleGroup ──────────────────────────────────────────────────────────────
-
-function ToggleGroup({
-  value, options, onChange,
-}: { value: string; options: readonly string[]; onChange: (v: string) => void }) {
-  return (
-    <div className="flex rounded-lg border border-border overflow-hidden w-full">
-      {options.map((opt, i) => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => onChange(opt)}
-          className={cn(
-            "flex-1 px-3 py-2 text-sm transition-colors",
-            i > 0 && "border-l border-border",
-            value === opt
-              ? "bg-primary text-primary-foreground font-medium"
-              : "bg-background hover:bg-muted text-muted-foreground"
-          )}
-        >
-          {opt}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ── Section wrapper ──────────────────────────────────────────────────────────
-
-function Section({ title, icon, children }: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold">
-        <span className="text-primary">{icon}</span>
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
@@ -118,6 +75,15 @@ export default function CreateRemixPage() {
     : [];
   const attr = (t: string) => originalAttributes.find((a) => a.trait_type === t)?.value;
 
+  // Remix is permissionless self-mint, gated only by the creator's declared
+  // derivatives term (non-owners). A non-owner of a no-derivatives asset is sent
+  // to the licensing deal — their only path.
+  const remixPolicy = resolveRemixPolicy({
+    parentNoDerivatives: getDerivativesTerm(originalAttributes) === "Not Allowed",
+    viewerIsParentOwner: isOwner,
+    dealAvailable: true, // unused for the remix gate (canRemixDirect only)
+  });
+
   // ── Form state ─────────────────────────────────────────────────────────────
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -130,15 +96,9 @@ export default function CreateRemixPage() {
   const [commercial, setCommercial] = useState(false);
   const [derivatives, setDerivatives] = useState(true);
   const [royalty, setRoyalty] = useState("");
-  const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState<string>(TOKENS[0]?.symbol ?? "STRK");
-  const [message, setMessage] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  // Offer submit (non-owner)
-  const [offerLoading, setOfferLoading] = useState(false);
-
-  // Owner mint flow — mints directly with the connected wallet (no PIN dialog;
+  // Self-mint flow — mints directly with the connected wallet (no PIN dialog;
   // dapp uses injected wallets, not ChipiPay). The previous setPinOpen gate was
   // orphaned (no PinDialog rendered) so the owner mint never fired.
   const [mintStep, setMintStep] = useState<MintStep>("idle");
@@ -198,9 +158,7 @@ export default function CreateRemixPage() {
 
   const validate = (): string | null => {
     if (!name.trim()) return "Remix name is required";
-    if (isOwner && !collectionId) return "Select a collection";
-    if (!isOwner && (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0))
-      return "Enter a valid price offer";
+    if (!collectionId) return "Select a collection";
     return null;
   };
 
@@ -322,8 +280,8 @@ export default function CreateRemixPage() {
       }
       if (!remixTokenId) throw new Error("Could not determine remix token ID — check portfolio shortly");
 
-      // 4. Confirm self-remix in backend
-      await confirmSelfRemix(
+      // 4. Register the self-minted remix (provenance) in backend
+      await registerRemix(
         {
           originalContract: contract,
           originalTokenId: tokenId,
@@ -344,41 +302,6 @@ export default function CreateRemixPage() {
     } catch (err: unknown) {
       setMintError(err instanceof Error ? err.message : "Something went wrong");
       setMintStep("error");
-    }
-  };
-
-  // ── Non-owner: offer submit ────────────────────────────────────────────────
-
-  const handleOfferSubmit = async () => {
-    const err = validate();
-    if (err) { toast.error(err); return; }
-    setOfferLoading(true);
-    try {
-      const tokenInfo = getTokenBySymbol(currency);
-      const decimals = tokenInfo?.decimals ?? 18;
-      const rawPrice = BigInt(Math.round(parseFloat(price) * 10 ** decimals)).toString();
-
-      await submitRemixOffer({
-        originalContract: contract,
-        originalTokenId: tokenId,
-        proposedPrice: rawPrice,
-        proposedCurrency: tokenInfo?.address ?? "",
-        licenseType,
-        commercial,
-        derivatives,
-        royaltyPct: royalty ? parseInt(royalty) : undefined,
-        message: message.trim() || undefined,
-      }, await getValidToken());
-      toast.success("Remix offer sent!", {
-        description: "The creator will be notified and can approve your request.",
-      });
-      router.push(`/asset/${contract}/${tokenId}`);
-    } catch (err: unknown) {
-      toast.error("Failed to submit offer", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
-    } finally {
-      setOfferLoading(false);
     }
   };
 
@@ -433,6 +356,13 @@ export default function CreateRemixPage() {
     );
   }
 
+  // Non-owner of a `Derivatives: Not Allowed` asset can't self-mint — the
+  // licensing deal is their path.
+  if (!remixPolicy.canRemixDirect) {
+    router.replace(`/create/licensing/${contract}/${tokenId}`);
+    return null;
+  }
+
   return (
     <>
       <MintProgressDialog
@@ -460,18 +390,11 @@ export default function CreateRemixPage() {
           </Link>
           <div className="flex items-center gap-2 text-primary">
             <GitBranch className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wider">
-              {isOwner ? "Create Remix" : "Propose Remix"}
-            </span>
+            <span className="text-sm font-semibold uppercase tracking-wider">Create Remix</span>
           </div>
-          <h1 className="text-3xl font-bold">
-            {isOwner ? "Mint a Remix" : "Send a Remix Offer"}
-          </h1>
+          <h1 className="text-3xl font-bold">Mint a Remix</h1>
           <p className="text-muted-foreground max-w-xl">
-            {isOwner
-              ? "Mint a derivative work based on your original asset. The parent attribution will be embedded in the IPFS metadata."
-              : "Propose remix terms and a license fee to the creator. If accepted, they'll mint and list it for you to purchase."
-            }
+            Mint a derivative work based on this asset. The parent attribution is embedded in the IPFS metadata.
           </p>
         </div>
 
@@ -547,37 +470,35 @@ export default function CreateRemixPage() {
               </div>
             </Section>
 
-            {/* Collection (owner only) */}
-            {isOwner && (
-              <Section title="Collection" icon={<Boxes className="h-4 w-4" />}>
-                {collectionsLoading ? (
-                  <Skeleton className="h-10 w-full rounded-md" />
-                ) : eligibleCollections.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border p-4 text-center space-y-2">
-                    <p className="text-sm text-muted-foreground">No eligible collections. Create one first.</p>
-                    <Button size="sm" variant="outline" asChild>
-                      <Link href="/create/collection">
-                        <Plus className="h-3.5 w-3.5 mr-1.5" />
-                        Create collection
-                      </Link>
-                    </Button>
-                  </div>
-                ) : (
-                  <Select value={collectionId} onValueChange={setCollectionId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a collection" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {eligibleCollections.map((c) => (
-                        <SelectItem key={c.collectionId!} value={c.collectionId!}>
-                          {c.name ?? c.contractAddress.slice(0, 14) + "…"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </Section>
-            )}
+            {/* Collection — the remix is minted into the creator's own collection */}
+            <Section title="Collection" icon={<Boxes className="h-4 w-4" />}>
+              {collectionsLoading ? (
+                <Skeleton className="h-10 w-full rounded-md" />
+              ) : eligibleCollections.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border p-4 text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">No eligible collections. Create one first.</p>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/create/collection">
+                      <Plus className="h-3.5 w-3.5 mr-1.5" />
+                      Create collection
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <Select value={collectionId} onValueChange={setCollectionId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a collection" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eligibleCollections.map((c) => (
+                      <SelectItem key={c.collectionId!} value={c.collectionId!}>
+                        {c.name ?? c.contractAddress.slice(0, 14) + "…"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Section>
 
             {/* IP Type */}
             <Section title="IP Type" icon={<Info className="h-4 w-4" />}>
@@ -659,81 +580,21 @@ export default function CreateRemixPage() {
               </Collapsible>
             </Section>
 
-            {/* License Fee Offer — non-owner only. The owner mint never lists
-                (handlePin/runOwnerMint has no listing call), so the old
-                "List for Sale (optional)" block was vestigial and removed. */}
-            {!isOwner && (
-            <Section
-              title="License Fee Offer"
-              icon={<DollarSign className="h-4 w-4" />}
-            >
-              {!isOwner && (
-                <p className="text-xs text-muted-foreground -mt-1">
-                  The amount you're offering to pay the creator for this remix license.
-                </p>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder={isOwner ? "Leave blank to skip listing" : "0.00"}
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="flex-1"
-                />
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TOKENS.map((t) => (
-                      <SelectItem key={t.symbol} value={t.symbol}>{t.symbol}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Message (non-owner only) */}
-              {!isOwner && (
-                <div className="space-y-1.5">
-                  <Label>Message to creator <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Tell the creator what you want to make, your vision, or why you'd like to remix this work…"
-                    rows={3}
-                    maxLength={500}
-                    className="resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground text-right">{message.length}/500</p>
-                </div>
-              )}
-            </Section>
-            )}
-
             {/* Submit */}
             <div className="btn-border-animated p-[1px] rounded-xl">
               <button
                 type="button"
-                disabled={isOwner ? false : offerLoading}
-                onClick={isOwner ? handleOwnerSubmit : handleOfferSubmit}
+                onClick={handleOwnerSubmit}
                 className="w-full h-12 rounded-[11px] flex items-center justify-center gap-2 text-base font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-brand-rose disabled:opacity-50"
               >
-                {offerLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <GitBranch className="h-5 w-5" />
-                )}
-                {isOwner ? "Mint Remix" : "Send Remix Offer"}
+                <GitBranch className="h-5 w-5" />
+                Mint Remix
               </button>
             </div>
 
-            {isOwner && (
-              <p className="text-xs text-center text-muted-foreground">
-                Two operations: IPFS metadata upload + on-chain mint. Gas is free.
-              </p>
-            )}
+            <p className="text-xs text-center text-muted-foreground">
+              Two operations: IPFS metadata upload + on-chain mint. Gas is free.
+            </p>
           </div>
 
           {/* ── Right: original asset card ──────────────────────────────── */}
@@ -797,21 +658,11 @@ export default function CreateRemixPage() {
                 <Info className="h-4 w-4 text-primary" />
                 What happens next
               </p>
-              {isOwner ? (
-                <ol className="space-y-2 text-muted-foreground text-xs list-decimal list-inside">
-                  <li>Your artwork and metadata are uploaded to IPFS</li>
-                  <li>A new NFT is minted in the selected collection</li>
-                  <li>Parent attribution is embedded on-chain permanently</li>
-                  {price && <li>The remix is listed for sale at your chosen price</li>}
-                </ol>
-              ) : (
-                <ol className="space-y-2 text-muted-foreground text-xs list-decimal list-inside">
-                  <li>Your offer is sent to the creator</li>
-                  <li>If approved, they'll mint the remix and list it for you</li>
-                  <li>You'll see "Complete Purchase" in your portfolio</li>
-                  <li>After purchase, the remix is yours permanently</li>
-                </ol>
-              )}
+              <ol className="space-y-2 text-muted-foreground text-xs list-decimal list-inside">
+                <li>Your artwork and metadata are uploaded to IPFS</li>
+                <li>A new NFT is minted in the selected collection</li>
+                <li>Parent attribution is embedded on-chain permanently</li>
+              </ol>
             </div>
 
           </div>

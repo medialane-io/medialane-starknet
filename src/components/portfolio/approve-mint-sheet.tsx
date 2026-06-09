@@ -221,14 +221,14 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <GitBranch className="h-4 w-4 text-primary" />
-              Approve Remix
+              Grant license &amp; mint
             </SheetTitle>
           </SheetHeader>
 
           {done ? (
             <MarketplaceSuccessState
               name="Remix"
-              title="Remix minted!"
+              title="License granted!"
               description={'The buyer will see "Complete Purchase" in their portfolio.'}
               txHash={mintHash}
               explorerUrl={EXPLORER_URL}
@@ -290,9 +290,9 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
                 disabled={loading || eligibleCollections.length === 0}
               >
                 {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <GitBranch className="h-4 w-4 mr-2" />}
-                Mint & List for Buyer
+                Grant license & mint
               </Button>
-              <p className="text-xs text-center text-muted-foreground">Mint + listing in one transaction. Gas is sponsored.</p>
+              <p className="text-xs text-center text-muted-foreground">Grant the license: mint the derivative and list it for the requester. One transaction. Gas is sponsored.</p>
             </div>
           )}
         </SheetContent>

@@ -81,6 +81,8 @@ interface AssetMarketplacePanelProps {
   onOpenPurchase: (order: ApiOrder) => void;
   onOpenOffer: () => void;
   onOpenRemix?: () => void;
+  showDealOption?: boolean;
+  onProposeDeal?: () => void;
 }
 
 export function AssetMarketplacePanel({
@@ -101,6 +103,8 @@ export function AssetMarketplacePanel({
   onOpenPurchase,
   onOpenOffer,
   onOpenRemix,
+  showDealOption = false,
+  onProposeDeal,
 }: AssetMarketplacePanelProps) {
   const myBid = !isOwner && walletAddress
     ? activeBids.find((bid) => bid.offerer.toLowerCase() === walletAddress.toLowerCase()) ?? null
@@ -178,6 +182,16 @@ export function AssetMarketplacePanel({
                     tone="purple"
                   />
                 ) : null}
+
+                {showDealOption && onProposeDeal ? (
+                  <ActionButton
+                    label="License this IP"
+                    icon={<HandCoins className="h-4 w-4" />}
+                    onClick={onProposeDeal}
+                    helpContent="Propose license terms and a fee to the creator. If they accept, the licensed derivative is minted and listed for you."
+                    tone="purple"
+                  />
+                ) : null}
               </div>
 
               {/* ERC-1155: owner can still buy more editions from a different seller */}
@@ -220,6 +234,14 @@ export function AssetMarketplacePanel({
                   label="Remix"
                   icon={<GitBranch className="h-4 w-4" />}
                   onClick={onOpenRemix}
+                  tone="purple"
+                />
+              ) : null}
+              {showDealOption && onProposeDeal ? (
+                <ActionButton
+                  label="License this IP"
+                  icon={<HandCoins className="h-4 w-4" />}
+                  onClick={onProposeDeal}
                   tone="purple"
                 />
               ) : null}
