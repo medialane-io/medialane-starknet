@@ -32,7 +32,8 @@ NEXT_PUBLIC_RPC_URL                   # Starknet RPC endpoint (for write/executi
 # Contracts
 # Marketplace contract addresses come from @medialane/sdk only.
 NEXT_PUBLIC_COLLECTION_721_CONTRACT   # ERC-721 collection registry (renamed from NEXT_PUBLIC_COLLECTION_CONTRACT on 2026-05-22)
-NEXT_PUBLIC_COLLECTION_1155_CONTRACT  # ERC-1155 collection registry
+NEXT_PUBLIC_COLLECTION_1155_CONTRACT_MAINNET  # ERC-1155 collection factory (canonical name, matches io + the *_MAINNET
+                                              # convention; bare NEXT_PUBLIC_COLLECTION_1155_CONTRACT kept as fallback)
 NEXT_PUBLIC_NFTCOMMENTS_CONTRACT      # NFT comments contract
 
 # Medialane Backend API (indexed on-chain data — used for all reads)
@@ -164,7 +165,9 @@ Every page and component that prompts the user to connect renders the shared `<C
 
 ## Starknet Integration Patterns
 
-**Contract ABIs** come from `@medialane/sdk` (currently 0.33.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
+**ERC-1155 editions mint (2026-06-10, SDK ≥0.34.0 / contract v0.3.0).** Collections deploy from the v0.3.0 ownerless factory (`0x0083543c…`) and assign edition ids **on-chain**, sequential from 1: the mint page (`/launchpad/nfteditions/[contract]/mint`) calls `mint_edition(to, value, uri)` and reads the assigned id from the tx's `IPMinted` event (`keys = [selector, id_low, id_high, recipient]`). Never reintroduce client-generated token ids or a `mint_item` path here. **Medialane does not support legacy protocol versions**: pre-v0.3.0 (v0.2.0 `mint_item`) collections were reclassified `external-erc1155` (read-only external provenance) on the 2026-06-10 cutover; the version-gate + `mint_item` fallback was removed from this page. (`mint_item` is still a live selector for the genesis/launch/BR mints and the remix flows, which target other contracts — don't confuse the two.)
+
+**Contract ABIs** come from `@medialane/sdk` (currently 0.34.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
 
 **Marketplace order flow** (in `src/hooks/use-marketplace.ts`) — **redesigned venues, SDK 0.26.0** (client-signing migration, 2026-05-31):
 - Order params use the new schema: single `amount` (no start/end), plus `marketplace`, `royalty_max_bps` (live EIP-2981 via `royalty_info`), and `counter` (`get_counter()`, replaces the removed nonce). Salt is a **wide 248-bit** value (sole order-hash uniqueness source).

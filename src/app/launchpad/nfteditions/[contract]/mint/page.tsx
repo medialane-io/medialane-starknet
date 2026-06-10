@@ -44,7 +44,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { normalizeAddress } from "@medialane/sdk";
-import { hash, shortString } from "starknet";
+import { hash } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
@@ -89,37 +89,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-// Legacy (v0.2.0) collections take a caller-supplied token id. New (v0.3.0+)
-// collections assign ids on-chain via mint_edition — see resolveMintPlan below.
-function generateErc1155TokenId(): string {
-  const randomValues = new Uint32Array(1);
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    crypto.getRandomValues(randomValues);
-  } else {
-    randomValues[0] = Math.floor(Math.random() * 1_000_000);
-  }
-
-  return (BigInt(Date.now()) * 1_000_000n + BigInt(randomValues[0] % 1_000_000)).toString();
-}
-
-/** Reads the collection's on-chain `version()` (ByteArray) → e.g. "0.3.0". */
-async function readCollectionVersion(collection: string): Promise<string> {
-  const res = await starknetProvider.callContract({
-    contractAddress: collection,
-    entrypoint: "version",
-    calldata: [],
-  });
-  // ByteArray: [num_full_words, ...words, pending_word, pending_word_len].
-  // Version strings are short (< 31 bytes), so the value is the pending word.
-  return shortString.decodeShortString(res[res.length - 2]);
-}
-
-/** True if the collection assigns edition ids on-chain (mint_edition), i.e. >= v0.3.0. */
-function supportsOnChainEditions(version: string): boolean {
-  const [maj, min] = version.split(".").map((n) => parseInt(n, 10) || 0);
-  return maj > 0 || (maj === 0 && min >= 3);
-}
 
 /** Reads the token id the contract assigned, from the IPMinted event of a mint_edition tx. */
 async function readAssignedEditionId(txHash: string, collection: string): Promise<string> {
@@ -189,9 +158,7 @@ export default function MintNFTEditionsPage() {
   const [metadataFields, setMetadataFields] = useState<MetadataField[]>([]);
   const [metadataResetKey, setMetadataResetKey] = useState(0);
   const [autoExternalUrl, setAutoExternalUrl] = useState("");
-  const [generatedTokenId, setGeneratedTokenId] = useState(() => generateErc1155TokenId());
-  // The token id to surface in the success UI: assigned on-chain (v0.3.0+) or the
-  // legacy caller-supplied id (v0.2.0). Resolved in the mint handler.
+  // The on-chain-assigned edition id, read from the IPMinted event in the mint handler.
   const [mintedTokenId, setMintedTokenId] = useState<string | null>(null);
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -346,41 +313,20 @@ export default function MintNFTEditionsPage() {
 
       const [valueLow, valueHigh] = encodeU256(BigInt(values.value));
 
-      // v0.3.0+ collections assign the edition id on-chain (mint_edition); legacy
-      // v0.2.0 collections take a caller-supplied id (mint_item).
-      const version = await readCollectionVersion(collectionAddress);
-      const onChainEditions = supportsOnChainEditions(version);
-
-      const call = onChainEditions
-        ? {
-            contractAddress: collectionAddress,
-            entrypoint: "mint_edition",
-            calldata: [
-              values.recipient,
-              valueLow, valueHigh,
-              ...serializeByteArray(tokenUri),
-            ],
-          }
-        : {
-            contractAddress: collectionAddress,
-            entrypoint: "mint_item",
-            calldata: [
-              values.recipient,
-              ...encodeU256(BigInt(generatedTokenId)),
-              valueLow, valueHigh,
-              ...serializeByteArray(tokenUri),
-            ],
-          };
-
-      const txHashResult = await executeAuto([call]);
+      // The contract assigns the edition id on-chain (sequential from 1).
+      const txHashResult = await executeAuto([{
+        contractAddress: collectionAddress,
+        entrypoint: "mint_edition",
+        calldata: [
+          values.recipient,
+          valueLow, valueHigh,
+          ...serializeByteArray(tokenUri),
+        ],
+      }]);
       if (!txHashResult) throw new Error("Mint transaction failed");
 
-      // Resolve the id to link to: read it from the IPMinted event for on-chain
-      // editions; fall back to the generated id for legacy collections.
-      const assignedId = onChainEditions
-        ? await readAssignedEditionId(txHashResult, collectionAddress)
-        : generatedTokenId;
-      setMintedTokenId(assignedId);
+      // Read the assigned id from the IPMinted event for the success/asset link.
+      setMintedTokenId(await readAssignedEditionId(txHashResult, collectionAddress));
 
       setTxHash(txHashResult);
       setTxStatus("confirmed");
@@ -403,7 +349,6 @@ export default function MintNFTEditionsPage() {
     setMetadataFields([]);
     setMetadataResetKey((key) => key + 1);
     setAutoExternalUrl("");
-    setGeneratedTokenId(generateErc1155TokenId());
     setMintedTokenId(null);
     form.reset({
       value: "1",
@@ -817,9 +762,9 @@ export default function MintNFTEditionsPage() {
         txHash={txHash}
         error={mintError}
         onMintAnother={handleMintAnother}
-        mintedTokenId={mintedTokenId ?? generatedTokenId}
-        assetHref={`/asset/${collectionAddress}/${mintedTokenId ?? generatedTokenId}`}
-        explorerAssetHref={`${EXPLORER_URL}/nft/${collectionAddress}/${mintedTokenId ?? generatedTokenId}`}
+        mintedTokenId={mintedTokenId ?? ""}
+        assetHref={`/asset/${collectionAddress}/${mintedTokenId ?? ""}`}
+        explorerAssetHref={`${EXPLORER_URL}/nft/${collectionAddress}/${mintedTokenId ?? ""}`}
       />
     </>
   );
