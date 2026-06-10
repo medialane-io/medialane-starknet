@@ -18,6 +18,9 @@ export const COLLECTION_721_CONTRACT =
   COLLECTION_721_CONTRACT_MAINNET;
 
 export const COLLECTION_1155_CONTRACT =
+  // Canonical name matches io + the *_MAINNET convention; the bare name is kept
+  // as a transition fallback so existing envs don't break.
+  (process.env.NEXT_PUBLIC_COLLECTION_1155_CONTRACT_MAINNET as `0x${string}`) ||
   (process.env.NEXT_PUBLIC_COLLECTION_1155_CONTRACT as `0x${string}`) ||
   COLLECTION_1155_CONTRACT_MAINNET;
 
