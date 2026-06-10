@@ -6,6 +6,8 @@
  * This is consistent with shadcn's own token pattern.
  */
 
+import type { CSSProperties } from "react";
+
 /** Parse an HSL string in any common format to { h, s, l } numbers. */
 export function parseHsl(hslString: string): { h: number; s: number; l: number } | null {
   // Handles: "hsl(271, 81%, 56%)", "hsl(271 81% 56%)", "271 81% 56%", "271, 81%, 56%"
@@ -52,7 +54,10 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-export interface DynamicTheme {
+// Extends CSSProperties so `style={theme}` type-checks under @types/react ≥19.2,
+// whose CSSProperties gained a custom-property index signature that bare object
+// types no longer overlap with.
+export interface DynamicTheme extends CSSProperties {
   "--dynamic-primary": string; // bare HSL "H S% L%"
   "--dynamic-accent": string;  // bare HSL "H S% L%"
   "--dynamic-glow": string;    // bare HSL with alpha "H S% 70% / 0.2"
