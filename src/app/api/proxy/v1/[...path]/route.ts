@@ -66,6 +66,7 @@ const ALLOWED_ROUTES: Record<string, RegExp[]> = {
     /^auth\/siws\/(nonce|verify)$/,                        // dapp SIWS sign-in
     /^collections\/(register|sync-tx|claim)$/,             // launchpad create + on-chain claim
     /^collections\/claim\/request$/,                       // manual-review claim request
+    /^coins\/sync$/,                                       // creator coin launch → instant index
     /^collection-slug-claims$/,                            // collection settings slug claim
     /^drop\/conditions$/,                                  // launchpad drop/create
     /^intents\/(mint|create-collection)$/,                 // launchpad mint + create-collection

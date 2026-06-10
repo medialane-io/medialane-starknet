@@ -128,6 +128,7 @@ const DAPP_HREFS: Record<string, { href?: string; buttonLabel?: string; browseHr
   "collection-drop": { href: "/launchpad/drop/create", buttonLabel: "Launch drop", browseHref: "/launchpad/drop" },
   "ip-collection-1155": { href: "/launchpad/nfteditions/create", buttonLabel: "Create Limited Edition contract" },
   "mint-editions": { href: "/launchpad/nfteditions", buttonLabel: "Mint Limited Edition" },
+  "creator-coins": { href: "/launchpad/coin/create", buttonLabel: "Launch Creator Coin" },
   "claim-memecoin": { href: "/launchpad/memecoin", buttonLabel: "Claim Memecoin" },
 };
 
@@ -294,7 +295,9 @@ export function LaunchpadContent() {
         >
           {LAUNCHPAD_SERVICE_DEFINITIONS.map((def) => {
             const { href, buttonLabel, browseHref } = DAPP_HREFS[def.key] ?? {};
-            return <ServiceCard key={def.key} def={def} href={href} buttonLabel={buttonLabel} browseHref={browseHref} />;
+            // Locally promote keys we've shipped in the dapp but are still "soon" in the UI lib.
+            const shippedDef = def.key === "creator-coins" ? { ...def, status: "live" } as typeof def : def;
+            return <ServiceCard key={def.key} def={shippedDef} href={href} buttonLabel={buttonLabel} browseHref={browseHref} />;
           })}
           {/* Claim Memecoin — a matching launchpad card (DAO-reviewed claim → /launchpad/memecoin) */}
           <ServiceCard

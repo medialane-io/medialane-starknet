@@ -25,7 +25,11 @@ import {
   walletAuthenticating,
   type WalletSession,
 } from "@/lib/wallet-session";
-import { POP_FACTORY_CONTRACT_MAINNET, DROP_FACTORY_CONTRACT_MAINNET } from "@medialane/sdk";
+import {
+  POP_FACTORY_CONTRACT_MAINNET,
+  DROP_FACTORY_CONTRACT_MAINNET,
+  CREATOR_COIN_FACTORY_CONTRACT_MAINNET,
+} from "@medialane/sdk";
 import {
   COLLECTION_721_CONTRACT,
   COLLECTION_1155_CONTRACT,
@@ -71,6 +75,13 @@ export const CARTRIDGE_POLICIES = (
     // ── POP / Drop factories (collection creation) ──────────────────────
     { target: POP_FACTORY_CONTRACT_MAINNET, method: "create_collection" },
     { target: DROP_FACTORY_CONTRACT_MAINNET, method: "create_drop" },
+    // ── Creator Coin factory (launch flow) ──────────────────────────────
+    // The launch multicall also transfers the buyback quote (STRK/ETH) to
+    // the factory; that ERC-20 `transfer` deliberately stays OFF this list
+    // (same precedent as marketplace `approve`) — fund-moving methods get a
+    // per-tx Cartridge prompt instead of silent session scope.
+    { target: CREATOR_COIN_FACTORY_CONTRACT_MAINNET, method: "create_creator_coin" },
+    { target: CREATOR_COIN_FACTORY_CONTRACT_MAINNET, method: "launch_on_ekubo" },
     // ── NFT comments ────────────────────────────────────────────────────
     { target: NFTCOMMENTS_CONTRACT, method: "add_comment" },
     // ── Static airdrop / launch mint contracts ──────────────────────────
