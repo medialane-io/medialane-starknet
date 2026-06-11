@@ -3,15 +3,18 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Coins, Loader2 } from "lucide-react";
-import { getTokenBySymbol, formatAmount } from "@medialane/sdk";
+import {
+  getTokenBySymbol, formatAmount,
+  validateCoinName as validateName,
+  validateCoinSymbol as validateSymbol,
+  validateCoinSupply as validateSupply,
+  coinToRaw as toRaw,
+  teamCoinsRaw, buybackQuoteRaw, fdvHuman,
+} from "@medialane/sdk";
 import { PageContainer } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useLaunchCoin, type LaunchCoinInput } from "@/hooks/use-launch-coin";
-import {
-  validateName, validateSymbol, validateSupply,
-  toRaw, teamCoinsRaw, buybackQuoteRaw, fdvHuman,
-} from "@/lib/coin-launch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

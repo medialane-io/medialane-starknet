@@ -13,8 +13,8 @@
   "dependencies": {
     "@avnu/gasless-sdk": "^0.1.8",
     "@hookform/resolvers": "^3",
-    "@medialane/sdk": "0.35.1",
-    "@medialane/ui": "0.7.0",
+    "@medialane/sdk": "0.36.0",
+    "@medialane/ui": "0.8.0",
     "@privy-io/node": "^0.18.0",
     "@privy-io/react-auth": "^3.25.0",
     "@radix-ui/react-accordion": "latest",
