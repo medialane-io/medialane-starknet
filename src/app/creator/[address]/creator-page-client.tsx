@@ -14,7 +14,7 @@ import { useDominantColor } from "@/hooks/use-dominant-color";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCardSkeleton } from "@/components/shared/collection-card";
+import { CollectionCardSkeleton } from "@medialane/ui";
 import { CollectionCarouselRow } from "@/components/creator/collection-carousel-row";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

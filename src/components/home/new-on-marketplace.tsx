@@ -6,7 +6,7 @@ import { Tag } from "lucide-react";
 import { useOrders } from "@/hooks/use-orders";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
-import { ScrollSection } from "@/components/shared/scroll-section";
+import { ScrollSection } from "@medialane/ui";
 import type { ApiOrder } from "@medialane/sdk";
 
 export function NewOnMarketplace() {

@@ -10,7 +10,7 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCard, CollectionCardSkeleton } from "@/components/shared/collection-card";
+import { CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
