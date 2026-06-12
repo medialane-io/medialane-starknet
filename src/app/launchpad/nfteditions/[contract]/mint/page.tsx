@@ -61,6 +61,7 @@ import {
   type IPType,
 } from "@/types/ip";
 import { IPTypeFields, type MetadataField } from "@/components/create/ip-type-fields";
+import { makeUploadDocument } from "@/lib/upload-document";
 import type { TxStatus } from "@/hooks/use-tx";
 
 const schema = z.object({
@@ -704,6 +705,7 @@ export default function MintNFTEditionsPage() {
                         key={metadataResetKey}
                         ipType={form.watch("ipType") as IPType}
                         onChange={setMetadataFields}
+                      uploadDocument={makeUploadDocument(getValidToken)}
                       />
                     </div>
                   </CollapsibleContent>
