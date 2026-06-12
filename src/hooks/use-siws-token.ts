@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "@starknet-react/core";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useWallet } from "@/hooks/use-wallet";
 import {
   getStoredSiwsToken,
   requestSiwsToken,
@@ -10,12 +11,13 @@ import {
 } from "@/lib/siws-client";
 
 export function useSiwsToken() {
-  const { account, address } = useAccount();
-  const {
-    wallet: starkZapWallet,
-    address: starkZapAddress,
-  } = useStarkZapWallet();
-  const activeAddress = starkZapAddress ?? address;
+  const { account } = useAccount();
+  const { wallet: starkZapWallet } = useStarkZapWallet();
+  // The active-wallet slot decides WHO signs (2026-06-07 redesign) — the old
+  // `starkZapWallet ?? account` priority let a stale Cartridge/Privy session
+  // sign SIWS for a different wallet than the one the user is actually using.
+  const { address: activeAddress, walletType } = useWallet();
+  const isStarkZap = walletType === "cartridge" || walletType === "privy";
   const [token, setToken] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,8 +36,15 @@ export function useSiwsToken() {
   const signIn = useCallback(async (): Promise<string | null> => {
     if (!activeAddress) return null;
 
-    const signer = (starkZapWallet ?? account) as SiwsSigner | null;
-    if (!signer) return null;
+    // Resolve the signer that belongs to the ACTIVE wallet — never cross rails.
+    // (Injected `account` hydrates async and can be momentarily undefined while
+    // connected; surface that as a retryable message instead of a silent null.)
+    const signer = (isStarkZap ? starkZapWallet : account) as SiwsSigner | null;
+    if (!signer) {
+      const message = "Your wallet isn't ready to sign yet — try again in a moment.";
+      setError(message);
+      throw new Error(message);
+    }
 
     setIsSigningIn(true);
     setError(null);
@@ -54,7 +63,7 @@ export function useSiwsToken() {
     } finally {
       setIsSigningIn(false);
     }
-  }, [activeAddress, starkZapWallet, account]);
+  }, [activeAddress, isStarkZap, starkZapWallet, account]);
 
   /**
    * Returns an existing valid token or triggers the SIWS sign-in flow.

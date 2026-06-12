@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAccount, useContract, useNetwork, useProvider } from "@starknet-react/core";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { Abi, shortString, constants, num } from "starknet";
 import { useSWRConfig } from "swr";
@@ -121,12 +122,13 @@ const assertOrderCreated = (receipt: any, marketplaceAddress: string) => {
 
 export function useMarketplace(): UseMarketplaceReturn {
     const { account } = useAccount();
-    // StarkZap (Cartridge/Privy) wallet — for these users starknet-react's
-    // `account` is null, so the trade path resolves a signer/executor as
-    // `szWallet ?? account`. Both expose signMessage(typedData) + execute(calls);
-    // results are normalized. When szWallet is null (injected users) every path
-    // below is byte-identical to the previous account-only behavior.
-    const { wallet: szWallet } = useStarkZapWallet();
+    // StarkZap (Cartridge/Privy) wallet. The ACTIVE-WALLET SLOT decides which
+    // rail signs/executes (2026-06-07 redesign) — a bare `szWallet ?? account`
+    // priority would let a lingering Cartridge/Privy session sign orders for a
+    // different wallet than the one the user explicitly connected.
+    const { wallet: szWalletRaw } = useStarkZapWallet();
+    const { walletType } = useWallet();
+    const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
     const { chain } = useNetwork();
     const { provider } = useProvider();
     const { mutate } = useSWRConfig();

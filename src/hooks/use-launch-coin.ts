@@ -13,6 +13,7 @@ import {
   buybackQuoteRaw,
   type CreatorCoinReceiptLike,
 } from "@medialane/sdk";
+import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { starknetProvider } from "@/lib/starknet";
@@ -29,7 +30,12 @@ export type LaunchStatus = "idle" | "deploying" | "launching" | "indexing" | "do
 
 export function useLaunchCoin() {
   const { account } = useAccount();
-  const { wallet: szWallet } = useStarkZapWallet();
+  // Gate the StarkZap wallet on the active-wallet slot — same hijack class as
+  // use-siws-token/use-marketplace. The old code could even split rails:
+  // signer = szWallet but owner = injected address when both were present.
+  const { wallet: szWalletRaw } = useStarkZapWallet();
+  const { walletType, address: activeAddress } = useWallet();
+  const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
   const [status, setStatus] = useState<LaunchStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +43,7 @@ export function useLaunchCoin() {
     async (input: LaunchCoinInput): Promise<{ coinAddress: string }> => {
       setError(null);
       const signer = (szWallet ?? account) as AccountInterface | undefined;
-      const owner = account?.address ?? (szWallet as any)?.address;
+      const owner = activeAddress;
       if (!signer || !owner) throw new Error("Connect a wallet first");
 
       const quote = getTokenBySymbol(input.quoteSymbol);
@@ -92,7 +98,7 @@ export function useLaunchCoin() {
         throw e;
       }
     },
-    [account, szWallet]
+    [account, szWallet, activeAddress]
   );
 
   return { launch, status, error };
