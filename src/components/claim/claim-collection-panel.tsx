@@ -8,11 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Step = "input" | "verifying" | "success" | "manual" | "pending";
+
+/** Loose Starknet address check — catches typos without rejecting valid (often
+ *  leading-zero-trimmed) contract addresses. */
+const isValidAddress = (a: string) => /^0x[0-9a-fA-F]{40,64}$/.test(a.trim());
 
 function StepIndicator({ step }: { step: Step }) {
   const atStep2 = step === "manual" || step === "pending";
@@ -61,7 +66,7 @@ export function ClaimCollectionPanel() {
     setStep("verifying");
     try {
       // Backend verifies on-chain ownership — no JWT required
-      const result = await (getMedialaneClient().api as any).claimCollection(
+      const result = await getMedialaneClient().api.claimCollection(
         contractAddress.trim(),
         walletAddress,
         ""
@@ -82,7 +87,7 @@ export function ClaimCollectionPanel() {
   async function handleManualRequest() {
     if (!email.trim()) { toast.error("Email is required"); return; }
     try {
-      await (getMedialaneClient().api as any).requestCollectionClaim({
+      await getMedialaneClient().api.requestCollectionClaim({
         contractAddress: contractAddress.trim(),
         walletAddress: walletAddress ?? undefined,
         email: email.trim(),
@@ -147,22 +152,33 @@ export function ClaimCollectionPanel() {
               value={contractAddress}
               onChange={(e) => setContractAddress(e.target.value)}
               disabled={step === "verifying"}
+              aria-invalid={contractAddress.trim() !== "" && !isValidAddress(contractAddress)}
             />
-            <p className="text-xs text-muted-foreground">
-              Paste the Starknet contract address you own — an NFT collection or a coin.
-              Coins are reviewed by our team before they go live.
-            </p>
+            {contractAddress.trim() !== "" && !isValidAddress(contractAddress) ? (
+              <p className="text-xs text-destructive">
+                That doesn&apos;t look like a Starknet address. It should start with “0x”.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Paste the Starknet contract address you own — an NFT collection or a coin.
+                Coins are reviewed by our team before they go live.
+              </p>
+            )}
           </div>
-          <Button
-            onClick={handleAutoClaim}
-            disabled={step === "verifying" || !contractAddress.trim()}
-            className="w-full"
-          >
-            {step === "verifying"
-              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying…</>
-              : "Verify & Claim"
-            }
-          </Button>
+          {!walletAddress ? (
+            <ConnectWallet label="Connect wallet to claim" className="w-full" />
+          ) : (
+            <Button
+              onClick={handleAutoClaim}
+              disabled={step === "verifying" || !isValidAddress(contractAddress)}
+              className="w-full"
+            >
+              {step === "verifying"
+                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying…</>
+                : "Verify & Claim"
+              }
+            </Button>
+          )}
         </div>
       )}
 
