@@ -103,6 +103,61 @@ function Stat({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
+/** Compact row variant of CoinCard for the Tokens "Table" view. */
+export function CoinRow({ collection }: { collection: ApiCollection }) {
+  const contract = collection.contractAddress;
+  const { price, isLoading: priceLoading } = useCoinPrice(contract);
+  const kind = coinKind(collection.service);
+  const verified = collection.claimedBy != null || kind === "creator";
+  const logoUri = collection.profile?.image ?? collection.image;
+  const logo = logoUri ? ipfsToHttp(logoUri) : null;
+  const initials = (collection.symbol ?? collection.name ?? "?").trim().slice(0, 2).toUpperCase();
+
+  return (
+    <Link
+      href={`/coins/${contract}`}
+      className="flex items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2.5 transition-colors hover:border-primary/40"
+    >
+      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted">
+        {logo ? (
+          <Image src={logo} alt="" fill sizes="36px" className="object-cover" unoptimized />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-blue to-brand-purple text-[11px] font-bold text-white">
+            {initials}
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1">
+          <span className="truncate text-sm font-semibold">{collection.name ?? "Untitled coin"}</span>
+          {verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" aria-label="Verified" />}
+        </div>
+        <span className="text-xs text-muted-foreground">{collection.symbol ?? "—"}</span>
+      </div>
+      <span
+        className={cn(
+          "hidden shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium sm:inline-block",
+          kind === "creator"
+            ? "border-brand-purple/30 bg-brand-purple/10 text-brand-purple"
+            : "border-brand-rose/30 bg-brand-rose/10 text-brand-rose"
+        )}
+      >
+        {kind === "creator" ? "Creator Coin" : "Memecoin"}
+      </span>
+      <span className="w-24 shrink-0 text-right text-sm font-semibold tabular-nums">
+        {priceLoading ? (
+          <Skeleton className="ml-auto h-4 w-12" />
+        ) : price ? (
+          formatCoinPrice(price.quotePerCoin)
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </span>
+      <span className="hidden shrink-0 text-sm font-medium text-primary sm:inline-block">Trade</span>
+    </Link>
+  );
+}
+
 export function CoinCardSkeleton() {
   return (
     <div className="flex flex-col rounded-xl border border-border/60 bg-card overflow-hidden">
