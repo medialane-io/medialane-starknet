@@ -38,7 +38,11 @@ export function CoinCard({ collection }: { collection: ApiCollection }) {
           {logo ? (
             <Image src={logo} alt="" fill sizes="48px" className="object-cover" unoptimized />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-primary/30 to-primary/5" />
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-blue to-brand-purple">
+              <span className="text-sm font-bold text-white">
+                {(collection.symbol ?? collection.name ?? "?").trim().slice(0, 2).toUpperCase()}
+              </span>
+            </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -52,8 +56,8 @@ export function CoinCard({ collection }: { collection: ApiCollection }) {
           className={cn(
             "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium",
             kind === "creator"
-              ? "border-purple-500/30 bg-purple-500/10 text-purple-400"
-              : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+              ? "border-brand-purple/30 bg-brand-purple/10 text-brand-purple"
+              : "border-brand-rose/30 bg-brand-rose/10 text-brand-rose"
           )}
         >
           {kind === "creator" ? "Creator Coin" : "Memecoin"}
@@ -77,7 +81,7 @@ export function CoinCard({ collection }: { collection: ApiCollection }) {
         <Stat label="Holders">
           <span className="inline-flex items-center gap-1 font-semibold">
             <Users className="h-3 w-3 text-muted-foreground" />
-            {collection.holderCount ?? "—"}
+            {collection.holderCount || "—"}
           </span>
         </Stat>
       </div>
