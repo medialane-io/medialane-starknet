@@ -200,7 +200,7 @@ export default function CoinCreatePage() {
           <p className="font-mono text-xs text-muted-foreground break-all text-center">{coinAddress}</p>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={handleReset}>Launch another</Button>
-            <Button className="flex-1 bg-brand-rose hover:bg-brand-rose/90" onClick={() => router.push(`/collections/${coinAddress}`)}>
+            <Button className="flex-1 bg-brand-rose hover:bg-brand-rose/90" onClick={() => router.push(`/coins/${coinAddress}`)}>
               View &amp; trade <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </div>
@@ -214,7 +214,7 @@ export default function CoinCreatePage() {
   return (
     <PageContainer className="box-border max-w-5xl pt-24 pb-8">
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-pink-400">
+        <div className="flex items-center gap-2 text-brand-rose">
           <Coins className="h-5 w-5" />
           <span className="text-sm font-semibold uppercase tracking-wider">Creator Coin</span>
         </div>
@@ -233,7 +233,7 @@ export default function CoinCreatePage() {
             onClick={() => { if (s < step || (s === 2 && identityValid) || (s === 3 && identityValid && economicsValid)) setStep(s); }}
             className={cn(
               "h-8 px-3 rounded-full text-xs font-semibold transition-colors",
-              s === step ? "bg-pink-500/15 text-pink-400" : "bg-muted/30 text-muted-foreground",
+              s === step ? "bg-brand-rose/15 text-brand-rose" : "bg-muted/30 text-muted-foreground",
             )}
           >
             {s}. {s === 1 ? "Your coin" : s === 2 ? "Economics" : "Launch"}
@@ -336,7 +336,7 @@ export default function CoinCreatePage() {
                       onClick={() => setSupply(p.value)}
                       className={cn(
                         "rounded-full border px-3 py-1 text-xs font-medium",
-                        supply === p.value ? "border-pink-500/50 bg-pink-500/10 text-pink-400" : "border-border text-muted-foreground",
+                        supply === p.value ? "border-brand-rose/50 bg-brand-rose/10 text-brand-rose" : "border-border text-muted-foreground",
                       )}
                     >
                       {p.label}
@@ -383,7 +383,7 @@ export default function CoinCreatePage() {
                 <input
                   id="alloc" type="range" min={0} max={10} step={1}
                   value={teamPct} onChange={(e) => setTeamPct(Number(e.target.value))}
-                  disabled={busy} className="w-full accent-pink-500"
+                  disabled={busy} className="w-full accent-[hsl(var(--brand-rose))]"
                 />
                 <p className="text-xs text-muted-foreground">
                   Up to 10% goes straight to your wallet at launch — you fund it

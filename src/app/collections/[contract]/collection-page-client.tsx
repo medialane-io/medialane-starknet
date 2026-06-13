@@ -35,7 +35,7 @@ import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog"
 import { useWallet } from "@/hooks/use-wallet";
 import { getService } from "@medialane/sdk";
 import type { ApiToken, ApiOrder } from "@medialane/sdk";
-import { CoinPageClient } from "./coin-page-client";
+import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
 
 const PAGE_SIZE = 24;
 
@@ -264,6 +264,9 @@ export default function CollectionPageClient() {
   // friendlier canonical URL for Creator Coins) — accept either param name.
   const params = useParams<{ contract?: string; address?: string }>();
   const contract = params.contract ?? params.address ?? "";
+  // Reached via /coins/[address] — the URL intends a coin, so loading shows a
+  // coin-shaped skeleton rather than the NFT-collection layout.
+  const isCoinRoute = params.address != null;
   const [reportOpen, setReportOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [descClamped, setDescClamped] = useState(false);
@@ -303,6 +306,11 @@ export default function CollectionPageClient() {
   // an ERC-20 has no per-token grid/listings, just a price + embedded swap.
   if (!colLoading && collection && getService(collection.service)?.uiVariant === "coin") {
     return <CoinPageClient collection={collection} />;
+  }
+  // On the /coins route, show the coin skeleton while loading instead of
+  // flashing the NFT-collection layout before the dispatch resolves.
+  if (colLoading && isCoinRoute) {
+    return <CoinPageSkeleton />;
   }
 
   const floorParsed = parsePriceDisplay(collection?.floorPrice);

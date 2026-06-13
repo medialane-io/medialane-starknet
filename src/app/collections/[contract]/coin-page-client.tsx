@@ -275,6 +275,37 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
   );
 }
 
+/**
+ * Coin-shaped loading skeleton — mirrors the CoinPageClient layout so the
+ * /coins/[address] route doesn't flash the NFT-collection layout while the
+ * collection record loads (the dispatch can't know it's a coin until then).
+ */
+export function CoinPageSkeleton() {
+  return (
+    <div className="container mx-auto px-4 pt-20 pb-12 max-w-5xl">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,380px)] gap-8">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-16 w-16 rounded-full shrink-0" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-28 w-full rounded-2xl" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          </div>
+        </div>
+        <Skeleton className="h-[28rem] w-full rounded-2xl lg:sticky lg:top-20" />
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Embedded swap
 // ---------------------------------------------------------------------------
