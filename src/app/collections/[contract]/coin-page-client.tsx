@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ShareButton } from "@/components/shared/share-button";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { CreatorChip } from "@/components/shared/creator-chip";
 import { ipfsToHttp, cn } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
 
@@ -156,6 +157,7 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
                   )}
                   <span className="text-xs text-muted-foreground">{serviceLabel}</span>
                 </div>
+                {collection.owner && <CreatorChip address={collection.owner} className="mt-2" />}
               </div>
             </div>
 
@@ -243,14 +245,6 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
 
             {/* Meta */}
             <div className="flex items-center gap-3 pt-1">
-              {collection.owner && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span>by</span>
-                  <Link href={`/creator/${collection.owner}`} className="hover:underline underline-offset-2">
-                    <AddressDisplay address={collection.owner} chars={6} showCopy={false} className="font-medium text-foreground" />
-                  </Link>
-                </div>
-              )}
               <AddressDisplay address={contract ?? ""} chars={6} className="text-xs text-muted-foreground/70" />
               <a
                 href={`${EXPLORER_URL}/contract/${contract}`}
@@ -271,7 +265,7 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
               coinAddress={contract}
               coinSymbol={collection.symbol ?? "COIN"}
               coinName={collection.name ?? "Creator Coin"}
-              coinColor={dynamicTheme ? "var(--dynamic-primary)" : "#8b5cf6"}
+              coinColor={dynamicTheme ? "var(--dynamic-primary)" : "hsl(var(--brand-purple))"}
               price={price}
             />
           </div>
@@ -566,7 +560,7 @@ function CoinSwapCard({
         </div>
       ) : (
         <Button
-          className="w-full h-11 border-0 bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white hover:opacity-90"
+          className="w-full h-11 border-0 bg-gradient-to-r from-brand-blue to-brand-purple text-white hover:opacity-90"
           disabled={!isConnected || !swap.canSwap || coinInsufficient}
           onClick={handleSwap}
         >
@@ -609,7 +603,7 @@ function CoinAvatar({ url, symbol }: { url: string | null; symbol?: string | nul
     );
   }
   return (
-    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shrink-0">
+    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-brand-blue to-brand-purple flex items-center justify-center shrink-0">
       <span className="text-xl font-bold text-white">{(symbol ?? "?").slice(0, 2).toUpperCase()}</span>
     </div>
   );
