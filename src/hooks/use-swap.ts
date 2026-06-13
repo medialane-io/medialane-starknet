@@ -69,6 +69,12 @@ export interface UseSwapReturn {
   // Price info
   priceImpact: string | null;
   exchangeRate: string | null;
+  /** Minimum the user is guaranteed to receive after slippage (human units). */
+  minBuyAmount: string | null;
+
+  // Slippage tolerance (fraction, e.g. 0.005 = 0.5%)
+  slippage: number;
+  setSlippage: (value: number) => void;
 
   // Execution
   executeSwap: () => Promise<string | null>;
@@ -99,6 +105,7 @@ export function useSwap(): UseSwapReturn {
   const [quote, setQuote] = useState<SwapQuote | null>(null);
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [slippage, setSlippage] = useState(0.005); // 0.5% default
 
   const [isExecuting, setIsExecuting] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -234,6 +241,14 @@ export function useSwap(): UseSwapReturn {
     ? `${((1 - quote.priceRatioUsd) * 100).toFixed(2)}%`
     : null;
 
+  const minBuyAmount = buyAmount
+    ? (() => {
+        const n = parseFloat(buyAmount) * (1 - slippage);
+        if (!Number.isFinite(n) || n <= 0) return null;
+        return n.toLocaleString(undefined, { maximumFractionDigits: 6 });
+      })()
+    : null;
+
   const exchangeRate = quote && sellAmount
     ? (() => {
         const sellRaw = parseTokenAmount(sellAmount, sellToken.decimals);
@@ -294,7 +309,7 @@ export function useSwap(): UseSwapReturn {
       const swapCall = await buildSwapCall({
         quoteId: freshQuote.quoteId,
         takerAddress: address,
-        slippage: 0.005,
+        slippage,
       });
 
       // Build approve call (AVNU router = swapCall.contractAddress)
@@ -330,7 +345,7 @@ export function useSwap(): UseSwapReturn {
     } finally {
       setIsExecuting(false);
     }
-  }, [address, quote, sellToken, buyToken, sellAmount, buyAmount, sellAmountRaw, execute, toast]);
+  }, [address, quote, sellToken, buyToken, sellAmount, buyAmount, sellAmountRaw, slippage, execute, toast]);
 
   return {
     sellToken,
@@ -349,6 +364,9 @@ export function useSwap(): UseSwapReturn {
     isSellBalanceLoading: BALANCE_TOKENS.has(sellToken.symbol) ? sellBalanceHook.isLoading : false,
     priceImpact,
     exchangeRate,
+    minBuyAmount,
+    slippage,
+    setSlippage,
     executeSwap,
     isExecuting,
     txHash,
