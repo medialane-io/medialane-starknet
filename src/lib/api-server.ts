@@ -35,7 +35,7 @@ export async function fetchTokenMeta(contract: string, tokenId: string) {
 }
 
 export async function fetchCollectionMeta(contract: string) {
-  return apiFetch<{ name?: string; description?: string; image?: string; totalSupply?: number }>(
+  return apiFetch<{ name?: string; description?: string; image?: string; totalSupply?: number; service?: string }>(
     `/v1/collections/${contract}`
   );
 }

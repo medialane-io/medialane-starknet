@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getService } from "@medialane/sdk";
 import { fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
 import CollectionPageClient from "./collection-page-client";
 
@@ -37,6 +39,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function CollectionPage() {
+export default async function CollectionPage({ params }: Props) {
+  const { contract } = await params;
+  // Creator Coins are canonical at /coins/[address]; redirect coin contracts
+  // hit under /collections so the friendlier URL is always the one in the bar.
+  // (The fetch is deduped with generateMetadata's identical request.)
+  const col = await fetchCollectionMeta(contract);
+  if (col?.service && getService(col.service)?.uiVariant === "coin") {
+    redirect(`/coins/${contract}`);
+  }
   return <CollectionPageClient />;
 }
