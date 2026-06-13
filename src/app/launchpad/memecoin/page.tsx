@@ -24,9 +24,9 @@ const STEPS = [
 
 export default function MemecoinClaimPage() {
   return (
-    <PageContainer className="box-border max-w-5xl pt-20 pb-8 space-y-8">
-      <div className="space-y-2 max-w-2xl">
-        <div className="flex items-center gap-2 text-primary">
+    <PageContainer className="box-border mx-auto max-w-lg pt-20 pb-8 space-y-8">
+      <div className="space-y-2 text-center">
+        <div className="flex items-center justify-center gap-2 text-primary">
           <Coins className="h-5 w-5" />
           <span className="text-sm font-semibold uppercase tracking-wider">Claim Memecoin</span>
         </div>
@@ -38,27 +38,25 @@ export default function MemecoinClaimPage() {
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <ClaimCollectionPanel />
+      <ClaimCollectionPanel />
 
-        <aside className="h-fit space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-5">
-          <p className="text-sm font-semibold">How it works</p>
-          <ol className="space-y-3">
-            {STEPS.map((s, i) => (
-              <li key={i} className="flex gap-3 text-sm text-muted-foreground">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {i + 1}
-                </span>
-                <span className="leading-relaxed">{s}</span>
-              </li>
-            ))}
-          </ol>
-          <div className="flex items-start gap-2 border-t border-border/40 pt-4 text-xs text-muted-foreground">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-            <span>Medialane never takes custody of your coin — claiming just links it to your account.</span>
-          </div>
-        </aside>
-      </div>
+      <aside className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-5">
+        <p className="text-sm font-semibold">How it works</p>
+        <ol className="space-y-3">
+          {STEPS.map((s, i) => (
+            <li key={i} className="flex gap-3 text-sm text-muted-foreground">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                {i + 1}
+              </span>
+              <span className="leading-relaxed">{s}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="flex items-start gap-2 border-t border-border/40 pt-4 text-xs text-muted-foreground">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+          <span>Medialane never takes custody of your coin — claiming just links it to your account.</span>
+        </div>
+      </aside>
     </PageContainer>
   );
 }
