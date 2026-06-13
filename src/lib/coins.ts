@@ -32,7 +32,9 @@ export function formatFdv(
   totalSupply: number | null | undefined,
   quoteSymbol: string | null | undefined
 ): string | null {
-  if (quotePerCoin == null || totalSupply == null) return null;
+  // Treat 0/unknown supply as unknown FDV ("—") — external coins aren't
+  // supply-indexed, so `price × 0` would otherwise render a misleading "0".
+  if (quotePerCoin == null || !totalSupply) return null;
   const fdv = quotePerCoin * totalSupply;
   const sym = quoteSymbol ?? "";
   const abbr =
