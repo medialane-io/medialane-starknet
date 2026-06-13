@@ -101,16 +101,11 @@ export function PrivyConnector({
   // Step 1: explicit connect request — open Privy login modal.
   useEffect(() => {
     if (!pendingConnect) return;
-    if (!ready) {
-      console.log("[Privy] pending connect but SDK not ready yet — waiting");
-      return;
-    }
-    console.log("[Privy] SDK ready, starting connect flow. authenticated=", authenticated);
+    if (!ready) return;
     clearPending();
     setSession(walletAuthenticating("privy"));
     setNeedsOnboard(true);
     if (!authenticated) {
-      console.log("[Privy] calling login()");
       // Don't await — login() may resolve before auth completes. The
       // onboarding effect below watches `authenticated` and fires when it
       // flips true.

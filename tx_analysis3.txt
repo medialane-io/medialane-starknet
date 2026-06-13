@@ -1,1 +1,0 @@
-Wait, register_order DOES NOT move the NFT! register_order simply computes the order hash and saves the order to starknet state! Or does it?

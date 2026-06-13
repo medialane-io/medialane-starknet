@@ -1,8 +1,0 @@
-User Tx trace analysis: 
-Sender: 0x5f9f8d300601199297b7ecd92928e1444a2556aa84c8544b8b513d2a18a65a2
-Call 1: 0x72aae499fee64e7be2006d2cfba07b1303667a231d40a727654134f7b28b76
-Selector: 0x219209e083275171774dab1df80982e9df2096516f06319c5c6d71ae0a8480c (approve)
-Calldata:
-"0x4299b51289aa700de4ce19cc77bcea8430bfd1aef04193efab09d60a3a7ee0f" -> Medialane contract
-"0x9" -> Token id low
-"0x0" -> Token id high

@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scratch / debug dumps (keep out of the repo root)
+/scratch/
+/*.log
+/tx_analysis*.txt
+/*_class.json
+/payload*.json

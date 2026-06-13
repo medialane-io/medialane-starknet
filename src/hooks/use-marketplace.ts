@@ -502,7 +502,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!opts?.silent) toast.success("Listing Created", { description: "Your asset has been listed successfully." });
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches, resolveRoyaltyMaxBps, signTypedData]);
 
     const makeOffer = useCallback(async (
         assetContractAddress: string,
@@ -610,7 +610,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, getErc20Allowance, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, getErc20Allowance, executeDirect, refreshMarketplaceCaches, resolveRoyaltyMaxBps, signTypedData]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[], opts?: WriteOpts) => {
         if (!walletAddress || !medialaneContract || !chain || items.length === 0) {
@@ -683,9 +683,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             const hash = await executeDirect([...approveCalls721, ...approveCalls1155, ...fulfillCalls, ...feeCalls]);
             setTxHash(hash);
             const receipt = await provider.waitForTransaction(hash);
-            if ((receipt as any).execution_status === "REVERTED") {
-                throw new Error((receipt as any).revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
-            }
+            assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             return hash;
@@ -736,9 +734,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             const hash = await executeDirect([call]);
             setTxHash(hash);
             const receipt = await provider.waitForTransaction(hash);
-            if ((receipt as any).execution_status === "REVERTED") {
-                throw new Error((receipt as any).revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
-            }
+            assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
             if (!opts?.silent) {
                 toast.success(
@@ -748,7 +744,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             }
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
+    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches, signTypedData]);
 
     /**
      * Asset owner accepts an incoming bid. Signs OrderFulfillment typed data,
@@ -804,9 +800,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             const hash = await executeDirect([approveCall, fulfillCall]);
             setTxHash(hash);
             const receipt = await provider.waitForTransaction(hash);
-            if ((receipt as any).execution_status === "REVERTED") {
-                throw new Error((receipt as any).revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
-            }
+            assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
             return hash;
         });

@@ -1,2 +1,0 @@
-User Mint Tx: Recipient is 0x5f9f8d... (the user). Target approve contract is 0x72aae4... (the NFT). Function is approve(Medialane, 9, 0).
-The starknet contract returns: ERC721: unauthorized caller.
