@@ -13,9 +13,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowDownUp, Loader2, Lock, ShieldCheck, ExternalLink, Check, Info, Zap, ChevronDown } from "lucide-react";
+import { ArrowDownUp, Loader2, ShieldCheck, ExternalLink, Check, Zap, Wallet, TrendingUp } from "lucide-react";
 import { getService } from "@medialane/sdk";
-import type { ApiCollection } from "@medialane/sdk";
+import type { ApiCollection, CreatorCoinPrice } from "@medialane/sdk";
 import { useCoinPrice } from "@/hooks/use-coin-price";
 import { useCoinBalance } from "@/hooks/use-coin-balance";
 import { useSwap, SWAP_TOKENS, type SwapToken } from "@/hooks/use-swap";
@@ -25,8 +25,40 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ShareButton } from "@/components/shared/share-button";
+import { CurrencyIcon } from "@/components/shared/currency-icon";
 import { ipfsToHttp, cn } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
+
+/** A coin amount string formatted for an input (no grouping; capped precision). */
+function formatAmountInput(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "0";
+  return n.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 6 });
+}
+
+/**
+ * Honest, locally-computed price impact: compare the pool's live spot price to
+ * what the route actually returns. Only meaningful when the user's quote token
+ * is the coin's own pool pair (otherwise the trade routes cross-token and AVNU's
+ * USD impact is unreliable — we hide it and lean on the guaranteed minimum).
+ */
+function computeImpact(
+  isBuy: boolean,
+  price: CreatorCoinPrice | null,
+  quoteSymbol: string,
+  sellAmount: string,
+  buyAmount: string
+): number | null {
+  if (!price || price.quoteSymbol !== quoteSymbol) return null;
+  const sell = parseFloat(sellAmount);
+  const buy = parseFloat(buyAmount);
+  if (!(sell > 0) || !(buy > 0) || !(price.quotePerCoin > 0)) return null;
+  // Buy: pay `sell` quote, expect sell / price coins. Sell: give `sell` coins,
+  // expect sell × price quote.
+  const expected = isBuy ? sell / price.quotePerCoin : sell * price.quotePerCoin;
+  if (!(expected > 0)) return null;
+  const impact = ((expected - buy) / expected) * 100;
+  return Math.max(0, impact); // clamp tiny-negative (stale-spot) noise to 0
+}
 
 const QUOTE_TOKENS = SWAP_TOKENS.filter((t) => t.symbol !== "WBTC");
 
@@ -58,7 +90,6 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
 
   const serviceLabel = getService(collection.service)?.displayName ?? "Creator Coin";
   const isExternal = collection.service === "external-erc20";
-  const [showWhat, setShowWhat] = useState(false);
 
   // Market cap = live spot price × circulating supply, in the quote token.
   const marketCap =
@@ -146,11 +177,11 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Not yet launched on Ekubo — no price available.
+                  Not trading yet — no market price available.
                 </p>
               )}
               <p className="mt-2 text-[11px] text-muted-foreground/70">
-                Live spot price from the Ekubo pool. Refreshes every 30s.
+                Live market price · updates every 30s
               </p>
             </div>
 
@@ -165,7 +196,7 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
                 label="Market Cap"
                 value={marketCap != null ? `${formatCompact(marketCap)} ${price?.quoteSymbol ?? ""}`.trim() : "—"}
               />
-              <StatCell label="Pair" value={price?.quoteSymbol ?? "—"} />
+              <StatCell label="Priced in" value={price?.quoteSymbol ?? "—"} />
             </div>
 
             {isFresh && (
@@ -181,38 +212,33 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
               </p>
             )}
 
-            {/* What is a Creator Coin? + plain-language, verifiable guarantees */}
-            <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
-              <button
-                onClick={() => setShowWhat((v) => !v)}
-                className="flex w-full items-center gap-1.5 text-sm font-medium"
-              >
-                <Info className="h-4 w-4 text-muted-foreground shrink-0" />
-                What is a Creator Coin?
-                <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showWhat && "rotate-180")} />
-              </button>
-              {showWhat && (
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  A Creator Coin is a token launched by a creator and traded on a public
-                  Ekubo pool. You buy and hold it in your own wallet — Medialane never holds
-                  it for you, and the price moves with the open market, not with us.
-                </p>
-              )}
-
-              {!isExternal && (
-                <div className="space-y-2 border-t border-border/40 pt-3">
-                  <TrustRow icon={Lock} text="The trading funds sit in a public pool the creator can't withdraw." />
-                  <TrustRow icon={ShieldCheck} text="Fixed supply — no one can create more of this coin after launch." />
-                  <a
-                    href={explorerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Verify on explorer <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
+            {/* How it works — plain-language benefit tiles (replaces the old
+                collapsible explainer + trust rows; everything visible at a glance) */}
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {collection.name ?? "This"} is a <span className="text-foreground font-medium">Creator Coin</span> —
+                a token you can buy, hold in your own wallet, and trade any time on the open market.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <BenefitTile
+                  icon={Wallet}
+                  title="You own it"
+                  text="It lives in your wallet. Medialane never holds it for you."
+                />
+                <BenefitTile
+                  icon={TrendingUp}
+                  title="Fair market price"
+                  text="The price is set by the open market, not by us."
+                />
+                {!isExternal && (
+                  <BenefitTile
+                    icon={ShieldCheck}
+                    title="Safe by design"
+                    text="The funds can't be pulled and no extra coins can be made."
+                    link={{ href: explorerUrl, label: "Verify" }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Meta */}
@@ -246,6 +272,7 @@ export function CoinPageClient({ collection }: { collection: ApiCollection }) {
               coinSymbol={collection.symbol ?? "COIN"}
               coinName={collection.name ?? "Creator Coin"}
               coinColor={dynamicTheme ? "var(--dynamic-primary)" : "#8b5cf6"}
+              price={price}
             />
           </div>
         </div>
@@ -263,11 +290,13 @@ function CoinSwapCard({
   coinSymbol,
   coinName,
   coinColor,
+  price,
 }: {
   coinAddress: string;
   coinSymbol: string;
   coinName: string;
   coinColor: string;
+  price: CreatorCoinPrice | null;
 }) {
   const { address, isConnected } = useWallet();
   const swap = useSwap();
@@ -312,16 +341,22 @@ function CoinSwapCard({
   const fromSymbol = isBuy ? quoteToken.symbol : coinSymbol;
   const toSymbol = isBuy ? coinSymbol : quoteToken.symbol;
   const fromBalance = isBuy ? swap.sellBalance : coinBal.formatted;
+  const fromBalanceNum = fromBalance != null ? parseFloat(fromBalance) : 0;
 
   const coinInsufficient =
     !isBuy &&
     fromBalance != null &&
     swap.sellAmount !== "" &&
-    parseFloat(swap.sellAmount || "0") > parseFloat(fromBalance || "0");
+    parseFloat(swap.sellAmount || "0") > fromBalanceNum;
 
   const noRoute = swap.quoteError != null && swap.sellAmount !== "";
   const hasQuote = !!swap.buyAmount && !noRoute;
   const insufficient = swap.insufficientBalance || coinInsufficient;
+
+  // Honest, locally-computed price impact (see computeImpact). High impact gets a
+  // friendly low-liquidity nudge instead of an alarming number.
+  const impact = computeImpact(isBuy, price, quoteToken.symbol, swap.sellAmount, swap.buyAmount);
+  const impactHigh = impact != null && impact > 15;
 
   const handleSwap = async () => {
     const h = await swap.executeSwap();
@@ -331,21 +366,38 @@ function CoinSwapCard({
     }
   };
 
-  const quoteSelect = (
-    <select
-      value={quoteToken.symbol}
-      onChange={(e) => changeQuoteToken(e.target.value)}
-      className="shrink-0 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm font-semibold outline-none"
-    >
-      {QUOTE_TOKENS.map((t) => (
-        <option key={t.symbol} value={t.symbol}>{t.symbol}</option>
-      ))}
-    </select>
+  const quoteBadge = (
+    <span className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm font-semibold">
+      <CurrencyIcon symbol={quoteToken.symbol} size={16} /> {quoteToken.symbol}
+    </span>
   );
   const coinChip = (
-    <span className="shrink-0 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm font-semibold">
-      {coinSymbol}
+    <span className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm font-semibold">
+      <span className="h-4 w-4 rounded-full" style={{ background: coinColor }} aria-hidden /> {coinSymbol}
     </span>
+  );
+  const quotePicker = (
+    <div>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
+        {isBuy ? "Pay with" : "Receive in"}
+      </p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {QUOTE_TOKENS.map((t) => (
+          <button
+            key={t.symbol}
+            onClick={() => changeQuoteToken(t.symbol)}
+            className={cn(
+              "inline-flex items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-semibold transition-colors",
+              quoteToken.symbol === t.symbol
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-border/50 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <CurrencyIcon symbol={t.symbol} size={13} /> {t.symbol}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 
   return (
@@ -374,12 +426,7 @@ function CoinSwapCard({
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-muted-foreground">You pay</span>
           {fromBalance != null && (
-            <button
-              onClick={() => swap.setSellAmount(fromBalance)}
-              className="text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Balance: {fromBalance} · <span className="font-medium">Max</span>
-            </button>
+            <span className="text-[11px] text-muted-foreground">Balance: {fromBalance}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -390,8 +437,25 @@ function CoinSwapCard({
             onChange={(e) => swap.setSellAmount(e.target.value)}
             className="flex-1 bg-transparent text-2xl font-semibold outline-none tabular-nums min-w-0"
           />
-          {isBuy ? quoteSelect : coinChip}
+          {isBuy ? quoteBadge : coinChip}
         </div>
+        {fromBalanceNum > 0 && (
+          <div className="flex gap-1.5">
+            {[
+              { label: "25%", frac: 0.25 },
+              { label: "50%", frac: 0.5 },
+              { label: "Max", frac: 1 },
+            ].map((q) => (
+              <button
+                key={q.label}
+                onClick={() => swap.setSellAmount(formatAmountInput(fromBalanceNum * q.frac))}
+                className="rounded-md border border-border/50 px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {q.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Flip buy / sell */}
@@ -407,23 +471,40 @@ function CoinSwapCard({
 
       {/* Receive (to) */}
       <div className="rounded-xl border border-border/50 bg-muted/20 p-3 space-y-2">
-        <span className="text-[11px] text-muted-foreground">You receive (estimated)</span>
+        <span className="text-[11px] text-muted-foreground">You&apos;ll get (estimated)</span>
         <div className="flex items-center gap-2">
           <span className="flex-1 text-2xl font-semibold tabular-nums truncate">
             {swap.isFetchingQuote ? "…" : swap.buyAmount || "0.0"}
           </span>
-          {isBuy ? coinChip : quoteSelect}
+          {isBuy ? coinChip : quoteBadge}
         </div>
       </div>
+
+      {/* Currency picker (the quote side) */}
+      {quotePicker}
 
       {/* Trade details */}
       {hasQuote && (
         <div className="space-y-1.5 rounded-xl border border-border/40 bg-muted/10 p-3 text-[11px]">
           {swap.exchangeRate && <DetailRow label="Rate" value={swap.exchangeRate} />}
-          {swap.priceImpact && <DetailRow label="Price impact" value={swap.priceImpact} />}
-          {swap.minBuyAmount && <DetailRow label="Min received" value={`${swap.minBuyAmount} ${toSymbol}`} />}
+          {impact != null && !impactHigh && (
+            <DetailRow
+              label="Price impact"
+              value={`~${impact < 1 ? impact.toFixed(2) : impact.toFixed(1)}%`}
+              valueClassName={impact > 5 ? "text-amber-600 dark:text-amber-500" : undefined}
+            />
+          )}
+          {swap.minBuyAmount && <DetailRow label="You'll get at least" value={`${swap.minBuyAmount} ${toSymbol}`} />}
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Max slippage</span>
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              Price protection
+              <span
+                title="If the price moves more than this while your trade is processing, the trade is cancelled so you're not overcharged."
+                className="cursor-help text-muted-foreground/50"
+              >
+                (?)
+              </span>
+            </span>
             <div className="inline-flex gap-1">
               {SLIPPAGE_PRESETS.map((s) => (
                 <button
@@ -441,27 +522,30 @@ function CoinSwapCard({
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-1 pt-0.5 text-emerald-500">
-            <Zap className="h-3 w-3" /> <span>Gas sponsored by Medialane</span>
-          </div>
         </div>
+      )}
+
+      {impactHigh && (
+        <p className="text-[11px] text-amber-600 dark:text-amber-500 text-center">
+          Low liquidity — this trade moves the price by a lot. Try a smaller amount.
+        </p>
       )}
 
       {noRoute && (
         <p className="text-[11px] text-amber-600 dark:text-amber-500 text-center">
-          No router quote yet — liquidity is live on Ekubo but not yet indexed by AVNU.
-          You can trade directly on Ekubo in the meantime.
+          Not tradable here yet — this coin is live but our price routing hasn&apos;t picked it up.
+          You can trade it directly on Ekubo for now.
         </p>
       )}
 
       {insufficient && (
-        <p className="text-[11px] text-destructive text-center">Insufficient {fromSymbol} balance</p>
+        <p className="text-[11px] text-destructive text-center">You don&apos;t have enough {fromSymbol}</p>
       )}
 
       {lastHash ? (
         <div className="space-y-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-center">
           <p className="flex items-center justify-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            <Check className="h-4 w-4" /> Trade submitted
+            <Check className="h-4 w-4" /> All done — your trade is on its way
           </p>
           <div className="flex items-center justify-center gap-3 text-[11px]">
             <a
@@ -470,10 +554,10 @@ function CoinSwapCard({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
             >
-              View on explorer <ExternalLink className="h-3 w-3" />
+              Receipt <ExternalLink className="h-3 w-3" />
             </a>
             <Link href="/portfolio" className="text-muted-foreground transition-colors hover:text-foreground">
-              Portfolio
+              My wallet
             </Link>
             <button onClick={() => setLastHash(null)} className="text-muted-foreground transition-colors hover:text-foreground">
               Trade again
@@ -482,7 +566,7 @@ function CoinSwapCard({
         </div>
       ) : (
         <Button
-          className="w-full"
+          className="w-full h-11 border-0 bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white hover:opacity-90"
           disabled={!isConnected || !swap.canSwap || coinInsufficient}
           onClick={handleSwap}
         >
@@ -491,12 +575,18 @@ function CoinSwapCard({
           ) : !isConnected ? (
             "Connect wallet to trade"
           ) : noRoute ? (
-            "No route available"
+            "Not tradable here yet"
           ) : (
-            `${isBuy ? "Buy" : "Sell"} ${coinSymbol}`
+            <><Zap className="h-4 w-4 mr-2" /> {isBuy ? "Buy" : "Sell"} {coinSymbol}</>
           )}
         </Button>
       )}
+
+      {/* Friendly trust footer (matches the offer-dialog microcopy pattern) */}
+      <p className="flex items-start justify-center gap-1.5 pt-0.5 text-center text-[10px] leading-relaxed text-muted-foreground/70">
+        <ShieldCheck className="h-3 w-3 shrink-0 mt-0.5" />
+        Held in your own wallet · settles on a public pool · gas sponsored by Medialane
+      </p>
     </div>
   );
 }
@@ -534,20 +624,43 @@ function StatCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TrustRow({ icon: Icon, text }: { icon: typeof Lock; text: string }) {
+function BenefitTile({
+  icon: Icon,
+  title,
+  text,
+  link,
+}: {
+  icon: typeof Wallet;
+  title: string;
+  text: string;
+  link?: { href: string; label: string };
+}) {
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <Icon className={cn("h-3.5 w-3.5 shrink-0 text-emerald-500")} />
-      <span>{text}</span>
+    <div className="rounded-xl border border-border/50 bg-muted/20 p-3 space-y-1.5">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/10">
+        <Icon className="h-3.5 w-3.5 text-emerald-500" />
+      </div>
+      <p className="text-xs font-semibold">{title}</p>
+      <p className="text-[11px] leading-relaxed text-muted-foreground">{text}</p>
+      {link && (
+        <a
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {link.label} <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
     </div>
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="text-muted-foreground">{label}</span>
-      <span className="tabular-nums text-right">{value}</span>
+      <span className={cn("tabular-nums text-right", valueClassName)}>{value}</span>
     </div>
   );
 }
