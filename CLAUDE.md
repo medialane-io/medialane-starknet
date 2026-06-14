@@ -167,7 +167,7 @@ Every page and component that prompts the user to connect renders the shared `<C
 
 **ERC-1155 editions mint (2026-06-10, SDK ≥0.34.0 / contract v0.3.0).** Collections deploy from the v0.3.0 ownerless factory (`0x0083543c…`) and assign edition ids **on-chain**, sequential from 1: the mint page (`/launchpad/nfteditions/[contract]/mint`) calls `mint_edition(to, value, uri)` and reads the assigned id from the tx's `IPMinted` event (`keys = [selector, id_low, id_high, recipient]`). Never reintroduce client-generated token ids or a `mint_item` path here. **Medialane does not support legacy protocol versions**: pre-v0.3.0 (v0.2.0 `mint_item`) collections were reclassified `external-erc1155` (read-only external provenance) on the 2026-06-10 cutover; the version-gate + `mint_item` fallback was removed from this page. (`mint_item` is still a live selector for the genesis/launch/BR mints and the remix flows, which target other contracts — don't confuse the two.)
 
-**Contract ABIs** come from `@medialane/sdk` (currently 0.34.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
+**Contract ABIs** come from `@medialane/sdk` (currently 0.38.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
 
 **Marketplace order flow** (in `src/hooks/use-marketplace.ts`) — **redesigned venues, SDK 0.26.0** (client-signing migration, 2026-05-31):
 - Order params use the new schema: single `amount` (no start/end), plus `marketplace`, `royalty_max_bps` (live EIP-2981 via `royalty_info`), and `counter` (`get_counter()`, replaces the removed nonce). Salt is a **wide 248-bit** value (sole order-hash uniqueness source).
@@ -368,23 +368,28 @@ dialog set — the shared modules are presentation + derivation only. Use the
 
 ---
 
-## Creator Coin pages (added 2026-06-04)
+## Creator Coin pages (added 2026-06-04; Coin/Collection split 2026-06-14, SDK 0.38)
 
-A Creator Coin (and any `external-erc20`) is an **ERC-20 = a `Collection`**, not a token —
-so it has **no per-token `/asset/...` page**. It renders through the **collection page
-dispatcher**: `collections/[contract]/collection-page-client.tsx` early-returns
-`<CoinPageClient/>` when `getService(collection.service)?.uiVariant === "coin"` (the NFT
-items/listings/offers tabs don't apply to a fungible coin).
+A Creator Coin (and any `external-erc20`) is a **fungible `Coin`** — its **own model**, not a
+`Collection` (the 2026-06-14 split). It has no per-token `/asset/...` page and no `Token`/`Order`
+rows. Coins are fetched from **`/v1/coins`** via the SDK's **`getCoins()` / `getCoin()`**, never
+`getCollections`.
 
-- **`collections/[contract]/coin-page-client.tsx`** — `CoinPageClient`: live price card,
-  holder/supply stats, a renounce + locked-LP trust strip (hidden for `external-erc20`), and
-  an embedded **buy-swap** (`CoinSwapCard`, reuses `useSwap` → AVNU router → settles on Ekubo,
-  with a graceful "no router quote yet" state for fresh coins AVNU hasn't indexed). Service
-  display name via `getService(service)?.displayName` (NOT `.label`).
-- **`hooks/use-coin-price.ts`** — `useCoinPrice(coin)`: SWR over the SDK's
-  `getCreatorCoinPrice(coin, starknetProvider)` (30s refresh, read-only). The Ekubo price math
-  lives in `@medialane/sdk` (single source) — never reimplement it in the dapp. This call uses
-  the failover-covered `starknetProvider` singleton (RPC path #1).
+- **`hooks/use-coins.ts`** — `useCoins({ service? })` (list, → `/v1/coins`) + `useCoin(contract)`
+  (single, → `getCoin`). The discovery explorer and the coin page read these.
+- **`components/coins/coins-explorer.tsx`** — injects `useCoins` into the shared
+  `@medialane/ui` `CoinsExplorer` (maps `ApiCoin.totalSupply` string→number for the UI's
+  `CoinCollectionLike`). The marketplace **Tokens** tab embeds this explorer.
+- **`collections/[contract]/collection-page-client.tsx`** — the dispatcher resolves a **Coin**
+  on the `/coins/[address]` route (or as a fallback for an old `/collections/[coin]` link) and
+  early-returns `<CoinPageClient coin={coin} />`. NFT collections take the normal path.
+- **`collections/[contract]/coin-page-client.tsx`** — `CoinPageClient({ coin }: { coin: ApiCoin })`:
+  live price card, supply/market-cap stats (no holders — coins are contract-level only), a
+  renounce + locked-LP trust strip (hidden for `external-erc20`), and an embedded **buy-swap**
+  (`CoinSwapCard`). Creator chip from `coin.creator`; image from `coin.image` (no profile).
+- **`hooks/use-coin-price.ts`** — `useCoinPrice(coin)`: SWR over `getCreatorCoinPrice(coin,
+  starknetProvider)` (30s, read-only). Ekubo price math lives in `@medialane/sdk` — never
+  reimplement. Uses the failover-covered `starknetProvider` singleton (RPC path #1).
 
 ---
 
