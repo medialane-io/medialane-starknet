@@ -6,7 +6,6 @@
  * and the internal /coins href (this app IS the Starknet trading surface).
  */
 
-import type { ApiCollection } from "@medialane/sdk";
 import { CoinCard as UICoinCard, CoinRow as UICoinRow, CoinCardSkeleton, type CoinCollectionLike } from "@medialane/ui";
 import { useCoinPrice } from "@/hooks/use-coin-price";
 
@@ -18,12 +17,12 @@ function useDappCoinPrice(collection: CoinCollectionLike) {
 
 const coinHref = (c: CoinCollectionLike) => `/coins/${c.contractAddress}`;
 
-export function CoinCard({ collection }: { collection: ApiCollection }) {
-  return <UICoinCard collection={collection} usePrice={useDappCoinPrice} href={coinHref(collection)} />;
+export function CoinCard({ collection, href }: { collection: CoinCollectionLike; href?: string }) {
+  return <UICoinCard collection={collection} usePrice={useDappCoinPrice} href={href ?? coinHref(collection)} />;
 }
 
-export function CoinRow({ collection }: { collection: ApiCollection }) {
-  return <UICoinRow collection={collection} usePrice={useDappCoinPrice} href={coinHref(collection)} />;
+export function CoinRow({ collection, href }: { collection: CoinCollectionLike; href?: string }) {
+  return <UICoinRow collection={collection} usePrice={useDappCoinPrice} href={href ?? coinHref(collection)} />;
 }
 
 export { CoinCardSkeleton };

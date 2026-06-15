@@ -376,7 +376,16 @@ rows. Coins are fetched from **`/v1/coins`** via the SDK's **`getCoins()` / `get
 `getCollections`.
 
 - **`hooks/use-coins.ts`** — `useCoins({ service? })` (list, → `/v1/coins`) + `useCoin(contract)`
-  (single, → `getCoin`). The discovery explorer and the coin page read these.
+  (single, → `getCoin`; returns `mutate`). The discovery explorer and the coin page read these.
+  Also `useCoinsByCreator(address)` (→ `/v1/coins?creator=`, the "my coins" list) and
+  `updateCoinProfile(contract, { image?, description? }, siwsToken)` (PATCH via the BFF proxy —
+  the proxy allowlists `PATCH coins/:contract`).
+- **Creator coin settings (2026-06-15)** — a coin's creator edits its logo + description:
+  `/portfolio/coins` (list via `useCoinsByCreator`, reuses the shared `CoinCard` with an `href`
+  override → settings) and `/portfolio/coins/[contract]/settings` (SIWS-gated logo upload via
+  `uploadFileToIpfs` + description → `updateCoinProfile`; ownership-gated on `coin.creator`). A
+  creator-only "Manage coin" link sits on `coin-page-client.tsx`. Admin coin tools live in the
+  **portal** (`/admin/coins`), not here.
 - **`components/coins/coins-explorer.tsx`** — injects `useCoins` into the shared
   `@medialane/ui` `CoinsExplorer` (maps `ApiCoin.totalSupply` string→number for the UI's
   `CoinCollectionLike`). The marketplace **Tokens** tab embeds this explorer.

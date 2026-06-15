@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowDownUp, Loader2, ShieldCheck, ExternalLink, Check, Zap, Wallet, TrendingUp } from "lucide-react";
+import { ArrowDownUp, Loader2, ShieldCheck, ExternalLink, Check, Zap, Wallet, TrendingUp, Settings } from "lucide-react";
 import { getService } from "@medialane/sdk";
 import type { ApiCoin, CreatorCoinPrice } from "@medialane/sdk";
 import { useCoinPrice } from "@/hooks/use-coin-price";
@@ -97,6 +97,10 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
       : null;
   const explorerUrl = `${EXPLORER_URL}/contract/${contract}`;
 
+  const { address } = useWallet();
+  const isCreator =
+    !!address && !!coin.creator && address.toLowerCase() === coin.creator.toLowerCase();
+
   return (
     <div
       style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
@@ -155,6 +159,14 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
                   <span className="text-xs text-muted-foreground">{serviceLabel}</span>
                 </div>
                 {coin.creator && <CreatorChip address={coin.creator} className="mt-2" />}
+                {isCreator && (
+                  <Link
+                    href={`/portfolio/coins/${contract}/settings`}
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Settings className="h-3.5 w-3.5" /> Manage coin
+                  </Link>
+                )}
               </div>
             </div>
 

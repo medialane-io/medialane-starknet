@@ -25,6 +25,7 @@ const NAV_GROUPS: PortfolioNavGroup[] = [
     items: [
       { label: "Assets",            href: "/portfolio/assets" },
       { label: "Collections",       href: "/portfolio/collections" },
+      { label: "Coins",             href: "/portfolio/coins" },
     ],
   },
   {
