@@ -119,6 +119,11 @@ export function CollectionDropMintButton({
     }
   };
 
+  // Per-wallet allowance: maxPerWallet "0" = unlimited.
+  const maxPerWallet = conditions ? parseInt(conditions.maxPerWallet, 10) : 0;
+  const mintedByWallet = mintStatus?.mintedByWallet ?? 0;
+  const remaining = maxPerWallet > 0 ? Math.max(0, maxPerWallet - mintedByWallet) : Infinity;
+
   let content: ReactNode;
   if (!isConnected) {
     content = <ConnectWallet label="Connect wallet to mint" className="w-full" />;
@@ -129,33 +134,40 @@ export function CollectionDropMintButton({
         Loading…
       </Button>
     );
-  } else if (mintStatus && mintStatus.mintedByWallet > 0) {
+  } else if (maxPerWallet > 0 && remaining <= 0) {
     content = (
       <div className="flex items-center gap-1.5 text-sm text-orange-500 font-medium">
         <CheckCircle2 className="h-4 w-4 shrink-0" />
-        Minted · {mintStatus.mintedByWallet} token{mintStatus.mintedByWallet !== 1 ? "s" : ""}
+        Minted · {mintedByWallet} token{mintedByWallet !== 1 ? "s" : ""} (max reached)
       </div>
     );
   } else {
     content = (
-      <Button
-        size="lg"
-        className="w-full gap-1.5 bg-orange-600 hover:bg-orange-700 text-white"
-        onClick={handleMint}
-        disabled={isProcessing}
-      >
-        {isProcessing ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Minting…
-          </>
-        ) : (
-          <>
-            <Package className="h-4 w-4" />
-            {priceDisplay ? `Mint for ${priceDisplay}` : "Mint free"}
-          </>
+      <>
+        <Button
+          size="lg"
+          className="w-full gap-1.5 bg-orange-600 hover:bg-orange-700 text-white"
+          onClick={handleMint}
+          disabled={isProcessing}
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Minting…
+            </>
+          ) : (
+            <>
+              <Package className="h-4 w-4" />
+              {priceDisplay ? `Mint for ${priceDisplay}` : "Mint free"}
+            </>
+          )}
+        </Button>
+        {Number.isFinite(remaining) && (
+          <p className="text-xs text-center text-muted-foreground mt-1.5">
+            {mintedByWallet > 0 ? `You've minted ${mintedByWallet} · ` : ""}You can mint {remaining} more
+          </p>
         )}
-      </Button>
+      </>
     );
   }
 

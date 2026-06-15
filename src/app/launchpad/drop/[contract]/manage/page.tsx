@@ -13,7 +13,7 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
-import { useDropInfo } from "@/hooks/use-drops";
+import { useDropInfo, useOnChainDropState } from "@/hooks/use-drops";
 import { starknetProvider } from "@/lib/starknet";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -211,6 +211,7 @@ export default function DropManagePage({
   const { contract } = use(params);
   const { isConnected, address: walletAddress } = useUnifiedWallet();
   const { dropInfo, isLoading: dropLoading } = useDropInfo(contract);
+  const { state: dropState } = useOnChainDropState(contract);
   const {
     data: allowlistEnabled,
     isLoading: allowlistLoading,
@@ -268,9 +269,9 @@ export default function DropManagePage({
   };
 
   const isPaidDrop =
-    dropInfo?.conditions &&
-    dropInfo.conditions.price !== "0" &&
-    dropInfo.conditions.paymentToken !== "0x0";
+    !!dropState?.conditions &&
+    dropState.conditions.price !== "0" &&
+    dropState.conditions.paymentToken !== "0x0";
 
   if (isLoading) {
     return (

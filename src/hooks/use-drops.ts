@@ -1,7 +1,10 @@
 "use client";
 
 import useSWR from "swr";
+import { Contract, type Abi } from "starknet";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { starknetProvider } from "@/lib/starknet";
+import { DropCollectionReadABI } from "@/lib/launchpad-contracts";
 import type { ApiCollection } from "@medialane/sdk";
 
 export interface DropMintStatus {
@@ -103,4 +106,52 @@ export function useDropInfo(contractAddress: string | null) {
   );
 
   return { dropInfo: data ?? null, isLoading, error };
+}
+
+export interface OnChainDropState {
+  conditions: DropConditions | null;
+  totalMinted: number;
+  maxSupply: number;
+  allowlistEnabled: boolean;
+  paused: boolean;
+}
+
+// Reads live drop state directly from the DropCollection contract — the only authority
+// for current conditions/supply (architecture 01 §I). Replaces the fragile backend mirror.
+export function useOnChainDropState(contract: string | null) {
+  const { data, error, isLoading, mutate } = useSWR<OnChainDropState>(
+    contract ? `drop-onchain-${contract}` : null,
+    async () => {
+      const c = new Contract({ abi: DropCollectionReadABI as unknown as Abi, address: contract!, providerOrAccount: starknetProvider });
+      const [cond, minted, max, allow, paused] = await Promise.all([
+        c.get_claim_conditions() as Promise<{
+          start_time: bigint; end_time: bigint; price: bigint;
+          payment_token: bigint | string; max_quantity_per_wallet: bigint;
+        }>,
+        c.total_minted() as Promise<bigint>,
+        c.get_max_supply() as Promise<bigint>,
+        c.is_allowlist_enabled() as Promise<boolean | bigint>,
+        c.is_paused() as Promise<boolean | bigint>,
+      ]);
+      const paymentToken =
+        typeof cond.payment_token === "bigint" ? "0x" + cond.payment_token.toString(16) : String(cond.payment_token);
+      return {
+        conditions: {
+          maxSupply: BigInt(max).toString(),
+          price: BigInt(cond.price).toString(),
+          paymentToken,
+          startTime: Number(cond.start_time),
+          endTime: Number(cond.end_time),
+          maxPerWallet: BigInt(cond.max_quantity_per_wallet).toString(),
+        },
+        totalMinted: Number(minted),
+        maxSupply: Number(max),
+        allowlistEnabled: Boolean(typeof allow === "bigint" ? allow : allow ? 1n : 0n),
+        paused: Boolean(typeof paused === "bigint" ? paused : paused ? 1n : 0n),
+      };
+    },
+    { revalidateOnFocus: false, refreshInterval: 30_000, shouldRetryOnError: false }
+  );
+
+  return { state: data ?? null, isLoading, error, mutate };
 }

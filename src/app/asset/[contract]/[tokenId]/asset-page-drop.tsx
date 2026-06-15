@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Package, ChevronRight, DollarSign, Shield, Calendar } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
-import { useDropInfo, getDropStatus } from "@/hooks/use-drops";
+import { useOnChainDropState, getDropStatus } from "@/hooks/use-drops";
 import type { DropConditions } from "@/hooks/use-drops";
 import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
@@ -129,7 +129,7 @@ export function AssetPageDrop() {
   const { collection } = useCollection(contract);
   const { token: rawToken, isLoading } = useToken(contract, tokenId);
   const token = rawToken as AssetToken | null;
-  const { dropInfo } = useDropInfo(contract);
+  const { state: dropState } = useOnChainDropState(contract);
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
   const { history } = useTokenHistory(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
@@ -189,7 +189,7 @@ export function AssetPageDrop() {
   const name = token.metadata?.name || `Token #${token.tokenId}`;
   const image = ipfsToHttp(token.metadata?.image);
   const description = token.metadata?.description;
-  const totalMinted = collection?.totalSupply ?? 0;
+  const totalMinted = dropState?.totalMinted ?? collection?.totalSupply ?? 0;
 
   return (
     <div
@@ -243,8 +243,8 @@ export function AssetPageDrop() {
               {description && <p className="text-sm text-muted-foreground leading-relaxed mt-1">{description}</p>}
             </div>
 
-            {dropInfo?.conditions && (
-              <DropInfoPanel conditions={dropInfo.conditions} totalMinted={totalMinted} contract={contract} />
+            {dropState?.conditions && (
+              <DropInfoPanel conditions={dropState.conditions} totalMinted={totalMinted} contract={contract} />
             )}
 
             <AssetMarketplacePanel
