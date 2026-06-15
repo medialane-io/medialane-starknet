@@ -79,6 +79,7 @@ const ALLOWED_ROUTES: Record<string, RegExp[]> = {
   PATCH: [
     /^collections\/[^/]+\/profile$/,                       // updateCollectionProfile
     /^creators\/[^/]+\/profile$/,                          // updateCreatorProfile
+    /^coins\/[^/]+$/,                                       // updateCoinProfile (creator-gated image/description)
   ],
   // DELETE intentionally empty — no dapp flow deletes through the proxy.
 };
