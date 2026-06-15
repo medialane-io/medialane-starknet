@@ -13,7 +13,7 @@ import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddressDisplay } from "@/components/shared/address-display";
-import { Loader2, Flag, Inbox, Sparkles, Lock } from "lucide-react";
+import { Loader2, Flag, Inbox, Sparkles, Lock, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReportDialog } from "@/components/report-dialog";
 import { useCollectionProfile } from "@/hooks/use-profiles";
@@ -31,6 +31,7 @@ import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { computeRarity } from "@/lib/rarity";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
+import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { useWallet } from "@/hooks/use-wallet";
@@ -50,7 +51,7 @@ const CURRENCY_ICONS: Record<string, string> = {
 
 function CurrencyIcon({ symbol, size = 16 }: { symbol: string; size?: number }) {
   const src = CURRENCY_ICONS[symbol?.toUpperCase()];
-  if (!src) return <span className="text-xs font-semibold text-white/70">{symbol}</span>;
+  if (!src) return <span className="text-xs font-semibold text-muted-foreground">{symbol}</span>;
   return <Image src={src} alt={symbol} width={size} height={size} className="inline-block shrink-0" />;
 }
 
@@ -275,6 +276,9 @@ export default function CollectionPageClient() {
   const descRef = useRef<HTMLParagraphElement>(null);
 
   const [activeTab, setActiveTab] = useState("items");
+  const [buyOrder, setBuyOrder] = useState<ApiOrder | null>(null);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const handleBuy = (o: ApiOrder) => { setBuyOrder(o); setPurchaseOpen(true); };
   const { address: walletAddress } = useWallet();
   const { collection, isLoading: colLoading } = useCollection(isCoinRoute ? null : contract);
   // Coins are their own model now (2026-06-14 split). Resolve via useCoin on the
@@ -377,50 +381,39 @@ export default function CollectionPageClient() {
 
       {/* ── Full-bleed hero banner ── */}
       {colLoading ? (
-        <Skeleton className="w-full h-48 sm:aspect-video" />
+        <Skeleton className="w-full h-[50svh]" />
       ) : (
-        <div className="relative w-full overflow-hidden h-[80svh] sm:h-auto sm:aspect-video">
+        <div className="relative w-full overflow-hidden h-[50svh]">
           <ParallaxBanner imageUrl={bannerUrl} contract={contract} />
 
-          {/* Bottom overlay: title + stat chips */}
-          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6 space-y-2.5 z-10">
-            <div>
-              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight"
-                style={{ textShadow: "0 2px 20px rgba(0,0,0,0.7)" }}>
-                {collection?.name ?? "Unnamed Collection"}
-              </h1>
-              {collection?.symbol && (
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className="font-mono text-[11px] bg-black/20 dark:bg-black/40 text-white/90 border border-white/15 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                    {collection.symbol}
-                  </span>
-                </div>
-              )}
-            </div>
+          {/* Bottom overlay: title + stat chips — backdrop blur only, no borders, no scrim */}
+          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 z-10">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight"
+              style={{ textShadow: "0 1px 12px rgba(0,0,0,0.4)" }}>
+              {collection?.name ?? "Unnamed Collection"}
+            </h1>
 
-            {/* Stat chips — currency-aware for floor/volume */}
+            {/* Stat chips — theme-aware frosted glass (light in light, dark in dark);
+                Floor/Volume show the currency icon only */}
             <div className="flex gap-2 flex-wrap">
               {stats.map(({ label, display, symbol }) => (
                 <div
                   key={label}
                   className={cn(
-                    "bg-black/25 backdrop-blur-md border border-white/10 rounded-xl px-3 py-2 flex flex-col justify-center shrink-0",
-                    symbol ? "min-w-[88px]" : "min-w-[60px] items-center text-center"
+                    "bg-background/75 backdrop-blur-md rounded-xl px-3 py-2 flex flex-col justify-center shrink-0",
+                    symbol ? "min-w-[80px]" : "min-w-[60px] items-center text-center"
                   )}
                 >
-                  <p className="text-[9px] text-white/50 uppercase tracking-widest mb-1">{label}</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-widest mb-1">{label}</p>
                   {symbol ? (
-                    <>
-                      <div className="flex items-center gap-1.5">
-                        <CurrencyIcon symbol={symbol} size={14} />
-                        <p className="text-sm sm:text-base font-bold text-white tabular-nums leading-tight truncate">
-                          {display}
-                        </p>
-                      </div>
-                      <p className="text-[9px] text-white/40 mt-0.5 leading-none">{symbol}</p>
-                    </>
+                    <div className="flex items-center gap-1.5">
+                      <CurrencyIcon symbol={symbol} size={15} />
+                      <p className="text-sm sm:text-base font-bold text-foreground tabular-nums leading-tight truncate">
+                        {display}
+                      </p>
+                    </div>
                   ) : (
-                    <p className="text-base sm:text-lg font-bold text-white tabular-nums leading-tight">
+                    <p className="text-base sm:text-lg font-bold text-foreground tabular-nums leading-tight">
                       {display}
                     </p>
                   )}
@@ -431,79 +424,117 @@ export default function CollectionPageClient() {
         </div>
       )}
 
-      {/* ── Meta section ── */}
+      {/* ── Meta section — flat layout (no boxed panel); identity on the left,
+          a lightweight right-aligned utility cluster fills the width ── */}
       {!colLoading && collection && (
-        <div className="px-4 sm:px-6 pt-4 pb-2 space-y-1.5">
-          <div className="flex items-center justify-between gap-3">
-            {collection.owner && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>by</span>
-                <Link href={`/creator/${collection.owner}`} className="hover:underline underline-offset-2">
-                  <AddressDisplay
-                    address={collection.owner}
-                    chars={6}
-                    showCopy={false}
-                    className="font-medium text-foreground"
-                  />
-                </Link>
-              </div>
-            )}
-            {/* Mint button — only for ERC-1155 collection owner */}
-            {collection.standard === "ERC1155" &&
-              walletAddress &&
-              collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
-              <Link
-                href={`/launchpad/nfteditions/${contract}/mint`}
-                className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors"
-              >
-                <Sparkles className="h-3 w-3" />
-                Mint editions
-              </Link>
-            )}
-          </div>
-
-          {collection.description && (
-            <>
-              <p
-                ref={descRef}
-                className={cn(
-                  "text-sm text-muted-foreground max-w-2xl leading-relaxed",
-                  descClamped && !descExpanded && "line-clamp-3"
-                )}
-              >
-                {collection.description}
-              </p>
-              {descOverflows && (
-                <button
-                  onClick={() => setDescExpanded((e) => !e)}
-                  className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                >
-                  {descExpanded ? "Show less" : "Show more"}
-                </button>
+        <div className="px-4 sm:px-6 pt-5 pb-2">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+            {/* Left — identity & description */}
+            <div className="space-y-3 min-w-0 lg:max-w-2xl">
+              {/* Type + symbol badges (moved down out of the hero) */}
+              {(collection.symbol || collection.standard) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {collection.standard === "ERC1155" ? (
+                    <span className="text-[11px] font-semibold bg-violet-500/15 text-violet-600 dark:text-violet-300 rounded-full px-2.5 py-0.5">
+                      Multi-edition NFT
+                    </span>
+                  ) : collection.standard === "ERC721" ? (
+                    <span className="text-[11px] font-semibold bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
+                      Single NFT
+                    </span>
+                  ) : null}
+                  {collection.symbol && (
+                    <span className="font-mono text-[11px] bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
+                      {collection.symbol}
+                    </span>
+                  )}
+                </div>
               )}
-            </>
-          )}
 
-          {/* Service action slot (POP claim, etc.) */}
-          <CollectionServiceAction
-            service={collection.service}
-            contractAddress={collection.contractAddress}
-          />
+              {/* By owner — address route (/creator/[slug] is username-only) */}
+              {collection.owner && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>by</span>
+                  <Link href={`/account/${collection.owner}`} className="hover:underline underline-offset-2">
+                    <AddressDisplay
+                      address={collection.owner}
+                      chars={6}
+                      showCopy={false}
+                      className="font-medium text-foreground"
+                    />
+                  </Link>
+                </div>
+              )}
 
-          <div className="flex items-center gap-2 pt-0.5">
-            <AddressDisplay
-              address={collection.contractAddress ?? ""}
-              chars={6}
-              className="text-xs text-muted-foreground/70"
-            />
-            <ShareButton title={collection.name ?? "Collection"} variant="ghost" size="icon" />
-            <button
-              onClick={() => setReportOpen(true)}
-              title="Report this collection"
-              className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            >
-              <Flag className="w-3.5 h-3.5" />
-            </button>
+              {collection.description && (
+                <>
+                  <p
+                    ref={descRef}
+                    className={cn(
+                      "text-sm text-muted-foreground leading-relaxed",
+                      descClamped && !descExpanded && "line-clamp-3"
+                    )}
+                  >
+                    {collection.description}
+                  </p>
+                  {descOverflows && (
+                    <button
+                      onClick={() => setDescExpanded((e) => !e)}
+                      className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                    >
+                      {descExpanded ? "Show less" : "Show more"}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Service action slot (POP claim, etc.) */}
+              <CollectionServiceAction
+                service={collection.service}
+                contractAddress={collection.contractAddress}
+              />
+            </div>
+
+            {/* Right — flat utility cluster (no panel/chrome) */}
+            <div className="flex flex-col gap-2.5 shrink-0 lg:items-end">
+              {walletAddress && collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
+                <div className="flex items-center gap-2">
+                  {collection.standard === "ERC1155" && (
+                    <Link
+                      href={`/launchpad/nfteditions/${contract}/mint`}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white bg-fuchsia-600 hover:bg-fuchsia-700 active:scale-[0.98] transition"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Mint editions
+                    </Link>
+                  )}
+                  <Link
+                    href={`/portfolio/collections/${contract}/settings`}
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border hover:bg-muted active:scale-[0.98] transition text-muted-foreground hover:text-foreground"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                    Settings
+                  </Link>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-widest text-muted-foreground/50">Contract</span>
+                <AddressDisplay
+                  address={collection.contractAddress ?? ""}
+                  chars={6}
+                  className="text-xs text-muted-foreground"
+                />
+                <ShareButton title={collection.name ?? "Collection"} variant="ghost" size="icon" />
+                <button
+                  onClick={() => setReportOpen(true)}
+                  title="Report this collection"
+                  className="text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <ReportDialog
@@ -585,7 +616,7 @@ export default function CollectionPageClient() {
               />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                {activeListings.map((o) => <ListingCard key={o.orderHash} order={o} />)}
+                {activeListings.map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
               </div>
             )}
           </TabsContent>
@@ -617,6 +648,15 @@ export default function CollectionPageClient() {
           )}
         </Tabs>
       </div>
+
+      {/* Inline buy for listed items (Listings tab) */}
+      {buyOrder && (
+        <PurchaseDialog
+          order={buyOrder}
+          open={purchaseOpen}
+          onOpenChange={(open) => { setPurchaseOpen(open); if (!open) setBuyOrder(null); }}
+        />
+      )}
     </div>
   );
 }
