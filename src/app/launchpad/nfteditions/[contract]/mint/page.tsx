@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -157,7 +157,12 @@ export default function MintNFTEditionsPage() {
   const [licensingOpen, setLicensingOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [ipTypeOpen, setIpTypeOpen] = useState(true);
-  const [metadataFields, setMetadataFields] = useState<MetadataField[]>([]);
+  // Read only at submit time — keep in a ref so each keystroke in IPTypeFields
+  // doesn't re-render this whole form (see /create/asset flicker fix).
+  const metadataFieldsRef = useRef<MetadataField[]>([]);
+  const handleMetadataFields = useCallback((fields: MetadataField[]) => {
+    metadataFieldsRef.current = fields;
+  }, []);
   const [metadataResetKey, setMetadataResetKey] = useState(0);
   const [autoExternalUrl, setAutoExternalUrl] = useState("");
   // The on-chain-assigned edition id, read from the IPMinted event in the mint handler.
@@ -302,7 +307,7 @@ export default function MintNFTEditionsPage() {
         metadataForm.append(`tmpl_${cleanTrait}`, cleanValue);
       };
 
-      metadataFields.forEach(({ traitType, value }) => appendTrait(traitType, value));
+      metadataFieldsRef.current.forEach(({ traitType, value }) => appendTrait(traitType, value));
       appendTrait("Token Standard", "ERC-1155");
       appendTrait("Editions", values.value);
       appendTrait("Collection Contract", collectionAddress);
@@ -352,7 +357,7 @@ export default function MintNFTEditionsPage() {
     setTxHash(null);
     setImagePreview(null);
     setImageUri(null);
-    setMetadataFields([]);
+    metadataFieldsRef.current = [];
     setMetadataResetKey((key) => key + 1);
     setAutoExternalUrl("");
     setMintedTokenId(null);
@@ -704,7 +709,7 @@ export default function MintNFTEditionsPage() {
                       <IPTypeFields
                         key={metadataResetKey}
                         ipType={form.watch("ipType") as IPType}
-                        onChange={setMetadataFields}
+                        onChange={handleMetadataFields}
                       uploadDocument={makeUploadDocument(getValidToken)}
                       />
                     </div>

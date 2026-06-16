@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -47,7 +47,12 @@ export default function CreateDropPage() {
   const { getValidToken } = useSiwsToken();
 
   const [items, setItems] = useState<DraftItem[]>([]);
-  const [metadataFields, setMetadataFields] = useState<MetadataField[]>([]);
+  // Read only at submit time — keep in a ref so each keystroke in IPTypeFields
+  // doesn't re-render this whole form (see /create/asset flicker fix).
+  const metadataFieldsRef = useRef<MetadataField[]>([]);
+  const handleMetadataFields = useCallback((fields: MetadataField[]) => {
+    metadataFieldsRef.current = fields;
+  }, []);
   const [ipTypeOpen, setIpTypeOpen] = useState(false);
   const [priceFree, setPriceFree] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
@@ -120,7 +125,7 @@ export default function CreateDropPage() {
       startDate: d.startDate, startTime: d.startTime, endDate: d.endDate, endTime: d.endTime,
       maxPerWallet: "1", whitelistEnabled: false, allowlistAddresses: "",
     });
-    clearImage(); setMetadataFields([]); setIpTypeOpen(false);
+    clearImage(); metadataFieldsRef.current = []; setIpTypeOpen(false);
     setPriceFree(true); setIsPublic(true); setSelectedToken(PAYMENT_TOKENS[0]); setTokenDropdownOpen(false); setAutoSymbol("");
   };
 
@@ -157,7 +162,7 @@ export default function CreateDropPage() {
           ipType: values.ipType, licenseType: values.licenseType,
           commercialUse: values.commercialUse, derivatives: values.derivatives, attribution: values.attribution,
           geographicScope: values.geographicScope, aiPolicy: values.aiPolicy, royalty: values.royalty,
-          templateTraits: metadataFields,
+          templateTraits: metadataFieldsRef.current,
         },
         { name: values.name, description: values.descriptionTemplate, image: imageUri },
         token
@@ -277,7 +282,7 @@ export default function CreateDropPage() {
             onAddItemFiles={addItemFiles}
             onRemoveItem={removeItem}
             onEditItem={editItem}
-            onMetadataFieldsChange={setMetadataFields}
+            onMetadataFieldsChange={handleMetadataFields}
             onSetIpTypeOpen={setIpTypeOpen}
             uploadDocument={uploadDocument}
           />
