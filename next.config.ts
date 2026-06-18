@@ -15,6 +15,15 @@ const PRIVY_UNUSED_OPTIONAL_MODULES = [
   // Privy's optional Stripe fiat→crypto on-ramp — not used by the dapp and not
   // declared as a Privy dependency, so webpack can't resolve the import. Stub it.
   "@stripe/crypto",
+  // Privy's EVM external-wallet connectors. The dapp is Starknet-only and uses
+  // Privy ONLY for email/social → Starknet (embedded wallet), never Privy's
+  // "connect MetaMask/Coinbase/WalletConnect" path — so these never load at
+  // runtime. Excluding them from the bundle (NOT viem, which Privy core uses).
+  "@coinbase/wallet-sdk",
+  "@walletconnect/ethereum-provider",
+  "@walletconnect/universal-provider",
+  "@base-org/account",
+  "mipd",
 ];
 
 const nextConfig: NextConfig = {
