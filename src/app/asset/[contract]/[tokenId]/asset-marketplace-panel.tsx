@@ -124,7 +124,7 @@ export function AssetMarketplacePanel({
   // swap style/label a moment later.
   if (isMarketLoading && !cheapest) {
     return (
-      <div className="rounded-2xl border border-border p-5 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-9 w-32" />
         <Skeleton className="h-12 w-full rounded-2xl" />
       </div>
@@ -134,10 +134,10 @@ export function AssetMarketplacePanel({
   return (
     <>
       {cheapest ? (
-        <div className="rounded-2xl border border-border p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <CurrencyIcon symbol={cheapest.price.currency ?? ""} size={22} />
-            <span className="text-3xl font-bold">
+        <div className="space-y-4">
+          <div className="flex items-baseline gap-2">
+            <CurrencyIcon symbol={cheapest.price.currency ?? ""} size={26} />
+            <span className="text-4xl font-bold tracking-tight">
               {formatDisplayPrice(cheapest.price.formatted)}
             </span>
             <HelpIcon
@@ -182,16 +182,6 @@ export function AssetMarketplacePanel({
                     tone="purple"
                   />
                 ) : null}
-
-                {showDealOption && onProposeDeal ? (
-                  <ActionButton
-                    label="License this IP"
-                    icon={<HandCoins className="h-4 w-4" />}
-                    onClick={onProposeDeal}
-                    helpContent="Propose license terms and a fee to the creator. If they accept, the licensed derivative is minted and listed for you."
-                    tone="purple"
-                  />
-                ) : null}
               </div>
 
               {/* ERC-1155: owner can still buy more editions from a different seller */}
@@ -216,36 +206,45 @@ export function AssetMarketplacePanel({
               )}
             </div>
           ) : isSignedIn ? (
-            <div className="grid grid-cols-2 gap-2">
-              <ActionButton
-                label="Buy"
-                icon={<ShoppingCart className="h-4 w-4" />}
-                onClick={() => onOpenPurchase(cheapest)}
-                tone="transparent"
-              />
-              <ActionButton
-                label="Make offer"
-                icon={<HandCoins className="h-4 w-4" />}
-                onClick={onOpenOffer}
-                tone="orange"
-              />
-              {remixEnabled && onOpenRemix ? (
+            <>
+              <div className="grid grid-cols-2 gap-2">
                 <ActionButton
-                  label="Remix"
-                  icon={<GitBranch className="h-4 w-4" />}
-                  onClick={onOpenRemix}
-                  tone="purple"
+                  label="Buy"
+                  icon={<ShoppingCart className="h-4 w-4" />}
+                  onClick={() => onOpenPurchase(cheapest)}
+                  tone="transparent"
                 />
-              ) : null}
-              {showDealOption && onProposeDeal ? (
                 <ActionButton
-                  label="License this IP"
+                  label="Make offer"
                   icon={<HandCoins className="h-4 w-4" />}
-                  onClick={onProposeDeal}
-                  tone="purple"
+                  onClick={onOpenOffer}
+                  tone="orange"
                 />
+                {remixEnabled && onOpenRemix ? (
+                  <ActionButton
+                    label="Remix"
+                    icon={<GitBranch className="h-4 w-4" />}
+                    onClick={onOpenRemix}
+                    helpContent="Create your own attributed derivative of this work."
+                    tone="purple"
+                  />
+                ) : null}
+                {showDealOption && onProposeDeal ? (
+                  <ActionButton
+                    label="License"
+                    icon={<HandCoins className="h-4 w-4" />}
+                    onClick={onProposeDeal}
+                    helpContent="Propose a license deal to the creator to use this work."
+                    tone="blue"
+                  />
+                ) : null}
+              </div>
+              {!remixEnabled && !showDealOption ? (
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  The creator marked this asset as no-derivatives.
+                </p>
               ) : null}
-            </div>
+            </>
           ) : (
             <div className="btn-border-animated p-[1px] rounded-2xl">
               <ConnectWallet
@@ -256,7 +255,7 @@ export function AssetMarketplacePanel({
           )}
         </div>
       ) : (
-        <div className="rounded-xl border border-border p-5 space-y-3">
+        <div className="space-y-3">
           {isOwner ? (
             <div className="grid grid-cols-2 gap-2">
               <ActionButton

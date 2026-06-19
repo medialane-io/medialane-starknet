@@ -4,10 +4,10 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useTokenListings } from "@/hooks/use-orders";
-import { useCollection } from "@/hooks/use-collections";
+import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
@@ -56,6 +56,14 @@ export function AssetPageStandard() {
   const { total: commentTotal } = useComments(contract, tokenId);
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
+  // Collection prev/next. Neighbours come from the (paged) collection token
+  // list; arrows are hidden when a neighbour isn't in the loaded page.
+  const { tokens: collectionTokens } = useCollectionTokens(contract);
+  const tokenIndex = collectionTokens.findIndex((t) => String(t.tokenId) === String(tokenId));
+  const prevToken = tokenIndex > 0 ? collectionTokens[tokenIndex - 1] : null;
+  const nextToken =
+    tokenIndex >= 0 && tokenIndex < collectionTokens.length - 1 ? collectionTokens[tokenIndex + 1] : null;
+
   // Audited IPNft creation record — undefined for external/legacy contracts (hook returns null).
   const { data: fullTokenData } = useFullTokenData({
     ipNftAddress: contract,
@@ -92,7 +100,7 @@ export function AssetPageStandard() {
   if (isLoading) {
     return (
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">
           <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
           <div className="space-y-6">
             <div className="space-y-3">
@@ -165,19 +173,41 @@ export function AssetPageStandard() {
           <span className="text-foreground font-medium truncate">{name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
-          <AssetMediaColumn
-            shouldReduce={Boolean(shouldReduce)}
-            image={image}
-            imageAlt={name}
-            imgError={imgError}
-            onImageError={() => setImgError(true)}
-            fallback={(
-              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/10 to-purple-500/10">
-                <span className="text-5xl font-mono text-muted-foreground">#{tokenId}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">
+          <div className="space-y-3">
+            <AssetMediaColumn
+              shouldReduce={Boolean(shouldReduce)}
+              image={image}
+              imageAlt={name}
+              imgError={imgError}
+              onImageError={() => setImgError(true)}
+              fallback={(
+                <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/10 to-purple-500/10">
+                  <span className="text-5xl font-mono text-muted-foreground">#{tokenId}</span>
+                </div>
+              )}
+            />
+            {(prevToken || nextToken) && (
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  disabled={!prevToken}
+                  onClick={() => prevToken && router.push(`/asset/${contract}/${prevToken.tokenId}`)}
+                  className="inline-flex items-center gap-1 text-sm text-muted-foreground transition hover:text-foreground active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Prev
+                </button>
+                <button
+                  type="button"
+                  disabled={!nextToken}
+                  onClick={() => nextToken && router.push(`/asset/${contract}/${nextToken.tokenId}`)}
+                  className="inline-flex items-center gap-1 text-sm text-muted-foreground transition hover:text-foreground active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  Next <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
             )}
-          />
+          </div>
 
           <motion.div
             initial={shouldReduce ? false : { opacity: 0, y: 16 }}
