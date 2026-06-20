@@ -48,7 +48,14 @@ export function ConnectGate({ children, title, subtitle, icon }: ConnectGateProp
           {subtitle ?? "Connect your wallet to continue."}
         </p>
         <div className="flex justify-center">
-          <ConnectWallet />
+          {/* Animated brand-gradient CTA — same treatment as the asset page's
+              "Connect wallet to trade" button (.btn-border-animated fill). */}
+          <div className="btn-border-animated p-[1px] rounded-2xl w-full max-w-xs">
+            <ConnectWallet
+              label="Connect wallet"
+              className="w-full h-12 text-base bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+            />
+          </div>
         </div>
       </div>
     );
