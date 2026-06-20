@@ -14,8 +14,8 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { toast } from "sonner";
 import { getListableTokens } from "@medialane/sdk";
 import { DropFactoryABI, DROP_FACTORY_CONTRACT } from "@/lib/launchpad-contracts";
-import { ConnectWallet } from "@/components/ConnectWallet";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { ConnectGate } from "@/components/connect-gate";
+import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
@@ -42,7 +42,7 @@ function suggestSymbol(name: string): string {
 }
 
 export default function CreateDropPage() {
-  const { isConnected, address: walletAddress } = useUnifiedWallet();
+  const { isConnected, address: walletAddress } = useWallet();
   const { executeAuto, isLoading: isProcessing } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
@@ -232,20 +232,12 @@ export default function CreateDropPage() {
     );
   }
 
-  // ── Not connected ─────────────────────────────────────────────────────────
-  if (!isConnected) {
-    return (
-      <div className="container max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
-        <Package className="h-10 w-10 text-orange-500 mx-auto" />
-        <h1 className="text-2xl font-bold">Connect wallet to launch a drop</h1>
-        <p className="text-muted-foreground">Connect your Starknet wallet to deploy a limited set of unique, licensed assets.</p>
-        <ConnectWallet label="Connect wallet" />
-      </div>
-    );
-  }
-
   // ── Launch form ─────────────────────────────────────────────────────────────
   return (
+    <ConnectGate
+      title="Connect wallet to launch a drop"
+      subtitle="Connect your Starknet wallet to create and manage a collection drop."
+    >
     <div className="container max-w-xl mx-auto px-4 pt-10 pb-16 space-y-8">
       <FadeIn>
         <div className="space-y-1">
@@ -291,5 +283,6 @@ export default function CreateDropPage() {
         </form>
       </Form>
     </div>
+    </ConnectGate>
   );
 }

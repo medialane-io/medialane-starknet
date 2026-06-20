@@ -21,8 +21,8 @@ import {
   Form, FormControl, FormField, FormItem,
   FormLabel, FormMessage, FormDescription,
 } from "@/components/ui/form";
-import { ConnectWallet } from "@/components/ConnectWallet";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { ConnectGate } from "@/components/connect-gate";
+import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
@@ -54,7 +54,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CreatePOPPage() {
-  const { isConnected } = useUnifiedWallet();
+  const { isConnected } = useWallet();
   const { executeAuto, isLoading: isTxLoading } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
@@ -197,22 +197,12 @@ export default function CreatePOPPage() {
     );
   }
 
-  // ── Not connected ──────────────────────────────────────────────────────────
-  if (!isConnected) {
-    return (
-      <div className="container max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
-        <Award className="h-10 w-10 text-green-500 mx-auto" />
-        <h1 className="text-2xl font-bold">Connect your wallet</h1>
-        <p className="text-muted-foreground">Connect your Starknet wallet to deploy a POP credential collection.</p>
-        <div className="flex justify-center">
-          <ConnectWallet />
-        </div>
-      </div>
-    );
-  }
-
   // ── Create form ────────────────────────────────────────────────────────────
   return (
+    <ConnectGate
+      title="Connect your wallet"
+      subtitle="Connect your Starknet wallet to deploy a POP credential collection."
+    >
     <div className="container max-w-xl mx-auto px-4 pt-10 pb-16 space-y-8">
 
       <FadeIn>
@@ -429,5 +419,6 @@ export default function CreatePOPPage() {
         </form>
       </Form>
     </div>
+    </ConnectGate>
   );
 }

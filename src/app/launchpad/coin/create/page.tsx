@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ConnectWallet } from "@/components/ConnectWallet";
+import { ConnectGate } from "@/components/connect-gate";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -212,6 +212,10 @@ export default function CoinCreatePage() {
   const stepTitle = step === 1 ? "Your coin" : step === 2 ? "Economics" : "Review & launch";
 
   return (
+    <ConnectGate
+      title="Connect wallet to launch a coin"
+      subtitle="Connect your Starknet wallet to create a creator coin."
+    >
     <PageContainer className="box-border max-w-5xl pt-24 pb-8">
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-brand-rose">
@@ -432,18 +436,14 @@ export default function CoinCreatePage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Your share</span><span className="font-semibold">{teamPct}% {preview && teamPct > 0 ? `(you fund ${preview.buybackHuman} ${quote})` : ""}</span></div>
               </div>
 
-              {!isConnected ? (
-                <ConnectWallet label="Connect wallet to launch" />
-              ) : (
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setStep(2)} disabled={busy}>
-                    <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
-                  </Button>
-                  <Button onClick={handleLaunch} disabled={!canLaunch} className="flex-1 bg-brand-rose hover:bg-brand-rose/90">
-                    {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{statusLabel}</> : <>Launch <ArrowRight className="h-4 w-4 ml-1.5" /></>}
-                  </Button>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep(2)} disabled={busy}>
+                  <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
+                </Button>
+                <Button onClick={handleLaunch} disabled={!canLaunch} className="flex-1 bg-brand-rose hover:bg-brand-rose/90">
+                  {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{statusLabel}</> : <>Launch <ArrowRight className="h-4 w-4 ml-1.5" /></>}
+                </Button>
+              </div>
               {status === "error" && error && <p className="text-xs text-destructive">{error}</p>}
             </>
           )}
@@ -454,5 +454,6 @@ export default function CoinCreatePage() {
         </div>
       </div>
     </PageContainer>
+    </ConnectGate>
   );
 }

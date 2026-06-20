@@ -27,8 +27,8 @@ import {
 } from "@/components/marketplace/collection-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
-import { ConnectWallet } from "@/components/ConnectWallet";
+import { useWallet } from "@/hooks/use-wallet";
+import { ConnectGate } from "@/components/connect-gate";
 import { toast } from "sonner";
 import {
   COLLECTION_1155_CONTRACT_MAINNET,
@@ -63,7 +63,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CreateNFTEditionsCollectionPage() {
-  const { isConnected, address: walletAddress } = useUnifiedWallet();
+  const { isConnected, address: walletAddress } = useWallet();
   const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
@@ -254,18 +254,6 @@ export default function CreateNFTEditionsCollectionPage() {
     }
   };
 
-  // ── Not connected ─────────────────────────────────────────────────────────
-  if (!isConnected) {
-    return (
-      <div className="container max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
-        <Layers className="h-10 w-10 text-violet-500 mx-auto" />
-        <h1 className="text-2xl font-bold">Connect wallet to create a collection</h1>
-        <p className="text-muted-foreground">Deploy a multi-edition ERC-1155 IP collection on Starknet.</p>
-        <ConnectWallet label="Connect wallet" />
-      </div>
-    );
-  }
-
   return (
     <>
       <CollectionProgressDialog
@@ -283,6 +271,10 @@ export default function CreateNFTEditionsCollectionPage() {
         deployedAddress={deployedAddress}
       />
 
+      <ConnectGate
+        title="Connect wallet to create a collection"
+        subtitle="Connect your Starknet wallet to create an editions collection."
+      >
       <div className="container max-w-2xl mx-auto px-4 pt-14 pb-8 space-y-8">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-primary">
@@ -420,6 +412,7 @@ export default function CreateNFTEditionsCollectionPage() {
           </form>
         </Form>
       </div>
+      </ConnectGate>
     </>
   );
 }
