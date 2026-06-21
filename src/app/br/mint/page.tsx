@@ -10,10 +10,10 @@ export const metadata: Metadata = {
   description:
     "Campanha de Lançamento no Brasil. Publique fotos, vídeos, músicas, e conteúdo autoral para monetizar com Medialane.",
   alternates: {
-    canonical: "https://dapp.medialane.io/br/mint",
+    canonical: "https://starknet.medialane.io/br/mint",
     languages: {
-      "en-US": "https://dapp.medialane.io/mint",
-      "pt-BR": "https://dapp.medialane.io/br/mint",
+      "en-US": "https://starknet.medialane.io/mint",
+      "pt-BR": "https://starknet.medialane.io/br/mint",
     },
   },
   openGraph: {

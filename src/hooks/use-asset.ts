@@ -301,7 +301,7 @@ export function useAsset(nftAddress?: `0x${string}`, tokenIdInput?: number) {
         avatar: asset.image || "/background.jpg",
         verified: false,
         bio: "",
-        website: asset.external_url || "https://dapp.medialane.io",
+        website: asset.external_url || "https://starknet.medialane.io",
       },
       creator: {
         name: creator,
@@ -309,7 +309,7 @@ export function useAsset(nftAddress?: `0x${string}`, tokenIdInput?: number) {
         avatar: asset.image || "/background.jpg",
         verified: false,
         bio: "",
-        website: asset.external_url || "https://dapp.medialane.io",
+        website: asset.external_url || "https://starknet.medialane.io",
       },
       owner: {
         name: tokenOwnerAddress,

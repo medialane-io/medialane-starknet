@@ -1,8 +1,8 @@
-# Medialane Dapp
+# Medialane — Starknet App
 
-Permissionless dApp for programmable IP monetization on Starknet — Creator Launchpad + IP Marketplace with full wallet sovereignty.
+Permissionless Web3 app for programmable IP monetization on Starknet — Creator Launchpad + IP Marketplace with full wallet sovereignty.
 
-**Dapp (Starknet Mainnet):** https://dapp.medialane.io  
+**Starknet App:** https://starknet.medialane.io  
 **Consumer App (social login):** https://medialane.io
 
 ---
