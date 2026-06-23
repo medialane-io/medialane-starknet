@@ -6,20 +6,21 @@ import {
   MARKETPLACE_721_CONTRACT,
   MEDIALANE_API_KEY,
   MEDIALANE_BACKEND_URL,
-  STARKNET_RPC_URL,
 } from "./constants";
 
 let _client: MedialaneClient | null = null;
 
 export function getMedialaneClient(): MedialaneClient {
   if (!_client) {
-    // Browser: the same-origin /api/rpc proxy (STARKNET_RPC_URL). Server (RSC):
-    // a relative proxy URL can't resolve, so use the keyed Alchemy URL directly
-    // — ALCHEMY_RPC_URL is server-only (no NEXT_PUBLIC_), never in the bundle.
+    // The SDK validates rpcUrl as an ABSOLUTE url (z.string().url()) and builds
+    // its own RpcProvider from it — so it CANNOT take a relative "/api/rpc".
+    // Mirror MEDIALANE_BACKEND_URL: browser → the same-origin proxy made
+    // absolute (`origin/api/rpc`, key stays server-side); server → the keyed
+    // Alchemy URL directly (a relative proxy URL can't resolve in RSC).
     const rpcUrl =
-      (typeof window === "undefined"
-        ? process.env.ALCHEMY_RPC_URL || process.env.STARKNET_RPC_URL_SERVER
-        : STARKNET_RPC_URL) || undefined;
+      typeof window === "undefined"
+        ? process.env.ALCHEMY_RPC_URL || process.env.STARKNET_RPC_URL_SERVER || undefined
+        : `${window.location.origin}/api/rpc`;
     _client = new MedialaneClient({
       backendUrl: MEDIALANE_BACKEND_URL,
       apiKey: MEDIALANE_API_KEY || undefined,
