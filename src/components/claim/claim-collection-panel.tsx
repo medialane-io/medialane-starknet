@@ -46,7 +46,11 @@ function StepIndicator({ step }: { step: Step }) {
   );
 }
 
-export function ClaimCollectionPanel() {
+/** Default (generic) helper — collection + coin. Overridden per surface. */
+const DEFAULT_HELPER_TEXT =
+  "Paste the Starknet contract address you own — an NFT collection or a coin. Coins are reviewed by our team before they go live.";
+
+export function ClaimCollectionPanel({ helperText }: { helperText?: string } = {}) {
   const { address: walletAddress } = useWallet();
   const [contractAddress, setContractAddress] = useState("");
   const [email, setEmail] = useState("");
@@ -159,10 +163,7 @@ export function ClaimCollectionPanel() {
                 That doesn&apos;t look like a Starknet address. It should start with “0x”.
               </p>
             ) : (
-              <p className="text-xs text-muted-foreground">
-                Paste the Starknet contract address you own — an NFT collection or a coin.
-                Coins are reviewed by our team before they go live.
-              </p>
+              <p className="text-xs text-muted-foreground">{helperText ?? DEFAULT_HELPER_TEXT}</p>
             )}
           </div>
           {!walletAddress ? (
