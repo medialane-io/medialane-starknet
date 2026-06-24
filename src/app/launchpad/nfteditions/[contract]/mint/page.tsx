@@ -44,6 +44,8 @@ import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
+import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
 import { hash } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
@@ -409,24 +411,18 @@ export default function MintNFTEditionsPage() {
   // ── Mint form ──────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="container max-w-xl mx-auto px-4 pt-10 pb-16 space-y-8">
-        <FadeIn>
-          <div className="space-y-1">
-            <span className="pill-badge inline-flex gap-1.5">
-              <Sparkles className="h-3 w-3" />
-              ERC-1155 · Mint
-            </span>
-            <h1 className="text-3xl font-bold mt-3">Mint IP Asset</h1>
-            <p className="text-muted-foreground text-sm">
-              Mint a new token type into your ERC-1155 collection. The URI and authorship
-              are recorded permanently on-chain at first mint.
-            </p>
-            <p className="text-xs text-muted-foreground font-mono break-all">
-              Collection: {collectionAddress}
-            </p>
+      <ClaimRouteShell
+        gated={false}
+        icon={<Sparkles className="h-4 w-4 text-white" />}
+        title="Mint an Edition"
+        subtitle="Add a new piece to your collection — its details and authorship are saved permanently. Free to mint, and it's yours."
+        headerAccessory={
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2 max-w-full">
+            <span className="font-mono text-xs text-foreground/80 truncate">Collection: {collectionAddress}</span>
           </div>
-        </FadeIn>
-
+        }
+        aside={<MintEditionAside />}
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
@@ -484,7 +480,7 @@ export default function MintNFTEditionsPage() {
                 <FormItem>
                   <FormLabel>Token name *</FormLabel>
                   <FormControl><Input placeholder="Genesis Track #1" {...field} /></FormControl>
-                  <FormDescription>Stored in the metadata JSON on IPFS.</FormDescription>
+                  <FormDescription>Shown to collectors for this edition.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -536,7 +532,7 @@ export default function MintNFTEditionsPage() {
                   <CollapsibleContent>
                     <div className="px-5 pb-5 space-y-4 border-t border-border/60 pt-4">
                       <p className="text-xs text-muted-foreground">
-                        Set licensing terms for your edition. These are embedded as immutable IPFS metadata.
+                        Set how others can use your edition — saved permanently with it.
                       </p>
                       <FormField
                         control={form.control}
@@ -748,22 +744,20 @@ export default function MintNFTEditionsPage() {
 
             {/* ── Submit ── */}
             <FadeIn delay={0.2}>
-              <div className="btn-border-animated p-[1px] rounded-xl mt-2">
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full rounded-xl bg-background text-foreground hover:bg-muted/60"
-                  disabled={imageUploading || mintStep !== "idle"}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Mint Token
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full rounded-xl mt-2"
+                disabled={imageUploading || mintStep !== "idle"}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Mint Edition
+              </Button>
             </FadeIn>
 
           </form>
         </Form>
-      </div>
+      </ClaimRouteShell>
 
       <MintProgressDialog
         open={mintStep !== "idle"}
