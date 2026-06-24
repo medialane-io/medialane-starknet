@@ -22,6 +22,8 @@ import {
   FormLabel, FormMessage, FormDescription,
 } from "@/components/ui/form";
 import { ConnectGate } from "@/components/connect-gate";
+import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { CreatePopAside } from "@/components/claim/create-pop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { toast } from "sonner";
@@ -203,20 +205,14 @@ export default function CreatePOPPage() {
       title="Connect your wallet"
       subtitle="Connect your Starknet wallet to deploy a POP credential collection."
     >
-    <div className="container max-w-xl mx-auto px-4 pt-10 pb-16 space-y-8">
-
-      <FadeIn>
-        <div className="space-y-1">
-          <span className="pill-badge inline-flex gap-1.5">
-            <Award className="h-3 w-3" />
-            Proof of Participation
-          </span>
-          <h1 className="text-3xl font-bold mt-3">Create Event</h1>
-          <p className="text-muted-foreground text-sm">
-            Deploy a soulbound credential collection for your event or program.
-          </p>
-        </div>
-      </FadeIn>
+    <ClaimRouteShell
+      gated={false}
+      icon={<Award className="h-4 w-4 text-white" />}
+      title="Create a POP Event"
+      subtitle="Give attendees a collectible badge that proves they were part of your event — free to publish."
+      aside={<CreatePopAside />}
+    >
+      <div className="space-y-6">
 
       {/* Event type selector */}
       <FadeIn delay={0.06}>
@@ -305,7 +301,7 @@ export default function CreatePOPPage() {
                   )}
                   <p className="text-xs text-muted-foreground">
                     {imageUri
-                      ? <span className="text-green-500">✓ Uploaded to IPFS</span>
+                      ? <span className="text-green-500">✓ Uploaded</span>
                       : "JPG, PNG, SVG or WebP · max 10 MB"}
                   </p>
                 </div>
@@ -399,26 +395,25 @@ export default function CreatePOPPage() {
 
           {/* Submit */}
           <FadeIn delay={0.2}>
-            <div className="btn-border-animated p-[1px] rounded-xl mt-2">
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full rounded-xl bg-background text-foreground hover:bg-muted/60"
-                disabled={isTxLoading || imageUploading}
-              >
-                {isTxLoading
-                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating event…</>
-                  : <><Award className="h-4 w-4 mr-2" />Create Event</>}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full rounded-xl mt-2"
+              disabled={isTxLoading || imageUploading}
+            >
+              {isTxLoading
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating event…</>
+                : <><Award className="h-4 w-4 mr-2" />Create Event</>}
+            </Button>
             <p className="text-xs text-center text-muted-foreground mt-2">
-              Gas is sponsored. Transaction is gasless.
+              Free to publish — gas is sponsored.
             </p>
           </FadeIn>
 
         </form>
       </Form>
-    </div>
+      </div>
+    </ClaimRouteShell>
     </ConnectGate>
   );
 }
