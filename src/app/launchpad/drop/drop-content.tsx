@@ -7,6 +7,8 @@ import { Package, Users, Plus, Zap, Timer, Layers } from "lucide-react";
 import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { ServiceHeader } from "@medialane/ui";
+import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { useDropCollections, useOnChainDropState, getDropStatus } from "@/hooks/use-drops";
 import { ipfsToHttp } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
@@ -154,44 +156,34 @@ export function DropContent() {
   return (
     <div className="pb-16 space-y-10">
 
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border/50">
-        <div className="px-4 py-14 sm:py-20">
-          <FadeIn>
-            <span className="pill-badge mb-5 inline-flex">
-              <Package className="h-3 w-3" />
-              Collection Drop
-            </span>
-          </FadeIn>
-          <FadeIn delay={0.08}>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight mb-3">
-              Limited Edition Drops<br />
-              <span className="gradient-text">Scarcity on Starknet</span>
-            </h1>
-          </FadeIn>
-          <FadeIn delay={0.16}>
-            <p className="text-muted-foreground text-base max-w-xl leading-relaxed">
-              Timed NFT drops with a fixed supply cap. Creators set the mint window and max quantity —
-              the community races to collect.
-            </p>
-          </FadeIn>
-          <FadeIn delay={0.24}>
-            <div className="flex flex-wrap gap-2 mt-5">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
-                <Package className={`h-3.5 w-3.5 ${BRAND.orange.text}`} />
-                <span className="text-muted-foreground">Fixed supply cap</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
-                <Users className="h-3.5 w-3.5 text-amber-500" />
-                <span className="text-muted-foreground">Transferable ERC-721</span>
-              </div>
+      {/* ── Header ── */}
+      <section className="px-4 pt-10 max-w-5xl mx-auto">
+        <ClaimBackButton />
+        <FadeIn>
+          <div className="mt-6">
+            <ServiceHeader
+              icon={<Package className="h-4 w-4 text-white" />}
+              title="Collection Drops"
+              subtitle="Timed drops with a fixed supply — set your mint window and how many, and the community collects before they're gone."
+            />
+          </div>
+        </FadeIn>
+        <FadeIn delay={0.16}>
+          <div className="flex flex-wrap gap-2 mt-5">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
+              <Package className={`h-3.5 w-3.5 ${BRAND.orange.text}`} />
+              <span className="text-muted-foreground">Fixed supply cap</span>
             </div>
-          </FadeIn>
-        </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
+              <Users className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-muted-foreground">Transferable ERC-721</span>
+            </div>
+          </div>
+        </FadeIn>
       </section>
 
       {/* Features grid */}
-      <section className="px-4">
+      <section className="px-4 max-w-5xl mx-auto">
         <FadeIn>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {DROP_FEATURES.map(({ icon: Icon, title, desc }) => (
@@ -206,7 +198,7 @@ export function DropContent() {
       </section>
 
       {/* Collections grid */}
-      <section className="px-4 space-y-4">
+      <section className="px-4 space-y-4 max-w-5xl mx-auto">
         <FadeIn>
           <div className="flex items-center justify-between">
             <div>

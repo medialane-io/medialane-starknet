@@ -8,6 +8,8 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { ServiceHeader } from "@medialane/ui";
+import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { ipfsToHttp } from "@/lib/utils";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import {
@@ -138,54 +140,45 @@ export function NFTEditionsContent() {
   return (
     <div className="pb-16">
 
-      {/* ── Hero ── */}
-      <section className="border-b border-border/50">
-        <div className="px-4 py-12 sm:py-16 max-w-3xl">
-          <FadeIn>
-            <span className="pill-badge mb-4 inline-flex">
-              <Layers className="h-3 w-3" />
-              ERC-1155
-            </span>
-          </FadeIn>
-          <FadeIn delay={0.06}>
-            <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-3">
-              Mint IP Editions
-            </h1>
-          </FadeIn>
-          <FadeIn delay={0.12}>
-            <p className="text-muted-foreground text-base max-w-xl leading-relaxed">
-              Select one of your IP Collection 1155 contracts and mint new token editions
-              into it — each with its own artwork, supply, and on-chain provenance.
-            </p>
-          </FadeIn>
-          <FadeIn delay={0.18}>
-            <div className="mt-6 flex items-center gap-3">
-              <Link
-                href="/launchpad/nfteditions/create"
-                className="flex items-center gap-2 h-10 px-5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-colors"
+      {/* ── Header ── */}
+      <section className="px-4 pt-10 max-w-5xl mx-auto">
+        <ClaimBackButton />
+        <FadeIn>
+          <div className="mt-6">
+            <ServiceHeader
+              icon={<Layers className="h-4 w-4 text-white" />}
+              title="Mint Editions"
+              subtitle="Pick one of your edition collections and mint new pieces into it — each with its own artwork and supply."
+            />
+          </div>
+        </FadeIn>
+        <FadeIn delay={0.08}>
+          <div className="mt-6 flex items-center gap-3">
+            <Link
+              href="/launchpad/nfteditions/create"
+              className="flex items-center gap-2 h-10 px-5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              New collection
+            </Link>
+            <Button variant="outline" size="sm" asChild>
+              {/* Plain <a> + absolute URL to docs.medialane.io — Next/Link
+                  with a relative /learn path would trigger an RSC prefetch
+                  that then 301s cross-origin and CORS-rejects. */}
+              <a
+                href="https://docs.medialane.io/learn/ip-collection-1155"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <Plus className="h-4 w-4" />
-                New collection
-              </Link>
-              <Button variant="outline" size="sm" asChild>
-                {/* Plain <a> + absolute URL to docs.medialane.io — Next/Link
-                    with a relative /learn path would trigger an RSC prefetch
-                    that then 301s cross-origin and CORS-rejects. */}
-                <a
-                  href="https://docs.medialane.io/learn/ip-collection-1155"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Learn more <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                </a>
-              </Button>
-            </div>
-          </FadeIn>
-        </div>
+                Learn more <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </a>
+            </Button>
+          </div>
+        </FadeIn>
       </section>
 
       {/* ── Collections list ── */}
-      <section className="px-4 pt-8 space-y-5">
+      <section className="px-4 pt-8 space-y-5 max-w-5xl mx-auto">
         {!isConnected ? (
           <FadeIn>
             <div className="bento-cell p-10 flex flex-col items-center gap-4 text-center">
