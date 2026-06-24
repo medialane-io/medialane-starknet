@@ -26,16 +26,16 @@ import {
   type WalletSession,
 } from "@/lib/wallet-session";
 import {
-  POP_FACTORY_CONTRACT_MAINNET,
-  DROP_FACTORY_CONTRACT_MAINNET,
-  CREATOR_COIN_FACTORY_CONTRACT_MAINNET,
+  STARKNET_POP_FACTORY_CONTRACT,
+  STARKNET_DROP_FACTORY_CONTRACT,
+  STARKNET_CREATOR_COIN_FACTORY_CONTRACT,
 } from "@medialane/sdk";
 import {
-  COLLECTION_721_CONTRACT,
-  COLLECTION_1155_CONTRACT,
-  MARKETPLACE_721_CONTRACT,
-  MARKETPLACE_1155_CONTRACT,
-  NFTCOMMENTS_CONTRACT,
+  STARKNET_COLLECTION_721_CONTRACT,
+  STARKNET_COLLECTION_1155_CONTRACT,
+  STARKNET_MARKETPLACE_721_CONTRACT,
+  STARKNET_MARKETPLACE_1155_CONTRACT,
+  STARKNET_NFTCOMMENTS_CONTRACT,
   LAUNCH_MINT_CONTRACT,
   MINT_CONTRACT,
   BR_MINT_CONTRACT,
@@ -59,31 +59,31 @@ import {
 export const CARTRIDGE_POLICIES = (
   [
     // ── MIP collection registry (ERC-721) ───────────────────────────────
-    { target: COLLECTION_721_CONTRACT, method: "mint" },
-    { target: COLLECTION_721_CONTRACT, method: "create_collection" },
-    { target: COLLECTION_721_CONTRACT, method: "transfer_token" },
-    { target: COLLECTION_721_CONTRACT, method: "transfer_collection_ownership" },
+    { target: STARKNET_COLLECTION_721_CONTRACT, method: "mint" },
+    { target: STARKNET_COLLECTION_721_CONTRACT, method: "create_collection" },
+    { target: STARKNET_COLLECTION_721_CONTRACT, method: "transfer_token" },
+    { target: STARKNET_COLLECTION_721_CONTRACT, method: "transfer_collection_ownership" },
     // ── IP-Programmable ERC-1155 factory ────────────────────────────────
-    { target: COLLECTION_1155_CONTRACT, method: "deploy_collection" },
+    { target: STARKNET_COLLECTION_1155_CONTRACT, method: "deploy_collection" },
     // ── Marketplace contracts ───────────────────────────────────────────
-    { target: MARKETPLACE_721_CONTRACT, method: "register_order" },
-    { target: MARKETPLACE_721_CONTRACT, method: "fulfill_order" },
-    { target: MARKETPLACE_721_CONTRACT, method: "cancel_order" },
-    { target: MARKETPLACE_1155_CONTRACT, method: "register_order" },
-    { target: MARKETPLACE_1155_CONTRACT, method: "fulfill_order" },
-    { target: MARKETPLACE_1155_CONTRACT, method: "cancel_order" },
+    { target: STARKNET_MARKETPLACE_721_CONTRACT, method: "register_order" },
+    { target: STARKNET_MARKETPLACE_721_CONTRACT, method: "fulfill_order" },
+    { target: STARKNET_MARKETPLACE_721_CONTRACT, method: "cancel_order" },
+    { target: STARKNET_MARKETPLACE_1155_CONTRACT, method: "register_order" },
+    { target: STARKNET_MARKETPLACE_1155_CONTRACT, method: "fulfill_order" },
+    { target: STARKNET_MARKETPLACE_1155_CONTRACT, method: "cancel_order" },
     // ── POP / Drop factories (collection creation) ──────────────────────
-    { target: POP_FACTORY_CONTRACT_MAINNET, method: "create_collection" },
-    { target: DROP_FACTORY_CONTRACT_MAINNET, method: "create_drop" },
+    { target: STARKNET_POP_FACTORY_CONTRACT, method: "create_collection" },
+    { target: STARKNET_DROP_FACTORY_CONTRACT, method: "create_drop" },
     // ── Creator Coin factory (launch flow) ──────────────────────────────
     // The launch multicall also transfers the buyback quote (STRK/ETH) to
     // the factory; that ERC-20 `transfer` deliberately stays OFF this list
     // (same precedent as marketplace `approve`) — fund-moving methods get a
     // per-tx Cartridge prompt instead of silent session scope.
-    { target: CREATOR_COIN_FACTORY_CONTRACT_MAINNET, method: "create_creator_coin" },
-    { target: CREATOR_COIN_FACTORY_CONTRACT_MAINNET, method: "launch_on_ekubo" },
+    { target: STARKNET_CREATOR_COIN_FACTORY_CONTRACT, method: "create_creator_coin" },
+    { target: STARKNET_CREATOR_COIN_FACTORY_CONTRACT, method: "launch_on_ekubo" },
     // ── NFT comments ────────────────────────────────────────────────────
-    { target: NFTCOMMENTS_CONTRACT, method: "add_comment" },
+    { target: STARKNET_NFTCOMMENTS_CONTRACT, method: "add_comment" },
     // ── Static airdrop / launch mint contracts ──────────────────────────
     // GenesisMint (used by /mint, /airdrop, /br/mint, /launch via
     // launch-mint.tsx) calls mint_item on these fixed env-driven targets.

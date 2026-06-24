@@ -1,36 +1,13 @@
-import {
-  MARKETPLACE_721_CONTRACT_MAINNET,
-  MARKETPLACE_1155_CONTRACT_MAINNET,
-  COLLECTION_721_CONTRACT_MAINNET,
-  COLLECTION_1155_CONTRACT_MAINNET,
-  NFTCOMMENTS_CONTRACT_MAINNET,
+// Protocol contract addresses — the SDK's chain-named constants (single source).
+// No NEXT_PUBLIC_ overrides, no *_MAINNET, no duplicate comments name.
+export {
   SUPPORTED_TOKENS,
+  STARKNET_MARKETPLACE_721_CONTRACT,
+  STARKNET_MARKETPLACE_1155_CONTRACT,
+  STARKNET_COLLECTION_721_CONTRACT,
+  STARKNET_COLLECTION_1155_CONTRACT,
+  STARKNET_NFTCOMMENTS_CONTRACT,
 } from "@medialane/sdk";
-
-export { SUPPORTED_TOKENS };
-
-export const MARKETPLACE_721_CONTRACT = MARKETPLACE_721_CONTRACT_MAINNET;
-
-export const MARKETPLACE_1155_CONTRACT = MARKETPLACE_1155_CONTRACT_MAINNET;
-
-export const COLLECTION_721_CONTRACT =
-  (process.env.NEXT_PUBLIC_COLLECTION_721_CONTRACT as `0x${string}`) ||
-  COLLECTION_721_CONTRACT_MAINNET;
-
-export const COLLECTION_1155_CONTRACT =
-  // Canonical name matches io + the *_MAINNET convention; the bare name is kept
-  // as a transition fallback so existing envs don't break.
-  (process.env.NEXT_PUBLIC_COLLECTION_1155_CONTRACT_MAINNET as `0x${string}`) ||
-  (process.env.NEXT_PUBLIC_COLLECTION_1155_CONTRACT as `0x${string}`) ||
-  COLLECTION_1155_CONTRACT_MAINNET;
-
-export const NFTCOMMENTS_CONTRACT =
-  (process.env.NEXT_PUBLIC_NFTCOMMENTS_CONTRACT as `0x${string}`) ||
-  NFTCOMMENTS_CONTRACT_MAINNET;
-
-export const COMMENTS_CONTRACT =
-  (process.env.NEXT_PUBLIC_COMMENTS_CONTRACT as `0x${string}`) ||
-  NFTCOMMENTS_CONTRACT;
 
 // ── Starknet RPC — provider-agnostic, two roles, server-only ────────────────
 // MAIN: the keyed provider (Alchemy today, any provider tomorrow). SERVER-ONLY —

@@ -1,9 +1,9 @@
 import { MedialaneClient } from "@medialane/sdk";
 import {
-  COLLECTION_1155_CONTRACT,
-  COLLECTION_721_CONTRACT,
-  MARKETPLACE_1155_CONTRACT,
-  MARKETPLACE_721_CONTRACT,
+  STARKNET_COLLECTION_1155_CONTRACT,
+  STARKNET_COLLECTION_721_CONTRACT,
+  STARKNET_MARKETPLACE_1155_CONTRACT,
+  STARKNET_MARKETPLACE_721_CONTRACT,
   MEDIALANE_API_KEY,
   MEDIALANE_BACKEND_URL,
   RPC_MAIN_URL,
@@ -28,10 +28,10 @@ export function getMedialaneClient(): MedialaneClient {
       backendUrl: MEDIALANE_BACKEND_URL,
       apiKey: MEDIALANE_API_KEY || undefined,
       rpcUrl,
-      marketplaceContract: MARKETPLACE_721_CONTRACT,
-      marketplace1155Contract: MARKETPLACE_1155_CONTRACT,
-      collectionContract: COLLECTION_721_CONTRACT,
-      collection1155Contract: COLLECTION_1155_CONTRACT,
+      marketplaceContract: STARKNET_MARKETPLACE_721_CONTRACT,
+      marketplace1155Contract: STARKNET_MARKETPLACE_1155_CONTRACT,
+      collectionContract: STARKNET_COLLECTION_721_CONTRACT,
+      collection1155Contract: STARKNET_COLLECTION_1155_CONTRACT,
       chain: "STARKNET",
     });
   }

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { getListableTokens } from "@medialane/sdk";
-import { DropFactoryABI, DROP_FACTORY_CONTRACT } from "@/lib/launchpad-contracts";
+import { DropFactoryABI, STARKNET_DROP_FACTORY_CONTRACT } from "@/lib/launchpad-contracts";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
@@ -181,10 +181,10 @@ export default function CreateDropPage() {
         max_quantity_per_wallet: maxPerWallet,
       };
 
-      const factory = new Contract({ abi: DropFactoryABI as unknown as Abi, address: DROP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
+      const factory = new Contract({ abi: DropFactoryABI as unknown as Abi, address: STARKNET_DROP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
       const call = factory.populate("create_drop", [values.name, values.symbol, baseUri, maxSupply, conditions]);
 
-      const txHash = await executeAuto([{ contractAddress: DROP_FACTORY_CONTRACT, entrypoint: "create_drop", calldata: call.calldata as string[] }]);
+      const txHash = await executeAuto([{ contractAddress: STARKNET_DROP_FACTORY_CONTRACT, entrypoint: "create_drop", calldata: call.calldata as string[] }]);
       if (!txHash) throw new Error("Transaction failed — no hash returned");
 
       // Optional whitelist: set on the new drop address (from the receipt), same wallet session.

@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { starknetProvider } from "@/lib/starknet";
 import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk";
-import { COLLECTION_721_CONTRACT } from "@/lib/constants";
+import { STARKNET_COLLECTION_721_CONTRACT } from "@/lib/constants";
 import { normalizeAddress } from "@/lib/utils";
 import { toast } from "sonner";
 import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-dialog-primitives";
@@ -60,7 +60,7 @@ export function TransferCollectionOwnershipDialog({
     try {
       const contract = new Contract({
         abi: ipCollectionAbi as any,
-        address: COLLECTION_721_CONTRACT,
+        address: STARKNET_COLLECTION_721_CONTRACT,
         providerOrAccount: starknetProvider,
       });
       const call = contract.populate("transfer_collection_ownership", [

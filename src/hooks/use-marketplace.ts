@@ -64,7 +64,7 @@ interface UseMarketplaceReturn {
 }
 
 // Module-level helpers
-import { SUPPORTED_TOKENS, MARKETPLACE_721_CONTRACT, MARKETPLACE_1155_CONTRACT, INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
+import { SUPPORTED_TOKENS, STARKNET_MARKETPLACE_721_CONTRACT, STARKNET_MARKETPLACE_1155_CONTRACT, INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 const getDecimals = (currencySymbol: string) =>
     SUPPORTED_TOKENS.find((t) => t.symbol === currencySymbol)?.decimals ?? 18;
 
@@ -138,11 +138,11 @@ export function useMarketplace(): UseMarketplaceReturn {
     const [error, setError] = useState<string | null>(null);
 
     const { contract: medialaneContract } = useContract({
-        address: MARKETPLACE_721_CONTRACT as `0x${string}`,
+        address: STARKNET_MARKETPLACE_721_CONTRACT as `0x${string}`,
         abi: IPMarketplaceABI as unknown as Abi,
     });
     const { contract: medialane1155Contract } = useContract({
-        address: MARKETPLACE_1155_CONTRACT as `0x${string}`,
+        address: STARKNET_MARKETPLACE_1155_CONTRACT as `0x${string}`,
         abi: IPMarketplace1155ABI as unknown as Abi,
     });
     const { address: walletAddress } = useUnifiedWallet();

@@ -33,7 +33,7 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { toast } from "sonner";
 import {
-  COLLECTION_1155_CONTRACT_MAINNET,
+  STARKNET_COLLECTION_1155_CONTRACT,
   normalizeAddress,
 } from "@medialane/sdk";
 import { hash } from "starknet";
@@ -42,7 +42,7 @@ import { serializeByteArray } from "@/lib/cairo-calldata";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
-const FACTORY = COLLECTION_1155_CONTRACT_MAINNET as `0x${string}`;
+const FACTORY = STARKNET_COLLECTION_1155_CONTRACT as `0x${string}`;
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 
 const schema = z.object({

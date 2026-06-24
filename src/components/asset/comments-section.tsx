@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AddressDisplay } from "@/components/shared/address-display";
-import { COMMENTS_CONTRACT, EXPLORER_URL } from "@/lib/constants";
+import { STARKNET_NFTCOMMENTS_CONTRACT, EXPLORER_URL } from "@/lib/constants";
 import { MessageSquare, Loader2, Send, CheckCircle, X, ExternalLink, Flag, Zap } from "lucide-react";
 import { ReportDialog, type ReportTarget } from "@/components/report-dialog";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
   const composeRef = useRef<HTMLTextAreaElement>(null);
 
   const byteLen = new TextEncoder().encode(text).length;
-  const canSubmit = text.trim().length > 0 && byteLen <= MAX_LEN && !!COMMENTS_CONTRACT;
+  const canSubmit = text.trim().length > 0 && byteLen <= MAX_LEN && !!STARKNET_NFTCOMMENTS_CONTRACT;
   const isProcessing = postStep === "processing";
 
   const isOwn = (author: string) =>
@@ -108,7 +108,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
       const calldata = CallData.compile([contract, { low: tokenIdLow, high: tokenIdHigh }, encoded]);
 
       const result = await executeTransaction([
-        { contractAddress: COMMENTS_CONTRACT, entrypoint: "add_comment", calldata },
+        { contractAddress: STARKNET_NFTCOMMENTS_CONTRACT, entrypoint: "add_comment", calldata },
       ]);
 
       setPostTxHash(result);

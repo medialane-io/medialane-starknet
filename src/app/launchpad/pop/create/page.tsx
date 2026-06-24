@@ -28,7 +28,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
-import { POPFactoryABI, POP_FACTORY_CONTRACT, type PopEventType } from "@/lib/launchpad-contracts";
+import { POPFactoryABI, STARKNET_POP_FACTORY_CONTRACT, type PopEventType } from "@/lib/launchpad-contracts";
 import { cn } from "@/lib/utils";
 
 const EVENT_TYPES: {
@@ -111,7 +111,7 @@ export default function CreatePOPPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!POP_FACTORY_CONTRACT) {
+    if (!STARKNET_POP_FACTORY_CONTRACT) {
       toast.error("POP Factory contract not configured");
       return;
     }
@@ -141,7 +141,7 @@ export default function CreatePOPPage() {
     );
 
     try {
-      const factory = new Contract({ abi: POPFactoryABI as any, address: POP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
+      const factory = new Contract({ abi: POPFactoryABI as any, address: STARKNET_POP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
       const call = factory.populate("create_collection", [
         values.name,
         values.symbol,
@@ -151,7 +151,7 @@ export default function CreatePOPPage() {
       ]);
 
       await executeAuto([{
-        contractAddress: POP_FACTORY_CONTRACT,
+        contractAddress: STARKNET_POP_FACTORY_CONTRACT,
         entrypoint: "create_collection",
         calldata: call.calldata as string[],
       }]);

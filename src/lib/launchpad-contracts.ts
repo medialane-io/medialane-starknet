@@ -1,10 +1,8 @@
-export const DROP_FACTORY_CONTRACT =
-  (process.env.NEXT_PUBLIC_DROP_FACTORY_CONTRACT as `0x${string}`) ||
-  ("0x03587f42e29daee1b193f6cf83bf8627908ed6632d0d83fcb26225c50547d800" as `0x${string}`);
-
-export const POP_FACTORY_CONTRACT =
-  (process.env.NEXT_PUBLIC_POP_FACTORY_CONTRACT as `0x${string}`) ||
-  ("0x00b32c34b427d8f346b5843ada6a37bd3368d879fc752cd52b68a87287f60111" as `0x${string}`);
+// Factory addresses — the SDK's chain-named constants (single source).
+export {
+  STARKNET_DROP_FACTORY_CONTRACT,
+  STARKNET_POP_FACTORY_CONTRACT,
+} from "@medialane/sdk";
 
 /** Minimal ABI for create_drop on the Drop Factory contract */
 export const DropFactoryABI = [
