@@ -39,6 +39,8 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { MintProgressDialog } from "@/components/marketplace/mint-progress-dialog";
 import type { MintStep } from "@/components/marketplace/mint-progress-dialog";
 import { ConnectGate } from "@/components/connect-gate";
+import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { CreateAssetAside } from "@/components/claim/create-asset-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { cn } from "@/lib/utils";
 import { absoluteUrl } from "@/lib/seo";
@@ -229,7 +231,7 @@ export default function CreateAssetPage() {
         imgFormData.append("network", "public");
         imgFormData.append("name", imageFile.name);
         const uploadRes2 = await fetch(signedData.url, { method: "POST", body: imgFormData });
-        if (!uploadRes2.ok) throw new Error("Image upload to IPFS failed");
+        if (!uploadRes2.ok) throw new Error("Image upload failed");
         const uploadJson = await uploadRes2.json();
         const cid = uploadJson.data?.cid;
         if (!cid) throw new Error("Image upload returned no CID");
@@ -244,10 +246,10 @@ export default function CreateAssetPage() {
       const uploadRes = await fetch("/api/pinata", withSiwsAuth(token, { method: "POST", body: formData }));
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok || uploadData.error) {
-        throw new Error(uploadData.error ?? "IPFS upload failed");
+        throw new Error(uploadData.error ?? "Image upload failed");
       }
       const tokenUri: string = uploadData.uri;
-      if (!tokenUri) throw new Error("IPFS upload returned no URI");
+      if (!tokenUri) throw new Error("Image upload failed — please try again");
 
       setMintStep("processing");
 
@@ -320,18 +322,13 @@ export default function CreateAssetPage() {
         title="Connect to create an asset"
         subtitle="Connect your wallet to mint your work and pick a collection."
       >
-      <div className="container max-w-2xl mx-auto px-4 pt-14 pb-8 space-y-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-primary">
-            <ImagePlus className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wider">Create</span>
-          </div>
-          <h1 className="text-3xl font-bold">Create IP Asset</h1>
-          <p className="text-muted-foreground">
-            Mint your creative work as a programmable NFT on Starknet with immutable licensing embedded in IPFS metadata.
-          </p>
-        </div>
-
+      <ClaimRouteShell
+        gated={false}
+        icon={<ImagePlus className="h-4 w-4 text-white" />}
+        title="Create a Digital Asset"
+        subtitle="Publish your creative work and set how others can use it — free to mint, and it's yours."
+        aside={<CreateAssetAside />}
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
@@ -497,7 +494,7 @@ export default function CreateAssetPage() {
                 <CollapsibleContent>
                   <div className="px-5 pb-5 space-y-4 border-t border-border/60 pt-4">
                     <p className="text-xs text-muted-foreground">
-                      Set licensing terms for your work. These are embedded as immutable IPFS metadata and Berne Convention-compatible.
+                      Set how others can use your work. These terms are saved permanently with it as proof of authorship.
                     </p>
                     <FormField
                       control={form.control}
@@ -675,21 +672,19 @@ export default function CreateAssetPage() {
               </div>
             </Collapsible>
 
-            <div className={`btn-border-animated p-[1px] rounded-xl ${mintStep !== "idle" || collectionsLoading || collections.length === 0 ? "opacity-40 pointer-events-none" : ""}`}>
-              <button
-                type="submit"
-                disabled={mintStep !== "idle" || collectionsLoading || collections.length === 0}
-                className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue"
-              >
-                Mint asset
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={mintStep !== "idle" || collectionsLoading || collections.length === 0}
+              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue ${mintStep !== "idle" || collectionsLoading || collections.length === 0 ? "opacity-40 pointer-events-none" : ""}`}
+            >
+              Mint asset
+            </button>
             <p className="text-xs text-center text-muted-foreground">
-              Gas is free. Your PIN signs the mint transaction.
+              Free to mint — no gas fees.
             </p>
           </form>
         </Form>
-      </div>
+      </ClaimRouteShell>
       </ConnectGate>
     </>
   );
