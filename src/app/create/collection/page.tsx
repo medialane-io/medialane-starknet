@@ -23,6 +23,8 @@ import { ConnectGate } from "@/components/connect-gate";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { useTx } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
+import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { CreateCollectionAside } from "@/components/claim/create-collection-aside";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -112,7 +114,7 @@ export default function CreateCollectionPage() {
       if (!siwsToken) throw new Error("Please sign in with your wallet to upload images.");
       const upload = await uploadFileToIpfs(file, siwsToken);
       setImageUri(upload.uri);
-      toast.success("Image uploaded to IPFS");
+      toast.success("Image uploaded");
     } catch (err: unknown) {
       const t = uploadFailureToast(err);
       toast.error(t.title, { description: t.description });
@@ -233,18 +235,13 @@ export default function CreateCollectionPage() {
         title="Connect to create a collection"
         subtitle="Connect your wallet to deploy a collection on Starknet."
       >
-      <div className="container max-w-2xl mx-auto px-4 pt-14 pb-8 space-y-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-primary">
-            <Layers className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wider">Create</span>
-          </div>
-          <h1 className="text-3xl font-bold">Create Collection</h1>
-          <p className="text-muted-foreground">
-            Deploy a new NFT collection on Starknet. Gas is free.
-          </p>
-        </div>
-
+      <ClaimRouteShell
+        gated={false}
+        icon={<Layers className="h-4 w-4 text-white" />}
+        title="Create a Collection"
+        subtitle="Set up a collection to mint your work into — free to publish, and it's yours."
+        aside={<CreateCollectionAside />}
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {/* Collection image */}
@@ -309,7 +306,7 @@ export default function CreateCollectionPage() {
                   <p className="text-xs text-muted-foreground">
                     JPG, PNG, GIF, SVG or WebP · max 10 MB
                     {imageUri && (
-                      <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded to IPFS</span>
+                      <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>
                     )}
                   </p>
                 </div>
@@ -345,7 +342,7 @@ export default function CreateCollectionPage() {
                     />
                   </FormControl>
                   <FormDescription>
-                    Short ticker (2–10 uppercase letters). Shown in wallets and explorers.
+                    Short ticker (2–10 uppercase letters). Shown in wallets and marketplaces.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -380,29 +377,27 @@ export default function CreateCollectionPage() {
                     <Input placeholder="https://yourwebsite.com" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Your website, portfolio, or social profile. Stored in collection metadata on IPFS.
+                    Your website, portfolio, or social profile — saved with your collection so it travels with it.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className={`btn-border-animated p-[1px] rounded-xl ${collectionStep !== "idle" || imageUploading ? "opacity-40 pointer-events-none" : ""}`}>
-              <button
-                type="submit"
-                disabled={collectionStep !== "idle" || imageUploading}
-                className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue"
-              >
-                <Layers className="h-4 w-4" />
-                Create collection
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={collectionStep !== "idle" || imageUploading}
+              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue ${collectionStep !== "idle" || imageUploading ? "opacity-40 pointer-events-none" : ""}`}
+            >
+              <Layers className="h-4 w-4" />
+              Create collection
+            </button>
             <p className="text-xs text-center text-muted-foreground">
-              Gas is free. Your PIN signs the transaction.
+              Free to publish — no gas fees.
             </p>
           </form>
         </Form>
-      </div>
+      </ClaimRouteShell>
       </ConnectGate>
     </>
   );
