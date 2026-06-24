@@ -10,11 +10,12 @@ import { starknetProvider } from "@/lib/starknet";
 import { Package, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { FadeIn } from "@/components/ui/motion-primitives";
 import { toast } from "sonner";
 import { getListableTokens } from "@medialane/sdk";
 import { DropFactoryABI, DROP_FACTORY_CONTRACT } from "@/lib/launchpad-contracts";
 import { ConnectGate } from "@/components/connect-gate";
+import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useSiwsToken } from "@/hooks/use-siws-token";
@@ -238,17 +239,13 @@ export default function CreateDropPage() {
       title="Connect wallet to launch a drop"
       subtitle="Connect your Starknet wallet to create and manage a collection drop."
     >
-    <div className="container max-w-xl mx-auto px-4 pt-10 pb-16 space-y-8">
-      <FadeIn>
-        <div className="space-y-1">
-          <span className="pill-badge inline-flex gap-1.5"><Package className="h-3 w-3" />Collection Drop</span>
-          <h1 className="text-3xl font-bold mt-3">Launch Drop</h1>
-          <p className="text-muted-foreground text-sm">
-            Deploy a limited set of unique, individually-licensed ERC-721 assets with a timed mint window.
-          </p>
-        </div>
-      </FadeIn>
-
+    <ClaimRouteShell
+      gated={false}
+      icon={<Package className="h-4 w-4 text-white" />}
+      title="Launch a Drop"
+      subtitle="Release a limited set of unique pieces with a timed mint window — free to launch, and it's yours."
+      aside={<CreateDropAside />}
+    >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <DropCreateForm
@@ -282,7 +279,7 @@ export default function CreateDropPage() {
           {uploadSuccess && <p className="text-xs text-emerald-500 mt-1">✓ {uploadSuccess}</p>}
         </form>
       </Form>
-    </div>
+    </ClaimRouteShell>
     </ConnectGate>
   );
 }
