@@ -24,21 +24,24 @@ The app is deployed at [medialane.io](https://medialane.io) on Starknet Mainnet.
 
 ## Key Environment Variables
 
-```
-# Network
-NEXT_PUBLIC_STARKNET_NETWORK          # "mainnet" or "sepolia" (defaults to mainnet)
+> **Mainnet-only.** Medialane runs on Starknet mainnet exclusively — there is no
+> network/Sepolia axis. Any testnet path was purged; never reintroduce one.
+>
+> **Protocol contract addresses are NOT env vars.** Marketplace, collection, POP,
+> Drop, comments and creator-coin addresses (+ class hashes, start blocks) come
+> from `@medialane/sdk`'s chain-named constants (`STARKNET_MARKETPLACE_721_CONTRACT`,
+> `STARKNET_COLLECTION_1155_CONTRACT`, `STARKNET_NFTCOMMENTS_CONTRACT`, …) — the
+> single source, derived from `chains.ts`. No `NEXT_PUBLIC_*_CONTRACT(_MAINNET)`
+> overrides (deleted 2026-06-25). Only genuinely app-specific, non-protocol
+> contracts (mint/airdrop campaigns) keep an env var.
 
+```
 # Starknet RPC — two role-based, SERVER-ONLY vars (browser uses the /api/rpc proxy).
 # Defined once in src/lib/constants.ts (RPC_MAIN_URL / RPC_FALLBACK_URL / RPC_PROXY_PATH).
 STARKNET_RPC_URL                      # MAIN (primary): the keyed provider URL (Alchemy today, any provider tomorrow). SERVER-ONLY — never NEXT_PUBLIC_ (a NEXT_PUBLIC_ keyed URL is inlined into the browser bundle = the 2026-06-23 key leak). The /api/rpc proxy forwards to it.
 STARKNET_RPC_FALLBACK_URL             # FALLBACK: keyless public node (lava). OPTIONAL — the code hardcodes https://rpc.starknet.lava.build as the default, so a missing/empty env can never break the build.
 
-# Contracts
-# Marketplace contract addresses come from @medialane/sdk only.
-NEXT_PUBLIC_COLLECTION_721_CONTRACT   # ERC-721 collection registry (renamed from NEXT_PUBLIC_COLLECTION_CONTRACT on 2026-05-22)
-NEXT_PUBLIC_COLLECTION_1155_CONTRACT_MAINNET  # ERC-1155 collection factory (canonical name, matches io + the *_MAINNET
-                                              # convention; bare NEXT_PUBLIC_COLLECTION_1155_CONTRACT kept as fallback)
-NEXT_PUBLIC_NFTCOMMENTS_CONTRACT      # NFT comments contract
+# (Protocol contract addresses come from @medialane/sdk — see the note above. No env vars.)
 
 # Medialane Backend API (indexed on-chain data — used for all reads)
 NEXT_PUBLIC_MEDIALANE_BACKEND_URL     # Backend base URL (default: http://localhost:3001) — public, used to construct URLs
@@ -49,7 +52,7 @@ MEDIALANE_API_KEY                     # Server-only API key. The BFF proxy at
                                       # ship the key in the browser bundle).
 
 # IPFS
-NEXT_PUBLIC_GATEWAY_URL               # Pinata IPFS gateway URL
+NEXT_PUBLIC_PINATA_GATEWAY            # Pinata IPFS gateway URL (one name; was NEXT_PUBLIC_GATEWAY_URL, collapsed 2026-06-25)
 PINATA_JWT                            # Server-side Pinata JWT (for uploads)
 
 # Explorer
