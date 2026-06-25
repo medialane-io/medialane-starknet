@@ -52,7 +52,6 @@ export const MEDIALANE_API_KEY = isServer
 
 export const PINATA_GATEWAY =
   process.env.NEXT_PUBLIC_PINATA_GATEWAY ||
-  process.env.NEXT_PUBLIC_GATEWAY_URL ||
   "https://gateway.pinata.cloud";
 
 export const EXPLORER_URL =
