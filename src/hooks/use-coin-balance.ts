@@ -12,7 +12,7 @@
 
 import useSWR from "swr";
 import { starknetProvider } from "@/lib/starknet";
-import { formatTokenAmount } from "@/utils/avnu-swap";
+import { formatTokenAmount } from "@/utils/swap-tokens";
 
 export interface UseCoinBalanceReturn {
   /** Raw balance in token base units (18 decimals), or null until loaded. */

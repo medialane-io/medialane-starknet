@@ -75,7 +75,7 @@
     "sonner": "^1",
     "starknet": "^8.9.2",
     "starknetkit": "^3.4.3",
-    "starkzap": "^1.0.0",
+    "starkzap": "^3.0.0",
     "swr": "^2",
     "tailwind-merge": "^2",
     "tailwindcss-animate": "^1",

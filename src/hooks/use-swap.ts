@@ -1,40 +1,32 @@
 "use client";
 
 /**
- * useSwap — token swap hook powered by AVNU Exchange.
+ * useSwap — token swap hook, routed directly on Ekubo via StarkZap.
  *
- * Manages the full swap lifecycle:
- *  1. Token + amount selection
- *  2. Debounced quote fetching from AVNU
- *  3. Transaction building (approve + swap call)
- *  4. Execution via unified wallet (paymaster-sponsored when available)
+ * The memecoin / creator-coin pools live on Ekubo (concentrated-liquidity AMM),
+ * so we quote and route straight against Ekubo through StarkZap's
+ * `EkuboSwapProvider` — no AVNU aggregator in the middle (and no AVNU
+ * integrator fee). StarkZap's `prepareSwap` returns ready-to-execute Starknet
+ * `Call[]` (approve + swap), which we run through the app's unified
+ * wallet/paymaster pipeline — so it works for every wallet type (injected
+ * Argent/Braavos, Cartridge, Privy), not just StarkZap-native wallets.
  *
- * @example
- * ```tsx
- * const swap = useSwap();
- * swap.setSellToken(ETH_TOKEN);
- * swap.setSellAmount("1.5");
- * // quote auto-fetches after 500ms debounce
- * const hash = await swap.executeSwap();
- * ```
+ * Lifecycle: token+amount selection → debounced Ekubo quote → prepareSwap →
+ * execute via unified wallet.
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { EkuboSwapProvider, type SwapQuote, type SwapRequest } from "starkzap";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useToast } from "@/hooks/use-toast";
+import { Amount, fromAddress, APP_CHAIN_ID, type Token as SzToken, type StarkZapTokenKey } from "@/lib/starkzap";
 import {
-  fetchSwapQuotes,
-  buildSwapCall,
-  buildApproveCall,
   formatTokenAmount,
   parseTokenAmount,
-  parseToBigInt,
   SWAP_TOKENS,
-  type SwapQuote,
   type SwapToken,
-} from "@/utils/avnu-swap";
-import type { StarkZapTokenKey } from "@/lib/starkzap";
+} from "@/utils/swap-tokens";
 
 export type { SwapToken };
 export { SWAP_TOKENS };
@@ -88,10 +80,40 @@ export interface UseSwapReturn {
 }
 
 // ---------------------------------------------------------------------------
-// Hook
+// Ekubo provider (singleton) + helpers
 // ---------------------------------------------------------------------------
 
 const DEBOUNCE_MS = 500;
+
+// Stateless provider — quotes via Ekubo's quoter, builds calls via the Ekubo
+// router preset. Safe to instantiate once at module scope.
+const ekubo = new EkuboSwapProvider();
+
+/** App SwapToken → StarkZap Token (the swap request shape). */
+function toSzToken(t: SwapToken): SzToken {
+  return { name: t.name, symbol: t.symbol, address: fromAddress(t.address), decimals: t.decimals };
+}
+
+function buildRequest(
+  sell: SwapToken,
+  buy: SwapToken,
+  rawAmount: bigint,
+  slippage: number,
+  takerAddress?: string
+): SwapRequest {
+  return {
+    chainId: APP_CHAIN_ID,
+    takerAddress: takerAddress ? fromAddress(takerAddress) : undefined,
+    tokenIn: toSzToken(sell),
+    tokenOut: toSzToken(buy),
+    amountIn: Amount.fromRaw(rawAmount, toSzToken(sell)),
+    slippageBps: BigInt(Math.round(slippage * 10_000)),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
 
 export function useSwap(): UseSwapReturn {
   const { address, execute } = useUnifiedWallet();
@@ -143,6 +165,7 @@ export function useSwap(): UseSwapReturn {
     sell: SwapToken,
     buy: SwapToken,
     amount: string,
+    slip: number,
     takerAddress?: string
   ) => {
     const parsed = parseTokenAmount(amount, sell.decimals);
@@ -157,29 +180,19 @@ export function useSwap(): UseSwapReturn {
     setQuoteError(null);
 
     try {
-      const quotes = await fetchSwapQuotes({
-        sellTokenAddress: sell.address,
-        buyTokenAddress: buy.address,
-        sellAmount: parsed,
-        takerAddress,
-      });
-
-      if (!quotes || quotes.length === 0) {
+      const q = await ekubo.getQuote(buildRequest(sell, buy, parsed, slip, takerAddress));
+      if (!q || q.amountOutBase <= 0n) {
         setQuote(null);
         setBuyAmount("");
         setQuoteError("No route found for this pair");
         return;
       }
-
-      const best = quotes[0];
-      setQuote(best);
-
-      const buyRaw = parseToBigInt(best.buyAmount);
-      setBuyAmount(formatTokenAmount(buyRaw, buy.decimals));
+      setQuote(q);
+      setBuyAmount(formatTokenAmount(q.amountOutBase, buy.decimals));
     } catch (err) {
       setQuote(null);
       setBuyAmount("");
-      setQuoteError(err instanceof Error ? err.message : "Failed to fetch quote");
+      setQuoteError(err instanceof Error ? err.message : "No route found for this pair");
     } finally {
       setIsFetchingQuote(false);
     }
@@ -189,12 +202,12 @@ export function useSwap(): UseSwapReturn {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchQuote(sellToken, buyToken, sellAmount, address);
+      fetchQuote(sellToken, buyToken, sellAmount, slippage, address);
     }, DEBOUNCE_MS);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [sellToken, buyToken, sellAmount, address, fetchQuote]);
+  }, [sellToken, buyToken, sellAmount, slippage, address, fetchQuote]);
 
   // ---- Token setters that clear the stale quote ---------------------------
 
@@ -236,9 +249,8 @@ export function useSwap(): UseSwapReturn {
 
   // ---- Price info ---------------------------------------------------------
 
-  // priceRatioUsd = buyValueUsd / sellValueUsd (e.g. 0.98 = 2% impact)
-  const priceImpact = quote?.priceRatioUsd != null
-    ? `${((1 - quote.priceRatioUsd) * 100).toFixed(2)}%`
+  const priceImpact = quote?.priceImpactBps != null
+    ? `${(Number(quote.priceImpactBps) / 100).toFixed(2)}%`
     : null;
 
   const minBuyAmount = buyAmount
@@ -252,13 +264,12 @@ export function useSwap(): UseSwapReturn {
   const exchangeRate = quote && sellAmount
     ? (() => {
         const sellRaw = parseTokenAmount(sellAmount, sellToken.decimals);
-        const buyRaw = parseToBigInt(quote.buyAmount);
         if (sellRaw === 0n) return null;
-        // rate = buyRaw / sellRaw, adjusted for decimal difference
+        // rate = amountOut / amountIn, adjusted for decimal difference
         const decimalAdj = sellToken.decimals - buyToken.decimals;
         const scaledBuy = decimalAdj >= 0
-          ? buyRaw * 10n ** BigInt(decimalAdj)
-          : buyRaw / 10n ** BigInt(-decimalAdj);
+          ? quote.amountOutBase * 10n ** BigInt(decimalAdj)
+          : quote.amountOutBase / 10n ** BigInt(-decimalAdj);
         const rate = Number(scaledBuy) / Number(sellRaw);
         return `1 ${sellToken.symbol} ≈ ${rate.toFixed(4)} ${buyToken.symbol}`;
       })()
@@ -284,54 +295,28 @@ export function useSwap(): UseSwapReturn {
   // ---- Execution ----------------------------------------------------------
 
   const executeSwap = useCallback(async (): Promise<string | null> => {
-    if (!address || !quote) return null;
+    if (!address) return null;
 
     setIsExecuting(true);
     setExecError(null);
 
     try {
-      // Re-fetch quote to ensure it's still valid
-      const freshQuotes = await fetchSwapQuotes({
-        sellTokenAddress: sellToken.address,
-        buyTokenAddress: buyToken.address,
-        sellAmount: sellAmountRaw,
-        takerAddress: address,
-      });
-
-      if (!freshQuotes || freshQuotes.length === 0) {
-        throw new Error("No route available — please try again");
-      }
-
-      const freshQuote = freshQuotes[0];
-      setQuote(freshQuote);
-
-      // Build swap call from AVNU
-      const swapCall = await buildSwapCall({
-        quoteId: freshQuote.quoteId,
-        takerAddress: address,
-        slippage,
-      });
-
-      // Build approve call (AVNU router = swapCall.contractAddress)
-      const approveCall = buildApproveCall(
-        sellToken.address,
-        swapCall.contractAddress,
-        sellAmountRaw
+      // Build fresh calls from Ekubo (approve + swap) for the current input.
+      const prepared = await ekubo.prepareSwap(
+        buildRequest(sellToken, buyToken, sellAmountRaw, slippage, address)
       );
+      if (!prepared.calls.length) throw new Error("No route available — please try again");
 
       toast({
         title: "Confirm swap",
         description: `Swapping ${sellAmount} ${sellToken.symbol} → ${buyAmount} ${buyToken.symbol}`,
       });
 
-      const hash = await execute([approveCall, swapCall]);
+      const hash = await execute(prepared.calls);
       setTxHash(hash);
-      toast({
-        title: "Swap submitted",
-        description: "Your swap is being processed on-chain.",
-      });
+      toast({ title: "Swap submitted", description: "Your swap is being processed on-chain." });
 
-      // Reset sell amount after success
+      // Reset after success
       setSellAmountState("");
       setBuyAmount("");
       setQuote(null);
@@ -345,7 +330,7 @@ export function useSwap(): UseSwapReturn {
     } finally {
       setIsExecuting(false);
     }
-  }, [address, quote, sellToken, buyToken, sellAmount, buyAmount, sellAmountRaw, slippage, execute, toast]);
+  }, [address, sellToken, buyToken, sellAmount, buyAmount, sellAmountRaw, slippage, execute, toast]);
 
   return {
     sellToken,

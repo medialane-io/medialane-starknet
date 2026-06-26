@@ -320,13 +320,7 @@ export function SwapContent() {
                       />
                     )}
                     <RouteInfo label="Slippage tolerance" value="0.5%" />
-                    {swap.quote.routes?.length > 0 && (
-                      <RouteInfo
-                        label="Route"
-                        value={swap.quote.routes.map((r) => r.name).join(" → ")}
-                      />
-                    )}
-                    <RouteInfo label="Protocol" value="AVNU Exchange" />
+                    <RouteInfo label="Protocol" value="Ekubo" />
                   </div>
                 )}
               </div>
