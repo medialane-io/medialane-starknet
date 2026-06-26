@@ -106,7 +106,8 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
       style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
       className="relative z-0 min-h-screen"
     >
-      {/* Atmospheric blur background */}
+      {/* Atmospheric blur background — identical settings to the standard asset
+          pages' AssetAtmosphere (opacity-30, no color wash). */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         {bannerUrl && (
           <Image
@@ -115,15 +116,11 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
             aria-hidden
             fill
             sizes="100vw"
-            className="absolute inset-0 w-full h-full object-cover opacity-20 scale-110"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 scale-110"
             style={{ filter: "blur(60px) saturate(1.5)" }}
             unoptimized
           />
         )}
-        <div
-          className="absolute inset-0"
-          style={{ background: dynamicTheme ? `hsl(var(--dynamic-primary) / 0.08)` : "transparent" }}
-        />
       </div>
 
       {bannerUrl && (
