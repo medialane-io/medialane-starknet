@@ -14,6 +14,10 @@ Deploy and manage tokenized IP assets on-chain:
 - **Collection Drops** — ERC721 curated NFT launches with mint pages
 - **IP1155** — ERC1155 multi-edition IP tokens
 - **Proof of Purchase (POP)** — on-chain purchase receipts and access passes
+- **Creator Coins & Memecoins** — launch a standard ERC-20 paired with a permanently-locked Ekubo pool, or claim a coin you already launched on Starknet
+
+### Coins
+Discover creator coins and memecoins (`/coins`) and trade them on a built-in swap routed **directly on Ekubo** (no aggregator middleman) — quotes + execution via the StarkZap SDK, gas sponsored, non-custodial.
 
 ### NFT Marketplace
 The high-integrity exchange for all tokenized creator assets:

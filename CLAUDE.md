@@ -389,7 +389,7 @@ dialog set — the shared modules are presentation + derivation only. Use the
 
 ---
 
-## Creator Coin pages (added 2026-06-04; Coin/Collection split 2026-06-14, SDK 0.38)
+## Creator Coin pages (added 2026-06-04; Coin/Collection split 2026-06-14, SDK 0.38; design + Ekubo-swap pass 2026-06-26)
 
 A Creator Coin (and any `external-erc20`) is a **fungible `Coin`** — its **own model**, not a
 `Collection` (the 2026-06-14 split). It has no per-token `/asset/...` page and no `Token`/`Order`
@@ -414,9 +414,24 @@ rows. Coins are fetched from **`/v1/coins`** via the SDK's **`getCoins()` / `get
   on the `/coins/[address]` route (or as a fallback for an old `/collections/[coin]` link) and
   early-returns `<CoinPageClient coin={coin} />`. NFT collections take the normal path.
 - **`collections/[contract]/coin-page-client.tsx`** — `CoinPageClient({ coin }: { coin: ApiCoin })`:
-  live price card, supply/market-cap stats (no holders — coins are contract-level only), a
-  renounce + locked-LP trust strip (hidden for `external-erc20`), and an embedded **buy-swap**
-  (`CoinSwapCard`). Creator chip from `coin.creator`; image from `coin.image` (no profile).
+  identity over the image-blur backdrop (same `AssetAtmosphere` settings: `opacity-30`, no tint),
+  a brand-gradient-`Panel` live-price card with the price in `text-brand-orange`, supply/market-cap
+  stats, and an embedded **buy-swap** (`CoinSwapCard`). Stats render only when they resolve (no
+  empty `—` boxes). Deliberately NO benefit-tile copy, NO holders, NO `font-mono` (Inter only);
+  primary actions use `btn-border-animated` + a solid `bg-brand-*` fill (never a static gradient
+  fill / gradient-on-text). Creator chip from `coin.creator`; image from `coin.image`.
+- **`hooks/use-coin-supply.ts`** — reads the ERC-20 `total_supply()` on-chain (same provider/SWR
+  pattern as `use-coin-balance`) so Supply + Market Cap resolve for every coin, including external
+  ERC-20s the backend doesn't index. Caller hides the stat if the read returns nothing.
+- **Swap engine — Ekubo via StarkZap v3 (NO AVNU).** `hooks/use-swap.ts` routes swaps directly on
+  Ekubo through StarkZap's `EkuboSwapProvider` (`getQuote` → `prepareSwap` returns approve+swap
+  `Call[]` → executed via the unified wallet/paymaster, so EVERY wallet type works). `starkzap` is
+  on **3.0.0**; its barrel pulls optional provider peers (Solana/Tongo/Hyperlane/RN shims) which
+  `next.config.ts` stubs via `resolve.alias = false` (same approach as the Privy stubs). Pay-with
+  token presets live in `utils/swap-tokens.ts` (renamed from `avnu-swap.ts` — all AVNU REST code
+  deleted). The standalone `/swap` page is an experiment; it and the coin page share `use-swap`.
+  **The AVNU *Paymaster* (gas sponsorship) is unrelated and still in use** — do not confuse it with
+  the removed AVNU *swap aggregator*.
 - **`hooks/use-coin-price.ts`** — `useCoinPrice(coin)`: SWR over `getCreatorCoinPrice(coin,
   starknetProvider)` (30s, read-only). Ekubo price math lives in `@medialane/sdk` — never
   reimplement. Uses the failover-covered `starknetProvider` singleton (RPC path #1).
