@@ -143,7 +143,7 @@ export function AssetsGrid({ address }: AssetsGridProps) {
           tokenId={selectedToken.tokenId}
           tokenName={selectedToken.metadata?.name ?? undefined}
           tokenImage={selectedToken.metadata?.image ?? null}
-          tokenStandard={(selectedToken as any).standard}
+          tokenStandard={selectedToken.standard}
           onSuccess={handleSuccess}
         />
       )}
