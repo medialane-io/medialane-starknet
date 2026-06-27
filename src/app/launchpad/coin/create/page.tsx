@@ -34,7 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConnectGate } from "@/components/connect-gate";
-import { ServiceHeader } from "@medialane/ui";
+import { ServiceFormShell, StepNav } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { CreateCoinAside } from "@/components/claim/create-coin-aside";
 import { cn } from "@/lib/utils";
@@ -212,48 +212,37 @@ export default function CoinCreatePage() {
     );
   }
 
-  const stepTitle = step === 1 ? "Your coin" : step === 2 ? "Economics" : "Review & launch";
-
   return (
     <ConnectGate
       title="Connect wallet to launch a coin"
       subtitle="Connect your Starknet wallet to create a creator coin."
     >
-    <PageContainer className="box-border max-w-5xl pt-24 pb-8">
-      <ClaimBackButton />
-      <div className="mt-6">
-        <ServiceHeader
-          icon={<Coins className="h-4 w-4 text-white" />}
-          title="Design your Creator Coin"
-          subtitle="Give it a face, set the numbers, and launch — with liquidity locked forever."
-        />
-      </div>
-
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mt-6 mb-6">
-        {([1, 2, 3] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => { if (s < step || (s === 2 && identityValid) || (s === 3 && identityValid && economicsValid)) setStep(s); }}
-            className={cn(
-              "h-8 px-3 rounded-full text-xs font-semibold transition-colors",
-              s === step ? "bg-brand-rose/15 text-brand-rose" : "bg-muted/30 text-muted-foreground",
-            )}
-          >
-            {s}. {s === 1 ? "Your coin" : s === 2 ? "Economics" : "Launch"}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
-        <div className="lg:hidden space-y-4">
-          <CoinLaunchPreview data={previewData} />
-          <CreateCoinAside />
-        </div>
-
-        <div className="space-y-6 rounded-2xl border border-border/40 p-5 sm:p-6">
-          <h2 className="text-lg font-bold">{stepTitle}</h2>
+      <ServiceFormShell
+        icon={<Coins className="h-4 w-4 text-white" />}
+        title="Design your Creator Coin"
+        subtitle="Give it a face, set the numbers, and launch — with liquidity locked forever."
+        backSlot={<ClaimBackButton />}
+        aboveForm={
+          <StepNav
+            current={step}
+            onStep={(s) => setStep(s as StudioStep)}
+            accentText="text-brand-rose"
+            accentBg="bg-brand-rose"
+            steps={[
+              { label: "Your coin", reachable: true },
+              { label: "Economics", reachable: step >= 2 || identityValid },
+              { label: "Launch", reachable: step >= 3 || (identityValid && economicsValid) },
+            ]}
+          />
+        }
+        aside={
+          <>
+            <CoinLaunchPreview data={previewData} />
+            <CreateCoinAside />
+          </>
+        }
+      >
+        <div className="space-y-6">
 
           {step === 1 && (
             <>
@@ -450,13 +439,7 @@ export default function CoinCreatePage() {
             </>
           )}
         </div>
-
-        <div className="hidden lg:block sticky top-24 space-y-4">
-          <CoinLaunchPreview data={previewData} />
-          <CreateCoinAside />
-        </div>
-      </div>
-    </PageContainer>
+      </ServiceFormShell>
     </ConnectGate>
   );
 }
