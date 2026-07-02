@@ -44,6 +44,8 @@ const DAPP_OVERRIDES: ServiceOverrides = {
   "remix-asset": { href: "/marketplace" },
   "pop-protocol": { href: "/launchpad/pop/create", browseHref: "/launchpad/pop" },
   "collection-drop": { href: "/launchpad/drop/create", browseHref: "/launchpad/drop" },
+  "ip-tickets": { href: "/launchpad/tickets/create", browseHref: "/launchpad/tickets" },
+  "ip-club": { href: "/launchpad/club/create", browseHref: "/launchpad/club" },
   "ip-collection-1155": { href: "/launchpad/nfteditions/create" },
   "mint-editions": { href: "/launchpad/nfteditions" },
   "creator-coins": { href: "/launchpad/coin/create" },
