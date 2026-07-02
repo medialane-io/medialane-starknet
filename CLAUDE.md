@@ -76,7 +76,9 @@ active-wallet slot (`WalletProvider` + `useWallet()`):
    - **Static targets are exhaustively whitelisted** as of PRs #20 + #24 (2026-05-26): MIP registry, ERC-1155 factory, marketplace ×2, POP factory, Drop factory, NFTComments, three airdrop mint contracts. Whenever a new (target, method) is invoked on a static-address contract, **add it to `CARTRIDGE_POLICIES`** — Cartridge session-keys reject any call outside the list.
    - **Per-instance contracts are a structural gap**: per-collection NFT contracts (transfers, approves, mint_item), per-pop event contracts (claim), per-drop contracts (manage actions) all have dynamic addresses the static list cannot cover. Cartridge users hit "additional approval needed" prompts mid-flow for these. Three follow-up paths possible: route through registry wrappers (e.g. MIP `transfer_token`), add a runtime UX nudge, or use Cartridge SDK wildcard support if available.
    - **Audit methodology**: `grep -rEo 'entrypoint:\s*"[a-zA-Z_]+"' src/ | awk -F'"' '{print $2}' | sort -u` lists every called entrypoint. Diff against `CARTRIDGE_POLICIES`. Anything called on a static-address contract but not in the list is a silent-failure bug.
+   - **Cartridge needs its own RPC config — never the app's Lava pin** (`getCartridgeStarkZapSdk()` in `src/lib/starkzap.ts`, fixed 2026-07-02). `@cartridge/controller`'s chain-detector only recognizes RPC URLs whose *path* contains `starknet`/`mainnet` (its own hosted-RPC convention, `https://api.cartridge.gg/x/starknet/mainnet`) — our reliable Lava endpoint (`https://rpc.starknet.lava.build`, root path, no such segment) throws `Chain ... not supported` the instant `connectCartridge()` forwards it in. This broke Cartridge connect entirely for ~4 weeks (since the `ddb6484` Lava-pin fix) before being caught — the raw RPC URL leaked into a user-facing error banner and was shared on the public Starknet Telegram. Fixed with a **second, Cartridge-only StarkZap SDK instance** on StarkZap's `network: "mainnet"` preset (which resolves to Cartridge's hosted RPC); the main Lava-pinned singleton (`getStarkZapSdk()`) is untouched and still used for every other read/write. If StarkZap ever exposes a per-call rpcUrl override on `connectCartridge()`, this dual-instance workaround can collapse back to one.
 3. **Privy** — email/social login via StarkZap SDK (`OnboardStrategy.Privy`). Keys managed server-side; no seed phrase required. Requires the two Privy API routes.
+   - **`login()` failures must be caught** (fixed 2026-07-02, `privy-connector.tsx`): a blocked OAuth popup (Brave/Safari block by default) throws or rejects with zero visible UI change — previously unhandled, leaving the wallet button stuck as a permanently-disabled spinner ("authenticating" session state that never resolves). Now caught with a friendly "pop-up blocked" message plus a 45s timeout backstop.
 
 **Architecture — one active-wallet slot (redesigned 2026-06-07; spec:
 `docs/superpowers/specs/2026-06-07-wallet-layer-redesign-design.md`).** A single
@@ -161,6 +163,9 @@ Every page and component that prompts the user to connect renders the shared `<C
 - **Do NOT use `starknetkit`'s `useStarknetkitConnectModal`**. That path was removed across the launchpad pages, drop / pop mint flows, claim gate, and genesis mint. It silently auto-selected one wallet when only one connector was "available" — which masked extension-id rebrands (e.g. Ready X exposing `wallet.id = "ready"` instead of `"argentX"`) by falling through to Braavos with no picker.
 - **Pattern for "connect or block" UI**: render `<ConnectWallet label="Connect wallet" />` in the not-connected branch. For inline guards mid-flow (form submits, mint handlers), use `toast.error("Connect your wallet first")` and return — the persistent `<ConnectWallet />` button is still on the page.
 - **Ready / Argent connector** (`src/lib/starknet-connectors.ts`): `idResolvedReady()` constructs an `IdResolvedInjectedConnector("argentX", …, ["ready"])` — the alias list lets it discover extensions that expose under either id. The connector's external `id` stays `"argentX"` so backend `WalletType` attribution doesn't drift across the rebrand.
+- **Missing-extension UX** (fixed 2026-07-02): both connectors are always configured regardless of which extensions are actually installed, so clicking one with nothing installed was a guaranteed `ConnectorNotFoundError`. `ConnectWallet.tsx` now checks `connector.available()` (synchronous) at render time and shows an "Install {name}" link instead of a doomed button.
+- **Connect failures must reopen the dialog.** `handleCartridgeConnect`/the Privy button used to close the dialog immediately and let the error land only in session state — with the dialog already closed, the user never saw it (reported as "the button does nothing, zero feedback"). A `useEffect` on `sessionError` now reopens the dialog whenever a connect attempt fails, so the (friendly) error banner is actually visible.
+- **`getFriendlyWalletError` (`src/lib/wallet-error.ts`) must never leak a raw endpoint.** `looksTechnical()` flags any message containing `http(s)://` regardless of length — added 2026-07-02 after a raw `Chain https://rpc.starknet.lava.build/ not supported` message reached a user and got shared on the public Starknet Telegram. The final fallback message was also rewritten from a dead-end "Something went wrong" to an actionable one ("try again... try a different wallet or refresh the page").
 
 ### Onboarding — `/v1/users/register` via the BFF proxy (2026-05-27 incident note)
 
@@ -211,6 +216,22 @@ and splices the fee `Call` into `use-marketplace.ts` checkout and the
 drop-mint button. Fee is platform-layer only — never on-chain (`00 §12`).
 **Fail-safe:** no fund address ⇒ no fee. The dapp executes atomically
 (`account.execute` via AVNU), so a failed buy reverts the fee too.
+
+**Buyer must disclose price + fee, not just price** (fixed 2026-07-02). `checkoutCart()`
+bundles the fee as a *separate* ERC-20 `transfer()` call in the same multicall as
+`fulfill_order` — the buyer's wallet needs `price + fee` in raw balance, not just
+`price` (the marketplace's own escrow only pulls `price` via the approved allowance).
+`PurchaseDialog` used to show only the raw listing price, so a wallet funded to
+exactly that amount always failed the wallet's own pre-flight simulation before the
+user could even confirm (surfaced as Ready/Argent's "Transaction failure predicted /
+Argent multicall failed", reported on a live 4 STRK listing). `PurchaseDialog.tsx`
+now renders a `PriceBreakdown` (item price / platform fee / total due) so buyers see
+and fund the real required total. **Any other buy-side surface that calls
+`checkoutCart`** (e.g. `counter-offers-table.tsx`'s accept-offer flow — though there
+the fee is paid by the *seller* out of the just-received proceeds, in the same atomic
+call, not pre-funded — verify the ordering (`fulfillCalls` before `feeCalls`) is
+preserved before touching that sequence) should disclose the same breakdown if it
+shows a price to a wallet that has to pre-fund it.
 
 ## RPC resilience (added 2026-06-03)
 
