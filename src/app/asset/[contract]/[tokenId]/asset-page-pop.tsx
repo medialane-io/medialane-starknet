@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { Award, Users, Shield, CheckCircle2, ExternalLink, ChevronRight, Flag } from "lucide-react";
+import { Award, Users, Shield, CheckCircle2, ExternalLink, Flag } from "lucide-react";
 import { useToken } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
 import { usePopClaimStatus } from "@/hooks/use-pop";
@@ -45,14 +45,6 @@ export function AssetPagePop() {
       <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
-          <Link href="/launchpad/pop" className="hover:text-foreground transition-colors shrink-0">
-            POP Protocol
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-          <span className="text-foreground font-medium truncate">{name}</span>
-        </nav>
-
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
           <motion.div
             initial={shouldReduce ? false : { scale: 1.0, opacity: 0 }}

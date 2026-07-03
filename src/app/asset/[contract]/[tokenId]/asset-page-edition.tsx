@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { ChevronRight, Layers } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Layers } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
-import { useCollection } from "@/hooks/use-collections";
+import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
 import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
@@ -20,23 +19,27 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
+import { AssetCollectionBar, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
-import { AssetMarketplacePanel } from "./asset-marketplace-panel";
-import { AssetOwnersPanel, AssetLinksRow, AssetCommentsDialog } from "./asset-side-panels";
+import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
-import { AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "./asset-top-sections";
+import { ReportDialog } from "@/components/report-dialog";
+import { HelpIcon } from "@/components/ui/help-icon";
+import { ConnectWallet } from "@/components/ConnectWallet";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 
 export function AssetPageEdition() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
+  const router = useRouter();
   const { isConnected: isSignedIn, address: walletAddress } = useWallet();
   const { collection } = useCollection(contract);
   const { token: rawToken, isLoading } = useToken(contract, tokenId);
   const token = rawToken as AssetToken | null;
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
   const { history } = useTokenHistory(contract, tokenId);
+  const { tokens: collectionTokens } = useCollectionTokens(contract);
   const { acceptOffer, isProcessing } = useMarketplace();
   const shouldReduce = useReducedMotion();
 
@@ -60,6 +63,13 @@ export function AssetPageEdition() {
     await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
     mutateListings();
   };
+
+  // Most recent "sale" activity — `history`'s sort order isn't guaranteed, so
+  // pick the max-timestamp entry explicitly rather than assuming array order.
+  const lastSale = (history as ApiActivity[])
+    .filter((h) => h.type === "sale" && h.price?.formatted)
+    .reduce<ApiActivity | null>((latest, h) => (!latest || h.timestamp > latest.timestamp ? h : latest), null);
+  const lastSaleRaw = lastSale?.price ? `${lastSale.price.formatted} ${lastSale.price.currency ?? ""}`.trim() : null;
 
   if (isLoading) {
     return (
@@ -101,18 +111,10 @@ export function AssetPageEdition() {
       <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
-          <Link href={`/collections/${contract}`} className="hover:text-foreground transition-colors truncate max-w-[140px] shrink-0">
-            {collection?.name ?? contract.slice(0, 8) + "…"}
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-          <span className="text-foreground font-medium truncate">{name}</span>
-        </nav>
-
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
           <AssetMediaColumn
             shouldReduce={Boolean(shouldReduce)}
-            image={image}
+            image={image ?? ""}
             imageAlt={name}
             imgError={imgError}
             onImageError={() => setImgError(true)}
@@ -133,7 +135,6 @@ export function AssetPageEdition() {
             <AssetHeaderBlock
               name={name}
               description={description}
-              ipType={token.metadata?.ipType}
               showMultiEditionBadge={true}
             />
 
@@ -147,6 +148,17 @@ export function AssetPageEdition() {
               myListing={myListing}
               activeBids={activeBids}
               walletAddress={walletAddress}
+              floorPriceRaw={collection?.floorPrice}
+              lastSaleRaw={lastSaleRaw}
+              renderAuthAction={(label) => (
+                <div className="btn-border-animated p-[1px] rounded-2xl">
+                  <ConnectWallet
+                    label={label}
+                    className="w-full h-12 text-base bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                  />
+                </div>
+              )}
+              renderHelp={(content) => <HelpIcon content={content} side="top" />}
               onCancelClick={dialogs.handleCancelClick}
               onAcceptBid={handleAcceptClick}
               onOpenListing={() => dialogs.setListOpen(true)}
@@ -157,14 +169,25 @@ export function AssetPageEdition() {
 
             <AssetOwnersPanel balances={holders} maxVisible={8} />
 
-            <AssetLinksRow
-              contractHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+            <AssetCollectionBar
+              collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
+              collectionImage={collection?.image}
               collectionHref={`/collections/${contract}`}
-              collection={collection}
+              ipType={token.metadata?.ipType}
+              contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
               shareTitle={name}
-              reportTarget={{ type: "TOKEN", contract, tokenId, name }}
-              reportOpen={reportOpen}
-              onReportOpenChange={setReportOpen}
+              onReportClick={() => setReportOpen(true)}
+              currentTokenId={tokenId}
+              siblingTokens={collectionTokens.map((t) => ({
+                tokenId: t.tokenId,
+                image: t.metadata?.image ? ipfsToHttp(t.metadata.image) : null,
+              }))}
+              onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
+            />
+            <ReportDialog
+              target={{ type: "TOKEN", contract, tokenId, name }}
+              open={reportOpen}
+              onOpenChange={setReportOpen}
             />
           </motion.div>
         </div>
