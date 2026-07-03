@@ -486,9 +486,21 @@ The vivid primitives live in `@medialane/ui` (`ServiceHeader`, `ServiceFormShell
 (or `ServiceHeader` + `ClaimBackButton` for non-form pages), wrap the existing `<Form>` as
 `children`, add a `*-aside.tsx`, **de-animate the form's own submit button** (the
 compartment provides the border now — drop the `btn-border-animated` wrapper, use a solid
-`bg-*` button), and soften copy to plain language (no "IPFS"/"PIN"/"ERC-xxxx"; footers say
-"Free to publish/mint — no gas fees"). Keep all tx logic + dialogs + the page's
-`ConnectGate`/`WalletGate` untouched.
+`bg-*` button), and soften copy to plain language (no "IPFS"/"PIN"/"ERC-xxxx"). Keep all
+tx logic + dialogs + the page's `ConnectGate`/`WalletGate` untouched.
+
+**Footer copy — never claim free/sponsored gas (2026-07-03).** AVNU isn't currently
+sponsoring transactions on this dapp (tested working previously, not active now — no
+budget for it). Every real network transaction costs the connected wallet real gas
+unless/until that changes. Footers should say **"Free to publish/mint — no platform
+fee"** (true: Medialane doesn't charge a cut) — never "no gas fees" / "gas is free" /
+"gasless" / "sponsored", which are currently false and were removed from ~28 files
+across both apps in this pass (`getFriendlyWalletError` in `src/lib/wallet-error.ts`
+also got hardened the same session — see its own header comment). Cartridge/Privy
+"gasless" claims are equally false: their StarkZap-routed sponsorship depends on the
+exact same `NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY` (`isStarkZapSponsorshipEnabled()` in
+`src/lib/starkzap.ts`), not a separate always-on mechanism — don't reintroduce those
+claims either.
 
 **Applied to:** all claims (`/launchpad/memecoin` + `ClaimCollectionPanel`),
 `/create/{collection,asset}`, `/launchpad/nfteditions/{create,[contract]/mint}`,
@@ -500,6 +512,49 @@ and adds `ServiceHeader` + a `ClaimRail` (How it works + a "Locked forever" trus
 no `included`) under the preview. `ClaimCollectionPanel` gained an optional `helperText`
 prop (default unchanged) so `/launchpad/memecoin` shows coin-specific copy. Mirrors the
 medialane-io rollout end-to-end.
+
+### Launchpad grid: 5 groups + dynamic filter bar (2026-07-03, @medialane/ui ≥ 0.35.1)
+
+The `/launchpad` browse page (`LaunchpadGroupedSections` + `LaunchpadServiceCard` +
+`LaunchpadFilterBar`, all in `@medialane/ui`) was regrouped and made searchable —
+full design/plan history: `docs/superpowers/specs/2026-07-03-launchpad-grid-redesign-design.md`
++ `docs/superpowers/plans/2026-07-03-launchpad-grid-redesign.md`.
+
+- **5 groups, not 10** (`src/data/launchpad-services.ts`, `LAUNCHPAD_SERVICE_GROUPS`):
+  Single Edition (now includes Collection Drop + Remix Asset — same mechanical type,
+  one unique tradeable item), Limited Editions, Coins (absorbs Claim Memecoin),
+  Community (new — POP Protocol + IP Tickets + IP Club + IP Sponsorship, grouped by
+  audience/event intent, not mechanism), Claims. Adding a new service: pick one of
+  these 5 (or `coming-soon`) for its `group:` field — don't invent a new group without
+  updating `LAUNCHPAD_SERVICE_GROUPS` and confirming the fit with the user first.
+- **Cards are 3-per-row on desktop** (`lg:grid-cols-3`, was capped at 2) at a smaller,
+  denser size (`min-h-[200px]`, 2 feature chips shown, not 3; the `example`/"e.g. ..."
+  line was dropped from the card entirely — still in the data model for other
+  consumers, just not rendered here).
+- **`LaunchpadFilterBar`** (new component, exported from `@medialane/ui`) sits above
+  the grouped sections: a search input (matches title/blurb/subtitle) + multi-select
+  group pills + a live result count. State is lifted into `LaunchpadGroupedSections`
+  itself (not the filter bar) so the grid below reacts to the same query/activeGroups
+  state. Active pill = the brand gradient (`from-brand-purple to-brand-blue`), not
+  generic `bg-primary`. No "show coming soon" toggle — removed after shipping (no
+  `building`/`soon`-status services exist; it was pure noise). A "Browse services"
+  eyebrow label + top border separates the filter bar from the hero above it — no
+  filled background card (would clash with the cards' own aurora-glow treatment).
+- **`PopHowItWorks`** (the 3-step explainer column) now keys off the `community`
+  group and is additionally gated on POP actually being in the filtered set — if a
+  search/filter hides POP, the explainer hides with it.
+- Copy across several taglines was tightened after user review: no jargon (dropped
+  "ERC-721"/"soulbound" from the IP Tickets card), no sales-y phrasing ("who show up
+  for you" → plain feature list), Claims rewritten to cover all three claim types
+  (username / collection name / external collection) instead of reading as just
+  "claim your name".
+
+**Adding a new launchpad service:** add its `ServiceDefinition` to
+`LAUNCHPAD_SERVICE_DEFINITIONS` in `@medialane/ui`'s `src/data/launchpad-services.ts`
+with a `group:` from the 5 above, publish a new `@medialane/ui` version, bump both
+apps. No per-app wiring needed beyond `overrides` (href/browseHref/status) in each
+app's `launchpad-content.tsx` — the grid, grouping, and filter bar are entirely
+shared-package-driven.
 
 ### Standard form layout + UX conventions (2026-06-27, @medialane/ui ≥ 0.28.0)
 

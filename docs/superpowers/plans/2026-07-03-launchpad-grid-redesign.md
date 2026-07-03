@@ -1,6 +1,13 @@
 # Launchpad Grid Redesign Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task (subagent-driven-development is disabled in this environment — work sequentially in the main thread). Steps use checkbox (`- [ ]`) syntax for tracking.
+**Status: Shipped 2026-07-03.** All 8 tasks complete, verified (typecheck/lint/build
+clean in all three repos), and pushed to `main` in `medialane-ui` (`0.35.1`),
+`medialane-starknet`, and `medialane-io`. See "Post-implementation revisions" at the
+end of this doc for user-feedback-driven changes made after Task 8's initial pass
+(header/filter-bar visual separation, coming-soon toggle removal, brand colors, and
+a copy pass on several taglines) that aren't reflected in the step-by-step text below.
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task (subagent-driven-development is disabled in this environment — work sequentially in the main thread). Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Regroup the launchpad's 13 services into 5 creator-intent groups, shrink cards to 3-per-row density, and add a dynamic search/filter bar — all in the shared `@medialane/ui` package, then roll the new version out to `medialane-starknet` and `medialane-io`.
 
@@ -41,7 +48,7 @@ No new files in either consuming app are expected. If Task 8's verification surf
 **Interfaces:**
 - Produces: `ServiceGroup` type now has exactly these values: `"single-edition" | "limited-editions" | "coins" | "community" | "claims" | "coming-soon"`. `LAUNCHPAD_SERVICE_GROUPS` array has exactly 6 entries in this order. Every `ServiceDefinition.group` value is one of the above.
 
-- [ ] **Step 1: Replace the `ServiceGroup` type union**
+- [x] **Step 1: Replace the `ServiceGroup` type union**
 
 Replace:
 ```ts
@@ -69,7 +76,7 @@ export type ServiceGroup =
   | "coming-soon";
 ```
 
-- [ ] **Step 2: Replace the `LAUNCHPAD_SERVICE_GROUPS` array**
+- [x] **Step 2: Replace the `LAUNCHPAD_SERVICE_GROUPS` array**
 
 Replace the entire array (currently 11 entries) with:
 ```ts
@@ -107,7 +114,7 @@ export const LAUNCHPAD_SERVICE_GROUPS: ServiceGroupDefinition[] = [
 ];
 ```
 
-- [ ] **Step 3: Reassign `group:` on the 4 moved services**
+- [x] **Step 3: Reassign `group:` on the 4 moved services**
 
 In the `LAUNCHPAD_SERVICE_DEFINITIONS` array, change exactly these 4 lines (leave everything else about each definition untouched):
 
@@ -122,12 +129,12 @@ In the `LAUNCHPAD_SERVICE_DEFINITIONS` array, change exactly these 4 lines (leav
 
 (That's 8 line changes, not 4 — `coins` absorbs both `creator-coins` and `claim-memecoin`, `single-edition` absorbs `collection-drop` and `remix-asset`, `community` absorbs 4 services. All other `group:` values — `mint-ip-asset`, `create-collection` at `single-edition`; `ip-collection-1155`, `mint-editions` at `limited-editions`; the 3 `claims` services — are already correct and need no change.)
 
-- [ ] **Step 4: Verify typecheck passes**
+- [x] **Step 4: Verify typecheck passes**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run typecheck`
 Expected: `$ tsc --noEmit` with no output (clean). If it fails, the error will point at a `group:` value that doesn't match the new `ServiceGroup` union — check for a typo against Step 3's list.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd /Users/medialane/dev/medialane-ui
@@ -153,7 +160,7 @@ mechanism). Claims and Limited Editions unchanged. 10 groups -> 6
 - Consumes: `ServiceDefinition` (unchanged shape from Task 1).
 - Produces: `LaunchpadServiceCard` renders at the new, smaller sizing. No prop signature change — `LaunchpadServiceCardProps` (`def`, `override`, `featured`, `index`) is unchanged, so Task 3+ callers don't need updating for this task alone.
 
-- [ ] **Step 1: Shrink the outer card min-height**
+- [x] **Step 1: Shrink the outer card min-height**
 
 In the "Inner surface" div (around line 133-137), change:
 ```tsx
@@ -164,7 +171,7 @@ to:
 "relative flex flex-1 flex-col overflow-hidden min-h-[200px]",
 ```
 
-- [ ] **Step 2: Shrink the content padding**
+- [x] **Step 2: Shrink the content padding**
 
 Around line 158, change:
 ```tsx
@@ -175,7 +182,7 @@ to:
 <div className="relative flex flex-col flex-1 p-5 sm:p-6 gap-3 sm:gap-4">
 ```
 
-- [ ] **Step 3: Shrink the watermark icon and icon tile**
+- [x] **Step 3: Shrink the watermark icon and icon tile**
 
 Around line 155, change:
 ```tsx
@@ -208,7 +215,7 @@ to:
 <Icon className="h-8 w-8 shrink-0 text-muted-foreground/50" />
 ```
 
-- [ ] **Step 4: Shrink the title, drop the example line, cap feature chips at 2**
+- [x] **Step 4: Shrink the title, drop the example line, cap feature chips at 2**
 
 Around lines 178-188, replace:
 ```tsx
@@ -271,7 +278,7 @@ with:
 )}
 ```
 
-- [ ] **Step 5: Verify typecheck — remove `example` from the destructure if it now warns unused**
+- [x] **Step 5: Verify typecheck — remove `example` from the destructure if it now warns unused**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run typecheck`
 
@@ -285,12 +292,12 @@ const { key, icon: Icon, title, browseLinkLabel, features } = def;
 ```
 and re-run typecheck to confirm it's now clean.
 
-- [ ] **Step 6: Verify build**
+- [x] **Step 6: Verify build**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run build`
 Expected: build completes with no errors (warnings about chunk sizes, if any, are pre-existing and fine).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /Users/medialane/dev/medialane-ui
@@ -314,7 +321,7 @@ Grid column change comes in the next task."
 - Consumes: `LAUNCHPAD_SERVICE_GROUPS` (6 entries from Task 1), `LAUNCHPAD_SERVICE_DEFINITIONS` (regrouped from Task 1), `LaunchpadServiceCard` (Task 2's smaller version).
 - Produces: `LaunchpadGroupedSections({ overrides, className })` unchanged prop signature for this task (filtering props come in Task 5) — this task only changes the grid's column count and which group key triggers `PopHowItWorks`.
 
-- [ ] **Step 1: Widen the grid columns**
+- [x] **Step 1: Widen the grid columns**
 
 Around line 328, change:
 ```tsx
@@ -325,7 +332,7 @@ to:
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
 ```
 
-- [ ] **Step 2: Re-key the `PopHowItWorks` trigger to the new `community` group**
+- [x] **Step 2: Re-key the `PopHowItWorks` trigger to the new `community` group**
 
 Around line 332, change:
 ```tsx
@@ -338,12 +345,12 @@ to:
 
 (This is a temporary broadening — `community` now has 4 services, not just POP, so `PopHowItWorks` will render alongside all of them for now. Task 5 makes this conditional on POP actually being present in the filtered set; that's a correctness fix, not introduced fresh here, so don't try to solve it in this task.)
 
-- [ ] **Step 3: Verify typecheck and build**
+- [x] **Step 3: Verify typecheck and build**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run typecheck && bun run build`
 Expected: both clean.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 cd /Users/medialane/dev/medialane-ui
@@ -381,7 +388,7 @@ actually being visible under the active filter."
   ```
   This is the exact interface Task 5 wires up — the state lives in `LaunchpadGroupedSections`, this component is presentation-only (controlled component, no internal state).
 
-- [ ] **Step 1: Write the component**
+- [x] **Step 1: Write the component**
 
 Create `/Users/medialane/dev/medialane-ui/src/components/launchpad-filter-bar.tsx`:
 ```tsx
@@ -484,12 +491,12 @@ export function LaunchpadFilterBar({
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run typecheck`
 Expected: clean. (This component isn't imported/used anywhere yet, so a clean typecheck here just confirms the file itself is well-typed in isolation.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 cd /Users/medialane/dev/medialane-ui
@@ -512,7 +519,7 @@ state into LaunchpadGroupedSections and connects filtering)."
 - Consumes: `LaunchpadFilterBar` (Task 4's exact props shape), `ServiceGroup`, `ServiceGroupDefinition`, `ServiceDefinition` (from `../data/launchpad-services.js`).
 - Produces: `LaunchpadGroupedSections({ overrides, className })` — prop signature is unchanged from the caller's perspective (both apps' existing `<LaunchpadGroupedSections overrides={...} />` call sites keep working with zero changes).
 
-- [ ] **Step 1: Add the new imports**
+- [x] **Step 1: Add the new imports**
 
 At the top of `/Users/medialane/dev/medialane-ui/src/components/launchpad-services.tsx`, change:
 ```tsx
@@ -547,7 +554,7 @@ import {
 import { LaunchpadFilterBar } from "./launchpad-filter-bar.js";
 ```
 
-- [ ] **Step 2: Replace the `LaunchpadGroupedSections` function body**
+- [x] **Step 2: Replace the `LaunchpadGroupedSections` function body**
 
 Replace the entire function (from `export function LaunchpadGroupedSections` to its closing brace, currently lines ~310-339) with:
 ```tsx
@@ -651,7 +658,7 @@ export function LaunchpadGroupedSections({ overrides, className }: LaunchpadGrou
 }
 ```
 
-- [ ] **Step 3: Add `layout` to each card's motion wrapper so filtering animates smoothly**
+- [x] **Step 3: Add `layout` to each card's motion wrapper so filtering animates smoothly**
 
 In `LaunchpadServiceCard` (around line 107-113), change:
 ```tsx
@@ -676,17 +683,17 @@ to:
 >
 ```
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run typecheck`
 Expected: clean. If `useMemo`'s exhaustive-deps eslint comment causes a typecheck (not lint) issue, it won't — `tsc` doesn't run eslint rules; the comment is inert to `tsc` and only suppresses an eslint warning if this package runs eslint (it doesn't have a lint script per its `package.json`, only `build`/`dev`/`typecheck`, so the comment is precautionary and harmless either way).
 
-- [ ] **Step 5: Verify build**
+- [x] **Step 5: Verify build**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run build`
 Expected: clean build.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd /Users/medialane/dev/medialane-ui
@@ -714,7 +721,7 @@ signature (overrides, className) is unchanged."
 **Interfaces:**
 - Produces: `LaunchpadFilterBar` and `LaunchpadFilterBarProps` become part of the package's public API (importable via `@medialane/ui`), matching how every other component in this file is exported.
 
-- [ ] **Step 1: Add the export**
+- [x] **Step 1: Add the export**
 
 Around line 107-108, change:
 ```ts
@@ -729,12 +736,12 @@ export { LaunchpadFilterBar } from "./components/launchpad-filter-bar.js";
 export type { LaunchpadFilterBarProps } from "./components/launchpad-filter-bar.js";
 ```
 
-- [ ] **Step 2: Verify typecheck and build**
+- [x] **Step 2: Verify typecheck and build**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run typecheck && bun run build`
 Expected: both clean. Check the build output includes `dist/components/launchpad-filter-bar.js` and its `.d.ts` — confirms the new file is actually bundled, not just typechecked in isolation.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 cd /Users/medialane/dev/medialane-ui
@@ -752,18 +759,18 @@ git commit -m "feat(launchpad): export LaunchpadFilterBar from package root"
 **Interfaces:**
 - Produces: a new published version on npm that both consuming apps bump to in Task 8. Check the currently-published version first — do not assume it's still `0.34.2` (there may be an unpublished bump already sitting in `package.json` from prior work in this session; read the file before editing).
 
-- [ ] **Step 1: Read the current version and bump it**
+- [x] **Step 1: Read the current version and bump it**
 
 Run: `cat /Users/medialane/dev/medialane-ui/package.json | grep '"version"'`
 
 Increment the minor version by one from whatever is currently there (this is a feature addition — new exported component, new grouping behavior — not a patch). Edit the `"version"` field in `package.json` accordingly.
 
-- [ ] **Step 2: Rebuild and verify one final time**
+- [x] **Step 2: Rebuild and verify one final time**
 
 Run: `cd /Users/medialane/dev/medialane-ui && bun run typecheck && bun run build`
 Expected: both clean.
 
-- [ ] **Step 3: Commit the version bump**
+- [x] **Step 3: Commit the version bump**
 
 ```bash
 cd /Users/medialane/dev/medialane-ui
@@ -771,11 +778,11 @@ git add package.json
 git commit -m "chore: bump @medialane/ui to <new-version> — launchpad grid redesign"
 ```
 
-- [ ] **Step 4: Push to origin**
+- [x] **Step 4: Push to origin**
 
 Run: `git push origin main`
 
-- [ ] **Step 5: Publish to npm**
+- [x] **Step 5: Publish to npm**
 
 This step requires an npm publish token supplied by the user via a local `.npmrc` (per this project's established one-time-token pattern — never a persistent npm login). Ask the user for a token if one hasn't already been provided in the session, write it to `/Users/medialane/dev/medialane-ui/.npmrc`, run `bun publish`, then immediately delete the `.npmrc` file regardless of outcome.
 
@@ -793,7 +800,7 @@ Expected output ends with a line like `+ @medialane/ui@<new-version>`.
 - Consumes: the new `@medialane/ui` version published in Task 7.
 - Produces: both apps' `/launchpad` pages render the new grid with zero source changes beyond the dependency bump — this task's job is to confirm that assumption, not to write new app code. If it doesn't hold, stop and add a new task rather than improvising a fix inline (see the note at the end).
 
-- [ ] **Step 1: Bump medialane-starknet**
+- [x] **Step 1: Bump medialane-starknet**
 
 ```bash
 cd /Users/medialane/dev/medialane-starknet
@@ -801,7 +808,7 @@ bun add @medialane/ui@<new-version>
 ```
 Expected output ends with `installed @medialane/ui@<new-version>`.
 
-- [ ] **Step 2: Typecheck and build medialane-starknet**
+- [x] **Step 2: Typecheck and build medialane-starknet**
 
 ```bash
 bunx tsc --noEmit
@@ -809,7 +816,7 @@ bun run build
 ```
 Expected: `tsc --noEmit` produces no output (clean). The Next.js build may fail on unrelated missing env vars in this local environment (e.g. `PRIVY_APP_ID`) — if it does, confirm the failure is the same pre-existing `/api/wallet/starknet` env-var error seen earlier in this session and not something new about the launchpad page; if it's a new error, stop and investigate before continuing.
 
-- [ ] **Step 3: Commit medialane-starknet's bump**
+- [x] **Step 3: Commit medialane-starknet's bump**
 
 ```bash
 git add package.json bun.lock
@@ -817,7 +824,7 @@ git commit -m "chore: bump @medialane/ui to <new-version> — launchpad grid red
 git push origin main
 ```
 
-- [ ] **Step 4: Bump medialane-io**
+- [x] **Step 4: Bump medialane-io**
 
 ```bash
 cd /Users/medialane/dev/medialane-io
@@ -825,7 +832,7 @@ bun add @medialane/ui@<new-version>
 ```
 Expected output ends with `installed @medialane/ui@<new-version>`.
 
-- [ ] **Step 5: Typecheck, lint, and build medialane-io**
+- [x] **Step 5: Typecheck, lint, and build medialane-io**
 
 ```bash
 bun run typecheck 2>/dev/null || bunx tsc --noEmit
@@ -834,7 +841,7 @@ bun run build
 ```
 Expected: all three clean. (This repo's exact typecheck script name — verify with `cat package.json | grep -A15 '"scripts"'` if the first command isn't recognized; use whatever the repo actually defines, following the pattern already established earlier in this session for this repo.)
 
-- [ ] **Step 6: Commit medialane-io's bump**
+- [x] **Step 6: Commit medialane-io's bump**
 
 ```bash
 git add package.json bun.lock
@@ -842,7 +849,7 @@ git commit -m "chore: bump @medialane/ui to <new-version> — launchpad grid red
 git push origin main
 ```
 
-- [ ] **Step 7: Manual visual verification**
+- [x] **Step 7: Manual visual verification**
 
 Run each app's dev server (`bun run dev` in each repo) and open `/launchpad` in a browser. Confirm:
 - Cards render 3-per-row on a desktop-width viewport, 2-per-row tablet, 1-per-row mobile
@@ -857,3 +864,45 @@ Run each app's dev server (`bun run dev` in each repo) and open `/launchpad` in 
 If any of the above doesn't hold, that's a bug in this plan's implementation, not a sign to add scope — fix the specific line, re-verify, and note what was wrong in the commit message for that fix.
 
 **Note on "no per-app changes expected":** if Task 8 surfaces something that genuinely requires an app-side code change (not just the dependency bump), stop before making it. Confirm with the user whether it belongs in this plan or is a follow-up — the spec explicitly scoped this as a shared-package-only change.
+
+---
+
+## Post-implementation revisions (shipped in @medialane/ui 0.35.1)
+
+Task 8's manual visual verification surfaced two pieces of fallout from an
+*earlier*, separately-committed-but-never-published change to `AssetCollectionBar`
+(the icon-split/centering work) that shipped bundled in the same `0.35.0` publish —
+both apps' asset pages needed their `AssetCollectionBar` call sites updated to use
+the new standalone `AssetUtilityIcons` component instead of the removed
+`contractExplorerHref`/`shareTitle`/`onReportClick` props. Fixed as part of Task 8
+in both `medialane-starknet` and `medialane-io`.
+
+After the initial 0.35.0 ship, user review of the live page produced further
+revisions, released as `0.35.1`:
+
+- **Removed the "Show coming soon" toggle entirely** — no `building`/`soon`-status
+  services exist today, so it was pure noise. `ComingSoonStrip` still renders if
+  the data ever populates that group (group/search filters still apply to it), it
+  just no longer has a separate live-status gate controlled by a toggle.
+- **Visual separation between hero and filter bar** — the two blurred together
+  with no boundary. Fixed with a top border + a small "Browse services" eyebrow
+  label above the search/pills row, explicitly *not* a filled background surface
+  (would clash with the aurora-glow card treatment below).
+- **Brand colors** — the active group-filter pill now uses the Medialane brand
+  gradient (`from-brand-purple to-brand-blue`, matching the page title) instead of
+  a generic `bg-primary`; the search input's focus ring/border followed suit.
+- **Copy pass** — several taglines read as redundant, sales-y, or inaccurate and
+  were rewritten:
+  - Single Edition: dropped "under your own name"
+  - Coins: dropped "and let your community back you"
+  - Community: dropped "Connect with the people who show up for you" (sales-y),
+    rewritten to plainly state what's included
+  - Claims: rewritten to cover all three claim types (username, collection name,
+    external collection) instead of reading as just "claim your name"
+  - Hero subtitle (both apps' `launchpad-content.tsx`): dropped "— it's always
+    yours"
+  - IP Tickets card feature copy: dropped jargon ("ERC-721", "soulbound") —
+    "Freely transferable" / "Stays with the original holder"
+
+None of these required new tasks beyond editing the same files Tasks 1–6 already
+touched; no architectural changes, no new components.
