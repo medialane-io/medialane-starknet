@@ -106,6 +106,21 @@ export function getFriendlyWalletError(error: unknown): FriendlyWalletError {
     };
   }
 
+  // Wallet-API spec's own generic placeholder (code 163, e.g. thrown by Ready
+  // mobile's in-app browser wallet when its internal execute call fails for
+  // an unspecified reason). It's short and contains none of the
+  // `looksTechnical` signals, so without this it fell through to the raw
+  // passthrough below and showed the literal "An error occurred
+  // (UNKNOWN_ERROR)" string verbatim — meaningless and alarming to a user.
+  if (/unknown_error/i.test(raw) || (typeof error === "object" && error !== null && (error as { code?: unknown }).code === 163)) {
+    return {
+      title: "Something went wrong",
+      message:
+        "Your wallet couldn't complete this transaction. Nothing was submitted — please try again, or try a different wallet or device if it keeps happening.",
+      isUserRejection: false,
+    };
+  }
+
   // Anything that looks like a raw RPC / serialization blob must never reach
   // the user — the full technical detail is already logged to the console by
   // the caller. Short, human-readable messages (e.g. app-thrown validation or
