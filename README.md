@@ -15,6 +15,9 @@ Deploy and manage tokenized IP assets on-chain:
 - **IP1155** — ERC1155 multi-edition IP tokens
 - **Proof of Purchase (POP)** — on-chain purchase receipts and access passes
 - **Creator Coins & Memecoins** — launch a standard ERC-20 paired with a permanently-locked Ekubo pool, or claim a coin you already launched on Starknet
+- **IP Tickets** — sell redeemable, tradeable ERC-721 tickets for events and access
+- **IP Club** — membership clubs with a non-transferable, soulbound NFT membership card
+- **IP Sponsorship** — sell a direct-settlement sponsorship license on an asset you own, no escrow
 
 ### Coins
 Discover creator coins and memecoins (`/coins`) and trade them on a built-in swap routed **directly on Ekubo** (no aggregator middleman) — quotes + execution via the StarkZap SDK, gas sponsored, non-custodial.
@@ -99,6 +102,12 @@ No Clerk. No ChipiPay. Disconnect: `const { disconnect } = useUnifiedWallet()`.
 | `/launchpad/ip1155/create` | Deploy new ERC1155 collection |
 | `/launchpad/ip1155/[contract]/mint` | ERC1155 mint page |
 | `/launchpad/pop/[contract]` | Proof of Purchase page |
+| `/launchpad/tickets` | IP Tickets browse |
+| `/launchpad/tickets/create` | Deploy a ticket collection |
+| `/launchpad/tickets/[contract]` | Ticket collection detail + mint |
+| `/launchpad/club` | IP Club browse |
+| `/launchpad/club/create` | Create a membership club |
+| `/launchpad/sponsorship` | IP Sponsorship browse + create offer |
 | `/create` | Asset creation hub |
 | `/asset/[contract]/[tokenId]` | Token detail + buy/offer/remix |
 | `/collections/[contract]` | Collection detail |
