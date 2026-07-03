@@ -19,7 +19,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { AssetCollectionBar, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
@@ -132,12 +132,19 @@ export function AssetPageEdition() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-6"
           >
-            <AssetHeaderBlock
-              name={name}
-              description={description}
-              ipType={token.metadata?.ipType}
-              showMultiEditionBadge={true}
-            />
+            <div className="flex items-start justify-between gap-3">
+              <AssetHeaderBlock
+                name={name}
+                description={description}
+                ipType={token.metadata?.ipType}
+                showMultiEditionBadge={true}
+              />
+              <AssetUtilityIcons
+                contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+                shareTitle={name}
+                onReportClick={() => setReportOpen(true)}
+              />
+            </div>
 
             <AssetMarketplacePanel
               cheapest={cheapest}
@@ -174,9 +181,6 @@ export function AssetPageEdition() {
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
               collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
               collectionHref={`/collections/${contract}`}
-              contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
-              shareTitle={name}
-              onReportClick={() => setReportOpen(true)}
               currentTokenId={tokenId}
               siblingTokens={collectionTokens.map((t) => ({
                 tokenId: t.tokenId,

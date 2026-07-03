@@ -21,7 +21,7 @@ import { useDominantColor } from "@/hooks/use-dominant-color";
 import { ParentAttributionBanner } from "@/components/asset/remixes-tab";
 import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AssetCollectionBar, AssetMarketplacePanel, AssetMediaColumn } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetCommentsDialog } from "./asset-side-panels";
@@ -235,15 +235,24 @@ export function AssetPageDrop() {
                   <ParentAttributionBanner parentContract={parentContract} parentTokenId={parentTokenId} parentName={`Token #${parentTokenId}`} />
                 </div>
               )}
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                {token.metadata?.ipType && <IpTypeBadge ipType={token.metadata.ipType} size="md" />}
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-500">
-                  <Package className="h-3 w-3" />
-                  Collection Drop
-                </span>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    {token.metadata?.ipType && <IpTypeBadge ipType={token.metadata.ipType} size="md" />}
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-500">
+                      <Package className="h-3 w-3" />
+                      Collection Drop
+                    </span>
+                  </div>
+                  <h1 className="text-3xl lg:text-5xl font-bold">{name}</h1>
+                  {description && <p className="text-sm text-muted-foreground leading-relaxed mt-1">{description}</p>}
+                </div>
+                <AssetUtilityIcons
+                  contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+                  shareTitle={name}
+                  onReportClick={() => setReportOpen(true)}
+                />
               </div>
-              <h1 className="text-3xl lg:text-5xl font-bold">{name}</h1>
-              {description && <p className="text-sm text-muted-foreground leading-relaxed mt-1">{description}</p>}
             </div>
 
             {dropState?.conditions && (
@@ -285,9 +294,6 @@ export function AssetPageDrop() {
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
               collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
               collectionHref={`/collections/${contract}`}
-              contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
-              shareTitle={name}
-              onReportClick={() => setReportOpen(true)}
               currentTokenId={tokenId}
               siblingTokens={collectionTokens.map((t) => ({
                 tokenId: t.tokenId,

@@ -20,7 +20,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useDominantColor } from "@/hooks/use-dominant-color";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { AssetCollectionBar, AssetMarketplacePanel, AssetHeaderBlock } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
@@ -192,15 +192,22 @@ export function AssetPageStandard() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-6"
           >
-            <AssetHeaderBlock
-              name={name}
-              description={description}
-              ipType={token.metadata?.ipType}
-              showMultiEditionBadge={Boolean(isERC1155)}
-              parentContract={parentContract}
-              parentTokenId={parentTokenId}
-              ownerAddress={!isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null}
-            />
+            <div className="flex items-start justify-between gap-3">
+              <AssetHeaderBlock
+                name={name}
+                description={description}
+                ipType={token.metadata?.ipType}
+                showMultiEditionBadge={Boolean(isERC1155)}
+                parentContract={parentContract}
+                parentTokenId={parentTokenId}
+                ownerAddress={!isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null}
+              />
+              <AssetUtilityIcons
+                contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+                shareTitle={name}
+                onReportClick={() => setReportOpen(true)}
+              />
+            </div>
 
             <AssetMarketplacePanel
               cheapest={cheapest}
@@ -246,9 +253,6 @@ export function AssetPageStandard() {
                 collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
                 collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
                 collectionHref={`/collections/${contract}`}
-                contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
-                shareTitle={name}
-                onReportClick={() => setReportOpen(true)}
                 currentTokenId={tokenId}
                 siblingTokens={collectionTokens.map((t) => ({
                   tokenId: t.tokenId,
