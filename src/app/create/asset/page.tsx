@@ -680,7 +680,7 @@ export default function CreateAssetPage() {
               Mint asset
             </button>
             <p className="text-xs text-center text-muted-foreground">
-              Free to mint — no gas fees.
+              Zero platform fees to mint.
             </p>
           </form>
         </Form>

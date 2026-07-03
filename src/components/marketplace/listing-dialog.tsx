@@ -217,7 +217,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                     <div className="flex items-start justify-center gap-1.5">
                       <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                       <p className="text-[10px] text-center text-muted-foreground">
-                        Listings are signed onchain and can be cancelled from your portfolio at any time. Gas is sponsored when available.
+                        You can cancel your listing from your portfolio anytime.
                       </p>
                     </div>
                   </div>

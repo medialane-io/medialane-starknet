@@ -17,7 +17,7 @@ export function CreateClubAside() {
       ]}
       trustIcon={Gift}
       trustLead="You keep the proceeds."
-      trust="Entry fees flow directly to your wallet — Medialane never takes custody."
+      trust="Entry fees flow directly to your own wallet, instantly."
     />
   );
 }

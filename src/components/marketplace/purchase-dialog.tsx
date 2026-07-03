@@ -385,7 +385,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                   <div className="flex items-start justify-center gap-1.5">
                       <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                       <p className="text-[10px] text-center text-muted-foreground">
-                      The asset transfers atomically after your wallet confirms the trade. Gas is sponsored when available.
+                      Your asset arrives the moment your wallet confirms the trade.
                     </p>
                   </div>
                 </div>

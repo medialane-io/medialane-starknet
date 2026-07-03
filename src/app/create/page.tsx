@@ -29,8 +29,8 @@ export const metadata: Metadata = {
 const FEATURES = [
   {
     icon: Zap,
-    title: "Frictionless Web3",
-    body: "Gasless transactions and invisible wallets with Google login powered by StarknetKit. Zero crypto knowledge required.",
+    title: "Simple sign-in",
+    body: "Sign in with Google — no wallet to set up, no crypto knowledge needed.",
     accent: "from-yellow-400 to-orange-400",
     border: "border-yellow-500/20",
     bg: "bg-yellow-500/5",
@@ -181,7 +181,7 @@ export default function CreatePage() {
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
-            Unique monetization services — gasless, global, and truly yours on Starknet.
+            Unique monetization services — global, and truly yours on Starknet.
           </p>
         </div>
 
@@ -260,9 +260,9 @@ export default function CreatePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 sm:gap-8">
             {[
               { value: "181", label: "Countries protected" },
-              { value: "Free", label: "to mint & list" },
-              { value: "Gas-free", label: "transactions" },
-              { value: "On-chain", label: "royalties & licensing" },
+              { value: "Zero fees", label: "to mint & list" },
+              { value: "Direct", label: "to your wallet" },
+              { value: "Programmable", label: "royalties & licensing" },
             ].map(({ value, label }) => (
               <div key={label} className="text-center space-y-1">
                 <p className="text-2xl sm:text-3xl font-black text-foreground">{value}</p>

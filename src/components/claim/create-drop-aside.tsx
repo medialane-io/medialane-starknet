@@ -13,11 +13,11 @@ export function CreateDropAside() {
       steps={[
         "Add your items and details",
         "Set the price and mint window",
-        "Launch it — it's free",
+        "Launch it — zero platform fees",
       ]}
       trustIcon={Gift}
-      trustLead="It's yours, free."
-      trust="You own the drop — Medialane never takes custody, and there are no fees to launch."
+      trustLead="Zero platform fees."
+      trust="You own the drop, fully and directly — zero platform fees to launch."
     />
   );
 }

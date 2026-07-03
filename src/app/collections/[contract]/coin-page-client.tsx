@@ -585,7 +585,7 @@ function CoinSwapCard({
       {/* Friendly trust footer (matches the offer-dialog microcopy pattern) */}
       <p className="flex items-start justify-center gap-1.5 pt-0.5 text-center text-[10px] leading-relaxed text-muted-foreground/70">
         <ShieldCheck className="h-3 w-3 shrink-0 mt-0.5" />
-        Held in your own wallet · settles on a public pool · gas sponsored by Medialane
+        Held in your own wallet · settles on a public pool via Ekubo
       </p>
       </div>
     </Panel>

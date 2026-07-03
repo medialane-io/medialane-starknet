@@ -15,8 +15,8 @@ export function ClaimMemecoinAside() {
         "We check on-chain that you own it",
         "After a quick review, it goes live",
       ]}
-      trustLead="Non-custodial."
-      trust="Medialane never takes custody of your coin — claiming just links it to your account."
+      trustLead="Stays in your wallet."
+      trust="Your coin stays in your own wallet the whole time — claiming just links it to your account."
     />
   );
 }

@@ -95,7 +95,7 @@ function getWalletBadge(
       label: "Cartridge",
       icon: <Gamepad2 className="h-3 w-3" />,
       className: "border-purple-500/30 text-purple-400 bg-purple-500/5",
-      hint: "Auto-gasless",
+      hint: "Instant setup",
     };
   }
   if (walletType === "privy") {
@@ -103,7 +103,7 @@ function getWalletBadge(
       label: "Social Login",
       icon: <Mail className="h-3 w-3" />,
       className: "border-blue-500/30 text-blue-400 bg-blue-500/5",
-      hint: "Gasless",
+      hint: "No setup needed",
     };
   }
   // argent / braavos are injected browser wallets — same badge as a generic
@@ -529,7 +529,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 Cartridge Controller
               </p>
               <p className="text-xs text-muted-foreground mb-2">
-                Gaming wallet · auto-gasless transactions
+                Gaming wallet · ready in seconds
               </p>
               <Button
                 variant="outline"

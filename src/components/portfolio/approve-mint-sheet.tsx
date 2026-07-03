@@ -293,7 +293,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
                 {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <GitBranch className="h-4 w-4 mr-2" />}
                 Grant license & mint
               </Button>
-              <p className="text-xs text-center text-muted-foreground">Grant the license: mint the derivative and list it for the requester. One transaction. Gas is sponsored.</p>
+              <p className="text-xs text-center text-muted-foreground">Grant the license: mint the derivative and list it for the requester, in one step.</p>
             </div>
           )}
         </SheetContent>

@@ -5,12 +5,12 @@ import { canonical } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "Medialane — Creator Launchpad + NFT Marketplace",
   description:
-    "Mint, license, and trade intellectual property as NFTs on Starknet. Free to mint. Gas-free trading. Programmable royalties.",
+    "Mint, license, and trade intellectual property as NFTs on Starknet. Zero platform fees to mint. Programmable royalties.",
   alternates: canonical("/"),
   openGraph: {
     title: "Medialane — Creator Launchpad + NFT Marketplace",
     description:
-      "Mint, license, and trade intellectual property as NFTs on Starknet. Free to mint. Gas-free trading. Programmable royalties.",
+      "Mint, license, and trade intellectual property as NFTs on Starknet. Zero platform fees to mint. Programmable royalties.",
     type: "website",
     url: "/",
   },

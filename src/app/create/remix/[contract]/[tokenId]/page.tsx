@@ -594,7 +594,7 @@ export default function CreateRemixPage() {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Two operations: IPFS metadata upload + on-chain mint. Gas is free.
+              Zero platform fees — your remix uploads and mints in one step.
             </p>
           </div>
 

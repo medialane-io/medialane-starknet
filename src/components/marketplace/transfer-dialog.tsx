@@ -228,7 +228,7 @@ export function TransferDialog({
                     )}
                   </Button>
                   <p className="text-[10px] text-center text-muted-foreground">
-                    Gas is free. Your PIN authorises the transfer.
+                    Confirm in your wallet to complete the transfer.
                   </p>
                 </form>
               </Form>

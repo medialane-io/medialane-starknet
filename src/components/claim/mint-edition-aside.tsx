@@ -13,11 +13,11 @@ export function MintEditionAside() {
       steps={[
         "Add the piece's details and image",
         "Choose how many editions",
-        "Mint it — it's free",
+        "Mint it — zero platform fees",
       ]}
       trustIcon={Gift}
-      trustLead="It's yours, free."
-      trust="You keep full ownership — Medialane never takes custody, and there are no fees to mint."
+      trustLead="Zero platform fees."
+      trust="You keep full ownership, fully and directly — zero platform fees to mint."
     />
   );
 }

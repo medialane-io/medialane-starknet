@@ -211,13 +211,13 @@ export function SwapContent() {
         <div className="text-center space-y-2 max-w-xs">
           <h1 className="text-2xl font-bold">Swap tokens</h1>
           <p className="text-muted-foreground text-sm">
-            Connect your wallet to swap ETH, STRK, USDC, USDT and more — all gas fees sponsored by Medialane.
+            Connect your wallet to swap ETH, STRK, USDC, USDT and more.
           </p>
         </div>
         <ConnectWallet />
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <Zap className="h-3 w-3 text-primary" />
-          Gas-free swaps powered by AVNU
+          Powered by Ekubo via AVNU
         </p>
       </div>
     );
@@ -236,7 +236,7 @@ export function SwapContent() {
           <h1 className="text-2xl font-bold">Exchange tokens</h1>
           <p className="text-sm text-muted-foreground flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
-            Gas fees sponsored by Medialane via AVNU
+            Swaps route through Ekubo via AVNU
           </p>
         </div>
 
@@ -386,7 +386,6 @@ export function SwapContent() {
         <p className="text-center text-xs text-muted-foreground pt-2">
           Prices and routes via{" "}
           <span className="font-medium text-foreground">AVNU Exchange</span>
-          {" "}· Gas sponsored by Medialane
         </p>
       </div>
     </div>

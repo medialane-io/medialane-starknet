@@ -13,11 +13,11 @@ export function CreateAssetAside() {
       steps={[
         "Upload your work and add details",
         "Choose your licensing terms",
-        "Mint it — it's free",
+        "Mint it — zero platform fees",
       ]}
       trustIcon={Gift}
-      trustLead="It's yours, free."
-      trust="You own it — Medialane never takes custody, and authorship is recorded permanently."
+      trustLead="Zero platform fees."
+      trust="You own it, fully and directly, and authorship is recorded permanently."
     />
   );
 }

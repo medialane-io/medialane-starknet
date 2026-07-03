@@ -406,7 +406,7 @@ export default function CreatePOPPage() {
                 : <><Award className="h-4 w-4 mr-2" />Create Event</>}
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-2">
-              Free to publish — gas is sponsored.
+              Zero platform fees to publish.
             </p>
           </FadeIn>
 

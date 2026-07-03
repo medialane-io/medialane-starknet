@@ -105,12 +105,12 @@ const POP_FEATURES = [
   },
   {
     icon: Zap,
-    title: "Gas-Free Claiming",
-    desc: "Participants claim for free — no wallet balance required.",
+    title: "Zero Platform Fees",
+    desc: "Claiming is free of any Medialane fee.",
   },
   {
     icon: ShieldCheck,
-    title: "Verifiable On-Chain",
+    title: "Provable Forever",
     desc: "Credentials are permanently readable and provable on Starknet.",
   },
 ];

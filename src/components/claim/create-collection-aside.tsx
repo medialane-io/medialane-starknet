@@ -12,12 +12,12 @@ export function CreateCollectionAside() {
       ]}
       steps={[
         "Add a name, symbol and image",
-        "Publish it — it's free",
+        "Publish it — zero platform fees",
         "Start minting your work",
       ]}
       trustIcon={Gift}
-      trustLead="It's yours, free."
-      trust="You own the collection — Medialane never takes custody, and there are no fees to publish."
+      trustLead="Zero platform fees."
+      trust="You own the collection, fully and directly — zero platform fees to publish."
     />
   );
 }

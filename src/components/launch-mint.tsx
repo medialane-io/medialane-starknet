@@ -56,8 +56,8 @@ function GenesisNftCard({ minted = false }: { minted?: boolean }) {
 // ─── Perks ────────────────────────────────────────────────────────────────────
 
 const PERKS = [
-  { icon: Gift, label: "Free to mint", sub: "Zero protocol fees" },
-  { icon: Zap, label: "Gas-free", sub: "Powered by Chipipay" },
+  { icon: Gift, label: "Free to mint", sub: "Zero platform fees" },
+  { icon: Zap, label: "One click", sub: "Straight to your wallet" },
   { icon: Droplets, label: "Airdrop passport", sub: "Future distribution" },
   { icon: Shield, label: "Programmable IP", sub: "Immutable ownership" },
 ];
@@ -283,7 +283,7 @@ export function LaunchMint() {
                         <ArrowRight className="h-4 w-4 ml-auto" />
                       </Button>
                       <p className="text-xs text-center text-muted-foreground">
-                        Limited edition · Mainnet Launch · Gas fees sponsored
+                        Limited edition · Mainnet Launch
                       </p>
                     </div>
                   </>
@@ -306,8 +306,6 @@ export function LaunchMint() {
                         <span className="font-medium">Medialane Genesis</span>
                         <span className="text-muted-foreground">Price</span>
                         <span className="font-medium text-emerald-400">Free</span>
-                        <span className="text-muted-foreground">Gas</span>
-                        <span className="font-medium text-emerald-400">Sponsored</span>
                         <span className="text-muted-foreground">Network</span>
                         <span className="font-medium">Starknet</span>
                       </div>

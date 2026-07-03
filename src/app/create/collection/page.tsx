@@ -393,7 +393,7 @@ export default function CreateCollectionPage() {
               Create collection
             </button>
             <p className="text-xs text-center text-muted-foreground">
-              Free to publish — no gas fees.
+              Zero platform fees to publish.
             </p>
           </form>
         </Form>

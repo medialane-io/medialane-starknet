@@ -135,8 +135,8 @@ const DROP_FEATURES = [
   },
   {
     icon: Zap,
-    title: "Gas-Free Minting",
-    desc: "Collectors mint without paying gas fees.",
+    title: "Optional Allowlist",
+    desc: "Gate the mint window to your community before it opens to everyone.",
   },
   {
     icon: Layers,
