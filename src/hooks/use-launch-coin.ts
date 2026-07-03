@@ -17,6 +17,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { starknetProvider } from "@/lib/starknet";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export interface LaunchCoinInput {
   name: string;
@@ -93,9 +94,11 @@ export function useLaunchCoin() {
         setStatus("done");
         return { coinAddress };
       } catch (e) {
+        console.error("[launch-coin] error:", e);
         setStatus("error");
-        setError(e instanceof Error ? e.message : "Launch failed");
-        throw e;
+        const friendly = getFriendlyWalletError(e);
+        setError(friendly.message);
+        throw new Error(friendly.message);
       }
     },
     [account, szWallet, activeAddress]

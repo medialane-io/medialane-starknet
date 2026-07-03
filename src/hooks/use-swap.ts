@@ -20,6 +20,7 @@ import { EkuboSwapProvider, type SwapQuote, type SwapRequest } from "starkzap";
 import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useToast } from "@/hooks/use-toast";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { Amount, fromAddress, APP_CHAIN_ID, type Token as SzToken, type StarkZapTokenKey } from "@/lib/starkzap";
 import {
   formatTokenAmount,
@@ -323,7 +324,8 @@ export function useSwap(): UseSwapReturn {
 
       return hash;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Swap failed";
+      console.error("[swap] error:", err);
+      const msg = getFriendlyWalletError(err).message;
       setExecError(msg);
       toast({ title: "Swap failed", description: msg, variant: "destructive" });
       return null;

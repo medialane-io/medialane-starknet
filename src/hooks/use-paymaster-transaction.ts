@@ -31,6 +31,7 @@ import {
 } from "@/lib/paymaster-adapter";
 import type { GasTokenPrice } from "@/types/paymaster";
 import { waitForReceipt } from "@/lib/wait-for-receipt";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export interface UsePaymasterTransactionResult {
   // ----- Execution -----
@@ -133,8 +134,8 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         }
         return transactionHash;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Gasless transaction failed";
-        setError(msg);
+        console.error("[paymaster:gasless] error:", err);
+        setError(getFriendlyWalletError(err).message);
         return null;
       } finally {
         setIsLoading(false);
@@ -172,8 +173,8 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         }
         return hash;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Sponsored transaction failed";
-        setError(msg);
+        console.error("[paymaster:sponsored] error:", err);
+        setError(getFriendlyWalletError(err).message);
         return null;
       } finally {
         setIsLoading(false);
@@ -200,9 +201,13 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
       try {
         return await active.execute(calls);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Transaction failed";
-        setError(msg);
-        throw new Error(msg);
+        console.error("[paymaster:auto] error:", err);
+        // Every current caller catches this rethrow and relays `.message`
+        // straight to the user with no remapping of its own — so the
+        // message must already be friendly here, not a raw wallet/RPC blob.
+        const friendly = getFriendlyWalletError(err);
+        setError(friendly.message);
+        throw new Error(friendly.message);
       } finally {
         setIsLoading(false);
       }
@@ -234,8 +239,8 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         }
         return hash;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Transaction failed";
-        setError(msg);
+        console.error("[paymaster:traditional] error:", err);
+        setError(getFriendlyWalletError(err).message);
         return null;
       } finally {
         setIsLoading(false);

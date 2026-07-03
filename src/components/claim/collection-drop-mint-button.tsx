@@ -108,12 +108,12 @@ export function CollectionDropMintButton({
       });
       mutate();
     } catch (err) {
+      console.error("[drop-mint] error:", err);
       const friendly = getFriendlyWalletError(err);
       setResult({
         status: "error",
         title: friendly.title,
         description: friendly.message,
-        error: friendly.isUserRejection ? null : (err instanceof Error ? err.message : "Mint failed"),
         onRetry: () => { setResult(null); void handleMint(); },
       });
     }

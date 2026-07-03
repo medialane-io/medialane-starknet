@@ -37,12 +37,12 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
       });
       mutate();
     } catch (err) {
+      console.error("[pop-claim] error:", err);
       const friendly = getFriendlyWalletError(err);
       setResult({
         status: "error",
         title: friendly.title,
         description: friendly.message,
-        error: friendly.isUserRejection ? null : (err instanceof Error ? err.message : "Claim failed"),
         onRetry: () => { setResult(null); void handleClaim(); },
       });
     }

@@ -32,6 +32,7 @@ import { useAccount } from "@starknet-react/core";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { starknetProvider } from "@/lib/starknet";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export type TxStatus =
   | "idle"
@@ -125,7 +126,8 @@ export function useTx() {
         return hash;
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Transaction failed";
+      console.error("[useTx] error:", err);
+      const msg = getFriendlyWalletError(err).message;
       setError(msg);
       setStatus("error");
       setStatusMessage(msg);

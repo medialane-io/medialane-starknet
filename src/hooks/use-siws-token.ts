@@ -9,6 +9,7 @@ import {
   requestSiwsToken,
   type SiwsSigner,
 } from "@/lib/siws-client";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export function useSiwsToken() {
   const { account } = useAccount();
@@ -57,9 +58,13 @@ export function useSiwsToken() {
       // rethrow so callers awaiting getValidToken() see the real reason
       // (e.g. "Check if your wallet is deployed on Starknet.") in their
       // try/catch instead of a null they convert to a generic message.
-      const message = err instanceof Error ? err.message : "Wallet sign-in failed";
+      // getFriendlyWalletError() passes specific, safe messages like that
+      // one through unchanged — it only rewrites raw wallet/RPC blobs (e.g.
+      // the SNIP wallet-api's own "An error occurred (UNKNOWN_ERROR)").
+      console.error("[siws] error:", err);
+      const message = getFriendlyWalletError(err).message;
       setError(message);
-      throw err instanceof Error ? err : new Error(message);
+      throw new Error(message);
     } finally {
       setIsSigningIn(false);
     }
