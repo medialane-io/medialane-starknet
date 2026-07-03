@@ -9,6 +9,8 @@ const GATEWAY =
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 120;
 const MAX_RESPONSE_BYTES = 25 * 1024 * 1024;
+// Reasonable ceiling for a proxied thumbnail request.
+const MAX_WIDTH = 2000;
 
 const ipCounts = new Map<string, { count: number; resetAt: number }>();
 
@@ -34,6 +36,14 @@ function checkRateLimit(ip: string): boolean {
  *  - The need for a dedicated Pinata gateway on the client
  *
  * Supports paths: /api/ipfs/QmXxx  and  /api/ipfs/QmXxx/image.png
+ *
+ * Optional `w` query param requests an on-the-fly resized/re-encoded
+ * rendition via Pinata's gateway image optimization (`img-width` etc,
+ * only documented on the `/files/{cid}` path — not the classic `/ipfs/{cid}`
+ * one, and confirmed to 401 on the shared public gateway domain without a
+ * gateway-scoped token). Only attempted when `PINATA_DEDICATED_GATEWAY` is
+ * actually configured; falls back to the plain unresized `/ipfs/{cid}`
+ * original otherwise — never a broken image.
  */
 export async function GET(
   req: NextRequest,
@@ -53,7 +63,17 @@ export async function GET(
     return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
   }
 
-  const url = `${GATEWAY}/ipfs/${cidPath}`;
+  const isDedicatedGateway = !!process.env.PINATA_DEDICATED_GATEWAY;
+  const width = Number.parseInt(req.nextUrl.searchParams.get("w") ?? "", 10);
+  const wantsResize = isDedicatedGateway && Number.isFinite(width) && width > 0 && width <= MAX_WIDTH;
+
+  const url = new URL(`${GATEWAY}/${wantsResize ? "files" : "ipfs"}/${cidPath}`);
+  if (wantsResize) {
+    url.searchParams.set("img-width", String(width));
+    url.searchParams.set("img-fit", "cover");
+    url.searchParams.set("img-format", "auto");
+    url.searchParams.set("img-quality", "80");
+  }
 
   const headers: HeadersInit = {};
   if (PINATA_JWT) {
@@ -95,8 +115,10 @@ export async function GET(
     headers: {
       "Content-Type": safeContentType,
       "X-Content-Type-Options": "nosniff",
-      // Cache aggressively — IPFS content is immutable by CID
-      "Cache-Control": "public, max-age=31536000, immutable",
+      // Cache aggressively — IPFS content is immutable by CID. `s-maxage` (vs
+      // browser-only `max-age`) lets Vercel's edge cache this across *all*
+      // visitors, not just the requesting browser.
+      "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
       // Allow any origin to embed this content (images, etc.)
       "Access-Control-Allow-Origin": "*",
     },

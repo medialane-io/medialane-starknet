@@ -283,16 +283,15 @@ export function AssetPageDrop() {
 
             <AssetCollectionBar
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
-              collectionImage={collection?.image}
+              collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
               collectionHref={`/collections/${contract}`}
-              ipType={token.metadata?.ipType}
               contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
               shareTitle={name}
               onReportClick={() => setReportOpen(true)}
               currentTokenId={tokenId}
               siblingTokens={collectionTokens.map((t) => ({
                 tokenId: t.tokenId,
-                image: t.metadata?.image ? ipfsToHttp(t.metadata.image) : null,
+                image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
               }))}
               onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
             />
