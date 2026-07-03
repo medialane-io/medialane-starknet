@@ -8,6 +8,7 @@ import { Gamepad2, Loader2, LogOut, Mail, User, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 
 function getConnectorDisplayName(id: string, fallback: string) {
@@ -33,11 +34,12 @@ export function NavAccountPanel() {
       const type = connector.id.toLowerCase() === "braavos" ? "braavos" : "argent";
       await connect(type, connector);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Wallet connection failed";
-      if (/user rejected|user aborted|aborted|rejected/i.test(message)) {
+      console.error("[nav-account-panel] connect error:", err);
+      const friendly = getFriendlyWalletError(err);
+      if (friendly.isUserRejection) {
         toast.info("Wallet connection cancelled");
       } else {
-        toast.error("Wallet connection failed", { description: message });
+        toast.error("Wallet connection failed", { description: friendly.message });
       }
     } finally {
       setConnectingId(null);
