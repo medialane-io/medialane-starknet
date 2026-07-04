@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { absoluteUrl, canonical, buildBreadcrumbJsonLd, buildSocialMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/json-ld";
 import CreatorUsernamePageClient from "./creator-username-client";
 
 export const revalidate = 60;
@@ -11,9 +13,13 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { address } = await params;
   // For address-based routes, title will be set after redirect
+  const title = `@${address}`;
+  const description = `Creator profile for @${address} on Medialane.`;
   return {
-    title: `@${address} | Medialane`,
-    description: `Creator profile for @${address} on Medialane.`,
+    title,
+    description,
+    alternates: canonical(`/creator/${address}`),
+    ...buildSocialMetadata({ title, description }),
   };
 }
 
@@ -27,5 +33,23 @@ export default async function CreatorPage({ params }: Props) {
   }
 
   // Otherwise treat as a username slug
-  return <CreatorUsernamePageClient username={address} />;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      name: `@${address} | Medialane`,
+      url: absoluteUrl(`/creator/${address}`),
+    },
+    buildBreadcrumbJsonLd([
+      { name: "Creators", path: "/creators" },
+      { name: `@${address}`, path: `/creator/${address}` },
+    ]),
+  ];
+
+  return (
+    <>
+      <JsonLd data={jsonLd} />
+      <CreatorUsernamePageClient username={address} />
+    </>
+  );
 }

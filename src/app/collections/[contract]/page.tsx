@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getService } from "@medialane/sdk";
 import { fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
+import { absoluteUrl, canonical, buildBreadcrumbJsonLd, buildSocialMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/json-ld";
 import CollectionPageClient from "./collection-page-client";
 
 export const revalidate = 60;
@@ -23,19 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: name,
     description,
-    openGraph: {
-      title: `${name} | Medialane`,
-      description,
-      ...(imageUrl && {
-        images: [{ url: imageUrl, width: 1200, height: 630, alt: name }],
-      }),
-    },
-    twitter: {
-      card: imageUrl ? "summary_large_image" : "summary",
-      title: `${name} | Medialane`,
-      description,
-      ...(imageUrl && { images: [imageUrl] }),
-    },
+    alternates: canonical(`/collections/${contract}`),
+    ...buildSocialMetadata({ title: name, description, imageUrl }),
   };
 }
 
@@ -48,5 +39,33 @@ export default async function CollectionPage({ params }: Props) {
   if (col?.service && getService(col.service)?.uiVariant === "coin") {
     redirect(`/coins/${contract}`);
   }
-  return <CollectionPageClient />;
+
+  const name = col?.name ?? "Collection";
+  const rawImage = col?.image;
+  const imageUrl = rawImage ? ipfsToHttpServer(rawImage) : undefined;
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name,
+      ...(col?.description && { description: col.description }),
+      ...(imageUrl && { image: imageUrl }),
+      url: absoluteUrl(`/collections/${contract}`),
+      ...(typeof col?.totalSupply === "number" && {
+        mainEntity: { "@type": "ItemList", numberOfItems: col.totalSupply },
+      }),
+    },
+    buildBreadcrumbJsonLd([
+      { name: "Collections", path: "/collections" },
+      { name, path: `/collections/${contract}` },
+    ]),
+  ];
+
+  return (
+    <>
+      <JsonLd data={jsonLd} />
+      <CollectionPageClient />
+    </>
+  );
 }

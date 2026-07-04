@@ -15,6 +15,12 @@ export default function robots(): MetadataRoute.Robots {
         "/sign-in",
         "/sign-up",
         "/onboarding",
+        // Owner-only launchpad tools — thin/duplicate-title forms, not indexable content.
+        "/launchpad/*/create",
+        "/launchpad/*/manage",
+        "/launchpad/*/my-drops",
+        "/launchpad/*/my-events",
+        "/launchpad/*/mint",
       ],
     },
     sitemap: `${APP_URL}/sitemap.xml`,

@@ -39,3 +39,9 @@ export async function fetchCollectionMeta(contract: string) {
     `/v1/collections/${contract}`
   );
 }
+
+export async function fetchDropMeta(contract: string) {
+  return apiFetch<{ name?: string | null; description?: string | null; image?: string | null }>(
+    `/v1/drop/${contract}/info`
+  );
+}

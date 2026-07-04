@@ -17,11 +17,16 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { canonical, buildSocialMetadata } from "@/lib/seo";
+
+const title = "Creator Studio";
+const description = "Protect, manage and unlock new revenue streams for your Intellectual Property.";
 
 export const metadata: Metadata = {
-  title: "Creator Studio · Medialane",
-  description:
-    "Protect, manage and unlock new revenue streams for your Intellectual Property.",
+  title,
+  description,
+  alternates: canonical("/create"),
+  ...buildSocialMetadata({ title, description }),
 };
 
 // ── Feature definitions ──────────────────────────────────────────────────────

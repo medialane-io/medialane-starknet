@@ -1,23 +1,15 @@
 import type { Metadata } from "next";
 import MarketplacePageClient from "./marketplace-page-client";
-import { canonical } from "@/lib/seo";
+import { canonical, buildSocialMetadata } from "@/lib/seo";
+
+const title = "Marketplace";
+const description = "Browse, buy, and license IP assets on the Medialane marketplace using Starknet wallets.";
 
 export const metadata: Metadata = {
-  title: "Marketplace",
-  description: "Browse, buy, and license IP assets on the Medialane marketplace using Starknet wallets.",
+  title,
+  description,
   alternates: canonical("/marketplace"),
-  openGraph: {
-    title: "Marketplace | Medialane",
-    description: "Browse, buy, and license IP assets on the Medialane marketplace using Starknet wallets.",
-    url: "/marketplace",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Medialane Marketplace" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Marketplace | Medialane",
-    description: "Browse, buy, and license IP assets on the Medialane marketplace.",
-    images: ["/og-image.jpg"],
-  },
+  ...buildSocialMetadata({ title, description, imageAlt: "Medialane Marketplace" }),
 };
 
 export default function MarketplacePage() {

@@ -72,9 +72,30 @@ export const viewport = {
   maximumScale: 5,
 };
 
+const BACKEND_ORIGIN = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ?? "").origin;
+  } catch {
+    return null;
+  }
+})();
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Every asset/collection/coin image resolves through the Pinata gateway
+            (src/utils/ipfs.ts IPFS_GATEWAYS[0]) — preconnect shaves the TLS/DNS
+            handshake off the LCP image on nearly every page. */}
+        <link rel="preconnect" href="https://gateway.pinata.cloud" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://gateway.pinata.cloud" />
+        {BACKEND_ORIGIN && (
+          <>
+            <link rel="preconnect" href={BACKEND_ORIGIN} />
+            <link rel="dns-prefetch" href={BACKEND_ORIGIN} />
+          </>
+        )}
+      </head>
       <body className={inter.className}>
         {/* Google tag (gtag.js) — Google Ads conversion tracking */}
         <Script
