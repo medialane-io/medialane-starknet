@@ -20,7 +20,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useDominantColor } from "@/hooks/use-dominant-color";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
@@ -249,6 +249,9 @@ export function AssetPageStandard() {
             {/* Details + rights — separated from the action group by a hairline
                 so the column reads as placard sections, not one flat stack. */}
             <div className="pt-5 border-t border-border/40 space-y-5">
+              {ownerAddress ? (
+                <AssetOwnerRow ownerAddress={ownerAddress} ownerHref={`/creator/${ownerAddress}`} />
+              ) : null}
               <AssetCollectionBar
                 collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
                 collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
@@ -259,8 +262,6 @@ export function AssetPageStandard() {
                   image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
                 }))}
                 onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
-                ownerAddress={ownerAddress}
-                ownerHref={ownerAddress ? `/creator/${ownerAddress}` : undefined}
               />
               <ReportDialog
                 target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name }}
