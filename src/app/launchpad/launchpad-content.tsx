@@ -8,9 +8,9 @@ import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useUserOrders } from "@/hooks/use-orders";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { BRAND } from "@/lib/brand";
-import { LaunchpadGroupedSections, type ServiceOverrides } from "@medialane/ui";
+import { LaunchpadGroupedSections, LaunchpadFilterBar, useLaunchpadFilter, type ServiceOverrides } from "@medialane/ui";
 import {
-  Zap, Package, Tag, ShoppingCart, ArrowRight,
+  Zap, Package, Tag, ShoppingCart, ArrowRight, ExternalLink,
 } from "lucide-react";
 
 function HeroStats({ address }: { address: string }) {
@@ -58,26 +58,47 @@ const DAPP_OVERRIDES: ServiceOverrides = {
 
 export function LaunchpadContent() {
   const { isConnected, address: walletAddress } = useWallet();
+  const filter = useLaunchpadFilter();
 
   return (
-    <div className="pb-20 space-y-12 sm:space-y-20">
+    <div className="relative pb-20 space-y-12 sm:space-y-20">
+
+      {/* ── medialane.io widget — top right, scrolls with the page ── */}
+      <a
+        href="https://medialane.io/launchpad"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-3 right-4 sm:right-6 lg:right-8 z-20 flex items-center gap-2 h-10 pl-3.5 pr-4 rounded-full border border-border/50 bg-background/70 backdrop-blur-xl shadow-lg shadow-black/10 text-sm hover:bg-background/90 active:scale-[0.98] transition-all"
+      >
+        <span className="hidden sm:inline text-muted-foreground">New to wallets?</span>
+        <span className="font-semibold">Sign in with email</span>
+        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+      </a>
+
       <section className="relative overflow-hidden">
-        <div className="px-4 py-14 sm:py-20">
-          <FadeIn>
-            <span className="pill-badge mb-5 inline-flex">
-              <Zap className="h-3 w-3" />
-              Creator
-            </span>
-          </FadeIn>
-          <FadeIn delay={0.08}>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight mb-3">
-              <span className="gradient-text">Launchpad</span>
-            </h1>
-          </FadeIn>
+        <div className="px-4 py-14 sm:py-20 space-y-6">
+          <div>
+            <FadeIn>
+              <span className="pill-badge mb-5 inline-flex">
+                <Zap className="h-3 w-3" />
+                Creator
+              </span>
+            </FadeIn>
+            <FadeIn delay={0.08}>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">
+                <span className="gradient-text">Launchpad</span>
+              </h1>
+            </FadeIn>
+          </div>
           <FadeIn delay={0.16}>
-            <p className="text-muted-foreground text-base max-w-xl leading-relaxed">
-              Publish your work, grow your community, and earn from what you create.
-            </p>
+            <LaunchpadFilterBar
+              query={filter.query}
+              onQueryChange={filter.setQuery}
+              groups={filter.filterableGroups}
+              activeGroups={filter.activeGroups}
+              onToggleGroup={filter.toggleGroup}
+              resultCount={filter.totalMatches}
+            />
           </FadeIn>
           {isConnected && walletAddress ? (
             <FadeIn delay={0.24}>
@@ -89,7 +110,12 @@ export function LaunchpadContent() {
 
       {/* Grouped services (shared @medialane/ui component) */}
       <section className="px-4">
-        <LaunchpadGroupedSections overrides={DAPP_OVERRIDES} />
+        <LaunchpadGroupedSections
+          overrides={DAPP_OVERRIDES}
+          query={filter.query}
+          activeGroups={filter.activeGroups}
+          onClearFilters={filter.clear}
+        />
       </section>
 
       {isConnected ? (
