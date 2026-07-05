@@ -6,7 +6,7 @@ import { useOrders } from "@/hooks/use-orders";
 import { ListingCard, ListingCardSkeleton } from "./listing-card";
 import { PurchaseDialog } from "./purchase-dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { LoadMoreSentinel } from "@medialane/ui";
 import type { ApiOrder, SortOrder } from "@medialane/sdk";
 
 const PAGE_SIZE = 15;
@@ -139,25 +139,7 @@ export function ListingsGrid({ sort = "recent", currency, orderType = "", minPri
             ))}
         </div>
 
-        {(hasMore || isLoadingMore) && (
-          <div className="flex justify-center pt-2">
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={isLoadingMore}
-              onClick={handleLoadMore}
-            >
-              {isLoadingMore ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Loading…
-                </>
-              ) : (
-                orderType === "offers" ? "Load more offers" : "Load more listings"
-              )}
-            </Button>
-          </div>
-        )}
+        <LoadMoreSentinel hasMore={hasMore} isLoading={isLoadingMore} onLoadMore={handleLoadMore} />
 
         {!hasMore && filteredOrders.length > PAGE_SIZE && (
           <p className="text-center text-xs text-muted-foreground">
