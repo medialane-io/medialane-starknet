@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useCollections, type CollectionSort } from "@/hooks/use-collections";
 import { usePlatformStats } from "@/hooks/use-stats";
-import { CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
+import { CollectionCard, CollectionCardSkeleton, LoadMoreSentinel } from "@medialane/ui";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { HelpIcon } from "@/components/ui/help-icon";
-import { Layers, Loader2, BadgeCheck, Eye, SlidersHorizontal, Award, Package } from "lucide-react";
+import { Layers, BadgeCheck, Eye, SlidersHorizontal, Award, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ApiCollection } from "@medialane/sdk";
 import { PageContainer } from "@medialane/ui";
@@ -318,19 +318,11 @@ export default function CollectionsPageClient() {
             ))}
           </div>
 
-          {hasMore && (
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={isLoading}
-              >
-                {isLoading
-                  ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Loading…</>
-                  : `Load more (${(meta?.total ?? 0) - allCollections.length} remaining)`}
-              </Button>
-            </div>
-          )}
+          <LoadMoreSentinel
+            hasMore={hasMore}
+            isLoading={isLoading}
+            onLoadMore={() => setPage((p) => p + 1)}
+          />
         </div>
       )}
     </PageContainer>
