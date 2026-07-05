@@ -13,8 +13,8 @@ import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddressDisplay } from "@/components/shared/address-display";
-import { Loader2, Flag, Inbox, Sparkles, Lock, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Flag, Inbox, Sparkles, Lock, Settings } from "lucide-react";
+import { LoadMoreSentinel } from "@medialane/ui";
 import { ReportDialog } from "@/components/report-dialog";
 import { useCollectionProfile } from "@/hooks/use-profiles";
 import { useGatedContent } from "@/hooks/use-gated-content";
@@ -191,18 +191,11 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
             })}
           </div>
         )}
-        {hasMore && (
-          <div className="flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={isLoading}
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Load more
-            </Button>
-          </div>
-        )}
+        <LoadMoreSentinel
+          hasMore={hasMore}
+          isLoading={isLoading}
+          onLoadMore={() => setPage((p) => p + 1)}
+        />
       </div>
 
       {/* Owner dialogs */}
