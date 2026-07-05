@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useWallet } from "@/hooks/use-wallet";
+import { useRewards, useRewardsConfig } from "@/hooks/use-rewards";
+import { XpProgress } from "@medialane/ui";
 import {
   Telescope, Compass, Store, Coins, Briefcase, Plus, Activity,
   LayoutGrid, Users, Search, Sun, Moon,
@@ -139,6 +141,9 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { address: walletAddress, isConnected } = useWallet();
   const unreadOffers = useUnreadOffers(isConnected ? walletAddress : null);
+  const { data: rewards } = useRewards(isConnected ? walletAddress : null);
+  const { data: rewardsConfig } = useRewardsConfig();
+  const levelXp = rewards ? rewardsConfig?.levels.find((l) => l.level === rewards.currentLevel)?.xpRequired ?? 0 : 0;
   const { setOpen, setOpenMobile, isMobile, state } = useSidebar();
 
   const closeSidebar = () => {
@@ -310,9 +315,22 @@ export function AppSidebar() {
                 tooltip="Rewards"
                 onClick={closeSidebar}
               >
-                <Link href="/rewards">
-                  <Trophy />
-                  <span>Rewards</span>
+                <Link href="/rewards" className="flex items-center gap-2">
+                  {rewards && rewards.totalXp > 0 ? (
+                    <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+                      <XpProgress
+                        variant="ring"
+                        size={16}
+                        totalXp={rewards.totalXp}
+                        levelXp={levelXp}
+                        nextLevelXp={rewards.nextLevel?.xpRequired ?? null}
+                        badgeColor={rewards.badgeColor}
+                      />
+                    </span>
+                  ) : (
+                    <Trophy />
+                  )}
+                  <span>Rewards{rewards && rewards.totalXp > 0 ? ` · Lv.${rewards.currentLevel}` : ""}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

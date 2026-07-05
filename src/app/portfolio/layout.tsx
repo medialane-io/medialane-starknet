@@ -12,6 +12,8 @@ import { useRemixOffers } from "@/hooks/use-remix-offers";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { HelpIcon } from "@/components/ui/help-icon";
+import { ScoreSummaryCard } from "@medialane/ui";
+import { useRewards, useRewardsConfig } from "@/hooks/use-rewards";
 import {
   PortfolioSubnav,
   derivePortfolioCounts,
@@ -53,6 +55,8 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
   const { orders } = useUserOrders(address ?? null);
   const { meta: tokenMeta } = useTokensByOwner(address ?? null, 1);
   const { offers: remixOffers } = useRemixOffers("creator");
+  const { data: rewards } = useRewards(address);
+  const { data: rewardsConfig } = useRewardsConfig();
 
   const counts = derivePortfolioCounts(orders, remixOffers, address);
 
@@ -101,6 +105,20 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
           )}
         </div>
       </div>
+
+      {/* Score summary */}
+      {rewards && (
+        <ScoreSummaryCard
+          level={rewards.currentLevel}
+          levelName={rewards.currentLevelName}
+          badgeColor={rewards.badgeColor}
+          totalXp={rewards.totalXp}
+          levelXp={rewardsConfig?.levels.find((l) => l.level === rewards.currentLevel)?.xpRequired ?? 0}
+          nextLevel={rewards.nextLevel}
+          topBadges={rewards.badges.slice(0, 4)}
+          href="/rewards"
+        />
+      )}
 
       {/* Subnav */}
       <PortfolioSubnav

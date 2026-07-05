@@ -7,6 +7,7 @@ import { CollectionsStrip } from "./collections-strip";
 import { CreatorsStrip } from "./creators-strip";
 import { FeedSection } from "./feed-section";
 import { IpTypeNav } from "./ip-type-nav";
+import { TopCreatorsRail } from "./top-creators-rail";
 
 export function DiscoverPage() {
   return (
@@ -16,6 +17,7 @@ export function DiscoverPage() {
       <CollectionsStrip />
       <FeedSection />
       <CreatorsStrip />
+      <TopCreatorsRail />
     </PageContainer>
   );
 }

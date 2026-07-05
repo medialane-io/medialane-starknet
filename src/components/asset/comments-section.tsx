@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AddressDisplay } from "@/components/shared/address-display";
+import { LevelBadge } from "@medialane/ui";
+import { useRewardsBatch } from "@/hooks/use-rewards";
 import { STARKNET_NFTCOMMENTS_CONTRACT, EXPLORER_URL } from "@/lib/constants";
 import { MessageSquare, Loader2, Send, CheckCircle, X, ExternalLink, Flag, Zap } from "lucide-react";
 import { ReportDialog, type ReportTarget } from "@/components/report-dialog";
@@ -55,6 +57,9 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
   const hasWallet = !!walletAddress;
   const { comments, total, isLoading, mutate } = useComments(contract, tokenId);
   const { execute: executeTransaction } = useTx();
+
+  // One batched rewards lookup for all visible authors — never per row.
+  const { data: authorLevels } = useRewardsBatch(comments.map((c) => c.author));
 
   const [text, setText] = useState("");
   const [postStep, setPostStep] = useState<PostStep>("idle");
@@ -204,12 +209,26 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                   <div className={`flex flex-col max-w-[78%] ${own ? "items-end" : "items-start"}`}>
                     {/* Author label — others only */}
                     {!own && (
-                      <Link
-                        href={`/creator/${comment.author}`}
-                        className="text-[10px] font-medium text-muted-foreground mb-1 ml-1 hover:underline underline-offset-2"
-                      >
-                        <AddressDisplay address={comment.author} chars={4} showCopy={false} />
-                      </Link>
+                      <div className="flex items-center gap-1.5 mb-1 ml-1">
+                        <Link
+                          href={`/creator/${comment.author}`}
+                          className="text-[10px] font-medium text-muted-foreground hover:underline underline-offset-2"
+                        >
+                          <AddressDisplay address={comment.author} chars={4} showCopy={false} />
+                        </Link>
+                        {(() => {
+                          const level = authorLevels?.get(comment.author);
+                          if (!level || level.totalXp <= 0) return null;
+                          return (
+                            <LevelBadge
+                              level={level.currentLevel}
+                              name={level.currentLevelName}
+                              badgeColor={level.badgeColor}
+                              size="sm"
+                            />
+                          );
+                        })()}
+                      </div>
                     )}
 
                     {/* Bubble */}
