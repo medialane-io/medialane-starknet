@@ -61,7 +61,7 @@ export function PriceHistoryChart({ history }: PriceHistoryChartProps) {
 
   return (
     <div className="rounded-xl border border-border bg-card/50 p-4 space-y-2">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <p className="text-xs font-medium text-muted-foreground">
         Price history · {chartData.currency}
       </p>
       <ResponsiveContainer width="100%" height={160}>

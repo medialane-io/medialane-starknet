@@ -159,6 +159,7 @@ export function AssetPageStandard() {
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const description = token.metadata?.description;
   const balances = token.balances ?? [];
+  const ownerAddress = !isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null;
 
   return (
     <div
@@ -200,7 +201,6 @@ export function AssetPageStandard() {
                 showMultiEditionBadge={Boolean(isERC1155)}
                 parentContract={parentContract}
                 parentTokenId={parentTokenId}
-                ownerAddress={!isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null}
               />
               <AssetUtilityIcons
                 contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
@@ -259,6 +259,8 @@ export function AssetPageStandard() {
                   image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
                 }))}
                 onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
+                ownerAddress={ownerAddress}
+                ownerHref={ownerAddress ? `/creator/${ownerAddress}` : undefined}
               />
               <ReportDialog
                 target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name }}
