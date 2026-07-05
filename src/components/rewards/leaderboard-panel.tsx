@@ -14,14 +14,16 @@ export interface LeaderboardPanelProps {
   limit?: number;
   /** Page heading — discover uses its own section header, so it can be hidden. */
   showHeading?: boolean;
-  /** Link to the full leaderboard — shown when the list is truncated. */
+  /** Link to the full scoreboard — shown when the list is truncated. */
   viewAllHref?: string;
   className?: string;
 }
 
-/** Shared "people taking part" leaderboard — built on @medialane/ui's
- *  LeaderboardTable (rank/address/level/XP row) so /rewards and the discover
- *  page's Community section render identical rows, just at different depths. */
+/** Shared "people taking part" scoreboard — built on @medialane/ui's
+ *  LeaderboardTable (address/level/points row, no ranking) so /rewards and
+ *  the discover page's Activities+Rewards section render identical rows,
+ *  just at different depths. This is participation, not a competition —
+ *  no position numbers, no podium colors. */
 export function LeaderboardPanel({
   myAddress,
   limit = 20,
@@ -65,7 +67,7 @@ export function LeaderboardPanel({
           href={viewAllHref}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          View leaderboard <ArrowRight className="h-3.5 w-3.5" />
+          View scoreboard <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       )}
     </section>

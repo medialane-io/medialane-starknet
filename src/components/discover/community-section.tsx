@@ -56,7 +56,7 @@ function ColumnHeader({
 /** Discover page's Community section — the old horizontal activity-card
  *  carousel read as "just another section" (2026-07-05 feedback). Replaced
  *  with the /activities page's list language (ActivityRow) on the left and
- *  the Rewards leaderboard on the right, each with its own "Activities" /
+ *  the Rewards scoreboard on the right, each with its own "Activities" /
  *  "Rewards" header (2026-07-05 follow-up) so the pairing reads as two
  *  distinct, titled panels rather than one shared "Community" banner. */
 export function CommunitySection() {
@@ -133,14 +133,14 @@ export function CommunitySection() {
         </div>
       </div>
 
-      {/* Right — Rewards leaderboard */}
+      {/* Right — Rewards scoreboard */}
       <div className="lg:col-span-5 space-y-4 sm:space-y-5">
         <ColumnHeader
           icon={<Trophy className="h-3.5 w-3.5 text-white" />}
           iconBg="bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/20"
           title="Rewards"
           href="/rewards"
-          linkLabel="Leaderboard"
+          linkLabel="Scoreboard"
         />
         <LeaderboardPanel myAddress={address} limit={8} showHeading={false} />
       </div>
