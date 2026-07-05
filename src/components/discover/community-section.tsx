@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, RefreshCw } from "lucide-react";
+import { Activity, ArrowRight, RefreshCw, Trophy } from "lucide-react";
 import { useActivities } from "@/hooks/use-activities";
 import { useRewardsBatch } from "@/hooks/use-rewards";
 import { useWallet } from "@/hooks/use-wallet";
@@ -13,11 +13,52 @@ import { timeAgo, cn } from "@/lib/utils";
 
 const FEED_LIMIT = 8;
 
+/** A small header shared by both columns — icon chip + title (+ optional
+ *  caption) on the left, a link on the right. Keeps the two panels reading
+ *  as a paired "what's happening right now" dashboard rather than one panel
+ *  with a caption and one without. */
+function ColumnHeader({
+  icon,
+  iconBg,
+  title,
+  caption,
+  href,
+  linkLabel,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  caption?: React.ReactNode;
+  href: string;
+  linkLabel: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2.5">
+        <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center shadow-md shrink-0", iconBg)}>
+          {icon}
+        </div>
+        <div>
+          <h2 className="text-lg sm:text-xl font-semibold leading-none">{title}</h2>
+          {caption && <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">{caption}</p>}
+        </div>
+      </div>
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md hover:bg-accent transition-colors shrink-0"
+      >
+        {linkLabel} <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
 /** Discover page's Community section — the old horizontal activity-card
  *  carousel read as "just another section" (2026-07-05 feedback). Replaced
  *  with the /activities page's list language (ActivityRow) on the left and
- *  the Rewards leaderboard on the right, so both feel like a single "what's
- *  happening right now" moment instead of two more scroll strips. */
+ *  the Rewards leaderboard on the right, each with its own "Activities" /
+ *  "Rewards" header (2026-07-05 follow-up) so the pairing reads as two
+ *  distinct, titled panels rather than one shared "Community" banner. */
 export function CommunitySection() {
   const { activities, isLoading } = useActivities({ limit: FEED_LIMIT });
   const { address } = useWallet();
@@ -37,33 +78,25 @@ export function CommunitySection() {
   const { data: actorLevels } = useRewardsBatch(actors);
 
   return (
-    <section className="space-y-5 sm:space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-indigo-500 to-blue-600 shadow-md shadow-indigo-500/20 shrink-0">
-            <Activity className="h-3.5 w-3.5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold leading-none">Community</h2>
-            {!isLoading && (
-              <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+    <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      {/* Left — recent on-chain activity, /activities-page list language */}
+      <div className="lg:col-span-7 space-y-4 sm:space-y-5">
+        <ColumnHeader
+          icon={<Activity className="h-3.5 w-3.5 text-white" />}
+          iconBg="bg-gradient-to-br from-indigo-500 to-blue-600 shadow-indigo-500/20"
+          title="Activities"
+          caption={
+            !isLoading && (
+              <>
                 <RefreshCw className="h-2.5 w-2.5" />
                 Updated {timeAgo(lastUpdated)}
-              </p>
-            )}
-          </div>
-        </div>
-        <Link
+              </>
+            )
+          }
           href="/activities"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md hover:bg-accent transition-colors shrink-0"
-        >
-          Activities <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* Left — recent on-chain activity, /activities-page list language */}
-        <div className="lg:col-span-7">
+          linkLabel="View all"
+        />
+        <div>
           {isLoading ? (
             <div className="divide-y divide-border/50 rounded-xl border border-border overflow-hidden">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -98,11 +131,18 @@ export function CommunitySection() {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Right — Rewards leaderboard */}
-        <div className="lg:col-span-5">
-          <LeaderboardPanel myAddress={address} limit={8} showHeading={false} viewAllHref="/rewards" />
-        </div>
+      {/* Right — Rewards leaderboard */}
+      <div className="lg:col-span-5 space-y-4 sm:space-y-5">
+        <ColumnHeader
+          icon={<Trophy className="h-3.5 w-3.5 text-white" />}
+          iconBg="bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/20"
+          title="Rewards"
+          href="/rewards"
+          linkLabel="Leaderboard"
+        />
+        <LeaderboardPanel myAddress={address} limit={8} showHeading={false} />
       </div>
     </section>
   );
