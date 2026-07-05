@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, SlidersHorizontal, HandCoins, GitBranch, Search, X as XIcon } from "lucide-react";
+import { SlidersHorizontal, HandCoins, GitBranch, Search, X as XIcon } from "lucide-react";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
-import { PageContainer } from "@medialane/ui";
+import { LoadMoreSentinel, PageContainer } from "@medialane/ui";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -470,24 +470,12 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
             ))}
           </div>
 
-          {(hasMore || isLoadingMore) && !listedOnly && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="outline"
-                size="lg"
-                disabled={isLoadingMore}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {isLoadingMore ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Loading…
-                  </>
-                ) : (
-                  `Load more${meta?.total ? ` (${meta.total - allTokens.length} remaining)` : ""}`
-                )}
-              </Button>
-            </div>
+          {!listedOnly && (
+            <LoadMoreSentinel
+              hasMore={hasMore}
+              isLoading={isLoadingMore}
+              onLoadMore={() => setPage((p) => p + 1)}
+            />
           )}
         </div>
       )}
