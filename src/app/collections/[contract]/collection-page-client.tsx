@@ -27,7 +27,6 @@ import { TraitFilter } from "@/components/collection/trait-filter";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
-import { computeRarity } from "@/lib/rarity";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
@@ -136,7 +135,6 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
     });
   }, [enrichedTokens, selectedFilters]);
 
-  const rarityMap = useMemo(() => computeRarity(allTokens), [allTokens]);
   const hasMore = meta ? allTokens.length < meta.total! : false;
 
   if (isLoading && allTokens.length === 0) {
@@ -181,7 +179,6 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
                 <TokenCard
                   key={`${t.contractAddress}-${t.tokenId}`}
                   token={t}
-                  rarityTier={rarityMap.get(t.tokenId)?.tier}
                   isOwner={isOwner}
                   onList={isOwner ? handleList : undefined}
                   onTransfer={isOwner ? handleTransfer : undefined}
