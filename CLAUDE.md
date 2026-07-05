@@ -595,15 +595,38 @@ Three conventions were added; keep new forms consistent with them:
 
 **`AcceptOfferDialog`** (`src/components/marketplace/accept-offer-dialog.tsx`): Full accept flow with success state + confetti. Wired into `ReceivedOffersTable` via `acceptOrder` state pattern (replaces the old toast).
 
-## Rewards System (added 2026-05-12)
+## Rewards System (added 2026-05-12; Rewards 2.0 2026-07-05)
 
-50-level DAO-managed XP + badge system. Scores live on the backend; frontend reads them via SWR hooks.
+50-level DAO-managed XP + badge system covering every live service (mint/list/buy/offer/comment,
+POP/Drop claims, IP Tickets, IP Club, IP Sponsorship, Creator Coins). Scores are computed on the
+backend every 15 min (`medialane-backend`'s `startRewardsComputeLoop`); the frontend only reads.
 
-**Hooks**: `useRewards(address)`, `useLeaderboard(page, limit)` in `src/hooks/use-rewards.ts`.
+**Hooks** (`src/hooks/use-rewards.ts`, thin SWR wrappers over `@medialane/sdk` ≥0.49.0):
+`useRewards(address)`, `useLeaderboard(page, limit)`, `useRewardsEvents(address, page, limit)`,
+`useRewardsConfig()` (level ladder + enabled action XP values + badge catalog — powers optimistic
+toasts and the locked-badge gallery), `useRewardsBatch(addresses)` (≤50, one call per list page —
+never per row).
 
-**Components**: `LevelBadge` (`src/components/rewards/level-badge.tsx`) — color-coded level chip in sm/md/lg sizes. `BadgeShelf` (`src/components/rewards/badge-shelf.tsx`) — lazy-loaded Lucide icon badges with tooltips.
+**Score kit** — all presentation components live in `@medialane/ui` ≥0.36.0 (this repo no longer
+has local copies): `LevelBadge`, `XpProgress` (bar/ring), `BadgeShelf` (locked-badge support via
+`earnedKeys`/`showLocked`), `ScoreSummaryCard`, `LeaderboardTable`/`LeaderboardWidget`,
+`LevelLadder`, `XpToastContent`. `src/components/rewards/creator-score-inline.tsx` wraps
+`useRewards` + `LevelBadge` for third-party address surfaces (renders nothing below 1 XP, on
+loading, or on failure — rewards must never add error states to non-rewards pages).
 
-**Page**: `/rewards` — My Rank tab (level card with ambient glow, XP progress bar, badge shelf, breakdown table) + Leaderboard tab. Uses `useWallet()` for address resolution.
+**`src/lib/reward-toast.tsx`** — `rewardToast(actionType)`: fire-and-forget optimistic "+XP" toast
+using the cached `/v1/rewards/config` action list. Shows the action's *configured* value, never a
+live balance (the real score updates on the next 15-min compute). Wired into every scoring action's
+on-chain success path: mint, create collection, launch (drop/POP/editions/tickets/club/coin), list,
+buy, offer, offer-accepted, claim (drop/POP), comment, sponsorship offer/bid.
+
+**Surfaces**: `/rewards` (redesigned — hero score card, `LevelLadder`, badge gallery with locked
+badges, XP breakdown via config labels, recent point events, leaderboard), creator/account pages,
+asset page owner/holder chips, collection page owner chip, activities feed (batched per-page level
+chips), comments (batched per-page author chips), portfolio (`ScoreSummaryCard`), sidebar nav
+(compact XP ring + level next to "Rewards"), homepage "Top Creators" rail, discover leaderboard rail.
+
+Spec: `medialane-core/docs/specs/2026-07-04-rewards-2.0-design.md`.
 
 ## Conventions
 
