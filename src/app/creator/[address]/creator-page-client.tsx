@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
 import useSWR from "swr";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -285,11 +286,14 @@ export default function CreatorPageClient() {
               <h1 className="text-xl sm:text-2xl font-bold leading-tight truncate text-foreground">
                 {profile?.displayName || (addr ? `${addr.slice(0, 10)}…${addr.slice(-8)}` : "—")}
               </h1>
-              <AddressDisplay
-                address={address ?? ""}
-                chars={8}
-                className="text-xs text-muted-foreground"
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <AddressDisplay
+                  address={address ?? ""}
+                  chars={8}
+                  className="text-xs text-muted-foreground"
+                />
+                <CreatorScoreInline address={address} size="sm" />
+              </div>
             </div>
           </div>
 

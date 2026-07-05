@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
 import useSWR from "swr";
 import { useParams } from "next/navigation";
 import { useTokensByOwner } from "@/hooks/use-tokens";
@@ -101,11 +102,14 @@ export default function CreatorPageClient() {
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <div className="px-6 pt-20 pb-2 flex items-start justify-between gap-3">
         <div className="space-y-1.5 min-w-0">
-          <AddressDisplay
-            address={address ?? ""}
-            chars={10}
-            className="text-base font-mono font-semibold"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AddressDisplay
+              address={address ?? ""}
+              chars={10}
+              className="text-base font-mono font-semibold"
+            />
+            <CreatorScoreInline address={address} size="sm" />
+          </div>
           {(() => {
             const parts: string[] = [];
             if (tabBadge.assets      !== undefined) parts.push(`${tabBadge.assets} ${tabBadge.assets === 1 ? "asset" : "assets"}`);
