@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
+import { LoadMoreSentinel } from "@medialane/ui";
 import { ipfsToHttp } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
-import { AtSign, Search, Users, Palette, Globe, Twitter, X, Loader2 } from "lucide-react";
+import { AtSign, Search, Users, Palette, Globe, Twitter, X } from "lucide-react";
 import type { ApiCreatorProfile } from "@medialane/sdk";
 
 function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
@@ -231,19 +232,11 @@ export default function CreatorsPageClient() {
                 </StaggerItem>
               ))}
             </Stagger>
-            {allCreators.length < total && (
-              <div className="flex justify-center pt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={isLoading}
-                >
-                  {isLoading
-                    ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Loading…</>
-                    : `Load more (${total - allCreators.length} remaining)`}
-                </Button>
-              </div>
-            )}
+            <LoadMoreSentinel
+              hasMore={allCreators.length < total}
+              isLoading={isLoading}
+              onLoadMore={() => setPage((p) => p + 1)}
+            />
           </>
         ) : (
           <div className="py-24 text-center space-y-4">
