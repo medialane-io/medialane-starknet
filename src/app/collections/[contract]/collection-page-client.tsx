@@ -34,6 +34,7 @@ import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { useWallet } from "@/hooks/use-wallet";
+import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
 import { getService } from "@medialane/sdk";
 import type { ApiToken, ApiOrder } from "@medialane/sdk";
 import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
@@ -444,6 +445,7 @@ export default function CollectionPageClient() {
                       className="font-medium text-foreground"
                     />
                   </Link>
+                  <CreatorScoreInline address={collection.owner} size="sm" />
                 </div>
               )}
 
