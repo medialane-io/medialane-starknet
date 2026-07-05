@@ -14,6 +14,7 @@
  */
 
 import { useState } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
 import { Handshake, Loader2 } from "lucide-react";
@@ -67,6 +68,7 @@ export function AssetPageSponsorship({ nftContract, tokenId, isOwner }: AssetPag
         transferable: true,
       });
       toast.success("Sponsorship offer created");
+      rewardToast("create_sponsorship_offer");
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create offer");
@@ -88,6 +90,7 @@ export function AssetPageSponsorship({ nftContract, tokenId, isOwner }: AssetPag
         paymentToken: offer.paymentToken,
       });
       toast.success("Bid placed");
+      rewardToast("place_sponsorship_bid");
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to place bid");

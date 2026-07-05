@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -201,6 +202,7 @@ export default function CreateDropPage() {
         }
       }
       setDone(true);
+      rewardToast("launch_launchpad");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create drop");
     } finally {

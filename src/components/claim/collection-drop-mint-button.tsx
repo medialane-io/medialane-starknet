@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -106,6 +107,7 @@ export function CollectionDropMintButton({
         txHash: hash,
         name: "Drop token",
       });
+      rewardToast("claim_drop");
       mutate();
     } catch (err) {
       console.error("[drop-mint] error:", err);

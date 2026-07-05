@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
 import { useForm } from "react-hook-form";
@@ -74,6 +75,7 @@ export default function CreateTicketsPage() {
       const client = getMedialaneClient();
       await client.services.ticket.deployTicketCollection(signer, { name: values.name, symbol: values.symbol });
       toast.success("Ticket contract deployed");
+      rewardToast("create_ticket_collection");
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to deploy ticket contract");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -204,6 +205,7 @@ export default function CreateCollectionPage() {
       }
 
       setCollectionStep("success");
+      rewardToast("create_collection");
       invalidatePortfolioCache(walletAddress);
     } catch (err: unknown) {
       setCollectionError(err instanceof Error ? err.message : "Something went wrong");

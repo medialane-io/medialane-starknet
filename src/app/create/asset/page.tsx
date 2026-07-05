@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import Image from "next/image";
 import { getService } from "@medialane/sdk";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
@@ -276,6 +277,7 @@ export default function CreateAssetPage() {
       }
 
       setMintStep("success");
+      rewardToast("mint_asset");
       invalidatePortfolioCache(walletAddress);
     } catch (err: unknown) {
       setMintError(err instanceof Error ? err.message : "Something went wrong");

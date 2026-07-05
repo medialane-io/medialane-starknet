@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -249,6 +250,7 @@ export default function CreateNFTEditionsCollectionPage() {
       setDeployedAddress(addr);
       setDialogTxStatus("confirmed");
       setCollectionStep("success");
+      rewardToast("create_collection");
     } catch (err) {
       setCollectionError(err instanceof Error ? err.message : "Something went wrong");
       setDialogTxStatus("idle");

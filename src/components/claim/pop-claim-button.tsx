@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { Loader2, CheckCircle2, Ban, Award, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
@@ -35,6 +36,7 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
         txHash: hash,
         name: "Credential",
       });
+      rewardToast("claim_pop");
       mutate();
     } catch (err) {
       console.error("[pop-claim] error:", err);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
 import { useForm } from "react-hook-form";
@@ -68,6 +69,7 @@ export default function CreateClubPage() {
         paymentToken: fee > 0 ? token!.address : undefined,
       });
       setDone(true);
+      rewardToast("create_club");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create club");
     } finally {

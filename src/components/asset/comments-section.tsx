@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { CallData } from "starknet";
@@ -114,6 +115,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
       setPostTxHash(result);
       if (result !== null) {
         setPostStep("success");
+        rewardToast("comment");
         setText("");
         if (composeRef.current) composeRef.current.style.height = "auto";
         setTimeout(() => mutate(), 30_000);

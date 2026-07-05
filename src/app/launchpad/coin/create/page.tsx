@@ -10,6 +10,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { useRouter } from "next/navigation";
 import { Coins, TrendingUp, ArrowRight, ArrowLeft, Lock, Sparkles, ImagePlus, X, Loader2 } from "lucide-react";
 import {
@@ -156,6 +157,7 @@ export default function CoinCreatePage() {
       setCoinAddress(addr);
       void saveCoinProfile(addr);
       toast.success("Creator Coin launched");
+      rewardToast("launch_coin");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Launch failed");
     }

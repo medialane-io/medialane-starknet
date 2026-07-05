@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -344,6 +345,7 @@ export default function MintNFTEditionsPage() {
       setTxHash(txHashResult);
       setTxStatus("confirmed");
       setMintStep("success");
+      rewardToast("mint_asset");
       if (walletAddress) invalidatePortfolioCache(walletAddress);
     } catch (err) {
       setMintError(err instanceof Error ? err.message : "Failed to mint token");

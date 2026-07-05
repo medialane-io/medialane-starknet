@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { rewardToast } from "@/lib/reward-toast";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -157,6 +158,7 @@ export default function CreatePOPPage() {
       }]);
 
       setDone(true);
+      rewardToast("launch_launchpad");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create event");
     }

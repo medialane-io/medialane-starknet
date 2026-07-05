@@ -7,6 +7,7 @@ import { Abi, shortString, constants, num } from "starknet";
 import { useSWRConfig } from "swr";
 import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk";
 import { toast } from "sonner";
+import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
@@ -441,6 +442,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 assertOrderCreated(receipt1155, contract.address);
                 refreshMarketplaceCaches();
                 if (!opts?.silent) toast.success("Listing Created", { description: "Your edition has been listed successfully." });
+                rewardToast("list_asset");
                 return hash1155;
             }
             // ── ERC-721 path — unchanged below ────────────────────────────────
@@ -500,6 +502,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             assertOrderCreated(receipt, contract.address);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Listing Created", { description: "Your asset has been listed successfully." });
+            rewardToast("list_asset");
             return hash;
         });
     }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches, resolveRoyaltyMaxBps, signTypedData]);
@@ -608,6 +611,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             assertOrderCreated(receipt, contract.address);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
+            rewardToast("make_offer");
             return hash;
         });
     }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, getErc20Allowance, executeDirect, refreshMarketplaceCaches, resolveRoyaltyMaxBps, signTypedData]);
@@ -686,6 +690,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
+            rewardToast("buy_asset");
             return hash;
         });
     }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
@@ -802,6 +807,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             const receipt = await provider.waitForTransaction(hash);
             assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
+            rewardToast("offer_accepted_seller");
             return hash;
         });
     }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
