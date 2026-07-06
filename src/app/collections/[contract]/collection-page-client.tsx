@@ -24,6 +24,7 @@ import { OwnerSetupPanel } from "@/components/collection/owner-setup-panel";
 import { TransferCollectionOwnershipDialog } from "@/components/collection/transfer-ownership-dialog";
 import { ShareButton } from "@/components/shared/share-button";
 import { TraitFilter } from "@/components/collection/trait-filter";
+import { SortDropdown } from "@/components/collection/sort-dropdown";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
@@ -35,7 +36,7 @@ import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog"
 import { useWallet } from "@/hooks/use-wallet";
 import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
 import { getService } from "@medialane/sdk";
-import type { ApiToken, ApiOrder } from "@medialane/sdk";
+import type { ApiToken, ApiOrder, CollectionTokensSort } from "@medialane/sdk";
 import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
 
 const PAGE_SIZE = 24;
@@ -74,11 +75,18 @@ function parsePriceDisplay(raw: string | null | undefined): { numStr: string; sy
 
 function CollectionItems({ contract, activeListings }: { contract: string; activeListings: ApiOrder[] }) {
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<CollectionTokensSort>("recent");
   const [allTokens, setAllTokens] = useState<ApiToken[]>([]);
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-  const { tokens, meta, isLoading, mutate } = useCollectionTokens(contract, page, PAGE_SIZE);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+  const { tokens, meta, isLoading, mutate } = useCollectionTokens(contract, page, PAGE_SIZE, sort);
   // SWR deduplicates — the parent also calls this hook; no extra network request.
   const { collection } = useCollection(contract);
+
+  function handleSortChange(next: CollectionTokensSort) {
+    setSort(next);
+    setPage(1);
+    setAllTokens([]);
+  }
 
   // Build tokenId → listing map so Items tab can show Buy buttons for listed tokens
   const listingByTokenId = useMemo(() => {
@@ -129,8 +137,9 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
       const attrs = Array.isArray(token.metadata?.attributes)
         ? (token.metadata.attributes as { trait_type?: string; value?: string }[])
         : [];
-      return filterEntries.every(([traitType, value]) =>
-        attrs.some((a) => a.trait_type === traitType && String(a.value) === value)
+      // AND across trait types, OR within a type's selected values.
+      return filterEntries.every(([traitType, values]) =>
+        attrs.some((a) => a.trait_type === traitType && values.includes(String(a.value)))
       );
     });
   }, [enrichedTokens, selectedFilters]);
@@ -157,6 +166,9 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
   return (
     <>
       <div className="space-y-4">
+        <div className="flex items-center justify-end gap-2 flex-wrap">
+          <SortDropdown value={sort} onChange={handleSortChange} />
+        </div>
         <TraitFilter
           tokens={allTokens}
           selected={selectedFilters}
