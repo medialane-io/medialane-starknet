@@ -189,8 +189,14 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
   // ---------------------------------------------------------------------------
 
   const handleConnectorClick = async (connector: Connector) => {
-    // Close our dialog first so the wallet extension popup is unobstructed
-    setConnectDialogOpen(false);
+    // Do NOT close the dialog before the extension responds — closing it here
+    // raced the Radix Dialog's unmount/focus-teardown against the injected
+    // wallet's popup request and made Ready silently auto-reject the connect
+    // (reported 2026-07-05; nav-account-panel's equivalent injected-connect
+    // path never closed anything up front and never showed the bug). The
+    // dialog already auto-closes on success (the isConnected/address effect
+    // above) and reopens on failure (catch below), so nothing needs closing
+    // here for the injected path.
     setInjectedConnectingId(connector.id);
     try {
       // connect() writes the single active-wallet slot, persists ml_wallet, and
