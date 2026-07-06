@@ -37,7 +37,7 @@ export function NavAccountPanel() {
       console.error("[nav-account-panel] connect error:", err);
       const friendly = getFriendlyWalletError(err);
       if (friendly.isUserRejection) {
-        toast.info("Wallet connection cancelled");
+        toast.info("Wallet didn't connect", { description: "You may have declined it, or your wallet may need extra verification first." });
       } else {
         toast.error("Wallet connection failed", { description: friendly.message });
       }

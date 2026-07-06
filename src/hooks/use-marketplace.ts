@@ -27,34 +27,6 @@ import {
  */
 interface WriteOpts { silent?: boolean }
 
-// TEMP DEBUG (2026-07-06): full error dump for the marketplace buy-failure
-// investigation. Walks own + inherited enumerable props (JSON.stringify
-// alone drops message/stack and anything on the prototype chain) plus any
-// nested cause/baseError a wallet RPC error might carry. Remove once the
-// buy-failure root cause is found.
-function dumpError(err: unknown): Record<string, unknown> {
-    const seen = new Set<unknown>();
-    const walk = (e: unknown): Record<string, unknown> | undefined => {
-        if (!e || typeof e !== "object" || seen.has(e)) return undefined;
-        seen.add(e);
-        const out: Record<string, unknown> = {};
-        for (const key of Object.getOwnPropertyNames(e)) {
-            try {
-                const v = (e as any)[key];
-                out[key] = key === "stack" ? String(v).split("\n").slice(0, 5) : v;
-            } catch {
-                out[key] = "<unreadable>";
-            }
-        }
-        const cause = walk((e as any).cause);
-        if (cause) out.cause = cause;
-        const baseError = walk((e as any).baseError);
-        if (baseError) out.baseError = baseError;
-        return out;
-    };
-    return walk(err) ?? { raw: String(err) };
-}
-
 interface UseMarketplaceReturn {
     createListing: (
         assetContractAddress: string,
@@ -220,8 +192,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         try {
             return await fn();
         } catch (err: any) {
-            console.error("[marketplace] error (full dump):", JSON.stringify(dumpError(err), null, 2));
-            console.error("[marketplace] error (raw object):", err);
+            console.error("[marketplace] error:", JSON.stringify(err, null, 2), err);
             const friendly = getFriendlyWalletError(err);
             setError(friendly.message);
             if (friendly.isUserRejection) {
@@ -713,20 +684,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 .filter((c): c is NonNullable<typeof c> => c !== null);
 
             // Single atomic multicall: all approvals + all fulfillments + fee transfers
-            const allCalls = [...approveCalls721, ...approveCalls1155, ...fulfillCalls, ...feeCalls];
-            // TEMP DEBUG (2026-07-06): buy-failure investigation — exact calls sent to
-            // the wallet, plus who's sending them. Remove once root cause is found.
-            console.log("[checkout] about to execute", {
-                walletAddress,
-                walletType: szWallet ? "starkzap" : "injected",
-                items,
-                calls: allCalls.map((c) => ({
-                    contractAddress: c.contractAddress,
-                    entrypoint: c.entrypoint,
-                    calldata: (c.calldata ?? []).map((x: unknown) => String(x)),
-                })),
-            });
-            const hash = await executeDirect(allCalls);
+            const hash = await executeDirect([...approveCalls721, ...approveCalls1155, ...fulfillCalls, ...feeCalls]);
             setTxHash(hash);
             const receipt = await provider.waitForTransaction(hash);
             assertTransactionSucceeded(receipt);

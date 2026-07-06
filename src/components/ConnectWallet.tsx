@@ -208,7 +208,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
       console.error("Failed to connect wallet", err);
       const friendly = getFriendlyWalletError(err);
       if (friendly.isUserRejection) {
-        toast.info("Wallet connection cancelled");
+        toast.info("Wallet didn't connect", { description: "You may have declined it, or your wallet may need extra verification first." });
       } else {
         toast.error("Wallet connection failed", { description: friendly.message, duration: 8000 });
       }

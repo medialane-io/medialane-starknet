@@ -74,10 +74,18 @@ function looksTechnical(text: string): boolean {
 
 export function getFriendlyWalletError(error: unknown): FriendlyWalletError {
   if (isUserRejectedRequest(error)) {
+    // The wallet-API "USER_REFUSED_OP" code (and equivalents across wallets)
+    // covers more than an explicit user click-cancel — some wallets (e.g.
+    // Ready's guardian/2FA-protected accounts) return the exact same code
+    // when *the wallet itself* declines to sign, with no user action at all.
+    // We can't tell these apart from the error alone, so the copy must not
+    // assert a specific cause we don't actually know (fixed 2026-07-06 after
+    // a Ready guardian-protected account was told it had "closed or rejected"
+    // a request it never even prompted for).
     return {
-      title: "Request cancelled",
-      message: "Request cancelled. Nothing was submitted.",
-      description: "You closed or rejected the wallet request. Review the details and try again whenever you're ready.",
+      title: "Request not completed",
+      message: "Request not completed. Nothing was submitted.",
+      description: "Your wallet didn't complete this request — you may have closed or declined it, or your wallet may require extra verification (like 2FA) before it can sign. Check your wallet for details, then try again.",
       isUserRejection: true,
     };
   }
