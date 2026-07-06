@@ -23,8 +23,7 @@ import { GatedContentPanel } from "@/components/collection/gated-content-panel";
 import { OwnerSetupPanel } from "@/components/collection/owner-setup-panel";
 import { TransferCollectionOwnershipDialog } from "@/components/collection/transfer-ownership-dialog";
 import { ShareButton } from "@/components/shared/share-button";
-import { TraitFilter } from "@/components/collection/trait-filter";
-import { SortDropdown } from "@/components/collection/sort-dropdown";
+import { CollectionFilters } from "@/components/collection/collection-filters";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
@@ -166,13 +165,12 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center justify-end gap-2 flex-wrap">
-          <SortDropdown value={sort} onChange={handleSortChange} />
-        </div>
-        <TraitFilter
+        <CollectionFilters
           tokens={allTokens}
           selected={selectedFilters}
           onChange={setSelectedFilters}
+          sort={sort}
+          onSortChange={handleSortChange}
         />
         {filteredTokens.length === 0 && Object.keys(selectedFilters).length > 0 ? (
           <EmptyState
