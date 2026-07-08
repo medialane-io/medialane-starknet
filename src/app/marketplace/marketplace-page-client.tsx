@@ -20,7 +20,7 @@ import { usePlatformStats } from "@/hooks/use-stats";
 import { IP_TYPES } from "@/types/ip";
 import { HelpIcon } from "@/components/ui/help-icon";
 import { PageContainer } from "@medialane/ui";
-import { CoinsExplorer } from "@/components/coins/coins-explorer";
+import { CoinsScanList } from "@/components/coins/coins-scan-list";
 
 const SORT_OPTIONS = [
   { label: "Recent", value: "recent" },
@@ -195,6 +195,7 @@ function IpTypeChip({ href, label }: { href: string; label: string }) {
 
 export default function MarketplacePageClient() {
   const [view, setView] = useState<"nfts" | "tokens">("nfts");
+  const [coinQuery, setCoinQuery] = useState("");
   const [sort, setSort] = useState("recent");
   const [currency, setCurrency] = useState("");
   const [orderType, setOrderType] = useState("");
@@ -259,16 +260,35 @@ export default function MarketplacePageClient() {
       {/* Live activity ticker — NFTs only */}
       {view === "nfts" && <ActivityTicker limit={12} />}
 
-      {/* Filter toolbar — always rendered so toggle is always accessible */}
+      {/* Filter toolbar */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          {view === "nfts" && (
-            <div className="flex-1 min-w-0">
+          {/* Search — context-sensitive */}
+          <div className="flex-1 min-w-0">
+            {view === "nfts" ? (
               <SearchBar />
-            </div>
-          )}
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tokens by name or symbol"
+                  value={coinQuery}
+                  onChange={(e) => setCoinQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {coinQuery && (
+                  <button
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setCoinQuery("")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
-          {/* NFTs | Tokens toggle — inline next to filters */}
+          {/* NFTs | Tokens toggle — always visible */}
           <div className="inline-flex rounded-lg border border-border p-0.5 shrink-0">
             {([["nfts", "NFTs"], ["tokens", "Tokens"]] as const).map(([v, label]) => (
               <button
@@ -284,6 +304,7 @@ export default function MarketplacePageClient() {
             ))}
           </div>
 
+          {/* Filters button — NFTs only */}
           {view === "nfts" && (
             <button
               onClick={() => setFiltersOpen(true)}
@@ -305,7 +326,7 @@ export default function MarketplacePageClient() {
           )}
         </div>
 
-        {/* Active filter pills — quick-clear */}
+        {/* Active NFT filter pills */}
         {view === "nfts" && hasFilters && (
           <div className="flex flex-wrap gap-1.5">
             {sort !== "recent" && (
@@ -480,7 +501,7 @@ export default function MarketplacePageClient() {
           maxPrice={maxPrice}
         />
       ) : (
-        <CoinsExplorer heading={false} />
+        <CoinsScanList query={coinQuery} />
       )}
     </PageContainer>
   );
