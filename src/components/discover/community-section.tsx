@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, RefreshCw, Trophy } from "lucide-react";
+import { Activity, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { useActivities } from "@/hooks/use-activities";
 import { useRewardsBatch } from "@/hooks/use-rewards";
 import { useWallet } from "@/hooks/use-wallet";
@@ -136,8 +136,8 @@ export function CommunitySection() {
       {/* Right — Rewards scoreboard */}
       <div className="lg:col-span-5 space-y-4 sm:space-y-5">
         <ColumnHeader
-          icon={<Trophy className="h-3.5 w-3.5 text-white" />}
-          iconBg="bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/20"
+          icon={<Sparkles className="h-3.5 w-3.5 text-white" />}
+          iconBg="bg-gradient-to-br from-brand-rose to-brand-orange"
           title="Rewards"
           href="/rewards"
           linkLabel="Scoreboard"
