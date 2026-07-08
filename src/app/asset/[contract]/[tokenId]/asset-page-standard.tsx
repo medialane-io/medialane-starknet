@@ -246,9 +246,7 @@ export function AssetPageStandard() {
               <AssetOwnersPanel balances={balances} maxVisible={5} />
             ) : null}
 
-            {/* Details + rights — separated from the action group by a hairline
-                so the column reads as placard sections, not one flat stack. */}
-            <div className="pt-5 border-t border-border/40 space-y-5">
+            <div className="pt-5 space-y-5">
               {ownerAddress ? (
                 <AssetOwnerRow ownerAddress={ownerAddress} ownerHref={`/creator/${ownerAddress}`} />
               ) : null}

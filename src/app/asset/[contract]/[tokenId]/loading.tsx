@@ -13,23 +13,16 @@ export default function AssetLoading() {
         {/* Right column — mirrors the live layout */}
         <div className="space-y-5">
           {/* Collection bar */}
-          <div className="rounded-2xl border border-border/50 overflow-hidden">
-            <div className="px-4 pt-4 pb-3.5 flex items-center gap-3">
+          <div className="rounded-2xl bg-muted/20 p-4 space-y-3">
+            <div className="flex items-center gap-3">
               <Skeleton className="h-11 w-11 rounded-xl shrink-0" />
-              <div className="flex-1 space-y-1.5">
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-4 w-32" />
-              </div>
+              <Skeleton className="h-4 w-36 flex-1" />
               <Skeleton className="h-8 w-8 rounded-xl shrink-0" />
             </div>
-            <div className="h-px bg-border/50 mx-4" />
-            <div className="px-4 py-3.5 space-y-3">
-              <Skeleton className="h-3 w-28" />
-              <div className="grid grid-cols-4 gap-1.5">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-xl" />
-                ))}
-              </div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-xl" />
+              ))}
             </div>
           </div>
 
