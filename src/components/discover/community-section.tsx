@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
+import { Activity, ArrowRight, RefreshCw, Sparkles, Zap, Palette, ShoppingBag, MessageSquare } from "lucide-react";
 import { useActivities } from "@/hooks/use-activities";
 import { useRewardsBatch } from "@/hooks/use-rewards";
 import { useWallet } from "@/hooks/use-wallet";
@@ -142,6 +142,32 @@ export function CommunitySection() {
           href="/rewards"
           linkLabel="Scoreboard"
         />
+
+        {/* Compact pitch */}
+        <div className="relative rounded-xl border border-border/40 bg-card overflow-hidden px-4 py-4 space-y-3">
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand-rose to-brand-orange" />
+          <p className="text-sm font-semibold leading-snug">
+            Earn XP. Share the Creator&apos;s Fund.
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {([
+              [Zap, "Mint"], [Palette, "Create"],
+              [ShoppingBag, "Trade"], [MessageSquare, "Engage"],
+            ] as const).map(([Icon, label]) => (
+              <div key={label} className="flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <Icon className="h-2.5 w-2.5" />
+                {label}
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/rewards"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-gradient-to-r from-brand-rose to-brand-orange rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
+          >
+            Start earning XP <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+
         <LeaderboardPanel myAddress={address} limit={8} showHeading={false} />
       </div>
     </section>

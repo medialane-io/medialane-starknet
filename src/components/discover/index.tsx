@@ -14,7 +14,7 @@ import { CommunitySection } from "./community-section";
 // having both stacked back-to-back was pure repetition (2026-07-05).
 export function DiscoverPage() {
   return (
-    <PageContainer className="box-border max-w-full pt-20 space-y-10 px-4 sm:px-5 lg:px-6">
+    <PageContainer className="box-border max-w-full pt-20 space-y-20 px-4 sm:px-5 lg:px-6">
       <Hero />
       <CollectionsStrip />
       <FeedSection />
