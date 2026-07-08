@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCollections } from "@/hooks/use-collections";
 import { ipfsToHttp, formatDisplayPrice, cn } from "@/lib/utils";
 import type { ApiCollection } from "@medialane/sdk";
@@ -48,7 +48,9 @@ function HeroSlide({
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/30 to-black/0" />
 
       <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 flex flex-col gap-3">
-        <h2 className="text-4xl lg:text-5xl font-semibold text-white leading-tight">{name}</h2>
+        <Link href={`/collections/${collection.contractAddress}`} className="hover:opacity-90 transition-opacity">
+          <h2 className="text-4xl lg:text-5xl font-semibold text-white leading-tight">{name}</h2>
+        </Link>
         <div className="flex items-center gap-4 text-sm text-white/70">
           {supply != null && <span>{supply.toLocaleString()} items</span>}
           {floor && (
@@ -57,14 +59,6 @@ function HeroSlide({
             </span>
           )}
         </div>
-        <Button
-          asChild
-          className="self-start mt-2 bg-white text-black hover:bg-white/90 font-semibold"
-        >
-          <Link href={`/collections/${collection.contractAddress}`}>
-            View Collection <ArrowRight className="h-4 w-4 ml-1.5" />
-          </Link>
-        </Button>
       </div>
     </div>
   );

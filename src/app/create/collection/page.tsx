@@ -231,6 +231,7 @@ export default function CreateCollectionPage() {
         txHash={txHash}
         error={collectionError}
         onCreateAnother={handleCreateAnother}
+        mintHref="/create/asset"
       />
 
       <ConnectGate
