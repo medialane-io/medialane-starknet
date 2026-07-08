@@ -6,7 +6,7 @@ import { TrendingCollections } from "./trending-collections";
 import { NewOnMarketplace } from "./new-on-marketplace";
 import { CreatorAirdropBanner } from "./creator-airdrop";
 import { AirdropSection } from "./airdrop-section";
-import { TopCreators } from "./top-creators";
+import { CommunityRewards } from "./community-rewards";
 import { PageContainer } from "@medialane/ui";
 
 export function HomePage() {
@@ -25,7 +25,7 @@ export function HomePage() {
         <TrendingCollections />
         <NewOnMarketplace />
         <CreatorAirdropBanner />
-        <TopCreators />
+        <CommunityRewards />
         <AirdropSection />
       </PageContainer>
     </div>
