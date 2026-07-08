@@ -18,14 +18,15 @@ export function AssetLightbox({ open, onOpenChange, image, alt }: AssetLightboxP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[96vw] w-fit border-0 bg-transparent p-0 shadow-none">
+      <DialogContent className="max-w-[96vw] w-fit max-h-none overflow-visible border-0 bg-transparent p-0 shadow-none">
         <DialogTitle className="sr-only">{alt}</DialogTitle>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image}
           alt={alt}
           crossOrigin="anonymous"
-          className="max-h-[92vh] max-w-[96vw] h-auto w-auto object-contain rounded-xl"
+          style={{ maxHeight: "92svh", maxWidth: "96vw" }}
+          className="h-auto w-auto object-contain rounded-2xl"
         />
       </DialogContent>
     </Dialog>
