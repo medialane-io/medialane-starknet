@@ -41,3 +41,4 @@ next-env.d.ts
 /tx_analysis*.txt
 /*_class.json
 /payload*.json
+package-lock.json
