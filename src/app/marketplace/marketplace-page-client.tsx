@@ -246,65 +246,67 @@ export default function MarketplacePageClient() {
   };
 
   return (
-    <PageContainer className="box-border max-w-full pt-20 pb-8 space-y-8">
+    <PageContainer className="box-border max-w-full pt-20 pb-8 space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-primary">
-          <Store className="h-5 w-5" />
-          <span className="text-sm font-semibold uppercase tracking-wider">NFT Marketplace</span>
+        <div className="flex items-center gap-3">
+          <Store className="h-6 w-6 text-primary shrink-0" />
+          <h1 className="text-3xl sm:text-4xl font-bold">Marketplace</h1>
         </div>
-        <h1 className="text-3xl font-bold">Discover and trade</h1>
         <PlatformStatsBar />
       </div>
 
-      {/* NFTs | Tokens segmented toggle */}
-      <div className="inline-flex rounded-lg border border-border p-0.5">
-        {([["nfts", "NFTs"], ["tokens", "Tokens"]] as const).map(([v, label]) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={cn(
-              "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
-              view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* Live activity ticker — NFTs only */}
+      {view === "nfts" && <ActivityTicker limit={12} />}
 
-      {view === "nfts" ? (
-        <>
-      {/* Live activity ticker */}
-      <ActivityTicker limit={12} />
-
-      {/* Filter toolbar */}
-      <div className="space-y-2 pb-3 border-b border-border/60">
+      {/* Filter toolbar — always rendered so toggle is always accessible */}
+      <div className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <SearchBar />
+          {view === "nfts" && (
+            <div className="flex-1 min-w-0">
+              <SearchBar />
+            </div>
+          )}
+
+          {/* NFTs | Tokens toggle — inline next to filters */}
+          <div className="inline-flex rounded-lg border border-border p-0.5 shrink-0">
+            {([["nfts", "NFTs"], ["tokens", "Tokens"]] as const).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          <button
-            onClick={() => setFiltersOpen(true)}
-            className={cn(
-              "relative flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-colors shrink-0",
-              filterCount > 0
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
-            )}
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            Filters
-            {filterCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {filterCount}
-              </span>
-            )}
-          </button>
+
+          {view === "nfts" && (
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className={cn(
+                "relative flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-colors shrink-0",
+                filterCount > 0
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filters
+              {filterCount > 0 && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {filterCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Active filter pills — quick-clear */}
-        {hasFilters && (
+        {view === "nfts" && hasFilters && (
           <div className="flex flex-wrap gap-1.5">
             {sort !== "recent" && (
               <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary">
@@ -468,15 +470,15 @@ export default function MarketplacePageClient() {
         </DialogContent>
       </Dialog>
 
-      {/* Grid */}
-      <ListingsGrid
-        sort={sort}
-        currency={currency ? getTokenBySymbol(currency)?.address : undefined}
-        orderType={orderType}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-      />
-        </>
+      {/* Grid / Coins */}
+      {view === "nfts" ? (
+        <ListingsGrid
+          sort={sort}
+          currency={currency ? getTokenBySymbol(currency)?.address : undefined}
+          orderType={orderType}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+        />
       ) : (
         <CoinsExplorer heading={false} />
       )}
