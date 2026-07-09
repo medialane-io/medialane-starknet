@@ -15,16 +15,22 @@ import {
   Form, FormControl, FormField, FormItem,
   FormLabel, FormMessage, FormDescription,
 } from "@/components/ui/form";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { CreateTicketAside } from "@/components/claim/create-ticket-aside";
+import { StepNav } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { getTokenBySymbol } from "@medialane/sdk";
+import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
+
+const LISTABLE_TOKENS = SUPPORTED_TOKENS.filter((t) => t.listable);
 
 const deploySchema = z.object({
   name: z.string().min(1, "Name required").max(100),
@@ -32,7 +38,7 @@ const deploySchema = z.object({
 });
 
 const collectionSchema = z.object({
-  metadataUri: z.string().min(1, "Metadata URI required").regex(/^(ipfs|ar):\/\//, "Must start with ipfs:// or ar://"),
+  metadataUri: z.string().min(1, "Image URI required").regex(/^(ipfs|ar):\/\//, "Must start with ipfs:// or ar://"),
   maxSupply: z.string().regex(/^\d+$/, "Must be a positive integer").refine((v) => parseInt(v, 10) >= 1, "Minimum 1"),
   priceAmount: z.string().default("").refine((v) => v === "" || !Number.isNaN(Number(v)), "Enter a valid price"),
   paymentToken: z.string().default("USDC"),
@@ -43,6 +49,11 @@ const collectionSchema = z.object({
 type DeployValues = z.infer<typeof deploySchema>;
 type CollectionValues = z.infer<typeof collectionSchema>;
 
+const STEPS = [
+  { label: "Your ticket contract" },
+  { label: "Event details" },
+];
+
 export default function CreateTicketsPage() {
   const { account } = useAccount();
   const { wallet: szWalletRaw } = useStarkZapWallet();
@@ -50,13 +61,14 @@ export default function CreateTicketsPage() {
   const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
   const signer = (szWallet ?? account) as AccountInterface | undefined;
 
-  const { collections: myCollections, isLoading: loadingMyCollections, mutate } = useMyTicketCollections(activeAddress);
+  const { collections: myCollections, isLoading: loadingMyCollections, mutate } = useMyTicketCollections(activeAddress ?? null);
   const [isDeploying, setIsDeploying] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [done, setDone] = useState(false);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
 
   const existingCollection = deployedAddress ?? myCollections[0]?.contractAddress ?? null;
+  const currentStep = !existingCollection ? 1 : 2;
 
   const deployForm = useForm<DeployValues>({
     resolver: zodResolver(deploySchema),
@@ -73,7 +85,10 @@ export default function CreateTicketsPage() {
     setIsDeploying(true);
     try {
       const client = getMedialaneClient();
-      await client.services.ticket.deployTicketCollection(signer, { name: values.name, symbol: values.symbol });
+      const result = await client.services.ticket.deployTicketCollection(signer, { name: values.name, symbol: values.symbol });
+      if (result && typeof result === "object" && "contractAddress" in result) {
+        setDeployedAddress(result.contractAddress as string);
+      }
       toast.success("Ticket contract deployed");
       rewardToast("create_ticket_collection");
       await mutate();
@@ -132,7 +147,7 @@ export default function CreateTicketsPage() {
             onClick={() => { setDone(false); collectionForm.reset(); }}
             className="bg-teal-600 hover:bg-teal-700 text-white"
           >
-            Create another
+            Create another event
           </Button>
         </div>
       </div>
@@ -149,15 +164,24 @@ export default function CreateTicketsPage() {
         aside={<CreateTicketAside />}
       >
         <div className="space-y-6">
+          {isConnected && !loadingMyCollections && (
+            <StepNav
+              steps={STEPS}
+              current={currentStep}
+              accentText="text-teal-500"
+              accentBg="bg-teal-600"
+            />
+          )}
+
           {!isConnected || loadingMyCollections ? null : !existingCollection ? (
             <FadeIn>
               <Form {...deployForm}>
                 <form onSubmit={deployForm.handleSubmit(onDeploy)} className="space-y-5">
-                  <p className="text-sm font-medium">Step 1 — Deploy your ticket contract (once, free)</p>
                   <FormField control={deployForm.control} name="name" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Contract name *</FormLabel>
                       <FormControl><Input placeholder="My Events" {...field} /></FormControl>
+                      <FormDescription>Your brand name — shown in wallets and explorers.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -172,11 +196,11 @@ export default function CreateTicketsPage() {
                           className="max-w-[160px]"
                         />
                       </FormControl>
-                      <FormDescription>Short ticker shown in wallets.</FormDescription>
+                      <FormDescription>Short ticker — 2 to 10 uppercase letters.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" size="lg" className="w-full rounded-xl" disabled={isDeploying}>
+                  <Button type="submit" size="lg" className="w-full rounded-xl bg-teal-600 hover:bg-teal-700 text-white" disabled={isDeploying}>
                     {isDeploying
                       ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Deploying…</>
                       : <><Ticket className="h-4 w-4 mr-2" />Deploy Ticket Contract</>}
@@ -188,53 +212,66 @@ export default function CreateTicketsPage() {
             <FadeIn>
               <Form {...collectionForm}>
                 <form onSubmit={collectionForm.handleSubmit(onCreateCollection)} className="space-y-5">
-                  <p className="text-sm font-medium">Step 2 — Create your event</p>
                   <FormField control={collectionForm.control} name="metadataUri" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Metadata URI *</FormLabel>
+                      <FormLabel>Image URI *</FormLabel>
                       <FormControl><Input placeholder="ipfs://bafybei…" {...field} /></FormControl>
-                      <FormDescription>ipfs:// or ar:// only — enforced on-chain.</FormDescription>
+                      <FormDescription>Upload your event image to IPFS and paste the ipfs:// link here.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={collectionForm.control} name="maxSupply" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Max supply *</FormLabel>
+                      <FormLabel>Tickets available *</FormLabel>
                       <FormControl><Input type="number" min={1} {...field} /></FormControl>
+                      <FormDescription>Maximum number of tickets that can be sold.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <div className="flex gap-3">
                     <FormField control={collectionForm.control} name="priceAmount" render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Price (0 = free)</FormLabel>
-                        <FormControl><Input type="number" min={0} step="0.01" placeholder="0" {...field} /></FormControl>
+                        <FormLabel>Price per ticket</FormLabel>
+                        <FormControl><Input type="number" min={0} step="0.01" placeholder="0 = free" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={collectionForm.control} name="paymentToken" render={({ field }) => (
                       <FormItem className="w-28">
-                        <FormLabel>Token</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormLabel>Currency</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {LISTABLE_TOKENS.map((t) => (
+                              <SelectItem key={t.symbol} value={t.symbol}>{t.symbol}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
                       </FormItem>
                     )} />
                   </div>
                   <FormField control={collectionForm.control} name="expirationDate" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expires *</FormLabel>
+                      <FormLabel>Valid until *</FormLabel>
                       <FormControl><Input type="date" {...field} /></FormControl>
-                      <FormDescription>Tickets lose access after this date — they stay transferable.</FormDescription>
+                      <FormDescription>Tickets lose access after this date — they stay tradeable.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={collectionForm.control} name="royalty" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Royalty %</FormLabel>
-                      <FormControl><Input type="number" min={0} max={50} step="0.5" {...field} /></FormControl>
+                      <FormLabel>Resale royalty %</FormLabel>
+                      <FormControl><Input type="number" min={0} max={50} step="0.5" placeholder="0" {...field} /></FormControl>
+                      <FormDescription>You earn this percentage whenever a ticket is resold.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" size="lg" className="w-full rounded-xl" disabled={isCreating}>
+                  <Button type="submit" size="lg" className="w-full rounded-xl bg-teal-600 hover:bg-teal-700 text-white" disabled={isCreating}>
                     {isCreating
                       ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating…</>
                       : <><Ticket className="h-4 w-4 mr-2" />Create Event</>}

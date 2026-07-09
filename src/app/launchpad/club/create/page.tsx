@@ -15,20 +15,25 @@ import {
   Form, FormControl, FormField, FormItem,
   FormLabel, FormMessage, FormDescription,
 } from "@/components/ui/form";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { CreateClubAside } from "@/components/claim/create-club-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { getTokenBySymbol } from "@medialane/sdk";
+import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
+
+const LISTABLE_TOKENS = SUPPORTED_TOKENS.filter((t) => t.listable);
 
 const schema = z.object({
   name: z.string().min(1, "Name required").max(100),
   symbol: z.string().min(1, "Symbol required").max(10).regex(/^[A-Z0-9]+$/, "Uppercase letters and numbers only"),
-  metadataUri: z.string().min(1, "Metadata URI required").regex(/^(ipfs|ar):\/\//, "Must start with ipfs:// or ar://"),
+  metadataUri: z.string().min(1, "Image URI required").regex(/^(ipfs|ar):\/\//, "Must start with ipfs:// or ar://"),
   maxMembers: z.string().default("").refine((v) => v === "" || /^\d+$/.test(v), "Must be a positive integer"),
   entryFeeAmount: z.string().default("").refine((v) => v === "" || !Number.isNaN(Number(v)), "Enter a valid amount"),
   paymentToken: z.string().default("USDC"),
@@ -82,7 +87,7 @@ export default function CreateClubPage() {
       <div className="container max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
         <div className="flex justify-center">
           <div className="h-20 w-20 rounded-full bg-indigo-500/10 flex items-center justify-center">
-            <CheckCircle2 className="h-10 w-10 text-indigo-500" />
+            <CheckCircle2 className="h-10 w-10 text-indigo-400" />
           </div>
         </div>
         <div className="space-y-2">
@@ -113,7 +118,7 @@ export default function CreateClubPage() {
         gated={false}
         icon={<Users className="h-4 w-4 text-white" />}
         title="Create a Club"
-        subtitle="Give your closest fans a membership card that unlocks more — free to publish."
+        subtitle="Give your closest fans a membership card — free to publish, no platform fee."
         aside={<CreateClubAside />}
       >
         <FadeIn>
@@ -123,6 +128,7 @@ export default function CreateClubPage() {
                 <FormItem>
                   <FormLabel>Club name *</FormLabel>
                   <FormControl><Input placeholder="Inner Circle" {...field} /></FormControl>
+                  <FormDescription>Your club's public name — shown on membership cards.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -137,15 +143,15 @@ export default function CreateClubPage() {
                       className="max-w-[160px]"
                     />
                   </FormControl>
-                  <FormDescription>Short ticker shown in wallets.</FormDescription>
+                  <FormDescription>Short ticker shown in wallets — 2 to 10 uppercase letters.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="metadataUri" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Metadata URI *</FormLabel>
+                  <FormLabel>Image URI *</FormLabel>
                   <FormControl><Input placeholder="ipfs://bafybei…" {...field} /></FormControl>
-                  <FormDescription>ipfs:// or ar:// only — enforced on-chain.</FormDescription>
+                  <FormDescription>Upload your club image to IPFS and paste the ipfs:// link here.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -153,6 +159,7 @@ export default function CreateClubPage() {
                 <FormItem>
                   <FormLabel>Member cap <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                   <FormControl><Input type="number" min={1} placeholder="Unlimited" {...field} /></FormControl>
+                  <FormDescription>Leave blank for no limit.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -161,17 +168,30 @@ export default function CreateClubPage() {
                   <FormItem className="flex-1">
                     <FormLabel>Entry fee <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                     <FormControl><Input type="number" min={0} step="0.01" placeholder="Free" {...field} /></FormControl>
+                    <FormDescription>Members pay this to join. Proceeds go to your wallet.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="paymentToken" render={({ field }) => (
                   <FormItem className="w-28">
-                    <FormLabel>Token</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
+                    <FormLabel>Currency</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {LISTABLE_TOKENS.map((t) => (
+                          <SelectItem key={t.symbol} value={t.symbol}>{t.symbol}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
                   </FormItem>
                 )} />
               </div>
-              <Button type="submit" size="lg" className="w-full rounded-xl" disabled={isSubmitting}>
+              <Button type="submit" size="lg" className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white" disabled={isSubmitting}>
                 {isSubmitting
                   ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating…</>
                   : <><Users className="h-4 w-4 mr-2" />Create Club</>}

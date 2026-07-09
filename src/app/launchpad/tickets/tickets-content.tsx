@@ -20,8 +20,8 @@ function TicketCollectionCard({ collection }: { collection: ApiCollection }) {
   const initial = (collection.name ?? "T").charAt(0).toUpperCase();
 
   return (
-    <Link href={`/launchpad/tickets/${collection.contractAddress}`} className="block">
-      <div className="bento-cell overflow-hidden flex flex-col hover:border-teal-500/40 transition-colors">
+    <Link href={`/launchpad/tickets/${collection.contractAddress}`} className="block group">
+      <div className="bento-cell overflow-hidden flex flex-col active:border-teal-500/40 transition-colors">
         <div className="relative aspect-video w-full overflow-hidden bg-muted shrink-0">
           {showImage ? (
             <Image
@@ -33,8 +33,9 @@ function TicketCollectionCard({ collection }: { collection: ApiCollection }) {
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/40 via-cyan-500/30 to-teal-900/50 flex items-center justify-center">
-              <span className="text-7xl font-black text-white/10 select-none">{initial}</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/30 via-cyan-500/20 to-teal-900/60 flex items-center justify-center">
+              <Ticket className="h-12 w-12 text-teal-300/20" />
+              <span className="absolute text-6xl font-black text-white/5 select-none">{initial}</span>
             </div>
           )}
           <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-widest text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
@@ -77,10 +78,10 @@ function TicketCollectionCardSkeleton() {
 }
 
 const TICKET_FEATURES = [
-  { icon: Ticket, title: "Your own contract", desc: "Deploy once — trade tickets like any other NFT." },
-  { icon: ShieldCheck, title: "Redeemable", desc: "Mark tickets used at the door without burning them." },
-  { icon: Clock, title: "Expiration built in", desc: "Set when a ticket stops granting access." },
-  { icon: Layers, title: "Multiple events, one contract", desc: "Run recurring events under your own ticket book." },
+  { icon: Ticket, title: "Your own contract", desc: "Deploy once — you own the ticket book. Trade tickets like any other NFT." },
+  { icon: ShieldCheck, title: "Redeemable at the door", desc: "Mark tickets used without burning them. They stay theirs, just no longer valid for entry." },
+  { icon: Clock, title: "Built-in expiration", desc: "Set when a ticket stops granting access — the gate is enforced on-chain." },
+  { icon: Layers, title: "Multiple events, one contract", desc: "Run recurring shows under your own ticket book — no new deployment needed." },
 ];
 
 export function TicketsContent() {
@@ -96,19 +97,15 @@ export function TicketsContent() {
               icon={<Ticket className="h-4 w-4 text-white" />}
               title="IP Tickets"
               subtitle="Sell verifiable tickets for your events — each one a real NFT your buyers can hold, trade, and show at the door."
+              headerAccessory={
+                <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+                  <Link href="/launchpad/tickets/create">
+                    <Plus className="h-3.5 w-3.5" />
+                    Sell Tickets
+                  </Link>
+                </Button>
+              }
             />
-          </div>
-        </FadeIn>
-        <FadeIn delay={0.16}>
-          <div className="flex flex-wrap gap-2 mt-5">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
-              <ShieldCheck className="h-3.5 w-3.5 text-teal-500" />
-              <span className="text-muted-foreground">Verifiable on-chain</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
-              <Layers className="h-3.5 w-3.5 text-cyan-500" />
-              <span className="text-muted-foreground">Transferable ERC-721</span>
-            </div>
           </div>
         </FadeIn>
       </section>
@@ -117,8 +114,10 @@ export function TicketsContent() {
         <FadeIn>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {TICKET_FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="bento-cell p-4 space-y-2">
-                <Icon className="h-5 w-5 text-teal-500" />
+              <div key={title} className="bento-cell p-4 space-y-3">
+                <div className="h-9 w-9 rounded-xl bg-teal-500/10 flex items-center justify-center">
+                  <Icon className="h-5 w-5 text-teal-500" />
+                </div>
                 <p className="text-sm font-semibold leading-tight">{title}</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
               </div>
@@ -134,12 +133,6 @@ export function TicketsContent() {
               <p className="section-label">Live</p>
               <h2 className="text-xl font-bold mt-0.5">Ticket collections</h2>
             </div>
-            <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
-              <Link href="/launchpad/tickets/create">
-                <Plus className="h-3.5 w-3.5" />
-                Create Tickets
-              </Link>
-            </Button>
           </div>
         </FadeIn>
 
@@ -149,13 +142,22 @@ export function TicketsContent() {
           </div>
         ) : collections.length === 0 ? (
           <FadeIn>
-            <div className="bento-cell border-dashed p-16 text-center space-y-3">
+            <div className="bento-cell border-dashed p-12 text-center space-y-4">
               <div className="flex justify-center">
-                <Ticket className="h-10 w-10 text-muted-foreground/20" />
+                <div className="h-16 w-16 rounded-2xl bg-teal-500/8 flex items-center justify-center">
+                  <Ticket className="h-8 w-8 text-teal-500/30" />
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                No ticket collections yet. Be the first to sell tickets on Medialane.
-              </p>
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">No ticket collections yet</p>
+                <p className="text-xs text-muted-foreground">Be the first to sell tickets on Medialane.</p>
+              </div>
+              <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+                <Link href="/launchpad/tickets/create">
+                  <Plus className="h-3.5 w-3.5" />
+                  Sell Tickets
+                </Link>
+              </Button>
             </div>
           </FadeIn>
         ) : (

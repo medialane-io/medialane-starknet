@@ -22,8 +22,8 @@ function ClubCard({ collection }: { collection: ApiCollection }) {
   const initial = (collection.name ?? "C").charAt(0).toUpperCase();
 
   return (
-    <Link href={`/launchpad/club/${collection.contractAddress}`} className="block">
-      <div className="bento-cell overflow-hidden flex flex-col hover:border-indigo-500/40 transition-colors">
+    <Link href={`/launchpad/club/${collection.contractAddress}`} className="block group">
+      <div className="bento-cell overflow-hidden flex flex-col active:border-indigo-500/40 transition-colors">
         <div className="relative aspect-video w-full overflow-hidden bg-muted shrink-0">
           {showImage ? (
             <Image
@@ -35,8 +35,9 @@ function ClubCard({ collection }: { collection: ApiCollection }) {
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 via-violet-500/30 to-indigo-900/50 flex items-center justify-center">
-              <span className="text-7xl font-black text-white/10 select-none">{initial}</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 via-violet-500/20 to-indigo-900/60 flex items-center justify-center">
+              <IdCard className="h-12 w-12 text-indigo-300/20" />
+              <span className="absolute text-6xl font-black text-white/5 select-none">{initial}</span>
             </div>
           )}
           <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-widest text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
@@ -58,7 +59,7 @@ function ClubCard({ collection }: { collection: ApiCollection }) {
               {collection.symbol}
             </span>
           )}
-          <div className="text-xs text-indigo-500 font-medium">View club →</div>
+          <div className="text-xs text-indigo-400 font-medium">View club →</div>
         </div>
       </div>
     </Link>
@@ -79,12 +80,12 @@ function ClubCardSkeleton() {
 }
 
 const CLUB_FEATURES = [
-  { icon: IdCard, title: "Membership card", desc: "Each member holds a real NFT proving they belong." },
-  { icon: KeyRound, title: "Open or close joining", desc: "Reversible — never affects existing members." },
-  { icon: Users, title: "Optional entry fee", desc: "Free or paid — you decide." },
+  { icon: IdCard, title: "Membership card", desc: "Each member holds a real NFT proving they belong — permanently on-chain." },
+  { icon: KeyRound, title: "Open or close joining", desc: "Reversible at any time — never affects existing members." },
+  { icon: Users, title: "Optional entry fee", desc: "Set a price to join, or keep it free. You keep what members pay." },
   CLUB_TRANSFERABLE
-    ? { icon: Layers, title: "Transferable ERC-721", desc: "Standard NFTs — trade freely in any marketplace." }
-    : { icon: Layers, title: "Non-transferable card", desc: "Soulbound to your wallet — membership can't be bought or sold." },
+    ? { icon: Layers, title: "Transferable", desc: "Standard NFTs — members can trade their card in any marketplace." }
+    : { icon: Layers, title: "Non-transferable card", desc: "Soulbound to the member's wallet — belonging can't be bought or sold." },
 ];
 
 export function ClubContent() {
@@ -99,20 +100,16 @@ export function ClubContent() {
             <ServiceHeader
               icon={<Users className="h-4 w-4 text-white" />}
               title="IP Club"
-              subtitle="Membership clubs backed by an on-chain NFT card — give your closest fans a way in."
+              subtitle="Membership clubs backed by an on-chain card — give your closest fans a way in, with or without an entry fee."
+              headerAccessory={
+                <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5">
+                  <Link href="/launchpad/club/create">
+                    <Plus className="h-3.5 w-3.5" />
+                    Create Club
+                  </Link>
+                </Button>
+              }
             />
-          </div>
-        </FadeIn>
-        <FadeIn delay={0.16}>
-          <div className="flex flex-wrap gap-2 mt-5">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
-              <IdCard className="h-3.5 w-3.5 text-indigo-500" />
-              <span className="text-muted-foreground">On-chain membership card</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
-              <Layers className="h-3.5 w-3.5 text-violet-500" />
-              <span className="text-muted-foreground">{CLUB_TRANSFERABLE ? "Transferable ERC-721" : "Non-transferable"}</span>
-            </div>
           </div>
         </FadeIn>
       </section>
@@ -121,8 +118,10 @@ export function ClubContent() {
         <FadeIn>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {CLUB_FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="bento-cell p-4 space-y-2">
-                <Icon className="h-5 w-5 text-indigo-500" />
+              <div key={title} className="bento-cell p-4 space-y-3">
+                <div className="h-9 w-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                  <Icon className="h-5 w-5 text-indigo-400" />
+                </div>
                 <p className="text-sm font-semibold leading-tight">{title}</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
               </div>
@@ -138,12 +137,6 @@ export function ClubContent() {
               <p className="section-label">Live</p>
               <h2 className="text-xl font-bold mt-0.5">Clubs</h2>
             </div>
-            <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5">
-              <Link href="/launchpad/club/create">
-                <Plus className="h-3.5 w-3.5" />
-                Create Club
-              </Link>
-            </Button>
           </div>
         </FadeIn>
 
@@ -153,13 +146,22 @@ export function ClubContent() {
           </div>
         ) : collections.length === 0 ? (
           <FadeIn>
-            <div className="bento-cell border-dashed p-16 text-center space-y-3">
+            <div className="bento-cell border-dashed p-12 text-center space-y-4">
               <div className="flex justify-center">
-                <Users className="h-10 w-10 text-muted-foreground/20" />
+                <div className="h-16 w-16 rounded-2xl bg-indigo-500/8 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-indigo-400/30" />
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                No clubs yet. Be the first to launch one on Medialane.
-              </p>
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">No clubs yet</p>
+                <p className="text-xs text-muted-foreground">Be the first to launch one on Medialane.</p>
+              </div>
+              <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5">
+                <Link href="/launchpad/club/create">
+                  <Plus className="h-3.5 w-3.5" />
+                  Create Club
+                </Link>
+              </Button>
             </div>
           </FadeIn>
         ) : (
