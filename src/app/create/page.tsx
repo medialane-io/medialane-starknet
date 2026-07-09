@@ -157,16 +157,6 @@ export default function CreatePage() {
       {/* Subtle background tint — visible in dark mode, near-invisible in light */}
       <div className="absolute inset-0 dark:bg-gradient-to-b dark:from-[#07000f]/80 dark:via-transparent dark:to-transparent pointer-events-none" />
 
-      {/* Aurora — dark-only decorative glows */}
-      <div
-        className="aurora-purple absolute w-[70%] max-w-[700px] h-[50%] max-h-[500px] -top-1/4 -left-1/4 pointer-events-none hidden dark:block"
-        style={{ opacity: 0.18 }}
-      />
-      <div
-        className="aurora-blue absolute w-[50%] max-w-[500px] h-[40%] max-h-[400px] top-0 -right-1/4 pointer-events-none hidden dark:block"
-        style={{ opacity: 0.12 }}
-      />
-
       {/* Top accent line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
 

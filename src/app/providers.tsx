@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { NavCommandMenu, useNavCommandMenu } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
-import { Aurora } from "@/components/ui/aurora";
+
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
 import { NavAccountPanel } from "@/components/nav-account-panel";
@@ -176,7 +176,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StarknetProvider>
           <StarkZapWalletProvider onRequestPrivy={handleRequestPrivy} PrivyConnector={PrivyConnectorMount}>
             <WalletProvider>
-            <Aurora />
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
             {!isStandalone && <NotificationSpotlight />}
