@@ -11,8 +11,8 @@ export function CreateTicketAside() {
         { icon: LayoutGrid, title: "A branded event page", desc: "Your event, with a shareable ticket link." },
       ]}
       steps={[
-        "Deploy your own ticket contract — once, zero platform fees",
-        "Set your price, supply, and expiration",
+        "Create your ticket collection — set name, symbol, and cover image",
+        "Add an event — set price, supply, and expiration",
         "Share the link — buyers mint directly",
       ]}
       trustIcon={Gift}
