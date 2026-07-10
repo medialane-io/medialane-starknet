@@ -1,9 +1,6 @@
 import { useState, useCallback } from "react";
-import { useAccount, useContract, useNetwork, useProvider } from "@starknet-react/core";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
-import { useWallet } from "@/hooks/use-wallet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
-import { Abi, shortString, constants, num } from "starknet";
+import { useContract, useProvider } from "@starknet-react/core";
+import { Abi, num } from "starknet";
 import { useSWRConfig } from "swr";
 import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk";
 import { toast } from "sonner";
@@ -11,13 +8,14 @@ import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
+import { getStarknetVenue } from "@/lib/starknet-venue";
+import { useVenueSigner } from "@/lib/use-venue-signer";
 import {
-    getOrderParametersTypedData,
-    getOrderCancellationTypedData,
-    get1155OrderParametersTypedData,
-    get1155OrderCancellationTypedData,
-    stringifyBigInts,
-} from "@/utils/marketplace-utils";
+    SUPPORTED_TOKENS,
+    STARKNET_MARKETPLACE_721_CONTRACT,
+    STARKNET_MARKETPLACE_1155_CONTRACT,
+    INDEXER_REVALIDATION_DELAY_MS,
+} from "@/lib/constants";
 
 /**
  * Per-call options for marketplace write ops. `silent` suppresses the success
@@ -65,16 +63,14 @@ interface UseMarketplaceReturn {
 }
 
 // Module-level helpers
-import { SUPPORTED_TOKENS, STARKNET_MARKETPLACE_721_CONTRACT, STARKNET_MARKETPLACE_1155_CONTRACT, INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 const getDecimals = (currencySymbol: string) =>
     SUPPORTED_TOKENS.find((t) => t.symbol === currencySymbol)?.decimals ?? 18;
 
 const toWei = (price: string, currencySymbol: string): string =>
     BigInt(Math.floor(parseFloat(price) * Math.pow(10, getDecimals(currencySymbol)))).toString();
 
-// Full-felt (248-bit) random salt. In the 0.26.0 schema the nonce was removed,
-// so salt is the SOLE order-hash uniqueness source — it must be wide to avoid
-// hash collisions the contract would reject. Mirrors @medialane/sdk generateSalt.
+// Full-felt (248-bit) random salt — the SOLE order-hash uniqueness source in the
+// 0.26.0 schema (nonce removed). Mirrors @medialane/sdk generateSalt.
 const generateSalt = (): string => {
     const bytes = new Uint8Array(31);
     crypto.getRandomValues(bytes);
@@ -82,55 +78,18 @@ const generateSalt = (): string => {
     return num.toHex(BigInt("0x" + hex));
 };
 
-const ORDER_CREATED_SELECTOR = "0x3427759bfd3b941f14e687e129519da3c9b0046c5b9aaa290bb1dede63753b3";
-
-const sameAddress = (a?: string, b?: string) => {
-    if (!a || !b) return false;
-    try {
-        return BigInt(a).toString() === BigInt(b).toString();
-    } catch {
-        return a.toLowerCase() === b.toLowerCase();
-    }
-};
-
-const U256_BASE = 1n << 128n;
-
-const parseU256Result = (result: string[]): bigint => {
-    if (!Array.isArray(result) || result.length === 0) return 0n;
-    const low = BigInt(result[0] ?? 0);
-    const high = BigInt(result[1] ?? 0);
-    return low + high * U256_BASE;
-};
-
-const assertTransactionSucceeded = (receipt: any) => {
-    if (receipt?.execution_status === "REVERTED") {
-        throw new Error(receipt.revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
-    }
-};
-
-const assertOrderCreated = (receipt: any, marketplaceAddress: string) => {
-    const events = Array.isArray(receipt?.events) ? receipt.events : [];
-    const hasOrderCreated = events.some((event: any) =>
-        sameAddress(event?.from_address, marketplaceAddress) &&
-        Array.isArray(event?.keys) &&
-        event.keys[0] === ORDER_CREATED_SELECTOR
-    );
-
-    if (!hasOrderCreated) {
-        throw new Error("Transaction confirmed, but the marketplace did not emit an order-created event.");
-    }
-};
-
+/**
+ * Marketplace write hook. The signed order-construction (list / offer / cancel)
+ * runs through the chain-neutral `StarknetVenue` adapter — the app no longer
+ * hand-rolls SNIP-12 signing or `register_order` calldata. Fulfilment stays here
+ * as app-level composition: `checkoutCart` is a multi-item atomic sweep and
+ * `acceptOffer` is a seller-side fulfil (NFT approval, not payment) — neither of
+ * which the single-order `VenueAdapter` models — but both execute through the
+ * shared `useVenueSigner` port, so wallet selection + confirmation are unified.
+ */
 export function useMarketplace(): UseMarketplaceReturn {
-    const { account } = useAccount();
-    // StarkZap (Cartridge/Privy) wallet. The ACTIVE-WALLET SLOT decides which
-    // rail signs/executes (2026-06-07 redesign) — a bare `szWallet ?? account`
-    // priority would let a lingering Cartridge/Privy session sign orders for a
-    // different wallet than the one the user explicitly connected.
-    const { wallet: szWalletRaw } = useStarkZapWallet();
-    const { walletType } = useWallet();
-    const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
-    const { chain } = useNetwork();
+    const venue = getStarknetVenue();
+    const signer = useVenueSigner();
     const { provider } = useProvider();
     const { mutate } = useSWRConfig();
 
@@ -146,7 +105,6 @@ export function useMarketplace(): UseMarketplaceReturn {
         address: STARKNET_MARKETPLACE_1155_CONTRACT as `0x${string}`,
         abi: IPMarketplace1155ABI as unknown as Abi,
     });
-    const { address: walletAddress } = useUnifiedWallet();
 
     const resetState = useCallback(() => {
         setTxHash(null);
@@ -206,78 +164,14 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const executeDirect = useCallback(async (calls: any[]): Promise<string> => {
-        // StarkZap (Cartridge/Privy): its SDK handles gas/sponsorship + waits.
-        if (szWallet) {
-            const tx = await szWallet.execute(calls);
-            return tx.hash;
-        }
-        if (!account) {
-            throw new Error("Wallet not ready. Please reconnect and try again.");
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tx = await account.execute(calls as any);
-        return tx.transaction_hash;
-    }, [szWallet, account]);
-
-    // Signs typed data with whichever wallet is active. starknet account and
-    // StarkZap WalletInterface both implement signMessage(typedData): Signature;
-    // callers normalize the result via signatureArray (handles [] or {r,s}).
-    const signTypedData = useCallback(async (typedData: any): Promise<any> => {
-        const signer = szWallet ?? account;
-        if (!signer) {
-            throw new Error("Wallet not ready. Please reconnect and try again.");
-        }
-        return signer.signMessage(typedData);
-    }, [szWallet, account]);
-
-    const getErc20Allowance = useCallback(async (
-        tokenAddress: string,
-        owner: string,
-        spender: string
-    ): Promise<bigint> => {
-        try {
-            const result = await provider.callContract({
-                contractAddress: tokenAddress,
-                entrypoint: "allowance",
-                calldata: [owner, spender],
-            });
-            return parseU256Result(result);
-        } catch (err) {
-            console.warn("Failed to check ERC20 allowance", err);
-            return 0n;
-        }
-    }, [provider]);
-
-    // Builds shared timing/counter/currency fields for an order.
-    const buildBaseOrderParams = useCallback(async (
-        currencySymbol: string,
-        durationSeconds: number,
-        contract: NonNullable<typeof medialaneContract>
-    ) => {
-        const now = Math.floor(Date.now() / 1000);
-        const startTime = (now + 30).toString(); // ~6s blocks — small inclusion buffer
-        const endTime = (now + durationSeconds).toString();
-        const salt = generateSalt();
-
-        const { SUPPORTED_TOKENS } = await import("@/lib/constants");
-        const currencyAddress = SUPPORTED_TOKENS.find((t: any) => t.symbol === currencySymbol)?.address;
-        if (!currencyAddress) throw new Error("Unsupported currency selected");
-
-        // 0.26.0: per-offerer monotonic counter replaces the removed nonce.
-        const currentCounter = await contract.get_counter(walletAddress!);
-        const counter = currentCounter.toString();
-
-        return { startTime, endTime, salt, currencyAddress, counter };
-    }, [walletAddress]);
-
     // Signed EIP-2981 royalty cap (bps) for an order. Reads the NFT's live 2981
     // rate via royalty_info(tokenId, 10000) — the returned amount equals the bps
-    // at salePrice 10000. Non-2981 NFTs / failures yield "0" (never over-pay).
+    // at salePrice 10000. Non-2981 NFTs / failures yield 0 (never over-pay). The
+    // venue accepts this as the royalty_max_bps override (skipping its own read).
     const resolveRoyaltyMaxBps = useCallback(async (
         nft: string,
         tokenId: string
-    ): Promise<string> => {
+    ): Promise<number> => {
         try {
             const { cairo } = await import("starknet");
             const id = cairo.uint256(tokenId);
@@ -286,58 +180,11 @@ export function useMarketplace(): UseMarketplaceReturn {
                 entrypoint: "royalty_info",
                 calldata: [id.low.toString(), id.high.toString(), "10000", "0"],
             });
-            return BigInt(res[1] ?? "0").toString();
+            return Number(BigInt(res[1] ?? "0"));
         } catch {
-            return "0";
+            return 0;
         }
     }, [provider]);
-
-    // Signs the orderParams, verifies the hash against the contract, and returns a
-    // populated register_order call ready to include in a multicall.
-    const signAndBuildRegisterCall = useCallback(async (
-        orderParams: any,
-        contract: NonNullable<typeof medialaneContract>
-    ) => {
-        const chainId = ('0x' + chain!.id.toString(16)) as constants.StarknetChainId;
-        const typedData = stringifyBigInts(getOrderParametersTypedData(orderParams, chainId));
-
-        const signature = await signTypedData(typedData);
-        const signatureArray = Array.isArray(signature)
-            ? signature
-            : [signature.r.toString(), signature.s.toString()];
-
-        const registerPayload = stringifyBigInts({
-            parameters: {
-                ...orderParams,
-                offer: {
-                    ...orderParams.offer,
-                    item_type: shortString.encodeShortString(orderParams.offer.item_type),
-                },
-                consideration: {
-                    ...orderParams.consideration,
-                    item_type: shortString.encodeShortString(orderParams.consideration.item_type),
-                },
-            },
-            signature: signatureArray,
-        });
-
-        // Hash verification (best-effort, account-only — StarkZap wallets don't
-        // expose hashMessage; the check is just a warning and never gates submit).
-        try {
-            if (account?.hashMessage) {
-                const localHash = await account.hashMessage(typedData);
-                const contractHash = await contract.get_order_hash(registerPayload.parameters, walletAddress!);
-                const contractHashHex = "0x" + BigInt(contractHash).toString(16);
-                if (localHash !== contractHashHex) {
-                    console.warn("[marketplace] Hash mismatch — signature may be rejected by contract");
-                }
-            }
-        } catch (hashErr) {
-            console.warn("Could not verify hash:", hashErr);
-        }
-
-        return contract.populate("register_order", [registerPayload]);
-    }, [account, chain, walletAddress, signTypedData]);
 
     const createListing = useCallback(async (
         assetContractAddress: string,
@@ -349,163 +196,36 @@ export function useMarketplace(): UseMarketplaceReturn {
         amount?: string,
         opts?: WriteOpts
     ) => {
+        if (!signer) {
+            toast.error("Connect your wallet first");
+            return undefined;
+        }
         const is1155 = tokenStandard === "ERC1155";
-        const contract = is1155 ? medialane1155Contract : medialaneContract;
-
-        if (!walletAddress || !contract || !chain) {
-            const msg = "Account, contract, or network not available";
-            setError(msg);
-            toast.error(msg);
-            return undefined;
-        }
-        if (!szWallet && !account) {
-            const msg = "Wallet not ready. Please reconnect and try again.";
-            setError(msg);
-            toast.error(msg);
-            return undefined;
-        }
-
         return withProcessing(async () => {
-            const priceWei = toWei(price, currencySymbol);
-            const { startTime, endTime, salt, currencyAddress, counter } =
-                await buildBaseOrderParams(currencySymbol, durationSeconds, contract);
             const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
-
-            // ── ERC-1155 path ─────────────────────────────────────────────────
-            if (is1155) {
-                const listAmount = amount ?? "1";
-                const orderParams1155 = {
-                    offerer: walletAddress,
-                    marketplace: contract.address,
-                    offer: {
-                        item_type: "ERC1155",
-                        token: assetContractAddress,
-                        identifier_or_criteria: tokenId,
-                        amount: listAmount,
-                    },
-                    consideration: {
-                        item_type: "ERC20",
-                        token: currencyAddress,
-                        identifier_or_criteria: "0",
-                        amount: priceWei,
-                        recipient: walletAddress,
-                    },
-                    royalty_max_bps: royaltyMaxBps,
-                    start_time: startTime,
-                    end_time: endTime,
-                    salt,
-                    counter,
-                };
-                const chainId = ('0x' + chain!.id.toString(16)) as constants.StarknetChainId;
-                const typedData1155 = stringifyBigInts(
-                    get1155OrderParametersTypedData(orderParams1155 as Record<string, unknown>, chainId)
-                );
-                const signature1155 = await signTypedData(typedData1155);
-                const signatureArray1155 = Array.isArray(signature1155)
-                    ? signature1155
-                    : [signature1155.r.toString(), signature1155.s.toString()];
-                const registerCall1155 = contract.populate("register_order", [{
-                    parameters: {
-                        ...orderParams1155,
-                        offer: {
-                            ...orderParams1155.offer,
-                            item_type: shortString.encodeShortString(orderParams1155.offer.item_type),
-                        },
-                        consideration: {
-                            ...orderParams1155.consideration,
-                            item_type: shortString.encodeShortString(orderParams1155.consideration.item_type),
-                        },
-                    },
-                    signature: signatureArray1155,
-                }]);
-                let isAlreadyApproved1155 = false;
-                try {
-                    const res = await provider.callContract({
-                        contractAddress: assetContractAddress,
-                        entrypoint: "is_approved_for_all",
-                        calldata: [walletAddress!, contract.address],
-                    });
-                    isAlreadyApproved1155 = BigInt(res[0]) !== 0n;
-                } catch (err) {
-                    console.warn("Failed to check ERC1155 approval status", err);
-                }
-                const approveCall1155 = {
-                    contractAddress: assetContractAddress,
-                    entrypoint: "set_approval_for_all",
-                    calldata: [contract.address, "1"],
-                };
-                const calls1155 = isAlreadyApproved1155 ? [registerCall1155] : [approveCall1155, registerCall1155];
-                const hash1155 = await executeDirect(calls1155);
-                setTxHash(hash1155);
-                const receipt1155 = await provider.waitForTransaction(hash1155);
-                assertTransactionSucceeded(receipt1155);
-                assertOrderCreated(receipt1155, contract.address);
-                refreshMarketplaceCaches();
-                if (!opts?.silent) toast.success("Listing Created", { description: "Your edition has been listed successfully." });
-                rewardToast("list_asset");
-                return hash1155;
-            }
-            // ── ERC-721 path — unchanged below ────────────────────────────────
-
-            const orderParams = {
-                offerer: walletAddress,
-                marketplace: contract.address,
-                offer: {
-                    item_type: "ERC721",
-                    token: assetContractAddress,
-                    identifier_or_criteria: tokenId,
-                    amount: "1",
-                },
-                consideration: {
-                    item_type: "ERC20",
-                    token: currencyAddress,
-                    identifier_or_criteria: "0",
-                    amount: priceWei,
-                    recipient: walletAddress,
-                },
-                royalty_max_bps: royaltyMaxBps,
-                start_time: startTime,
-                end_time: endTime,
-                salt,
-                counter,
-            };
-
-            const registerCall = await signAndBuildRegisterCall(orderParams, contract);
-
-            const { cairo } = await import("starknet");
-            let approveCall: any;
-            let isAlreadyApproved = false;
-
-            const tokenIdUint256 = cairo.uint256(tokenId);
-            try {
-                const res = await provider.callContract({
-                    contractAddress: assetContractAddress,
-                    entrypoint: "get_approved",
-                    calldata: [tokenIdUint256.low.toString(), tokenIdUint256.high.toString()],
-                });
-                isAlreadyApproved =
-                    BigInt(res[0]).toString() === BigInt(contract.address).toString();
-            } catch (err) {
-                console.warn("Failed to check ERC721 approval status", err);
-            }
-            approveCall = {
-                contractAddress: assetContractAddress,
-                entrypoint: "approve",
-                calldata: [contract.address, tokenIdUint256.low.toString(), tokenIdUint256.high.toString()],
-            };
-
-            const calls = isAlreadyApproved ? [registerCall] : [approveCall, registerCall];
-            const hash = await executeDirect(calls);
+            const now = Math.floor(Date.now() / 1000);
+            const { txHash: hash } = await venue.registerOrder(signer, {
+                asset: { chain: "STARKNET", contract: assetContractAddress, tokenId },
+                side: "listing",
+                paymentToken: currencySymbol,
+                amount: toWei(price, currencySymbol), // per-unit raw base units
+                quantity: is1155 ? (amount ?? "1") : "1",
+                royaltyMaxBps,
+                startTime: 0,
+                endTime: now + durationSeconds,
+                salt: generateSalt(),
+            });
             setTxHash(hash);
-            const receipt = await provider.waitForTransaction(hash);
-            assertTransactionSucceeded(receipt);
-            assertOrderCreated(receipt, contract.address);
             refreshMarketplaceCaches();
-            if (!opts?.silent) toast.success("Listing Created", { description: "Your asset has been listed successfully." });
+            if (!opts?.silent) {
+                toast.success("Listing Created", {
+                    description: is1155 ? "Your edition has been listed successfully." : "Your asset has been listed successfully.",
+                });
+            }
             rewardToast("list_asset");
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, executeDirect, refreshMarketplaceCaches, resolveRoyaltyMaxBps, signTypedData]);
+    }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
 
     const makeOffer = useCallback(async (
         assetContractAddress: string,
@@ -516,115 +236,41 @@ export function useMarketplace(): UseMarketplaceReturn {
         tokenStandard?: string,
         opts?: WriteOpts
     ) => {
+        if (!signer) {
+            toast.error("Connect your wallet first");
+            return undefined;
+        }
         const is1155 = tokenStandard === "ERC1155";
-        const contract = is1155 ? medialane1155Contract : medialaneContract;
-
-        if (!walletAddress || !contract || !chain) {
-            const msg = "Account, contract, or network not available";
-            setError(msg);
-            toast.error(msg);
-            return undefined;
-        }
-        if (!szWallet && !account) {
-            const msg = "Wallet not ready. Please reconnect and try again.";
-            setError(msg);
-            toast.error(msg);
-            return undefined;
-        }
-
         return withProcessing(async () => {
-            const priceWei = toWei(price, currencySymbol);
-            const { startTime, endTime, salt, currencyAddress, counter } =
-                await buildBaseOrderParams(currencySymbol, durationSeconds, contract);
             const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
-
-            // Inverted vs. listing: offerer sends ERC20, receives the NFT
-            const orderParams = {
-                offerer: walletAddress,
-                marketplace: contract.address,
-                offer: {
-                    item_type: "ERC20",
-                    token: currencyAddress,
-                    identifier_or_criteria: "0",
-                    amount: priceWei,
-                },
-                consideration: {
-                    item_type: is1155 ? "ERC1155" : "ERC721",
-                    token: assetContractAddress,
-                    identifier_or_criteria: tokenId,
-                    amount: "1",
-                    recipient: walletAddress,
-                },
-                royalty_max_bps: royaltyMaxBps,
-                start_time: startTime,
-                end_time: endTime,
-                salt,
-                counter,
-            };
-
-            let registerCall: any;
-            if (is1155) {
-                const chainId = ('0x' + chain!.id.toString(16)) as constants.StarknetChainId;
-                const typedData = stringifyBigInts(
-                    get1155OrderParametersTypedData(orderParams as Record<string, unknown>, chainId)
-                );
-                const signature = await signTypedData(typedData);
-                const signatureArray = Array.isArray(signature)
-                    ? signature
-                    : [signature.r.toString(), signature.s.toString()];
-                registerCall = contract.populate("register_order", [{
-                    parameters: {
-                        ...orderParams,
-                        offer: {
-                            ...orderParams.offer,
-                            item_type: shortString.encodeShortString(orderParams.offer.item_type),
-                        },
-                        consideration: {
-                            ...orderParams.consideration,
-                            item_type: shortString.encodeShortString(orderParams.consideration.item_type),
-                        },
-                    },
-                    signature: signatureArray,
-                }]);
-            } else {
-                registerCall = await signAndBuildRegisterCall(orderParams, contract);
-            }
-
-            const { cairo } = await import("starknet");
-            const requiredAllowance = BigInt(priceWei);
-            const currentAllowance = await getErc20Allowance(currencyAddress, walletAddress, contract.address);
-            const calls = [registerCall];
-
-            if (currentAllowance < requiredAllowance) {
-                const amountUint256 = cairo.uint256(priceWei);
-                calls.unshift({
-                    contractAddress: currencyAddress,
-                    entrypoint: "approve",
-                    calldata: [contract.address, amountUint256.low.toString(), amountUint256.high.toString()],
-                });
-            }
-
-            const hash = await executeDirect(calls);
+            const now = Math.floor(Date.now() / 1000);
+            const { txHash: hash } = await venue.registerOrder(signer, {
+                asset: { chain: "STARKNET", contract: assetContractAddress, tokenId },
+                side: "bid",
+                paymentToken: currencySymbol,
+                // Per-unit bid price; the venue approves per-unit × quantity for 1155.
+                amount: toWei(price, currencySymbol),
+                quantity: is1155 ? "1" : "1",
+                royaltyMaxBps,
+                startTime: 0,
+                endTime: now + durationSeconds,
+                salt: generateSalt(),
+            });
             setTxHash(hash);
-            const receipt = await provider.waitForTransaction(hash);
-            assertTransactionSucceeded(receipt);
-            assertOrderCreated(receipt, contract.address);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             rewardToast("make_offer");
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, buildBaseOrderParams, signAndBuildRegisterCall, getErc20Allowance, executeDirect, refreshMarketplaceCaches, resolveRoyaltyMaxBps, signTypedData]);
+    }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[], opts?: WriteOpts) => {
-        if (!walletAddress || !medialaneContract || !chain || items.length === 0) {
-            const msg = "Account, contract, network not available, or cart empty";
-            setError(msg);
-            toast.error(msg);
+        if (!signer) {
+            toast.error("Connect your wallet first");
             return undefined;
         }
-        if (!szWallet && !account) {
-            const msg = "Wallet not ready. Please reconnect and try again.";
+        if (!medialaneContract || items.length === 0) {
+            const msg = "Contract not available, or cart empty";
             setError(msg);
             toast.error(msg);
             return undefined;
@@ -684,62 +330,23 @@ export function useMarketplace(): UseMarketplaceReturn {
                 .filter((c): c is NonNullable<typeof c> => c !== null);
 
             // Single atomic multicall: all approvals + all fulfillments + fee transfers
-            const hash = await executeDirect([...approveCalls721, ...approveCalls1155, ...fulfillCalls, ...feeCalls]);
+            const { txHash: hash } = await signer.execute([...approveCalls721, ...approveCalls1155, ...fulfillCalls, ...feeCalls]);
             setTxHash(hash);
-            const receipt = await provider.waitForTransaction(hash);
-            assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             rewardToast("buy_asset");
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
+    }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
 
-    const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
-        const is1155 = tokenStandard === "ERC1155";
-        const contract = is1155 ? medialane1155Contract : medialaneContract;
-
-        if (!walletAddress || !contract || !chain) {
-            const msg = "Account, contract, or network not available";
-            setError(msg);
-            toast.error(msg);
+    const cancelOrder = useCallback(async (orderHash: string, _tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
+        if (!signer) {
+            toast.error("Connect your wallet first");
             return undefined;
         }
-        if (!szWallet && !account) {
-            const msg = "Wallet not ready. Please reconnect and try again.";
-            setError(msg);
-            toast.error(msg);
-            return undefined;
-        }
-
         return withProcessing(async () => {
-            const cancelParams = {
-                order_hash: orderHash,
-                offerer: walletAddress,
-            };
-
-            const chainId = ('0x' + chain.id.toString(16)) as constants.StarknetChainId;
-            const typedData = stringifyBigInts(
-                is1155
-                    ? get1155OrderCancellationTypedData(cancelParams as Record<string, unknown>, chainId)
-                    : getOrderCancellationTypedData(cancelParams, chainId)
-            );
-
-            const signature = await signTypedData(typedData);
-            const signatureArray = Array.isArray(signature)
-                ? signature
-                : [signature.r.toString(), signature.s.toString()];
-
-            const cancelRequest = stringifyBigInts({
-                cancelation: cancelParams,
-                signature: signatureArray,
-            });
-
-            const call = contract.populate("cancel_order", [cancelRequest]);
-            const hash = await executeDirect([call]);
+            const { txHash: hash } = await venue.cancelOrder(signer, orderHash);
             setTxHash(hash);
-            const receipt = await provider.waitForTransaction(hash);
-            assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
             if (!opts?.silent) {
                 toast.success(
@@ -749,12 +356,13 @@ export function useMarketplace(): UseMarketplaceReturn {
             }
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches, signTypedData]);
+    }, [signer, venue, withProcessing, refreshMarketplaceCaches]);
 
     /**
-     * Asset owner accepts an incoming bid. Signs OrderFulfillment typed data,
-     * approves the NFT transfer to the marketplace, then executes both calls
-     * atomically so either both succeed or neither does.
+     * Asset owner accepts an incoming bid. Fulfilment is unsigned (the owner is
+     * the fulfiller); the owner approves the NFT transfer to the marketplace, then
+     * executes both calls atomically. Kept app-side because the venue's fulfil
+     * models a buyer paying, not a seller approving their NFT.
      */
     const acceptOffer = useCallback(async (
         orderHash: string,
@@ -762,29 +370,24 @@ export function useMarketplace(): UseMarketplaceReturn {
         tokenId: string,
         tokenStandard?: string
     ) => {
-        const is1155 = tokenStandard === "ERC1155";
-        const contract = is1155 ? medialane1155Contract : medialaneContract;
-
-        if (!walletAddress || !contract || !chain) {
-            const msg = "Account, contract, or network not available";
-            setError(msg);
-            toast.error(msg);
+        if (!signer) {
+            toast.error("Connect your wallet first");
             return undefined;
         }
-        if (!szWallet && !account) {
-            const msg = "Wallet not ready. Please reconnect and try again.";
+        const is1155 = tokenStandard === "ERC1155";
+        const contract = is1155 ? medialane1155Contract : medialaneContract;
+        if (!contract) {
+            const msg = "Contract not available";
             setError(msg);
             toast.error(msg);
             return undefined;
         }
 
         return withProcessing(async () => {
-            // Fulfilment is unsigned in 0.26.0 — the owner (caller) is the fulfiller.
             const fulfillCall = is1155
                 ? contract.populate("fulfill_order", [orderHash, "1"])
                 : contract.populate("fulfill_order", [orderHash]);
 
-            // Owner must approve the NFT transfer before fulfilling
             const { cairo } = await import("starknet");
             let approveCall: any;
             if (is1155) {
@@ -802,15 +405,13 @@ export function useMarketplace(): UseMarketplaceReturn {
                 };
             }
 
-            const hash = await executeDirect([approveCall, fulfillCall]);
+            const { txHash: hash } = await signer.execute([approveCall, fulfillCall]);
             setTxHash(hash);
-            const receipt = await provider.waitForTransaction(hash);
-            assertTransactionSucceeded(receipt);
             refreshMarketplaceCaches();
             rewardToast("offer_accepted_seller");
             return hash;
         });
-    }, [account, szWallet, walletAddress, medialaneContract, medialane1155Contract, chain, provider, withProcessing, executeDirect, refreshMarketplaceCaches]);
+    }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
 
     return {
         createListing,
