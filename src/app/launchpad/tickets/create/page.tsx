@@ -102,8 +102,18 @@ export default function CreateTicketsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
 
+  // Image upload state (step 2)
+  const [imageFile2, setImageFile2] = useState<File | null>(null);
+  const [imagePreview2, setImagePreview2] = useState<string | null>(null);
+  const [imageUploading2, setImageUploading2] = useState(false);
+  const fileInputRef2 = useRef<HTMLInputElement>(null);
+  const previewUrlRef2 = useRef<string | null>(null);
+
   useEffect(() => {
-    return () => { if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current); };
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      if (previewUrlRef2.current) URL.revokeObjectURL(previewUrlRef2.current);
+    };
   }, []);
 
   const existingCollection = deployedAddress ?? myCollections[0]?.contractAddress ?? null;
@@ -157,6 +167,42 @@ export default function CreateTicketsPage() {
     setImagePreview(null);
     setImageUri(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleImageSelect2 = async (file: File) => {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast.error("Unsupported format", { description: "Please upload a JPG, PNG, GIF, SVG, or WebP image." });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image too large", { description: `Max 10 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB.` });
+      return;
+    }
+    setImageFile2(file);
+    if (previewUrlRef2.current) URL.revokeObjectURL(previewUrlRef2.current);
+    const objectUrl = URL.createObjectURL(file);
+    previewUrlRef2.current = objectUrl;
+    setImagePreview2(objectUrl);
+    setImageUploading2(true);
+    try {
+      const siwsToken = await getValidToken();
+      if (!siwsToken) throw new Error("Sign in with your wallet to upload images.");
+      const uploaded = await uploadFileToIpfs(file, siwsToken);
+      collectionForm.setValue("metadataUri", uploaded.uri);
+      toast.success("Event image uploaded to IPFS");
+    } catch (err) {
+      const t = uploadFailureToast(err);
+      toast.error(t.title, { description: t.description });
+    } finally {
+      setImageUploading2(false);
+    }
+  };
+
+  const clearImage2 = () => {
+    setImageFile2(null);
+    setImagePreview2(null);
+    collectionForm.setValue("metadataUri", "");
+    if (fileInputRef2.current) fileInputRef2.current.value = "";
   };
 
   // ── Step 1: Create ticket collection ───────────────────────────────────────
@@ -279,6 +325,7 @@ export default function CreateTicketsPage() {
 
   const onCreateCollection = async (values: CollectionValues) => {
     if (!signer || !existingCollection) { toast.error("Create your ticket collection first"); return; }
+    if (imageUploading2) { toast.error("Image still uploading, please wait"); return; }
     setIsCreating(true);
     try {
       const price = values.priceAmount ? Number(values.priceAmount) : 0;
@@ -489,14 +536,74 @@ export default function CreateTicketsPage() {
             <FadeIn>
               <Form {...collectionForm}>
                 <form onSubmit={collectionForm.handleSubmit(onCreateCollection)} className="space-y-5">
-                  <FormField control={collectionForm.control} name="metadataUri" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event image URI *</FormLabel>
-                      <FormControl><Input placeholder="ipfs://bafybei…" {...field} /></FormControl>
-                      <FormDescription>Upload your event image to IPFS and paste the ipfs:// link here.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  {/* Event image upload */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Event image *</p>
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="relative h-28 w-28 rounded-xl border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-primary/50 transition-colors"
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Upload event image"
+                        onClick={() => !imageUploading2 && fileInputRef2.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            if (!imageUploading2) fileInputRef2.current?.click();
+                          }
+                        }}
+                      >
+                        {imagePreview2 ? (
+                          <Image src={imagePreview2} alt="Event image" fill className="object-cover" />
+                        ) : (
+                          <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                        )}
+                        {imageUploading2 && (
+                          <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        <input
+                          ref={fileInputRef2}
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageSelect2(file);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={imageUploading2}
+                          onClick={() => fileInputRef2.current?.click()}
+                        >
+                          {imageUploading2 ? (
+                            <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Uploading…</>
+                          ) : imageFile2 ? "Change image" : "Upload image"}
+                        </Button>
+                        {imageFile2 && (
+                          <button
+                            type="button"
+                            onClick={clearImage2}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="h-3 w-3" /> Remove
+                          </button>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          JPG, PNG, GIF, SVG or WebP · max 10 MB
+                          {collectionForm.watch("metadataUri") && (
+                            <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
                   <FormField control={collectionForm.control} name="maxSupply" render={({ field }) => (
                     <FormItem>
@@ -555,7 +662,7 @@ export default function CreateTicketsPage() {
                     type="submit"
                     size="lg"
                     className="w-full rounded-xl bg-teal-600 hover:bg-teal-700 text-white"
-                    disabled={isCreating}
+                    disabled={isCreating || imageUploading2}
                   >
                     {isCreating
                       ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating…</>

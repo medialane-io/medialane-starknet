@@ -1,87 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { Ticket, ShieldCheck, Plus, Layers, Clock } from "lucide-react";
+import { Ticket, Plus, Check } from "lucide-react";
 import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ServiceHeader } from "@medialane/ui";
+import { ServiceHeader, CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { useTicketCollections } from "@/hooks/use-tickets";
-import { ipfsToHttp } from "@/lib/utils";
-import type { ApiCollection } from "@medialane/sdk";
-
-function TicketCollectionCard({ collection }: { collection: ApiCollection }) {
-  const [imgError, setImgError] = useState(false);
-  const imageUrl = collection.image ? ipfsToHttp(collection.image) : null;
-  const showImage = imageUrl && !imgError;
-  const initial = (collection.name ?? "T").charAt(0).toUpperCase();
-
-  return (
-    <Link href={`/launchpad/tickets/${collection.contractAddress}`} className="block group">
-      <div className="bento-cell overflow-hidden flex flex-col active:border-teal-500/40 transition-colors">
-        <div className="relative aspect-video w-full overflow-hidden bg-muted shrink-0">
-          {showImage ? (
-            <Image
-              src={imageUrl}
-              alt={collection.name ?? "Ticket Collection"}
-              fill
-              className="object-cover"
-              onError={() => setImgError(true)}
-              unoptimized
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/30 via-cyan-500/20 to-teal-900/60 flex items-center justify-center">
-              <Ticket className="h-12 w-12 text-teal-300/20" />
-              <span className="absolute text-6xl font-black text-white/5 select-none">{initial}</span>
-            </div>
-          )}
-          <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-widest text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
-            TICKETS
-          </span>
-        </div>
-        <div className="p-4 flex flex-col gap-3 flex-1">
-          <div className="flex-1 space-y-1">
-            <p className="font-bold text-sm leading-tight">{collection.name ?? "Unnamed Ticket Collection"}</p>
-            {collection.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                {collection.description}
-              </p>
-            )}
-          </div>
-          {collection.symbol && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Layers className="h-3 w-3" />
-              {collection.symbol}
-            </span>
-          )}
-          <div className="text-xs text-teal-500 font-medium">View events →</div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function TicketCollectionCardSkeleton() {
-  return (
-    <div className="bento-cell overflow-hidden">
-      <Skeleton className="aspect-video w-full" />
-      <div className="p-4 space-y-3">
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-8 w-full mt-2" />
-      </div>
-    </div>
-  );
-}
 
 const TICKET_FEATURES = [
-  { icon: Ticket, title: "Your own contract", desc: "Deploy once — you own the ticket book. Trade tickets like any other NFT." },
-  { icon: ShieldCheck, title: "Redeemable at the door", desc: "Mark tickets used without burning them. They stay theirs, just no longer valid for entry." },
-  { icon: Clock, title: "Built-in expiration", desc: "Set when a ticket stops granting access — the gate is enforced on-chain." },
-  { icon: Layers, title: "Multiple events, one contract", desc: "Run recurring shows under your own ticket book — no new deployment needed." },
+  "Your own contract",
+  "Redeemable at the door",
+  "Built-in expiration",
+  "Multiple events, one contract",
 ];
 
 export function TicketsContent() {
@@ -112,15 +43,15 @@ export function TicketsContent() {
 
       <section className="px-4 max-w-5xl mx-auto">
         <FadeIn>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {TICKET_FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="bento-cell p-4 space-y-3">
-                <div className="h-9 w-9 rounded-xl bg-teal-500/10 flex items-center justify-center">
-                  <Icon className="h-5 w-5 text-teal-500" />
-                </div>
-                <p className="text-sm font-semibold leading-tight">{title}</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-              </div>
+          <div className="flex flex-wrap gap-2">
+            {TICKET_FEATURES.map((f) => (
+              <span
+                key={f}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 border border-border/30 text-xs font-medium text-muted-foreground"
+              >
+                <Check className="h-3 w-3 text-teal-500 shrink-0" />
+                {f}
+              </span>
             ))}
           </div>
         </FadeIn>
@@ -128,17 +59,17 @@ export function TicketsContent() {
 
       <section className="px-4 space-y-4 max-w-5xl mx-auto">
         <FadeIn>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="section-label">Live</p>
-              <h2 className="text-xl font-bold mt-0.5">Ticket collections</h2>
-            </div>
+          <div>
+            <p className="section-label">Live</p>
+            <h2 className="text-xl font-bold mt-0.5">Ticket collections</h2>
           </div>
         </FadeIn>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }).map((_, i) => <TicketCollectionCardSkeleton key={i} />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <CollectionCardSkeleton key={i} />
+            ))}
           </div>
         ) : collections.length === 0 ? (
           <FadeIn>
@@ -161,10 +92,13 @@ export function TicketsContent() {
             </div>
           </FadeIn>
         ) : (
-          <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <Stagger className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {collections.map((col) => (
               <StaggerItem key={col.contractAddress}>
-                <TicketCollectionCard collection={col} />
+                <CollectionCard
+                  collection={col}
+                  href={`/launchpad/tickets/${col.contractAddress}`}
+                />
               </StaggerItem>
             ))}
           </Stagger>
