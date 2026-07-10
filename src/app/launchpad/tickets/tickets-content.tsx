@@ -30,7 +30,7 @@ export function TicketsContent() {
               title="IP Tickets"
               subtitle="Deploy a collection, add events, and mint tickets to attendees."
               headerAccessory={
-                <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+                <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
                   <Link href="/launchpad/tickets/create">
                     <Plus className="h-3.5 w-3.5" />
                     Create collection
@@ -60,8 +60,8 @@ export function TicketsContent() {
           <FadeIn>
             <div className="bento-cell border-dashed p-12 text-center space-y-4">
               <div className="flex justify-center">
-                <div className="h-16 w-16 rounded-2xl bg-teal-500/8 flex items-center justify-center">
-                  <Ticket className="h-8 w-8 text-teal-500/30" />
+                <div className="h-16 w-16 rounded-2xl bg-brand-blue/8 flex items-center justify-center">
+                  <Ticket className="h-8 w-8 text-brand-blue/30" />
                 </div>
               </div>
               <div className="space-y-1">
@@ -70,7 +70,7 @@ export function TicketsContent() {
                   Create your first ticket collection to start adding events.
                 </p>
               </div>
-              <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+              <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
                 <Link href="/launchpad/tickets/create">
                   <Plus className="h-3.5 w-3.5" />
                   Create collection

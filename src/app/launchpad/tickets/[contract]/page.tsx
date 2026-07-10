@@ -59,7 +59,7 @@ function EventCard({ token, contract }: { token: ApiToken; contract: string }) {
           )}
         </div>
 
-        <Button asChild size="sm" className="w-full bg-teal-600 hover:bg-teal-700 text-white gap-1.5 text-xs">
+        <Button asChild size="sm" className="w-full bg-brand-blue hover:bg-brand-electric text-white gap-1.5 text-xs">
           <Link href={`/launchpad/tickets/${contract}/mint?eventId=${tokenId}`}>
             <Ticket className="h-3.5 w-3.5" />
             Mint tickets
@@ -133,7 +133,7 @@ export default function TicketCollectionPage() {
             <div className="mt-6 flex flex-col sm:flex-row gap-6 items-start">
               {/* collection avatar */}
               <div className="shrink-0">
-                <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-2xl overflow-hidden border-2 border-border bg-muted shadow-xl">
+                <div className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-2xl overflow-hidden border-2 border-border bg-muted shadow-xl">
                   {collectionLoading ? (
                     <div className="h-full w-full flex items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -141,8 +141,8 @@ export default function TicketCollectionPage() {
                   ) : collectionImage ? (
                     <Image src={collectionImage} alt={collection?.name ?? "Collection"} fill className="object-cover" unoptimized />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-teal-500/10">
-                      <Ticket className="h-10 w-10 text-teal-500/50" />
+                    <div className="h-full w-full flex items-center justify-center bg-brand-blue/10">
+                      <Ticket className="h-10 w-10 text-brand-blue/50" />
                     </div>
                   )}
                 </div>
@@ -161,7 +161,7 @@ export default function TicketCollectionPage() {
 
                   <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                     {collection?.symbol && (
-                      <span className="pill-badge text-xs font-mono bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full">
+                      <span className="pill-badge text-xs font-mono bg-brand-purple/10 text-brand-purple border border-brand-purple/20 px-2 py-0.5 rounded-full">
                         {collection.symbol}
                       </span>
                     )}
@@ -185,7 +185,7 @@ export default function TicketCollectionPage() {
 
                 {/* primary action */}
                 <div className="flex items-center gap-2 pt-1">
-                  <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+                  <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
                     <Link href={`/launchpad/tickets/${contract}/create-event`}>
                       <Plus className="h-3.5 w-3.5" />
                       Add event
@@ -258,8 +258,8 @@ export default function TicketCollectionPage() {
           <FadeIn>
             <div className="bento-cell border-dashed p-16 text-center space-y-5">
               <div className="flex justify-center">
-                <div className="h-16 w-16 rounded-2xl bg-teal-500/8 flex items-center justify-center">
-                  <Calendar className="h-8 w-8 text-teal-500/30" />
+                <div className="h-16 w-16 rounded-2xl bg-brand-blue/8 flex items-center justify-center">
+                  <Calendar className="h-8 w-8 text-brand-blue/30" />
                 </div>
               </div>
               <div className="space-y-1">
@@ -268,7 +268,7 @@ export default function TicketCollectionPage() {
                   Create your first event to start selling tickets.
                 </p>
               </div>
-              <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+              <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
                 <Link href={`/launchpad/tickets/${contract}/create-event`}>
                   <Plus className="h-3.5 w-3.5" />
                   Add event

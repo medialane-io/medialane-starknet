@@ -353,7 +353,7 @@ export default function CreateTicketCollectionPage() {
             <button
               type="submit"
               disabled={collectionStep !== "idle" || imageUploading}
-              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-teal-600 ${collectionStep !== "idle" || imageUploading ? "opacity-40 pointer-events-none" : ""}`}
+              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue ${collectionStep !== "idle" || imageUploading ? "opacity-40 pointer-events-none" : ""}`}
             >
               <Ticket className="h-4 w-4" />
               Create Ticket Collection

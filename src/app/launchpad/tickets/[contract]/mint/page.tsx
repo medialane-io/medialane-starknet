@@ -194,7 +194,7 @@ export default function MintTicketsPage() {
             <button
               type="submit"
               disabled={mintStep === "processing"}
-              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-teal-600 ${mintStep === "processing" ? "opacity-40 pointer-events-none" : ""}`}
+              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-brand-blue ${mintStep === "processing" ? "opacity-40 pointer-events-none" : ""}`}
             >
               <Ticket className="h-4 w-4" />
               Mint tickets

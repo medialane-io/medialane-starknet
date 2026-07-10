@@ -352,7 +352,7 @@ export default function CreateEventPage() {
                     tabIndex={0}
                     onClick={() => !imageUploading && fileInputRef.current?.click()}
                     onKeyDown={(e) => { if (e.key === "Enter") fileInputRef.current?.click(); }}
-                    className="relative h-20 w-20 rounded-2xl border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-teal-500/50 transition-colors"
+                    className="relative h-20 w-20 rounded-2xl border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-brand-blue/50 transition-colors"
                   >
                     {imagePreview
                       ? <Image src={imagePreview} alt="Event" fill className="object-cover" />
@@ -380,7 +380,7 @@ export default function CreateEventPage() {
                     )}
                     <p className="text-xs text-muted-foreground">
                       {imageUri
-                        ? <span className="text-teal-500">✓ Uploaded to IPFS</span>
+                        ? <span className="text-brand-blue">✓ Uploaded to IPFS</span>
                         : "JPG, PNG, SVG or WebP · max 10 MB"}
                     </p>
                   </div>
@@ -586,7 +586,7 @@ export default function CreateEventPage() {
               <Button
                 type="submit"
                 disabled={busy || imageUploading}
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                className="w-full bg-brand-blue hover:bg-brand-electric text-white"
               >
                 {mintStep === "uploading" ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Uploading metadata…</>
