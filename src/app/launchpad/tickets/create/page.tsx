@@ -137,12 +137,21 @@ export default function CreateTicketCollectionPage() {
     }
     setStatus("deploying");
     try {
-      // Pin collection metadata if image was provided
-      let baseUri = "";
-      if (imageUri) {
+      const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });
+      const call = factory.populate("deploy_collection", [values.name, values.symbol]);
+
+      const txH = await executeAuto([call]);
+      if (!txH) throw new Error("Transaction failed");
+      setTxHash(txH);
+      rewardToast("launch_launchpad");
+
+      const deployedAddress = await readDeployedAddress(txH);
+
+      // Pin collection metadata to IPFS after deploy (non-blocking)
+      if (deployedAddress && imageUri) {
         try {
           const token = await getValidToken();
-          const r = await fetch("/api/pinata/json", withSiwsAuth(token, {
+          await fetch("/api/pinata/json", withSiwsAuth(token, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -151,20 +160,9 @@ export default function CreateTicketCollectionPage() {
               image: imageUri,
             }),
           }));
-          const d = await r.json();
-          if (d.uri) baseUri = d.uri;
         } catch { /* non-fatal */ }
       }
 
-      const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });
-      const call = factory.populate("deploy_collection", [values.name, values.symbol, baseUri]);
-
-      const txH = await executeAuto([call]);
-      if (!txH) throw new Error("Transaction failed");
-      setTxHash(txH);
-      rewardToast("launch_launchpad");
-
-      const deployedAddress = await readDeployedAddress(txH);
       void mutate();
       setStatus("done");
 
