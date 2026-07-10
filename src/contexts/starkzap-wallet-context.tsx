@@ -29,6 +29,7 @@ import {
   STARKNET_POP_FACTORY_CONTRACT,
   STARKNET_DROP_FACTORY_CONTRACT,
   STARKNET_CREATOR_COIN_FACTORY_CONTRACT,
+  STARKNET_IP_TICKETS_FACTORY_CONTRACT,
 } from "@medialane/sdk";
 import {
   STARKNET_COLLECTION_721_CONTRACT,
@@ -82,6 +83,9 @@ export const CARTRIDGE_POLICIES = (
     // per-tx Cartridge prompt instead of silent session scope.
     { target: STARKNET_CREATOR_COIN_FACTORY_CONTRACT, method: "create_creator_coin" },
     { target: STARKNET_CREATOR_COIN_FACTORY_CONTRACT, method: "launch_on_ekubo" },
+    // ── IP Tickets factory (static — per-collection create_event/mint
+    // have dynamic addresses and remain outside this list) ────────────
+    { target: STARKNET_IP_TICKETS_FACTORY_CONTRACT, method: "deploy_collection" },
     // ── NFT comments ────────────────────────────────────────────────────
     { target: STARKNET_NFTCOMMENTS_CONTRACT, method: "add_comment" },
     // ── Static airdrop / launch mint contracts ──────────────────────────

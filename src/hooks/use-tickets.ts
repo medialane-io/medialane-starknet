@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-import type { ApiCollection } from "@medialane/sdk";
+import type { ApiCollection, ApiToken } from "@medialane/sdk";
 
 const BASE = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
 
@@ -44,28 +44,38 @@ export function useMyTicketCollections(ownerAddress: string | null) {
   return { collections: data?.data ?? [], isLoading, error, mutate };
 }
 
-// ── useTicketStatus ────────────────────────────────────────────────────────────
+// ── useTicketEvents ───────────────────────────────────────────────────────────
+// Returns indexed tokens for a ticket collection — each token ID = one event.
+// Shows events that have had at least one mint (backend indexes TransferSingle).
 
-export interface TicketStatus {
-  hasValidTicket: boolean;
-  activeBalance: number;
+export function useTicketEvents(contractAddress: string | null) {
+  const { data, error, isLoading, mutate } = useSWR<{ data: ApiToken[]; meta: unknown }>(
+    contractAddress ? `ticket-events-${contractAddress}` : null,
+    () => backendFetch(`${BASE}/v1/collections/${contractAddress}/tokens?limit=50`),
+    { revalidateOnFocus: false }
+  );
+
+  return { events: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
 }
 
-export function useTicketStatus(
-  collectionAddress: string | null,
-  ticketCollectionId: string | null,
+// ── useTicketValidity ─────────────────────────────────────────────────────────
+// Pure on-chain read via the backend — true iff holder has balance > 0 AND within time window.
+
+export function useTicketValidity(
+  contractAddress: string | null,
+  tokenId: string | null,
   wallet: string | null
 ) {
   const key =
-    collectionAddress && ticketCollectionId && wallet
-      ? `ticket-status-${collectionAddress}-${ticketCollectionId}-${wallet}`
+    contractAddress && tokenId && wallet
+      ? `ticket-validity-${contractAddress}-${tokenId}-${wallet}`
       : null;
 
-  const { data, error, isLoading, mutate } = useSWR<{ data: TicketStatus }>(
+  const { data, error, isLoading } = useSWR<{ data: { valid: boolean } }>(
     key,
-    () => backendFetch(`${BASE}/v1/tickets/${collectionAddress}/${ticketCollectionId}/status/${wallet}`),
+    () => backendFetch(`${BASE}/v1/tickets/${contractAddress}/${tokenId}/validity/${wallet}`),
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
-  return { status: data?.data ?? null, isLoading, error, mutate };
+  return { valid: data?.data?.valid ?? false, isLoading, error };
 }
