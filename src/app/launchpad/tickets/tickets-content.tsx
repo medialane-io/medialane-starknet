@@ -25,6 +25,7 @@ export function TicketsContent() {
         <FadeIn>
           <div className="mt-6">
             <ServiceHeader
+              plain
               icon={<Ticket className="h-4 w-4 text-white" />}
               title="IP Tickets"
               subtitle="Deploy a collection, add events, and mint tickets to attendees."

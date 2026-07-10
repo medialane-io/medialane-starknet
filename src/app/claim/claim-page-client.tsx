@@ -29,6 +29,7 @@ export function ClaimPageClient() {
         <ClaimBackButton />
         <div className="mt-6">
           <ServiceHeader
+            plain
             icon={<Package className="h-4 w-4 text-white" />}
             title="Claims & Drops"
             subtitle="Exclusive drops, collections and creator pages available on Medialane."

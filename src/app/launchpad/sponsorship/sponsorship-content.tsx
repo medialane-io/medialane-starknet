@@ -48,6 +48,7 @@ export function SponsorshipContent() {
         <FadeIn>
           <div className="mt-6">
             <ServiceHeader
+              plain
               icon={<Handshake className="h-4 w-4 text-white" />}
               title="IP Sponsorship"
               subtitle="Sponsorship offers anchored to your IP assets — a sponsor bids, you accept, they receive a license."

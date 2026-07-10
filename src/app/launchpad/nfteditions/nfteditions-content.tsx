@@ -146,6 +146,7 @@ export function NFTEditionsContent() {
         <FadeIn>
           <div className="mt-6">
             <ServiceHeader
+              plain
               icon={<Layers className="h-4 w-4 text-white" />}
               title="Mint Editions"
               subtitle="Pick one of your edition collections and mint new pieces into it — each with its own artwork and supply."

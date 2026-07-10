@@ -25,6 +25,7 @@ export function ClubContent() {
         <FadeIn>
           <div className="mt-6">
             <ServiceHeader
+              plain
               icon={<Users className="h-4 w-4 text-white" />}
               title="IP Club"
               subtitle="Membership clubs backed by an on-chain card — give your closest fans a way in, with or without an entry fee."

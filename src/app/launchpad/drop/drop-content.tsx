@@ -162,6 +162,7 @@ export function DropContent() {
         <FadeIn>
           <div className="mt-6">
             <ServiceHeader
+              plain
               icon={<Package className="h-4 w-4 text-white" />}
               title="Collection Drops"
               subtitle="Timed drops with a fixed supply — set your mint window and how many, and the community collects before they're gone."
