@@ -157,7 +157,7 @@ export default function CreateTicketCollectionPage() {
       }
 
       const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });
-      const call = factory.populate("deploy_collection", [values.name, values.symbol]);
+      const call = factory.populate("deploy_collection", [values.name, values.symbol, baseUri]);
 
       const txH = await executeAuto([call]);
       if (!txH) throw new Error("Transaction failed");
