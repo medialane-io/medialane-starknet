@@ -35,6 +35,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  MintProgressDialog,
+  type MintStep,
+} from "@/components/marketplace/mint-progress-dialog";
+import type { TxStatus } from "@/hooks/use-tx";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
@@ -45,7 +50,6 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Contract, CairoOption, CairoOptionVariant, cairo } from "starknet";
 import { normalizeAddress, IPTicketCollectionABI } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
-import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { useTicketEvents } from "@/hooks/use-tickets";
@@ -130,8 +134,9 @@ export default function CreateEventPage() {
   const { mutate } = useTicketEvents(contract);
   const router = useRouter();
 
-  const [status, setStatus] = useState<"idle" | "uploading" | "submitting" | "done">("idle");
-  const [txHash, setTxHash] = useState<string | null>(null);
+  const [mintStep, setMintStep] = useState<MintStep>("idle");
+  const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
+  const [mintError, setMintError] = useState<string | null>(null);
   const [licensingOpen, setLicensingOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
@@ -160,7 +165,6 @@ export default function CreateEventPage() {
     },
   });
 
-  // Pre-fill external URL with the collection page
   useEffect(() => {
     if (!contract) return;
     const suggested = absoluteUrl(`/collections/${contract}`);
@@ -168,6 +172,12 @@ export default function CreateEventPage() {
       form.setValue("external_url", suggested);
     }
   }, [contract, form]);
+
+  const handleReset = () => {
+    setMintStep("idle");
+    setDialogTxStatus("idle");
+    setMintError(null);
+  };
 
   const handleLicenseChange = (value: string) => {
     form.setValue("licenseType", value);
@@ -215,8 +225,11 @@ export default function CreateEventPage() {
     if (!isConnected) { toast.error("Connect your wallet first"); return; }
     if (!imageUri) { toast.error("Upload an event image first"); return; }
 
+    setMintError(null);
+    setDialogTxStatus("idle");
+    setMintStep("uploading");
+
     try {
-      setStatus("uploading");
       const siwsToken = await getValidToken();
       if (!siwsToken) throw new Error("Authentication required — please sign in");
 
@@ -245,7 +258,9 @@ export default function CreateEventPage() {
       }
       const metadataUri: string = uploadData.uri;
 
-      setStatus("submitting");
+      setMintStep("processing");
+      setDialogTxStatus("submitting");
+
       const startTime = dateToUnixTimestamp(values.startDate);
       const endTime = dateToUnixTimestamp(values.endDate);
       const royaltyBps = Math.round(values.royalty * 100);
@@ -265,15 +280,15 @@ export default function CreateEventPage() {
 
       const txH = await executeAuto([call]);
       if (!txH) throw new Error("Transaction failed");
-      setTxHash(txH);
+      setDialogTxStatus("confirming");
+      setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");
       void mutate();
-      setStatus("done");
-      setTimeout(() => router.push(`/launchpad/tickets/${contract}`), 1500);
+      setMintStep("success");
     } catch (err: any) {
-      console.error(err);
-      toast.error(err?.message ?? "Failed to create event");
-      setStatus("idle");
+      setMintError(err?.message ?? "Failed to create event");
+      setDialogTxStatus("idle");
+      setMintStep("error");
     }
   }
 
@@ -281,47 +296,47 @@ export default function CreateEventPage() {
     return <ConnectGate><div /></ConnectGate>;
   }
 
-  const busy = status === "uploading" || status === "submitting";
+  const busy = mintStep === "uploading" || mintStep === "processing";
 
   return (
-    <ClaimRouteShell
-      icon={<Calendar className="h-4 w-4 text-white" />}
-      title="Create event"
-      subtitle="Add a new event to your ticket collection."
-      gated={false}
-      aside={
-        <ClaimRail
-          steps={[
-            "Upload an event image and fill in the details",
-            "Set licensing terms — saved permanently with the event",
-            "Set ticket supply and optional time window",
-            "Metadata is pinned to IPFS and the event is registered on-chain",
-          ]}
-          trustIcon={Calendar}
-          trustLead="Immutable on-chain."
-          trust="Once created, the event record is permanent. The metadata and licensing terms are locked to this event forever."
-        />
-      }
-    >
-      {status === "done" ? (
-        <div className="p-8 text-center space-y-3">
-          <div className="h-14 w-14 rounded-2xl bg-teal-500/10 flex items-center justify-center mx-auto">
-            <Calendar className="h-7 w-7 text-teal-500" />
-          </div>
-          <p className="font-semibold">Event created!</p>
-          {txHash && (
-            <a
-              href={`${EXPLORER_URL}/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              View transaction
-            </a>
-          )}
-          <p className="text-xs text-muted-foreground">Returning to your collection…</p>
-        </div>
-      ) : (
+    <>
+      <MintProgressDialog
+        open={mintStep !== "idle"}
+        mintStep={mintStep}
+        txStatus={dialogTxStatus}
+        assetName={form.getValues("name")}
+        imagePreview={imagePreview}
+        txHash={null}
+        error={mintError}
+        onMintAnother={handleReset}
+        uploadStepLabel="Upload event metadata"
+        processingTitle="Creating event on Starknet…"
+        successTitle="Event created!"
+        successSubtitle={`"${form.getValues("name")}" is now live — you can start minting tickets.`}
+        mintAnotherLabel="Add another event"
+        primaryActionLabel="Back to collection"
+        primaryActionHref={`/launchpad/tickets/${contract}`}
+      />
+
+      <ClaimRouteShell
+        icon={<Calendar className="h-4 w-4 text-white" />}
+        title="Create event"
+        subtitle="Add a new event to your ticket collection."
+        gated={false}
+        aside={
+          <ClaimRail
+            steps={[
+              "Upload an event image and fill in the details",
+              "Set licensing terms — saved permanently with the event",
+              "Set ticket supply and optional time window",
+              "Metadata is pinned to IPFS and the event is registered on-chain",
+            ]}
+            trustIcon={Calendar}
+            trustLead="Immutable on-chain."
+            trust="Once created, the event record is permanent. The metadata and licensing terms are locked to this event forever."
+          />
+        }
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
@@ -573,9 +588,9 @@ export default function CreateEventPage() {
                 disabled={busy || imageUploading}
                 className="w-full bg-teal-600 hover:bg-teal-700 text-white"
               >
-                {status === "uploading" ? (
+                {mintStep === "uploading" ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Uploading metadata…</>
-                ) : status === "submitting" ? (
+                ) : mintStep === "processing" ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating event…</>
                 ) : (
                   <><Calendar className="h-4 w-4 mr-2" />Create event</>
@@ -585,7 +600,7 @@ export default function CreateEventPage() {
 
           </form>
         </Form>
-      )}
-    </ClaimRouteShell>
+      </ClaimRouteShell>
+    </>
   );
 }

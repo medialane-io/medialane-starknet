@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Ticket, Loader2, ChevronRight, ImagePlus } from "lucide-react";
+import { Ticket, Loader2, ChevronRight, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  CollectionProgressDialog,
+  type CollectionStep,
+} from "@/components/marketplace/collection-progress-dialog";
+import type { TxStatus } from "@/hooks/use-tx";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
@@ -32,7 +37,6 @@ import { toast } from "sonner";
 import { Contract, hash } from "starknet";
 import { normalizeAddress, IPTicketCollectionFactoryABI, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
-import { EXPLORER_URL } from "@/lib/constants";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
@@ -70,8 +74,11 @@ export default function CreateTicketCollectionPage() {
   const { getValidToken } = useSiwsToken();
   const { mutate } = useMyTicketCollections(address ?? null);
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "deploying" | "done">("idle");
-  const [txHash, setTxHash] = useState<string | null>(null);
+
+  const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
+  const [collectionError, setCollectionError] = useState<string | null>(null);
+  const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
+  const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -87,6 +94,17 @@ export default function CreateTicketCollectionPage() {
     resolver: zodResolver(schema),
     defaultValues: { name: "", symbol: "", description: "" },
   });
+
+  const handleReset = () => {
+    setCollectionStep("idle");
+    setCollectionError(null);
+    setDeployedAddress(null);
+    setDialogTxStatus("idle");
+    form.reset();
+    setImagePreview(null);
+    setImageUri(null);
+    if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
+  };
 
   const handleImageSelect = async (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -135,20 +153,24 @@ export default function CreateTicketCollectionPage() {
       toast.error("Image upload failed", { description: "Please re-upload your collection image." });
       return;
     }
-    setStatus("deploying");
+
+    setCollectionError(null);
+    setDialogTxStatus("idle");
+    setCollectionStep("processing");
+
     try {
       const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });
       const call = factory.populate("deploy_collection", [values.name, values.symbol]);
 
+      setDialogTxStatus("submitting");
       const txH = await executeAuto([call]);
       if (!txH) throw new Error("Transaction failed");
-      setTxHash(txH);
-      rewardToast("launch_launchpad");
+      setDialogTxStatus("confirming");
 
-      const deployedAddress = await readDeployedAddress(txH);
+      const addr = await readDeployedAddress(txH);
 
       // Pin collection metadata to IPFS after deploy (non-blocking)
-      if (deployedAddress && imageUri) {
+      if (addr && imageUri) {
         try {
           const token = await getValidToken();
           await fetch("/api/pinata/json", withSiwsAuth(token, {
@@ -164,15 +186,14 @@ export default function CreateTicketCollectionPage() {
       }
 
       void mutate();
-      setStatus("done");
-
-      if (deployedAddress) {
-        setTimeout(() => router.push(`/launchpad/tickets/${deployedAddress}`), 1500);
-      }
+      setDeployedAddress(addr);
+      setDialogTxStatus("confirmed");
+      setCollectionStep("success");
+      rewardToast("create_collection");
     } catch (err: any) {
-      console.error(err);
-      toast.error(err?.message ?? "Failed to create collection");
-      setStatus("idle");
+      setCollectionError(err?.message ?? "Something went wrong");
+      setDialogTxStatus("idle");
+      setCollectionStep("error");
     }
   }
 
@@ -181,47 +202,44 @@ export default function CreateTicketCollectionPage() {
   }
 
   return (
-    <ClaimRouteShell
-      icon={<Ticket className="h-4 w-4 text-white" />}
-      title="Create Ticket Collection"
-      subtitle="One collection, as many events as you need."
-      gated={false}
-      aside={
-        <ClaimRail
-          included={[
-            { icon: Ticket, title: "One collection per creator", desc: "Add as many events as you need without creating a new collection." },
-            { icon: ChevronRight, title: "You keep full control", desc: "Only you can create events and mint tickets." },
-          ]}
-          steps={[
-            "Create your ticket collection — set name, symbol, and cover image",
-            "Add events — each gets its own supply and optional time window",
-            "Mint tickets to attendees directly from your collection page",
-          ]}
-          trustIcon={Ticket}
-          trustLead="Your tickets, your rules."
-          trust="Only you can create events and mint. Holders keep their tickets forever."
-        />
-      }
-    >
-      {status === "done" ? (
-        <div className="p-8 text-center space-y-3">
-          <div className="h-14 w-14 rounded-2xl bg-teal-500/10 flex items-center justify-center mx-auto">
-            <Ticket className="h-7 w-7 text-teal-500" />
-          </div>
-          <p className="font-semibold">Collection created!</p>
-          {txHash && (
-            <a
-              href={`${EXPLORER_URL}/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              View transaction
-            </a>
-          )}
-          <p className="text-xs text-muted-foreground">Redirecting to your collection…</p>
-        </div>
-      ) : (
+    <>
+      <CollectionProgressDialog
+        open={collectionStep !== "idle"}
+        collectionStep={collectionStep}
+        txStatus={dialogTxStatus}
+        collectionName={form.getValues("name")}
+        imagePreview={imagePreview}
+        txHash={null}
+        error={collectionError}
+        onCreateAnother={handleReset}
+        createAnotherLabel="Create another"
+        firstStepLabel="Deploy collection"
+        mintHref={deployedAddress ? `/launchpad/tickets/${deployedAddress}/create-event` : undefined}
+        deployedAddress={deployedAddress}
+      />
+
+      <ClaimRouteShell
+        icon={<Ticket className="h-4 w-4 text-white" />}
+        title="Create Ticket Collection"
+        subtitle="One collection, as many events as you need."
+        gated={false}
+        aside={
+          <ClaimRail
+            included={[
+              { icon: Ticket, title: "One collection per creator", desc: "Add as many events as you need without creating a new collection." },
+              { icon: ChevronRight, title: "You keep full control", desc: "Only you can create events and mint tickets." },
+            ]}
+            steps={[
+              "Create your ticket collection — set name, symbol, and cover image",
+              "Add events — each gets its own supply and optional time window",
+              "Mint tickets to attendees directly from your collection page",
+            ]}
+            trustIcon={Ticket}
+            trustLead="Your tickets, your rules."
+            trust="Only you can create events and mint. Holders keep their tickets forever."
+          />
+        }
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
@@ -263,9 +281,18 @@ export default function CreateTicketCollectionPage() {
                     disabled={imageUploading}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {imageUploading ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Uploading…</> : "Upload image"}
+                    {imageUploading ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Uploading…</> : imagePreview ? "Change image" : "Upload image"}
                   </Button>
-                  <p className="text-xs text-muted-foreground">JPG, PNG, GIF, SVG or WebP · max 10 MB</p>
+                  {imagePreview && (
+                    <button type="button" onClick={() => { setImagePreview(null); setImageUri(null); }}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors">
+                      <X className="h-3 w-3" /> Remove
+                    </button>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    JPG, PNG, GIF, SVG or WebP · max 10 MB
+                    {imageUri && <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>}
+                  </p>
                 </div>
               </div>
             </div>
@@ -323,20 +350,17 @@ export default function CreateTicketCollectionPage() {
               )}
             />
 
-            <Button
+            <button
               type="submit"
-              disabled={status === "deploying" || imageUploading}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+              disabled={collectionStep !== "idle" || imageUploading}
+              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-teal-600 ${collectionStep !== "idle" || imageUploading ? "opacity-40 pointer-events-none" : ""}`}
             >
-              {status === "deploying" ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating…</>
-              ) : (
-                <><Ticket className="h-4 w-4 mr-2" />Create Ticket Collection</>
-              )}
-            </Button>
+              <Ticket className="h-4 w-4" />
+              Create Ticket Collection
+            </button>
           </form>
         </Form>
-      )}
-    </ClaimRouteShell>
+      </ClaimRouteShell>
+    </>
   );
 }

@@ -5,9 +5,8 @@ import { rewardToast } from "@/lib/reward-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { Ticket, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useParams, useSearchParams } from "next/navigation";
+import { Ticket } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -18,6 +17,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  MintProgressDialog,
+  type MintStep,
+} from "@/components/marketplace/mint-progress-dialog";
+import type { TxStatus } from "@/hooks/use-tx";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
@@ -27,7 +31,6 @@ import { toast } from "sonner";
 import { normalizeAddress, IPTicketCollectionABI } from "@medialane/sdk";
 import { Contract, cairo } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
-import { EXPLORER_URL } from "@/lib/constants";
 
 const schema = z.object({
   eventId: z
@@ -50,21 +53,33 @@ export default function MintTicketsPage() {
   const defaultEventId = searchParams.get("eventId") ?? "";
   const { address, isConnected } = useWallet();
   const { executeAuto } = usePaymasterTransaction();
-  const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "minting" | "done">("idle");
-  const [txHash, setTxHash] = useState<string | null>(null);
+
+  const [mintStep, setMintStep] = useState<MintStep>("idle");
+  const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
+  const [mintError, setMintError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { eventId: defaultEventId, recipient: address ?? "", amount: "1" },
   });
 
+  const handleReset = () => {
+    setMintStep("idle");
+    setDialogTxStatus("idle");
+    setMintError(null);
+    form.reset({ eventId: defaultEventId, recipient: "", amount: "1" });
+  };
+
   async function onSubmit(values: FormValues) {
     if (!isConnected || !address) {
       toast.error("Connect your wallet first");
       return;
     }
-    setStatus("minting");
+
+    setMintError(null);
+    setMintStep("processing");
+    setDialogTxStatus("submitting");
+
     try {
       const col = new Contract({ abi: IPTicketCollectionABI as any, address: contract, providerOrAccount: starknetProvider });
       const recipientNorm = normalizeAddress("STARKNET", values.recipient);
@@ -76,13 +91,14 @@ export default function MintTicketsPage() {
 
       const hash = await executeAuto([call]);
       if (!hash) throw new Error("Transaction failed");
-      setTxHash(hash);
+      setDialogTxStatus("confirming");
+      setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");
-      setStatus("done");
+      setMintStep("success");
     } catch (err: any) {
-      console.error(err);
-      toast.error(err?.message ?? "Mint failed");
-      setStatus("idle");
+      setMintError(err?.message ?? "Mint failed");
+      setDialogTxStatus("idle");
+      setMintStep("error");
     }
   }
 
@@ -91,50 +107,43 @@ export default function MintTicketsPage() {
   }
 
   return (
-    <ClaimRouteShell
-      icon={<Ticket className="h-4 w-4 text-white" />}
-      title="Mint tickets"
-      subtitle="Send tickets directly to an attendee's wallet."
-      gated={false}
-      aside={
-        <ClaimRail
-          steps={[
-            "Enter the event ID, recipient address, and quantity",
-            "The ticket is minted directly to the recipient's wallet",
-            "Holders can prove validity at the door via the asset page",
-          ]}
-          trustIcon={Ticket}
-          trustLead="Owner-only."
-          trust="Only the collection owner can mint. Recipients hold their tickets — you cannot revoke them."
-        />
-      }
-    >
-      {status === "done" ? (
-        <div className="p-8 text-center space-y-3">
-          <div className="h-14 w-14 rounded-2xl bg-teal-500/10 flex items-center justify-center mx-auto">
-            <Ticket className="h-7 w-7 text-teal-500" />
-          </div>
-          <p className="font-semibold">Tickets minted!</p>
-          {txHash && (
-            <a
-              href={`${EXPLORER_URL}/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              View transaction
-            </a>
-          )}
-          <div className="flex gap-2 justify-center pt-2">
-            <Button size="sm" variant="outline" onClick={() => { setStatus("idle"); form.reset({ eventId: defaultEventId, recipient: "", amount: "1" }); }}>
-              Mint more
-            </Button>
-            <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => router.push(`/launchpad/tickets/${contract}`)}>
-              Back to collection
-            </Button>
-          </div>
-        </div>
-      ) : (
+    <>
+      <MintProgressDialog
+        open={mintStep !== "idle"}
+        mintStep={mintStep}
+        txStatus={dialogTxStatus}
+        assetName={`Event #${form.getValues("eventId")} ticket`}
+        imagePreview={null}
+        txHash={null}
+        error={mintError}
+        onMintAnother={handleReset}
+        uploadStepLabel="Prepare transaction"
+        processingTitle="Minting tickets on Starknet…"
+        successTitle="Tickets minted!"
+        successSubtitle={`${form.getValues("amount")} ticket(s) sent to the recipient's wallet.`}
+        mintAnotherLabel="Mint more"
+        primaryActionLabel="Back to collection"
+        primaryActionHref={`/launchpad/tickets/${contract}`}
+      />
+
+      <ClaimRouteShell
+        icon={<Ticket className="h-4 w-4 text-white" />}
+        title="Mint tickets"
+        subtitle="Send tickets directly to an attendee's wallet."
+        gated={false}
+        aside={
+          <ClaimRail
+            steps={[
+              "Enter the event ID, recipient address, and quantity",
+              "The ticket is minted directly to the recipient's wallet",
+              "Holders can prove validity at the door via the asset page",
+            ]}
+            trustIcon={Ticket}
+            trustLead="Owner-only."
+            trust="Only the collection owner can mint. Recipients hold their tickets — you cannot revoke them."
+          />
+        }
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -182,20 +191,17 @@ export default function MintTicketsPage() {
               )}
             />
 
-            <Button
+            <button
               type="submit"
-              disabled={status === "minting"}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+              disabled={mintStep === "processing"}
+              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-teal-600 ${mintStep === "processing" ? "opacity-40 pointer-events-none" : ""}`}
             >
-              {status === "minting" ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Minting…</>
-              ) : (
-                "Mint tickets"
-              )}
-            </Button>
+              <Ticket className="h-4 w-4" />
+              Mint tickets
+            </button>
           </form>
         </Form>
-      )}
-    </ClaimRouteShell>
+      </ClaimRouteShell>
+    </>
   );
 }

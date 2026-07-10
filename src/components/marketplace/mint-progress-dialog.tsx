@@ -36,9 +36,23 @@ interface MintProgressDialogProps {
   explorerAssetHref?: string | null;
   listingStep?: ListingStep;
   listingError?: string | null;
+  /** Override "Mint another" label */
+  mintAnotherLabel?: string;
+  /** Override primary success button label (default: "View portfolio") */
+  primaryActionLabel?: string;
+  /** Override primary success button href (default: "/portfolio/assets") */
+  primaryActionHref?: string;
+  /** Override processing title */
+  processingTitle?: string;
+  /** Override success title */
+  successTitle?: string;
+  /** Override success subtitle */
+  successSubtitle?: string;
+  /** Steps to display (overrides default MINT_STEPS) */
+  uploadStepLabel?: string;
 }
 
-const MINT_STEPS = [
+const MINT_STEPS_DEFAULT = [
   {
     label: "Upload to IPFS",
     done: (mintStep: MintStep, txStatus: TxStatus) =>
@@ -71,6 +85,13 @@ export function MintProgressDialog({
   explorerAssetHref,
   listingStep = "idle",
   listingError,
+  mintAnotherLabel = "Mint another",
+  primaryActionLabel = "View portfolio",
+  primaryActionHref = "/portfolio/assets",
+  processingTitle,
+  successTitle,
+  successSubtitle,
+  uploadStepLabel = "Upload to IPFS",
 }: MintProgressDialogProps) {
   const router = useRouter();
   const confettiFired = useRef(false);
@@ -88,6 +109,10 @@ export function MintProgressDialog({
       confettiFired.current = false;
     }
   }, [mintStep, listingStep]);
+
+  const MINT_STEPS = MINT_STEPS_DEFAULT.map((s, i) =>
+    i === 0 ? { ...s, label: uploadStepLabel } : s
+  );
 
   const isProcessing = mintStep === "uploading" || mintStep === "processing";
   const isListing = listingStep === "polling" || listingStep === "listing";
@@ -118,7 +143,7 @@ export function MintProgressDialog({
 
             <div className="text-center space-y-1">
               <p className="font-semibold text-lg">
-                {mintStep === "uploading" ? "Uploading to IPFS…" : "Minting on Starknet…"}
+                {processingTitle ?? (mintStep === "uploading" ? "Uploading to IPFS…" : "Minting on Starknet…")}
               </p>
               <p className="text-sm text-muted-foreground">
                 {mintStep === "uploading"
@@ -241,13 +266,19 @@ export function MintProgressDialog({
               <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-yellow-400" />
             </div>
             <div className="text-center space-y-1">
-              <p className="font-bold text-xl">Minted!</p>
+              <p className="font-bold text-xl">{successTitle ?? "Minted!"}</p>
               <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{assetName || "Your asset"}</span> is now live on Starknet.
+                {successSubtitle ?? (
+                  <>
+                    <span className="font-medium text-foreground">{assetName || "Your asset"}</span> is now live on Starknet.
+                  </>
+                )}
               </p>
-              <p className="text-xs text-muted-foreground/70 pt-1">
-                Metadata, traits, and licensing may take 1-2 minutes to appear while the platform indexes the onchain mint.
-              </p>
+              {!successSubtitle && (
+                <p className="text-xs text-muted-foreground/70 pt-1">
+                  Metadata, traits, and licensing may take 1-2 minutes to appear while the platform indexes the onchain mint.
+                </p>
+              )}
             </div>
             {imagePreview && (
               <div className="h-28 w-28 rounded-xl overflow-hidden border border-border shadow-md">
@@ -265,10 +296,10 @@ export function MintProgressDialog({
             )}
             <div className="flex flex-col sm:flex-row gap-2 w-full pt-1">
               <Button variant="outline" className="flex-1" onClick={onMintAnother}>
-                Mint another
+                {mintAnotherLabel}
               </Button>
-              <Button className="flex-1" onClick={() => router.push("/portfolio/assets")}>
-                View portfolio
+              <Button className="flex-1" onClick={() => router.push(primaryActionHref)}>
+                {primaryActionLabel}
               </Button>
             </div>
           </div>
