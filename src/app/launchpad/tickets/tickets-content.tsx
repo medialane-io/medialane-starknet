@@ -66,7 +66,7 @@ export function TicketsContent() {
               <div className="space-y-1">
                 <p className="font-semibold text-sm">No collections yet</p>
                 <p className="text-xs text-muted-foreground">
-                  Deploy your first ticket collection to start creating events.
+                  Create your first ticket collection to start adding events.
                 </p>
               </div>
               <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
