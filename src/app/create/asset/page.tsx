@@ -41,6 +41,7 @@ import { MintProgressDialog } from "@/components/marketplace/mint-progress-dialo
 import type { MintStep } from "@/components/marketplace/mint-progress-dialog";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateAssetAside } from "@/components/claim/create-asset-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { cn } from "@/lib/utils";
@@ -329,7 +330,17 @@ export default function CreateAssetPage() {
         icon={<ImagePlus className="h-4 w-4 text-white" />}
         title="Create a Digital Asset"
         subtitle="Publish your creative work and set how others can use it — free to mint, and it's yours."
-        aside={<CreateAssetAside />}
+        aside={
+          <>
+            <MedialaneCollectionCard
+              image={imagePreview}
+              name={form.watch("name")}
+              collection={collections.find((c) => c.collectionId === form.watch("collectionId"))?.name || "IP Asset"}
+              creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
+            />
+            <CreateAssetAside />
+          </>
+        }
       >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

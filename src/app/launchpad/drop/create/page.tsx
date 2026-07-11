@@ -16,6 +16,7 @@ import { getListableTokens } from "@medialane/sdk";
 import { DropFactoryABI, STARKNET_DROP_FACTORY_CONTRACT } from "@/lib/launchpad-contracts";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
@@ -246,7 +247,17 @@ export default function CreateDropPage() {
       icon={<Package className="h-4 w-4 text-white" />}
       title="Launch a Drop"
       subtitle="Release a limited set of unique pieces with a timed mint window — free to launch, and it's yours."
-      aside={<CreateDropAside />}
+      aside={
+        <>
+          <MedialaneCollectionCard
+            image={imagePreview}
+            name={form.watch("name")}
+            collection={form.watch("symbol") || "Drop"}
+            creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
+          />
+          <CreateDropAside />
+        </>
+      }
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">

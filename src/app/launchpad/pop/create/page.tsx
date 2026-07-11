@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreatePopAside } from "@/components/claim/create-pop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
@@ -57,7 +58,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CreatePOPPage() {
-  const { isConnected } = useWallet();
+  const { isConnected, address: walletAddress } = useWallet();
   const { executeAuto, isLoading: isTxLoading } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
@@ -210,7 +211,17 @@ export default function CreatePOPPage() {
       icon={<Award className="h-4 w-4 text-white" />}
       title="Create a POP Event"
       subtitle="Give attendees a collectible badge that proves they were part of your event — free to publish."
-      aside={<CreatePopAside />}
+      aside={
+        <>
+          <MedialaneCollectionCard
+            image={imagePreview}
+            name={form.watch("name")}
+            collection={form.watch("symbol") || "POP Event"}
+            creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
+          />
+          <CreatePopAside />
+        </>
+      }
     >
       <div className="space-y-6">
 

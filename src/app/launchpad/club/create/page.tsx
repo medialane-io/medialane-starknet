@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateClubAside } from "@/components/claim/create-club-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
@@ -293,7 +294,17 @@ export default function CreateClubPage() {
         icon={<Users className="h-4 w-4 text-white" />}
         title="Create a Club"
         subtitle="Give your closest fans a membership card — free to publish, no platform fee."
-        aside={<CreateClubAside />}
+        aside={
+          <>
+            <MedialaneCollectionCard
+              image={imagePreview}
+              name={form.watch("name")}
+              collection={form.watch("symbol") || "Club"}
+              creator={activeAddress ? `${activeAddress.slice(0, 6)}…${activeAddress.slice(-4)}` : undefined}
+            />
+            <CreateClubAside />
+          </>
+        }
       >
         <FadeIn>
           <Form {...form}>

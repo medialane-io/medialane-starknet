@@ -44,7 +44,7 @@ import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { ClaimRail } from "@medialane/ui";
+import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { Contract, CairoOption, CairoOptionVariant, cairo } from "starknet";
@@ -324,6 +324,12 @@ export default function CreateEventPage() {
         subtitle="Add a new event to your ticket collection."
         gated={false}
         aside={
+          <>
+          <MedialaneCollectionCard
+            image={imagePreview}
+            name={form.watch("name")}
+            collection="Event"
+          />
           <ClaimRail
             steps={[
               "Upload an event image and fill in the details",
@@ -335,6 +341,7 @@ export default function CreateEventPage() {
             trustLead="Immutable on-chain."
             trust="Once created, the event record is permanent. The metadata and licensing terms are locked to this event forever."
           />
+          </>
         }
       >
         <Form {...form}>

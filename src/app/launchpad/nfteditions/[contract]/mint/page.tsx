@@ -46,6 +46,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
 import { hash } from "starknet";
@@ -423,7 +424,18 @@ export default function MintNFTEditionsPage() {
             <span className="font-mono text-xs text-foreground/80 truncate">Collection: {collectionAddress}</span>
           </div>
         }
-        aside={<MintEditionAside />}
+        aside={
+          <>
+            <MedialaneCollectionCard
+              image={imagePreview}
+              name={form.watch("name")}
+              collection="Edition"
+              serial={Number(form.watch("value")) > 1 ? `× ${form.watch("value")}` : undefined}
+              creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
+            />
+            <MintEditionAside />
+          </>
+        }
       >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">

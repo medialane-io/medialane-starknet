@@ -32,7 +32,7 @@ import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { ClaimRail } from "@medialane/ui";
+import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
 import { toast } from "sonner";
 import { Contract, hash } from "starknet";
 import { normalizeAddress, IPTicketCollectionFactoryABI, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@medialane/sdk";
@@ -226,6 +226,13 @@ export default function CreateTicketCollectionPage() {
         subtitle="One collection, as many events as you need."
         gated={false}
         aside={
+          <>
+          <MedialaneCollectionCard
+            image={imagePreview}
+            name={form.watch("name")}
+            collection={form.watch("symbol") || "Tickets"}
+            creator={address ? `${address.slice(0, 6)}…${address.slice(-4)}` : undefined}
+          />
           <ClaimRail
             included={[
               { icon: Ticket, title: "One collection per creator", desc: "Add as many events as you need without creating a new collection." },
@@ -240,6 +247,7 @@ export default function CreateTicketCollectionPage() {
             trustLead="Your tickets, your rules."
             trust="Only you can create events and mint. Holders keep their tickets forever."
           />
+          </>
         }
       >
         <Form {...form}>
