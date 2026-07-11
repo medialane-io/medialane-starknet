@@ -144,20 +144,17 @@ export default function CreateClubPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Pin collection metadata JSON to IPFS so wallets resolve the image.
-      let baseUri = imageUri ?? "";
+      // 1. Pin collection metadata JSON to IPFS — base_uri goes on-chain; this must succeed.
+      let baseUri = "";
       if (imageUri) {
-        try {
-          const siwsToken = await getValidToken();
-          if (!siwsToken) throw new Error("no siws token");
-          const metaUri = await uploadJsonToIpfs({
-            name: values.name,
-            description: values.description || "",
-            image: imageUri,
-            external_link: `https://medialane.io/account/${activeAddress}`,
-          }, siwsToken);
-          baseUri = metaUri;
-        } catch { /* non-fatal — deploy still proceeds with imageUri */ }
+        const siwsToken = await getValidToken();
+        if (!siwsToken) throw new Error("Authentication required");
+        baseUri = await uploadJsonToIpfs({
+          name: values.name,
+          description: values.description || "",
+          image: imageUri,
+          external_link: `https://medialane.io/account/${activeAddress}`,
+        }, siwsToken);
       }
 
       // 2. Register intent so sync-tx can associate the image with this collection.

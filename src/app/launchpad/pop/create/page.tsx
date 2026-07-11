@@ -117,7 +117,6 @@ export default function CreatePOPPage() {
       return;
     }
 
-    let baseUri = "";
     try {
       const metadata: Record<string, unknown> = {
         name: values.name,
@@ -134,14 +133,13 @@ export default function CreatePOPPage() {
         body: JSON.stringify(metadata),
       }));
       const d = await r.json();
-      if (d.uri) baseUri = d.uri;
-    } catch { /* non-fatal — proceed with empty baseUri */ }
+      if (!r.ok || !d.uri) throw new Error("Failed to pin metadata to IPFS");
+      const baseUri: string = d.uri;
 
-    const claimEndTimestamp = Math.floor(
-      new Date(`${values.claimEndDate}T${values.claimEndTime}:00`).getTime() / 1000
-    );
+      const claimEndTimestamp = Math.floor(
+        new Date(`${values.claimEndDate}T${values.claimEndTime}:00`).getTime() / 1000
+      );
 
-    try {
       const factory = new Contract({ abi: POPFactoryABI as any, address: STARKNET_POP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
       const call = factory.populate("create_collection", [
         values.name,
