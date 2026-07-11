@@ -11,7 +11,7 @@ npm run lint     # Run ESLint
 npx tsc --noEmit # Type-check (zero-error target)
 ```
 
-No test suite is configured. TypeScript build errors are intentionally ignored (`typescript.ignoreBuildErrors: true` in `next.config.ts`), but `npx tsc --noEmit` should stay clean.
+No test suite is configured. TypeScript errors fail the build (`ignoreBuildErrors` was removed 2026-07-11); `npx tsc --noEmit` must stay clean.
 
 ## Architecture Overview
 

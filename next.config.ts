@@ -48,9 +48,6 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
       {
