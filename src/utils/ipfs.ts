@@ -98,22 +98,38 @@ export async function fetchIPFSMetadata(cid: string, bypassCache = false): Promi
     }
   }
 
-  for (const gateway of IPFS_GATEWAYS) {
+  const tryGateway = async (gateway: string): Promise<IPFSMetadata> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       const response = await fetch(`${gateway}${cid}`, { signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return (await response.json()) as IPFSMetadata;
+    } finally {
       clearTimeout(timeoutId);
-
-      if (!response.ok) continue; // Try next gateway silently
-
-      const metadata = await response.json();
-      localSet(`${CACHE_PREFIX}${cid}`, JSON.stringify({ data: metadata, timestamp: Date.now() }));
-      return metadata as IPFSMetadata;
-    } catch {
-      // Try next gateway silently
     }
+  };
+
+  // Race the two primary gateways (Pinata + ipfs.io) so one slow/down
+  // gateway no longer costs a serial 5s timeout; fall back to the rest
+  // serially only if both lose.
+  let metadata: IPFSMetadata | null = null;
+  try {
+    metadata = await Promise.any(IPFS_GATEWAYS.slice(0, 2).map(tryGateway));
+  } catch {
+    for (const gateway of IPFS_GATEWAYS.slice(2)) {
+      try {
+        metadata = await tryGateway(gateway);
+        break;
+      } catch {
+        // Try next gateway silently
+      }
+    }
+  }
+
+  if (metadata) {
+    localSet(`${CACHE_PREFIX}${cid}`, JSON.stringify({ data: metadata, timestamp: Date.now() }));
+    return metadata;
   }
 
   // Only log in development — all gateways exhausted

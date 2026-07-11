@@ -50,7 +50,7 @@ export function AssetPageEdition() {
   const [reportOpen, setReportOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
 
-  const { total: commentTotal } = useComments(contract, tokenId);
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
   const dialogs = useAssetMarketplaceDialogState();

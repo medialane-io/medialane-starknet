@@ -16,7 +16,9 @@ export function useComments(
   contract: string,
   tokenId: string,
   page = 1,
-  limit = 20
+  limit = 20,
+  /** false = fetch once but don't poll — for count-only callers (badges). The visible comments list keeps the default. */
+  active = true
 ): UseCommentsResult {
   const { data, error, isLoading, mutate } = useSWR(
     contract && tokenId
@@ -25,7 +27,7 @@ export function useComments(
     () =>
       getMedialaneClient().api.getTokenComments(contract, tokenId, { page, limit }),
     {
-      refreshInterval: 15000,
+      refreshInterval: active ? 15000 : 0,
       revalidateOnFocus: false,
       dedupingInterval: 5000,
     }

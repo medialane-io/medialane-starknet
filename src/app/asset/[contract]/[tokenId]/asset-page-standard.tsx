@@ -54,7 +54,7 @@ export function AssetPageStandard() {
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const { total: commentTotal } = useComments(contract, tokenId);
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
   // Collection siblings for the filmstrip nav — from the (paged) collection
