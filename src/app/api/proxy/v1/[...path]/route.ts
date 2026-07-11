@@ -84,6 +84,25 @@ const ALLOWED_ROUTES: Record<string, RegExp[]> = {
   // DELETE intentionally empty — no dapp flow deletes through the proxy.
 };
 
+// ─── Edge caching for anonymous public reads ─────────────────────────────
+//
+// Public catalog reads (collections/tokens/orders/coins/activities and the
+// rewards config/leaderboard) are identical for every anonymous visitor —
+// let Vercel's edge cache absorb repeat traffic instead of hitting the
+// metered backend per user. Strictly anonymous GET only: any request
+// carrying an Authorization header (SIWS identity) is never cached, and
+// user-scoped paths are simply not listed here.
+const CACHEABLE_GET_PATHS = [
+  /^collections(\/|$)/,
+  /^tokens(\/|$)/,
+  /^orders(\/|$)/,
+  /^coins(\/|$)/,
+  /^activities(\/|$)/,
+  /^rewards\/(config|leaderboard)$/,
+  /^search(\/|$)/,
+];
+const EDGE_CACHE_CONTROL = "public, s-maxage=30, stale-while-revalidate=120";
+
 function isPathAllowed(method: string, path: string): boolean {
   const patterns = ALLOWED_ROUTES[method.toUpperCase()];
   if (!patterns) return false;
@@ -148,6 +167,15 @@ async function handle(
     const key = k.toLowerCase();
     if (HOP_BY_HOP_HEADERS.has(key) || key === "set-cookie") continue;
     outHeaders.set(k, v);
+  }
+
+  if (
+    req.method === "GET" &&
+    res.ok &&
+    !req.headers.get("authorization") &&
+    CACHEABLE_GET_PATHS.some((re) => re.test(joinedPath))
+  ) {
+    outHeaders.set("cache-control", EDGE_CACHE_CONTROL);
   }
 
   return new NextResponse(res.body, {
