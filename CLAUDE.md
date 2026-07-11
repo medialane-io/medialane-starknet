@@ -317,7 +317,6 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
 
 ## StarkZap Feature Hooks
 
-- `useTxTracker(txHash)` — real-time tx monitoring (status, explorerUrl, isConfirmed)
 - `useTokenBalance(tokenKey, address)` — ERC20 balance for STRK/ETH/USDC/USDT
 - `useAllTokenBalances(address)` — all four balances in parallel
 - `useStaking(validatorAddress)` — STRK delegation: stake, exitIntent, exitPool, claimRewards
@@ -347,7 +346,6 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
   - `src/hooks/use-paymaster-transaction.ts` — core paymaster hook
   - `src/hooks/use-paymaster-minting.ts` — sponsored minting
   - `src/hooks/use-paymaster-marketplace.ts` — sponsored marketplace ops
-  - `src/hooks/use-tx-tracker.ts` — real-time transaction monitoring
   - `src/hooks/use-token-balance.ts` — ERC20 balance reads
   - `src/hooks/use-staking.ts` — STRK delegation staking
 - `src/lib/` — Shared utilities, types, and constants

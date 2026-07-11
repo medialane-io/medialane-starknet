@@ -15,7 +15,6 @@
  *
  * // In a handler:
  * const hash = await executeSponsored(mintCalls);
- * // feed hash into useTxTracker(hash)
  * ```
  */
 

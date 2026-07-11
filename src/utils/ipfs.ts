@@ -49,25 +49,6 @@ export interface IPFSMetadata {
   [key: string]: unknown;
 }
 
-export interface AssetType {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  ipfsCid?: string;
-  metadataUrl?: string;
-  type?: string;
-  creator: string | { name: string; address: string };
-  owner: string | { name: string; address: string };
-  registrationDate?: string;
-  attributes?: Array<{ trait_type: string; value: string }>;
-  [key: string]: unknown;
-}
-
-export interface EnhancedAsset extends AssetType {
-  ipfsCid?: string;
-}
-
 const CACHE_EXPIRY = 24 * 60 * 60 * 1000;
 const CACHE_PREFIX = 'ipfs-metadata-';
 
@@ -142,100 +123,6 @@ export async function fetchIPFSMetadata(cid: string, bypassCache = false): Promi
   return null;
 }
 
-
-/**
- * Stract the known CDIs
- * @returns {Record<string, string>}
- */
-export function getKnownCids(): Record<string, string> {
-  const cachedCids = localGet('known-ipfs-cids');
-  if (cachedCids) {
-    try {
-      return JSON.parse(cachedCids);
-    } catch {
-      // Ignore parse error
-    }
-  }
-
-  const cids = {
-    "1": "QmT7fTAgtScnXy1WGHYfzWrZfTsZEWPXbZqRPKqsYbifF1",
-    "2": "QmULxVeZ6ADXYfSmvbWAr3k6WVp7WFjEbxxUdqkzKwxriY",
-    "3": "QmVLDAhCY3X9P2uRudKAryuQFPM5zqA3Yij1dY8FpGbL3T",
-    "4": "QmP1QyqoYxmYJQfYDj6BcUa5YNbgWgSJNjGTpz1G8HbR1N",
-    "5": "QmWnSQ3oRrYa9GyYaUCKQ5amL1z2Q1LFMYVM8Rkd3r9Kj2",
-  };
-
-  localSet('known-ipfs-cids', JSON.stringify(cids));
-  return cids;
-}
-
-/**
- * Mix the dappData with ipfsdata if is necessary
- */
-export function combineData(ipfsData: IPFSMetadata | null, dappData: AssetType): AssetType {
-  if (!ipfsData) return dappData;
-
-  const result: AssetType = {
-    ...dappData,
-    ...(ipfsData as Partial<AssetType>),
-    id: dappData.id,
-    creator: ipfsData.creator || dappData.creator,
-    owner: dappData.owner,
-    image: ipfsData.image || dappData.image,
-    attributes: ipfsData.attributes || dappData.attributes,
-    type: ipfsData.type || dappData.type,
-    registrationDate: ipfsData.registrationDate || dappData.registrationDate
-  };
-
-  if (dappData.ipfsCid) {
-    result.ipfsCid = dappData.ipfsCid;
-  }
-
-  return result;
-}
-
-/**
- * Load IPFS metadata for multiple assets in the background (batched).
- */
-export async function loadIPFSMetadataInBackground(
-  assets: AssetType[],
-  updateCallback: (updatedAssets: EnhancedAsset[]) => void,
-  batchSize = 3
-): Promise<void> {
-  const assetsWithCids = assets.filter(asset => asset.ipfsCid);
-  if (assetsWithCids.length === 0) return;
-
-  const batches = [];
-  for (let i = 0; i < assetsWithCids.length; i += batchSize) {
-    batches.push(assetsWithCids.slice(i, i + batchSize));
-  }
-
-  let updatedAssets: EnhancedAsset[] = [...assets] as EnhancedAsset[];
-
-  for (const batch of batches) {
-    const processedBatch = await Promise.all(
-      batch.map(async (asset) => {
-        try {
-          const metadata = await fetchIPFSMetadata(asset.ipfsCid!);
-          return combineData(metadata, asset) as EnhancedAsset;
-        } catch {
-          return asset as EnhancedAsset;
-        }
-      })
-    );
-
-    updatedAssets = updatedAssets.map(asset => {
-      const processed = processedBatch.find(a => a.id === asset.id);
-      return processed || asset;
-    });
-
-    updateCallback(updatedAssets);
-
-    if (batches.indexOf(batch) < batches.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-  }
-}
 
 /**
  * Clear IPFS metadata cache (single CID or all).

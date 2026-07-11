@@ -9,7 +9,7 @@ import { starknetProvider } from "@/lib/starknet";
  *  - `{ ok: true }` on confirmed success
  *  - `{ ok: false, reason }` on on-chain revert (caller surfaces error)
  *  - `{ ok: true, polledOk: false }` on polling failure — tx may still
- *    confirm; consumers can pair with useTxTracker for streaming finality.
+ *    confirm on-chain.
  */
 export async function waitForReceipt(hash: string): Promise<
   | { ok: true; polledOk?: boolean }

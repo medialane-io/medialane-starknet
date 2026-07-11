@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   ListingCard as PackageListingCard,
   ListingCardSkeleton,
-  ipfsToHttp,
-  formatDisplayPrice,
 } from "@medialane/ui";
 import {
   DropdownMenu,
@@ -30,10 +28,6 @@ interface ListingCardProps {
 
 export function ListingCard({ order, onBuy, compact = false }: ListingCardProps) {
   const [reportOpen, setReportOpen] = useState(false);
-
-  const name = order.token?.name ?? `Token #${order.nftTokenId}`;
-  const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
-
 
   const overflowMenu = (
     <DropdownMenu>
