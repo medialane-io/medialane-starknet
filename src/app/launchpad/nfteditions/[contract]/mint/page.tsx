@@ -41,7 +41,7 @@ import {
   type MintStep,
 } from "@/components/marketplace/mint-progress-dialog";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
@@ -149,7 +149,7 @@ export default function MintNFTEditionsPage() {
   const { contract: rawContract } = useParams<{ contract: string }>();
   const collectionAddress = normalizeAddress("STARKNET", rawContract ?? "");
 
-  const { isConnected, address: walletAddress } = useUnifiedWallet();
+  const { isConnected, address: walletAddress } = useWallet();
   const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 

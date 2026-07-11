@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
 export interface GatedContent {
@@ -18,7 +18,7 @@ export type GatedContentState =
   | { status: "error" };
 
 export function useGatedContent(contract: string | undefined): GatedContentState {
-  const { address, isConnected } = useUnifiedWallet();
+  const { address, isConnected } = useWallet();
 
   const { data, error, isLoading } = useSWR<GatedContent | "not_holder">(
     contract && isConnected && address ? ["gated-content", contract, address] : null,

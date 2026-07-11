@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useSWRConfig } from "swr";
 import { toast } from "sonner";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 import type { Call } from "starknet";
 
@@ -37,7 +37,7 @@ export function encodeTokenId(tokenId: string): [string, string] {
 }
 
 export function useTransfer() {
-  const { address, isConnected, execute } = useUnifiedWallet();
+  const { address, isConnected, execute } = useWallet();
   const { mutate } = useSWRConfig();
 
   const [isProcessing, setIsProcessing] = useState(false);

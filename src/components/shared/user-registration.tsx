@@ -1,6 +1,6 @@
 "use client";
 
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useRegisterUser } from "@/hooks/use-register-user";
 
 /**
@@ -9,7 +9,7 @@ import { useRegisterUser } from "@/hooks/use-register-user";
  * Keeping this out of useWallet preserves the hook as a pure identity read.
  */
 export function UserRegistration() {
-  const { address, walletType } = useUnifiedWallet();
+  const { address, walletType } = useWallet();
   useRegisterUser(address ?? null, walletType);
   return null;
 }

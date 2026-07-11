@@ -5,7 +5,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import { Loader2, CheckCircle2, Ban, Award, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { usePopClaimStatus } from "@/hooks/use-pop";
@@ -16,7 +16,7 @@ interface PopClaimButtonProps {
 }
 
 export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
-  const { address, isConnected } = useUnifiedWallet();
+  const { address, isConnected } = useWallet();
   const { claimStatus, isLoading, error, mutate } = usePopClaimStatus(
     collectionAddress,
     address ?? null

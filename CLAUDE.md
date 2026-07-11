@@ -93,9 +93,8 @@ the 2026-06-07 "Privy hijack" incident.)
 **`useWallet()` is the single hook** (`src/hooks/use-wallet.ts`): reads the slot →
 `{ address, isConnected, isConnecting, walletType, error, connect, disconnect,
 execute }`. Use it everywhere — identity AND execution. `connect(type, connector?)`
-is the only thing that writes the slot. `useUnifiedWallet()` and `useWalletSession()`
-are kept as **thin compatibility shims** over `useWallet()` (same shapes) so legacy
-call sites keep working; new code uses `useWallet()`.
+is the only thing that writes the slot. (The old `useUnifiedWallet()`/`useWalletSession()`
+compat shims were removed 2026-07-11 — every call site uses `useWallet()` directly.)
 
 **Identity is decoupled from the account object.** The slot exists whenever
 `injectedConnected && injectedAddress` — NEVER gated on starknet-react's `account`
@@ -144,7 +143,6 @@ ThemeProvider
 - `src/lib/wait-for-receipt.ts` — shared on-chain confirmation + revert detection
 - `src/contexts/starkzap-wallet-context.tsx` — StarkZap SDK onboarding + `useStarkZapWallet()` (Cartridge/Privy)
 - `src/lib/starkzap.ts` — SDK singleton (`getStarkZapSdk()`), token presets, staking config
-- `src/hooks/use-unified-wallet.ts`, `src/hooks/use-wallet-session.ts` — compat shims over `useWallet()`
 - `src/app/api/wallet/{starknet,sign}/route.ts` — Privy server wallet get-or-create + raw signing
 
 **StarkZap stays.** It is the modern, valued Starknet SDK powering Cartridge, Privy,
@@ -342,7 +340,6 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
 - `src/contexts/` — React contexts (StarkZap wallet context)
 - `src/hooks/` — React hooks for contract interaction, data fetching, and state
   - `src/hooks/contracts/` — Low-level contract hooks
-  - `src/hooks/use-unified-wallet.ts` — unified wallet interface
   - `src/hooks/use-paymaster-transaction.ts` — core paymaster hook
   - `src/hooks/use-paymaster-minting.ts` — sponsored minting
   - `src/hooks/use-paymaster-marketplace.ts` — sponsored marketplace ops
@@ -686,7 +683,7 @@ Spec: `medialane-core/docs/specs/2026-07-04-rewards-2.0-design.md`.
 - Token IDs are represented as `bigint` in contract calls and decoded as `u256` (low + high << 128)
 - All contract calls that modify state go through `executeAuto` (paymaster) or `account.execute()` — never call contracts directly in server code
 - New transaction flows should default to `executeAuto` from `usePaymasterTransaction` or the feature-specific paymaster hook
-- **Wallet**: `useWallet()` is the single hook for everything — `{ address, isConnected, isConnecting, walletType, error, connect, disconnect, execute }`. `useUnifiedWallet()`/`useWalletSession()` are legacy compat shims over it; don't reach for them in new code.
+- **Wallet**: `useWallet()` is the single hook for everything — `{ address, isConnected, isConnecting, walletType, error, connect, disconnect, execute }`.
 - **Page layout**: top-level pages wrap content in `<PageContainer className="box-border max-w-full pt-20 …">` from `@medialane/ui` (full-width, content aligns with the logo) — do NOT use Tailwind's `container` (it caps width + centers → mismatched side gutters). `pt-20` clears the fixed logo/nav. Asset pages use `mx-auto w-full px-4 sm:px-6 lg:px-8` (full-width without PageContainer).
 - **No hover-only effects** on cards/grids (scale, lift-shadow, color-shift) — most users are on mobile where hover doesn't exist. Keep `active:` (touch) states; reserve `hover:` for non-essential desktop polish only.
 - **Token images go through `resolveTokenImage` (`src/lib/utils.ts`), not raw `ipfsToHttp`.** It returns a browser-loadable URL or `null` (so the UI shows its own fallback, never the `/placeholder.svg` sentinel), and is **idempotent** (already-resolved/proxied URLs pass through). The marketplace dialogs that take a `tokenImage` prop (`listing`/`transfer`/`offer`/`counter-offer`) **resolve it internally** — so callers pass the **raw** `token.metadata?.image` and never repeat `x ? ipfsToHttp(x) : null`. (Forgetting that incantation is what dropped the image in the portfolio/collection dialogs, 2026-06-27.)

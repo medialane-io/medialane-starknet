@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { type ApiCreatorProfile } from "@medialane/sdk";
 import { getMedialaneClient } from "@/lib/medialane-client";
@@ -21,7 +21,7 @@ export type { ApiCreatorProfile as CreatorByUsername };
 
 /** Fetch the current user's username claim status. */
 export function useMyUsernameClaim() {
-  const { address, isConnected } = useUnifiedWallet();
+  const { address, isConnected } = useWallet();
   const { token } = useSiwsToken();
 
   // Gate on token so we never auto-prompt the wallet to sign on mount.

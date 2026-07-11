@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import type { RemixOffer, RemixOfferListResponse, PublicRemix } from "@/types/remix-offers";
@@ -26,7 +26,7 @@ async function apiFetch(
 }
 
 export function useRemixOffers(role: "creator" | "requester", status?: string) {
-  const { address: walletAddress } = useUnifiedWallet();
+  const { address: walletAddress } = useWallet();
   const { token } = useSiwsToken();
 
   // Only fetch when a valid SIWS token is already stored — never auto-prompt.

@@ -17,7 +17,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { EkuboSwapProvider, type SwapQuote, type SwapRequest } from "starkzap";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useToast } from "@/hooks/use-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
@@ -117,7 +117,7 @@ function buildRequest(
 // ---------------------------------------------------------------------------
 
 export function useSwap(): UseSwapReturn {
-  const { address, execute } = useUnifiedWallet();
+  const { address, execute } = useWallet();
   const { toast } = useToast();
 
   const [sellToken, setSellTokenState] = useState<SwapToken>(SWAP_TOKENS[0]); // ETH
@@ -147,8 +147,8 @@ export function useSwap(): UseSwapReturn {
     ? (buyToken.symbol as StarkZapTokenKey)
     : "ETH";
 
-  const sellBalanceHook = useTokenBalance(sellBalanceKey, address);
-  const buyBalanceHook = useTokenBalance(buyBalanceKey, address);
+  const sellBalanceHook = useTokenBalance(sellBalanceKey, address ?? undefined);
+  const buyBalanceHook = useTokenBalance(buyBalanceKey, address ?? undefined);
 
   const sellBalance = BALANCE_TOKENS.has(sellToken.symbol) ? sellBalanceHook.raw : null;
   const buyBalance = BALANCE_TOKENS.has(buyToken.symbol) ? buyBalanceHook.raw : null;
@@ -203,7 +203,7 @@ export function useSwap(): UseSwapReturn {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchQuote(sellToken, buyToken, sellAmount, slippage, address);
+      fetchQuote(sellToken, buyToken, sellAmount, slippage, address ?? undefined);
     }, DEBOUNCE_MS);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

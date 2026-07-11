@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { useDropInfo, useOnChainDropState } from "@/hooks/use-drops";
 import { starknetProvider } from "@/lib/starknet";
 import { toast } from "sonner";
@@ -209,7 +209,7 @@ export default function DropManagePage({
   params: Promise<{ contract: string }>;
 }) {
   const { contract } = use(params);
-  const { isConnected, address: walletAddress } = useUnifiedWallet();
+  const { isConnected, address: walletAddress } = useWallet();
   const { dropInfo, isLoading: dropLoading } = useDropInfo(contract);
   const { state: dropState } = useOnChainDropState(contract);
   const {

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useCollection } from "@/hooks/use-collections";
 import { toast } from "sonner";
@@ -121,7 +121,7 @@ export default function PopManagePage({
   params: Promise<{ contract: string }>;
 }) {
   const { contract } = use(params);
-  const { address, isConnected } = useUnifiedWallet();
+  const { address, isConnected } = useWallet();
   const { collection, isLoading } = useCollection(contract);
   const { executeAuto, isLoading: isTxLoading } = usePaymasterTransaction();
 

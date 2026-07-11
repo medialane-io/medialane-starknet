@@ -5,7 +5,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUnifiedWallet } from "@/hooks/use-unified-wallet";
+import { useWallet } from "@/hooks/use-wallet";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
@@ -38,7 +38,7 @@ export function CollectionDropMintButton({
   collectionAddress,
   conditions,
 }: CollectionDropMintButtonProps) {
-  const { isConnected, address: walletAddress } = useUnifiedWallet();
+  const { isConnected, address: walletAddress } = useWallet();
   const { mintStatus, isLoading, mutate } = useDropMintStatus(
     collectionAddress,
     walletAddress ?? null
