@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Urbanist } from "next/font/google";
 import Script from "next/script";
 import { Providers } from "./providers";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -8,6 +8,8 @@ import "@medialane/ui/styles";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
+// Brand display face — headings pick it up via --font-display (@medialane/ui styles).
+const urbanist = Urbanist({ subsets: ["latin"], display: "swap", variable: "--font-display" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
@@ -96,7 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${urbanist.variable}`}>
         {/* Google tag (gtag.js) — Google Ads conversion tracking */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-18112836088"
