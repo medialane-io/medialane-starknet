@@ -6,6 +6,7 @@ import {
   ListingCard as PackageListingCard,
   ListingCardSkeleton,
 } from "@medialane/ui";
+import { ipfsToHttp } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,11 @@ interface ListingCardProps {
 
 export function ListingCard({ order, onBuy, compact = false }: ListingCardProps) {
   const [reportOpen, setReportOpen] = useState(false);
+
+  // Resolve through the app's /api/ipfs resizing proxy (w=640 covers the
+  // largest grid cell at high DPR) instead of the ui package's default
+  // full-size gateway URL.
+  const imageUrl = order.token?.image ? ipfsToHttp(order.token.image, 640) : null;
 
   const overflowMenu = (
     <DropdownMenu>
@@ -74,6 +80,7 @@ export function ListingCard({ order, onBuy, compact = false }: ListingCardProps)
         onBuy={onBuy}
         compact={compact}
         overflowMenu={overflowMenu}
+        imageUrl={imageUrl}
       />
       {reportOpen && (
         <ReportDialog
