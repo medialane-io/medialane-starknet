@@ -17,10 +17,23 @@ import {
   XCircle,
   ChevronDown,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { GenesisMint } from "@/components/airdrop/genesis-mint";
-import { PrivyInlineLogin } from "@/components/airdrop/privy-inline-login";
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
+
+// Lazy-loaded: the static import pulled the whole @privy-io/react-auth bundle
+// (~350 kB gz) into the first load of this paid-ads landing page. The hero and
+// trust strip paint immediately; the email login streams in behind them.
+const PrivyInlineLogin = dynamic(
+  () => import("@/components/airdrop/privy-inline-login").then((m) => m.PrivyInlineLogin),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-40 w-full max-w-md animate-pulse rounded-2xl border border-border/40 bg-card/30" aria-hidden />
+    ),
+  },
+);
 import { useWallet } from "@/hooks/use-wallet";
 import { BR_MINT_CONTRACT, BR_NFT_URI } from "@/lib/constants";
 
