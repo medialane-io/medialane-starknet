@@ -37,7 +37,6 @@ import { toast } from "sonner";
 import { Contract, hash } from "starknet";
 import { normalizeAddress, IPTicketCollectionFactoryABI, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
-import { getMedialaneClient } from "@/lib/medialane-client";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
@@ -160,8 +159,26 @@ export default function CreateTicketCollectionPage() {
     setCollectionStep("processing");
 
     try {
+      // Pin collection metadata to IPFS first so the URI can go on-chain in the deploy tx.
+      // base_uri on the contract is the authoritative source — the backend is just a cache.
+      let baseUri = "";
+      if (imageUri) {
+        const token = await getValidToken();
+        const res = await fetch("/api/pinata/json", withSiwsAuth(token, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: values.name,
+            description: values.description || "",
+            image: imageUri,
+          }),
+        }));
+        const pinData = await res.json();
+        if (pinData?.uri) baseUri = `${pinData.uri}/`;
+      }
+
       const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });
-      const call = factory.populate("deploy_collection", [values.name, values.symbol]);
+      const call = factory.populate("deploy_collection", [values.name, values.symbol, baseUri]);
 
       setDialogTxStatus("submitting");
       const txH = await executeAuto([call]);
@@ -169,25 +186,6 @@ export default function CreateTicketCollectionPage() {
       setDialogTxStatus("confirming");
 
       const addr = await readDeployedAddress(txH);
-
-      // Register collection profile in the backend (non-blocking — indexer may not have the row yet)
-      if (addr && imageUri) {
-        (async () => {
-          for (let attempt = 0; attempt < 6; attempt++) {
-            try {
-              if (attempt > 0) await new Promise((r) => setTimeout(r, 10_000));
-              const token = await getValidToken();
-              if (!token) return;
-              await getMedialaneClient().api.updateCollectionProfile(addr, {
-                displayName: values.name,
-                ...(values.description ? { description: values.description } : {}),
-                image: imageUri,
-              }, token);
-              return;
-            } catch { /* retry */ }
-          }
-        })();
-      }
 
       void mutate();
       setDeployedAddress(addr);
