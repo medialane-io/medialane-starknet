@@ -14,7 +14,8 @@ export function useCollections(
   sort: CollectionSort = "recent",
   hideEmpty = true,
   service?: string,
-  standard?: string
+  standard?: string,
+  fallback?: ApiCollection[]
 ) {
   const key = `collections-${page}-${limit}-${isFeatured}-${sort}-${hideEmpty}-${service ?? ""}-${standard ?? ""}`;
 
@@ -37,7 +38,12 @@ export function useCollections(
       if (!res.ok) throw new Error(`Collections fetch failed: ${res.status}`);
       return res.json();
     },
-    { revalidateOnFocus: false }
+    {
+      revalidateOnFocus: false,
+      // Server-fetched seed (homepage hero) — first render shows real data,
+      // SWR still revalidates in the background.
+      ...(fallback ? { fallbackData: { data: fallback } as ApiResponse<ApiCollection[]> } : {}),
+    }
   );
 
   return {

@@ -18,12 +18,14 @@ interface ListingsGridProps {
   orderType?: string; // "listings" | "offers" | "" (all)
   minPrice?: string;
   maxPrice?: string;
+  /** Server-fetched first page (default filter state) — renders real cards in the initial HTML; SWR replaces it on mount and filter changes clear it. */
+  initialOrders?: ApiOrder[];
 }
 
-export function ListingsGrid({ sort = "recent", currency, orderType = "", minPrice, maxPrice }: ListingsGridProps = {}) {
+export function ListingsGrid({ sort = "recent", currency, orderType = "", minPrice, maxPrice, initialOrders }: ListingsGridProps = {}) {
   const [backendPage, setBackendPage] = useState(1);
   const [visiblePages, setVisiblePages] = useState(1);
-  const [allOrders, setAllOrders] = useState<ApiOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<ApiOrder[]>(initialOrders ?? []);
   const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
 

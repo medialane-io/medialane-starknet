@@ -8,12 +8,13 @@ import { CreatorAirdropBanner } from "./creator-airdrop";
 import { AirdropSection } from "./airdrop-section";
 import { CommunityRewards } from "./community-rewards";
 import { PageContainer } from "@medialane/ui";
+import type { ApiCollection } from "@medialane/sdk";
 
-export function HomePage() {
+export function HomePage({ initialFeatured }: { initialFeatured?: ApiCollection[] }) {
   return (
     <div className="pb-20">
       {/* Hero — full-bleed */}
-      <HeroSlider />
+      <HeroSlider initial={initialFeatured} />
 
       {/* Live market ticker */}
       <PageContainer className="box-border max-w-full pt-6 pb-0">

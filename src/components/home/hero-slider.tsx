@@ -88,8 +88,8 @@ function HeroPlaceholder() {
   );
 }
 
-export function HeroSlider() {
-  const { collections, isLoading } = useCollections(1, 3, true, "recent");
+export function HeroSlider({ initial }: { initial?: ApiCollection[] }) {
+  const { collections, isLoading } = useCollections(1, 3, true, "recent", true, undefined, undefined, initial);
   const [current, setCurrent] = useState(0);
   const count = collections.length;
 

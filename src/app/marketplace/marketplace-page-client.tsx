@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Search, X, Store, SlidersHorizontal } from "lucide-react";
 import { ActivityTicker } from "@/components/shared/activity-ticker";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
-import type { ApiSearchResult } from "@medialane/sdk";
+import type { ApiOrder, ApiSearchResult } from "@medialane/sdk";
 import { getTokenBySymbol, parseAmount, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { ipfsToHttp, cn } from "@/lib/utils";
 import Link from "next/link";
@@ -193,7 +193,7 @@ function IpTypeChip({ href, label }: { href: string; label: string }) {
   );
 }
 
-export default function MarketplacePageClient() {
+export default function MarketplacePageClient({ initialOrders }: { initialOrders?: ApiOrder[] }) {
   const [view, setView] = useState<"nfts" | "tokens">("nfts");
   const [coinQuery, setCoinQuery] = useState("");
   const [sort, setSort] = useState("recent");
@@ -499,6 +499,7 @@ export default function MarketplacePageClient() {
           orderType={orderType}
           minPrice={minPrice}
           maxPrice={maxPrice}
+          initialOrders={initialOrders}
         />
       ) : (
         <CoinsScanList query={coinQuery} />

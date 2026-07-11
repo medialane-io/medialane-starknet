@@ -5,6 +5,8 @@
  * metadata falls back gracefully.
  */
 
+import type { ApiCollection, ApiOrder } from "@medialane/sdk";
+
 const BASE = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ?? "";
 const KEY  = process.env.MEDIALANE_API_KEY ?? "";
 
@@ -38,6 +40,18 @@ export async function fetchCollectionMeta(contract: string) {
   return apiFetch<{ name?: string; description?: string; image?: string; totalSupply?: number; service?: string }>(
     `/v1/collections/${contract}`
   );
+}
+
+/** Featured collections for the homepage hero — same query `useCollections(1, limit, true, "recent")` issues client-side, so it can seed that hook's SWR fallback. */
+export async function fetchFeaturedCollections(limit: number) {
+  return apiFetch<ApiCollection[]>(
+    `/v1/collections?page=1&limit=${limit}&sort=recent&isFeatured=true&hideEmpty=true`
+  );
+}
+
+/** First page of active orders — mirrors the default-filter query `ListingsGrid` issues via `useOrders`, so it can seed the grid's initial render. */
+export async function fetchActiveOrders(limit: number) {
+  return apiFetch<ApiOrder[]>(`/v1/orders?status=ACTIVE&sort=recent&page=1&limit=${limit}`);
 }
 
 export async function fetchDropMeta(contract: string) {

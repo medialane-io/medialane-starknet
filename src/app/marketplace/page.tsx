@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import MarketplacePageClient from "./marketplace-page-client";
+import { fetchActiveOrders } from "@/lib/api-server";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Marketplace";
@@ -12,6 +13,11 @@ export const metadata: Metadata = {
   ...buildSocialMetadata({ title, description, imageAlt: "Medialane Marketplace" }),
 };
 
-export default function MarketplacePage() {
-  return <MarketplacePageClient />;
+// ISR — the first page of listings renders as real cards in the server HTML
+// instead of skeletons awaiting a client fetch.
+export const revalidate = 30;
+
+export default async function MarketplacePage() {
+  const initialOrders = await fetchActiveOrders(50);
+  return <MarketplacePageClient initialOrders={initialOrders ?? undefined} />;
 }
