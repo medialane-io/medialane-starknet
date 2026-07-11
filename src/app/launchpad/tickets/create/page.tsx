@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { Contract, hash } from "starknet";
 import { normalizeAddress, IPTicketCollectionFactoryABI, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
@@ -169,20 +170,23 @@ export default function CreateTicketCollectionPage() {
 
       const addr = await readDeployedAddress(txH);
 
-      // Pin collection metadata to IPFS after deploy (non-blocking)
+      // Register collection profile in the backend (non-blocking — indexer may not have the row yet)
       if (addr && imageUri) {
-        try {
-          const token = await getValidToken();
-          await fetch("/api/pinata/json", withSiwsAuth(token, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: values.name,
-              description: values.description || "",
-              image: imageUri,
-            }),
-          }));
-        } catch { /* non-fatal */ }
+        (async () => {
+          for (let attempt = 0; attempt < 6; attempt++) {
+            try {
+              if (attempt > 0) await new Promise((r) => setTimeout(r, 10_000));
+              const token = await getValidToken();
+              if (!token) return;
+              await getMedialaneClient().api.updateCollectionProfile(addr, {
+                displayName: values.name,
+                ...(values.description ? { description: values.description } : {}),
+                image: imageUri,
+              }, token);
+              return;
+            } catch { /* retry */ }
+          }
+        })();
       }
 
       void mutate();
