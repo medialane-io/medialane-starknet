@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConnectGate } from "@/components/connect-gate";
-import { ServiceFormShell, StepNav } from "@medialane/ui";
+import { ServiceFormShell, StepNav, ActionButton } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { CreateCoinAside } from "@/components/claim/create-coin-aside";
 import { cn } from "@/lib/utils";
@@ -315,7 +315,7 @@ export default function CoinCreatePage() {
                 <p className="text-xs text-muted-foreground">Shown on your coin&apos;s page. You can edit it anytime.</p>
               </div>
 
-              <Button onClick={() => setStep(2)} disabled={!identityValid || imageUploading} className="w-full">
+              <Button onClick={() => setStep(2)} disabled={!identityValid || imageUploading} className="w-full bg-brand-rose hover:bg-brand-rose/90 text-white">
                 Next: Economics <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </>
@@ -398,7 +398,7 @@ export default function CoinCreatePage() {
                 <Button variant="outline" onClick={() => setStep(1)}>
                   <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
                 </Button>
-                <Button onClick={() => setStep(3)} disabled={!economicsValid || insufficient} className="flex-1">
+                <Button onClick={() => setStep(3)} disabled={!economicsValid || insufficient} className="flex-1 bg-brand-rose hover:bg-brand-rose/90 text-white">
                   Next: Review <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </div>
@@ -433,9 +433,14 @@ export default function CoinCreatePage() {
                 <Button variant="outline" onClick={() => setStep(2)} disabled={busy}>
                   <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
                 </Button>
-                <Button onClick={handleLaunch} disabled={!canLaunch} className="flex-1 bg-brand-rose hover:bg-brand-rose/90">
-                  {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{statusLabel}</> : <>Launch <ArrowRight className="h-4 w-4 ml-1.5" /></>}
-                </Button>
+                <ActionButton
+                  tone="rose"
+                  onClick={handleLaunch}
+                  disabled={!canLaunch}
+                  className={`flex-1 ${!canLaunch ? "opacity-40 pointer-events-none" : ""}`}
+                >
+                  {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{statusLabel}</> : <>Launch your coin <ArrowRight className="h-4 w-4 ml-1.5" /></>}
+                </ActionButton>
               </div>
               {status === "error" && error && <p className="text-xs text-destructive">{error}</p>}
             </>
