@@ -360,6 +360,55 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
 - `src/utils/` — Helper functions (SEO, marketplace utils, IPFS, starknet address utils, paymaster utils)
 - `src/actions/` — Next.js Server Actions
 
+## Launchpad Deploy — Metadata Must Go On-Chain (§1 principle)
+
+**The contract is the only truth** (`medialane-core/docs/architecture/00-principles.md §1`). For every NFT collection deploy (ERC-721, ERC-1155, IP Tickets, POP, Drop), the metadata URI must be embedded in the deploy transaction as `base_uri`. The backend reads this from the contract and caches `collection.image` — it is a rebuildable cache, not the source of truth.
+
+### Correct flow for any collection with a cover image
+
+```
+1. Upload image → IPFS → imageUri ("ipfs://{cid}")
+2. POST /api/pinata/json { name, description, image: imageUri, ... }
+   → { uri: "ipfs://{metadataCid}", cid: string }
+3. Call deploy_collection(name, symbol, baseUri = `ipfs://{metadataCid}/`)
+                                                     ↑ passed on-chain in the same tx
+```
+
+If step 2 fails, **throw** — never silently proceed with an empty or wrong `base_uri`. A deploy that succeeds with an empty `base_uri` permanently breaks the collection image; there is no fix after the fact (contracts are immutable).
+
+### Anti-patterns — do NOT do these
+
+```ts
+// ❌ Non-fatal IPFS fallback — silent §1 violation
+let baseUri = "";
+try {
+  baseUri = await uploadJsonToIpfs({ ... });
+} catch {
+  /* non-fatal, proceed anyway */         // ← deploy embeds empty base_uri forever
+}
+
+// ❌ Wrong fallback type
+let baseUri = imageUri ?? "";             // ← imageUri is an image, not a metadata JSON URI
+
+// ❌ Patch soft-state instead of on-chain
+await updateCollectionProfile(contract, { image: imageUri });  // ← only valid for coins
+```
+
+### `updateCollectionProfile` — fungible tokens (coins) only
+
+`updateCollectionProfile` is a backend PATCH (`PATCH /v1/coins/:contract`). Valid ONLY for Creator Coins — ERC-20 tokens that have no `base_uri` standard. **Never use it as a substitute for `base_uri` on NFT collections.** The indexer cannot rebuild off-chain profile edits from chain events, which is the exact violation §1 rules out.
+
+### Pages that are architecturally correct (reference implementations)
+
+- `launchpad/nfteditions/create/page.tsx` — pins metadata, throws on failure, passes `collectionMetaUri` as `base_uri`
+- `launchpad/tickets/create/page.tsx` — pins metadata, throws on failure, passes `baseUri` as third arg to `deploy_collection`
+- `launchpad/tickets/[contract]/create-event/page.tsx` — `metadataUri` goes into `create_event` calldata
+- `launchpad/pop/create/page.tsx` — metadata pin inside single outer try/catch, fatal
+- `launchpad/club/create/page.tsx` — metadata pin fatal, no inner catch
+- `create/collection/page.tsx` — `uploadJsonToIpfs` throws to outer catch
+
+---
+
 ## Collection Metadata Resolution
 
 Collections are resolved via `base_uri` on-chain. The dapp reads `base_uri` from the registry contract and resolves the metadata JSON from IPFS — no backend calls.
@@ -564,8 +613,10 @@ Three conventions were added; keep new forms consistent with them:
 - **Plain header, gradient on the form only.** `ServiceHeader` gained a `plain` variant
   (neutral border, no brand gradient); `ServiceFormShell` renders the header **`plain`** so a
   create/mint page shows the animated gradient border **only on the form**, never stacked on
-  the header. Standalone headers (browse pages, coin detail, `/claim` hub) still pass no
-  `plain` → they keep the gradient (single accent, nothing competing).
+  the header. Standalone headers (browse pages, coin detail, `/claim` hub, service management pages)
+  must pass **`plain`** — these pages have no form, so the gradient border has nothing to "frame"
+  and competes with the content. (`tickets-content`, `club-content`, `nfteditions-content`,
+  `pop-content`, `drop-content`, `sponsorship-content`, `claim-page-client` all pass `plain`).
 - **Multi-step forms use the shared shell, not a bespoke layout.** `ServiceFormShell` gained
   an **`aboveForm`** slot (left column, between header and form) and a **sticky right rail**
   on desktop. New **`StepNav`** (`@medialane/ui`, `accentText`/`accentBg` props) is the
