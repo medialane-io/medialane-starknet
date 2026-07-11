@@ -147,7 +147,7 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
 
   if (isLoading && allTokens.length === 0) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         {Array.from({ length: 8 }).map((_, i) => <TokenCardSkeleton key={i} />)}
       </div>
     );
@@ -178,7 +178,7 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
             body="Try removing some filters to see more results."
           />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {filteredTokens.map((t) => {
               // ERC-1155 list responses don't include per-holder balances — can't
               // determine ownership here. Holders manage from Portfolio instead.
@@ -589,7 +589,7 @@ export default function CollectionPageClient() {
 
           <TabsContent value="listings" className="mt-4">
             {ordersLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
               </div>
             ) : activeListings.length === 0 ? (
@@ -598,7 +598,7 @@ export default function CollectionPageClient() {
                 body="When items in this collection are listed for sale, they'll appear here."
               />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {activeListings.map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
               </div>
             )}
@@ -606,7 +606,7 @@ export default function CollectionPageClient() {
 
           <TabsContent value="offers" className="mt-4">
             {ordersLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
               </div>
             ) : activeBids.length === 0 ? (
@@ -615,7 +615,7 @@ export default function CollectionPageClient() {
                 body="Collection-wide offers will appear here when placed."
               />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {activeBids.map((o) => <ListingCard key={o.orderHash} order={o} />)}
               </div>
             )}
