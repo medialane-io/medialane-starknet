@@ -152,18 +152,14 @@ export default function CreateCollectionPage() {
       //    the collection image onchain (base_uri → collection metadata → image field).
       let baseUri: string | undefined;
       if (imageUri) {
-        try {
-          const metaToken = await getValidToken();
-          if (!metaToken) throw new Error("Please sign in with your wallet to upload collection metadata.");
-          baseUri = await uploadJsonToIpfs({
-            name: values.name,
-            description: values.description || "",
-            image: imageUri,
-            external_link: values.external_link || "https://medialane.io",
-          }, metaToken);
-        } catch {
-          // Non-fatal: collection is still created, just without onchain metadata URI
-        }
+        const metaToken = await getValidToken();
+        if (!metaToken) throw new Error("Please sign in with your wallet to upload collection metadata.");
+        baseUri = await uploadJsonToIpfs({
+          name: values.name,
+          description: values.description || "",
+          image: imageUri,
+          external_link: values.external_link || "https://medialane.io",
+        }, metaToken);
       }
 
       // 2. Create collection intent — pre-signed, returns calls immediately

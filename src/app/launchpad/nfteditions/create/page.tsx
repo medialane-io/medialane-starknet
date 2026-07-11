@@ -172,24 +172,23 @@ export default function CreateNFTEditionsCollectionPage() {
     setCollectionStep("processing");
 
     try {
-      // 1. Pin metadata JSON to IPFS
+      // 1. Pin metadata JSON to IPFS — base_uri goes on-chain; must succeed when image is set.
       let collectionMetaUri: string | undefined;
       if (imageUri) {
-        try {
-          const token = await getValidToken();
-          const r = await fetch("/api/pinata/json", withSiwsAuth(token, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: values.name,
-              description: values.description || "",
-              image: imageUri,
-              external_link: values.external_link || "",
-            }),
-          }));
-          const d = await r.json();
-          if (d.uri) collectionMetaUri = d.uri;
-        } catch { /* non-fatal */ }
+        const token = await getValidToken();
+        const r = await fetch("/api/pinata/json", withSiwsAuth(token, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: values.name,
+            description: values.description || "",
+            image: imageUri,
+            external_link: values.external_link || "",
+          }),
+        }));
+        const d = await r.json();
+        if (!r.ok || !d.uri) throw new Error("Failed to pin metadata to IPFS");
+        collectionMetaUri = d.uri;
       }
 
       // 2. Execute deploy_collection on the factory.
