@@ -9,10 +9,8 @@ import React, {
   useState,
 } from "react";
 import type { User } from "@privy-io/react-auth";
-import { OnboardStrategy } from "starkzap";
 import type { WalletInterface } from "starkzap";
 import { toast } from "sonner";
-import { getCartridgeStarkZapSdk } from "@/lib/starkzap";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { writePersistedWallet, clearPersistedWallet } from "@/lib/wallet-types";
 import type { PrivyConnectorProps } from "./privy-connector";
@@ -151,6 +149,14 @@ export function StarkZapWalletProvider({
   const connectCartridge = useCallback(async () => {
     setSession(walletConnecting("cartridge"));
     try {
+      // StarkZap (and its zod-heavy dependency graph) loads only when a
+      // Cartridge connect/resume actually happens — keeping it out of the
+      // first-load bundle of every page for every visitor. This callback is
+      // also the silent-resume path on reload, so both flows are covered.
+      const [{ OnboardStrategy }, { getCartridgeStarkZapSdk }] = await Promise.all([
+        import("starkzap"),
+        import("@/lib/starkzap"),
+      ]);
       const sdk = getCartridgeStarkZapSdk();
       const result = await sdk.onboard({
         strategy: OnboardStrategy.Cartridge,
