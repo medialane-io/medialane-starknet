@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { privyServer } from "@/lib/privy-server";
+import { PrivyClient } from "@privy-io/node";
+import { getPrivyServer } from "@/lib/privy-server";
 
 function toExternalId(userId: string): string {
   return userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
 }
 
-async function getStarknetWalletForUser(userId: string) {
+async function getStarknetWalletForUser(privy: PrivyClient, userId: string) {
   const externalId = toExternalId(userId);
 
-  for await (const wallet of privyServer.wallets().list({ external_id: externalId })) {
+  for await (const wallet of privy.wallets().list({ external_id: externalId })) {
     if (wallet.chain_type === "starknet") {
       return wallet;
     }
@@ -40,15 +41,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
 
+  const privy = getPrivyServer();
+
   try {
-    const claims = await privyServer.utils().auth().verifyAccessToken(token);
-    const wallet = await getStarknetWalletForUser(claims.user_id);
+    const claims = await privy.utils().auth().verifyAccessToken(token);
+    const wallet = await getStarknetWalletForUser(privy, claims.user_id);
 
     if (!wallet || wallet.id !== walletId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const result = await privyServer.wallets().rawSign(walletId, {
+    const result = await privy.wallets().rawSign(walletId, {
       params: { hash },
     });
 
