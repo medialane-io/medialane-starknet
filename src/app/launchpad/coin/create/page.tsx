@@ -12,7 +12,7 @@
 import { useMemo, useState } from "react";
 import { rewardToast } from "@/lib/reward-toast";
 import { useRouter } from "next/navigation";
-import { Coins, TrendingUp, ArrowRight, ArrowLeft, Lock, Sparkles, ImagePlus, X, Loader2 } from "lucide-react";
+import { Coins, TrendingUp, ArrowRight, Lock, Sparkles, ImagePlus, X, Loader2 } from "lucide-react";
 import {
   getTokenBySymbol, formatAmount,
   validateCoinName as validateName,
@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConnectGate } from "@/components/connect-gate";
-import { ServiceFormShell, StepNav, ActionButton } from "@medialane/ui";
+import { ServiceFormShell, ActionButton } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { CreateCoinAside } from "@/components/claim/create-coin-aside";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,6 @@ const SUPPLY_PRESETS = [
   { label: "1B", value: "1000000000" },
 ];
 
-type StudioStep = 1 | 2 | 3;
 type ProfileStatus = "idle" | "saving" | "saved" | "failed";
 
 export default function CoinCreatePage() {
@@ -59,7 +58,6 @@ export default function CoinCreatePage() {
   const { launch, status, error } = useLaunchCoin();
   const { token: siwsToken, signIn: siwsSignIn } = useSiwsToken();
 
-  const [step, setStep] = useState<StudioStep>(1);
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [autoSymbol, setAutoSymbol] = useState("");
@@ -166,7 +164,6 @@ export default function CoinCreatePage() {
   const handleReset = () => {
     setCoinAddress(null);
     setProfileStatus("idle");
-    setStep(1);
     setName(""); setSymbol(""); setAutoSymbol(""); setDescription("");
     setSupply(""); setTeamPct(5);
     clearImage();
@@ -224,19 +221,6 @@ export default function CoinCreatePage() {
         title="Design your Creator Coin"
         subtitle="Give it a face, set the numbers, and launch — with liquidity locked forever."
         backSlot={<ClaimBackButton />}
-        aboveForm={
-          <StepNav
-            current={step}
-            onStep={(s) => setStep(s as StudioStep)}
-            accentText="text-brand-rose"
-            accentBg="bg-brand-rose"
-            steps={[
-              { label: "Your coin", reachable: true },
-              { label: "Economics", reachable: step >= 2 || identityValid },
-              { label: "Launch", reachable: step >= 3 || (identityValid && economicsValid) },
-            ]}
-          />
-        }
         aside={
           <>
             <CoinLaunchPreview data={previewData} />
@@ -244,17 +228,21 @@ export default function CoinCreatePage() {
           </>
         }
       >
-        <div className="space-y-6">
+        <div className="space-y-7">
 
-          {step === 1 && (
-            <>
+          {/* ── Give it a face ── */}
+          <section className="space-y-4">
+            <div>
+              <h3 className="text-lg font-bold">Give it a face</h3>
+              <p className="text-sm text-muted-foreground">This is how your coin shows up across Medialane.</p>
+            </div>
               <div className="space-y-1.5">
                 <Label>Coin image</Label>
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="relative h-20 w-20 shrink-0 rounded-full overflow-hidden border border-dashed border-border bg-muted/20 flex items-center justify-center"
+                    className="relative h-24 w-24 shrink-0 rounded-full overflow-hidden border border-dashed border-border bg-muted/20 flex items-center justify-center"
                   >
                     {imagePreview ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -315,14 +303,16 @@ export default function CoinCreatePage() {
                 <p className="text-xs text-muted-foreground">Shown on your coin&apos;s page. You can edit it anytime.</p>
               </div>
 
-              <Button onClick={() => setStep(2)} disabled={!identityValid || imageUploading} className="w-full bg-brand-rose hover:bg-brand-rose/90 text-white">
-                Next: Economics <ArrowRight className="h-4 w-4 ml-1.5" />
-              </Button>
-            </>
-          )}
+          </section>
 
-          {step === 2 && (
-            <>
+          <div className="h-px bg-border/60" />
+
+          {/* ── Set the numbers ── */}
+          <section className="space-y-4">
+            <div>
+              <h3 className="text-lg font-bold">Set the numbers</h3>
+              <p className="text-sm text-muted-foreground">The price is fixed at launch — your supply sets the market cap.</p>
+            </div>
               <div className="space-y-1.5">
                 <Label htmlFor="supply">Total supply</Label>
                 <div className="flex gap-2 mb-1">
@@ -394,19 +384,12 @@ export default function CoinCreatePage() {
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(1)}>
-                  <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
-                </Button>
-                <Button onClick={() => setStep(3)} disabled={!economicsValid || insufficient} className="flex-1 bg-brand-rose hover:bg-brand-rose/90 text-white">
-                  Next: Review <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Button>
-              </div>
-            </>
-          )}
+          </section>
 
-          {step === 3 && (
-            <>
+          <div className="h-px bg-border/60" />
+
+          {/* ── Launch ── */}
+          <section className="space-y-4">
               <ul className="space-y-2.5 text-sm">
                 <li className="flex items-start gap-2">
                   <Lock className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0" />
@@ -422,29 +405,17 @@ export default function CoinCreatePage() {
                 </li>
               </ul>
 
-              <div className="rounded-xl bg-muted/30 p-4 text-sm space-y-1.5">
-                <div className="flex justify-between"><span className="text-muted-foreground">Coin</span><span className="font-semibold">{name} (${symbol})</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Supply</span><span className="font-semibold">{Number(supply).toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Market cap</span><span className="font-semibold">{preview?.fdv.toLocaleString()} {quote}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Your share</span><span className="font-semibold">{teamPct}% {preview && teamPct > 0 ? `(you fund ${preview.buybackHuman} ${quote})` : ""}</span></div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(2)} disabled={busy}>
-                  <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
-                </Button>
-                <ActionButton
-                  tone="rose"
-                  onClick={handleLaunch}
-                  disabled={!canLaunch}
-                  className={`flex-1 ${!canLaunch ? "opacity-40 pointer-events-none" : ""}`}
-                >
-                  {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{statusLabel}</> : <>Launch your coin <ArrowRight className="h-4 w-4 ml-1.5" /></>}
-                </ActionButton>
-              </div>
+              <ActionButton
+                tone="rose"
+                big
+                onClick={handleLaunch}
+                disabled={!canLaunch}
+                className={`w-full ${!canLaunch ? "opacity-40 pointer-events-none" : ""}`}
+              >
+                {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{statusLabel}</> : <>Launch your coin <ArrowRight className="h-4 w-4 ml-1.5" /></>}
+              </ActionButton>
               {status === "error" && error && <p className="text-xs text-destructive">{error}</p>}
-            </>
-          )}
+          </section>
         </div>
       </ServiceFormShell>
     </ConnectGate>
