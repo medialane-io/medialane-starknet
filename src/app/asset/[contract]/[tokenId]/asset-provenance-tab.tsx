@@ -1,8 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
-import { PriceHistoryChart } from "@/components/asset/price-history-chart";
 import { RemixesTab } from "@/components/asset/remixes-tab";
+
+// Lazy-loaded: recharts (~100 kB gz) otherwise lands in the asset page's
+// first load for a chart that lives behind the provenance tab.
+const PriceHistoryChart = dynamic(
+  () => import("@/components/asset/price-history-chart").then((m) => m.PriceHistoryChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[220px] w-full animate-pulse rounded-xl border border-border bg-card/50" aria-hidden />
+    ),
+  },
+);
 import { CreationRecord } from "@/components/asset/creation-record";
 import { formatDisplayPrice, timeAgo } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
