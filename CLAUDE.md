@@ -231,6 +231,49 @@ call, not pre-funded — verify the ordering (`fulfillCalls` before `feeCalls`) 
 preserved before touching that sequence) should disclose the same breakdown if it
 shows a price to a wallet that has to pre-fund it.
 
+## Performance architecture (2026-07-11 pass)
+
+First-load JS was cut ~30–57% on every key route (homepage 671→480 kB, marketplace
+676→484 kB, asset 817→523 kB, /mint & /br/mint ~1 MB→~437 kB). The mechanisms below
+are load-bearing — don't regress them:
+
+- **Lazy-loaded heavy modules — never re-add these as static imports:**
+  - `PrivyInlineLogin` is `next/dynamic` (`ssr: false`) in `airdrop-claim.tsx` and
+    `br-mint-content.tsx`. A static import anywhere in the mint-landing tree pulls the
+    whole `@privy-io/react-auth` bundle (~350 kB gz) back into the paid-ads pages.
+  - `PriceHistoryChart` (recharts) is `next/dynamic` in `asset-provenance-tab.tsx`.
+  - **StarkZap loads only inside `connectCartridge()`** (`starkzap-wallet-context.tsx`,
+    via `await import("starkzap")` + `import("@/lib/starkzap")`) — that callback covers
+    both explicit connect AND the silent resume-on-reload. Keeping StarkZap out of the
+    always-loaded provider chain is worth ~190 kB on every page; type-only imports from
+    `"starkzap"` are fine anywhere. (`use-swap`/`use-token-balance` import it statically
+    but live in route-level chunks — also fine.)
+- **ISR-seeded entry pages.** `/` (`revalidate 60`) and `/marketplace` (`revalidate 30`)
+  are async RSCs: `fetchFeaturedCollections(3)` / `fetchActiveOrders(50)` from
+  `src/lib/api-server.ts` seed the existing SWR hooks (`useCollections`'s trailing
+  `fallback` param; `ListingsGrid`'s `initialOrders` prop), so real content is in the
+  server HTML and SWR revalidates on mount. **`apiFetch` has a hard 5s
+  `AbortSignal.timeout`** — without it a slow backend stalls prerender until Next kills
+  the page render at 60s and fails the build after 3 attempts (observed once, 2026-07-11).
+- **Marketplace card images go through the resizing proxy.** The app's
+  `src/components/marketplace/listing-card.tsx` passes
+  `imageUrl={ipfsToHttp(order.token.image, 640)}` (→ `/api/ipfs/{cid}?w=640`) to
+  `@medialane/ui`'s `ListingCard` (≥0.58.0 `imageUrl` override prop). The ui package's
+  own `ipfsToHttp` points at a public gateway full-size — new card surfaces should pass
+  a proxied URL the same way. Resize only activates when `PINATA_DEDICATED_GATEWAY` is
+  set; otherwise the proxy serves originals.
+- **BFF proxy edge caching.** Anonymous public GETs matching `CACHEABLE_GET_PATHS` in
+  the proxy route get `cache-control: public, s-maxage=30, stale-while-revalidate=120`
+  so Vercel's edge absorbs repeat reads (metered backend). Requests with an
+  Authorization header are never cached — keep it that way.
+- **Polling discipline.** `useComments` has a trailing `active` param — count-only
+  callers (the asset pages' badge) pass `false` (no background poll; the SWR key is
+  shared with the dialog's list, so counts still refresh whenever the dialog polls).
+  `useTokensByOwner` polls at 30s. IPFS metadata fetches race the first two gateways
+  (`Promise.any`) before falling back serially.
+- Type checking is enforced at build (`ignoreBuildErrors` removed); the Privy server
+  client is a lazy singleton (`getPrivyServer()`), so builds need no Privy env.
+
 ## RPC resilience (added 2026-06-03)
 
 Alchemy's Starknet endpoint intermittently 503s (`-32001 "Unable to complete
