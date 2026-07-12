@@ -1,17 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { Toaster, toast } from "sonner";
 import Link from "next/link";
-import { Menu } from "lucide-react";
-import { NavCommandMenu, useNavCommandMenu } from "@medialane/ui";
+import { Wallet } from "lucide-react";
+import {
+  NavCommandMenu,
+  useNavCommandMenu,
+  NavBrandButton,
+  NavIconButton,
+  NavAccountSheet,
+  useNavAccountSheet,
+} from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
 
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
+import { useWallet } from "@/hooks/use-wallet";
 import { NavAccountPanel } from "@/components/nav-account-panel";
 import { NavThemeToggle } from "@/components/nav-theme-toggle";
 import { SWRConfig } from "swr";
@@ -22,24 +29,16 @@ import { UserRegistration } from "@/components/shared/user-registration";
 
 function NavTrigger() {
   const { open } = useNavCommandMenu();
+  return <NavBrandButton onClick={open} />;
+}
 
+function NavWalletTrigger() {
+  const { open } = useNavAccountSheet();
+  const { isConnected } = useWallet();
   return (
-    <button
-      type="button"
-      onClick={open}
-      aria-label="Open navigation"
-      className="group flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-    >
-      <Image
-        src="/icon.png"
-        alt="Medialane"
-        width={32}
-        height={32}
-        className="h-8 w-8 rounded-full opacity-90 transition-opacity group-hover:opacity-100"
-        priority
-      />
-      <Menu className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" aria-hidden="true" />
-    </button>
+    <NavIconButton onClick={open} aria-label="Wallet" indicator={isConnected}>
+      <Wallet className="h-[18px] w-[18px]" />
+    </NavIconButton>
   );
 }
 
@@ -47,8 +46,14 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
       <NavCommandMenu commands={NAV_COMMANDS} accountSlot={<NavAccountPanel />} footerSlot={<NavThemeToggle />} />
-      <div className="fixed top-4 left-4 sm:left-6 lg:left-8 z-50 flex items-center gap-1.5">
+      <NavAccountSheet title="Wallet">
+        <NavAccountPanel />
+      </NavAccountSheet>
+      <div className="fixed top-4 left-4 sm:left-6 lg:left-8 z-50">
         <NavTrigger />
+      </div>
+      <div className="fixed top-4 right-4 sm:right-6 lg:right-8 z-50">
+        <NavWalletTrigger />
       </div>
       <main className="min-w-0 flex-1 bg-background overflow-x-hidden">{children}</main>
       <footer className="bg-background border-t border-border/60 px-6 py-8 mt-auto">
