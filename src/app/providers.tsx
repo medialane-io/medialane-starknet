@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { Toaster, toast } from "sonner";
 import Link from "next/link";
-import { NavCommandMenu, useNavCommandMenu, NavBrandButton } from "@medialane/ui";
+import { NavCommandMenu, NavBrandButton } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
 
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
@@ -18,17 +18,12 @@ import { StarkZapWalletProvider } from "@/contexts/starkzap-wallet-context";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
 
-function NavTrigger() {
-  const { open } = useNavCommandMenu();
-  return <NavBrandButton onClick={open} />;
-}
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
       <NavCommandMenu commands={NAV_COMMANDS} accountSlot={<NavAccountPanel />} footerSlot={<NavThemeToggle />} />
       <div className="fixed top-4 left-4 sm:left-6 lg:left-8 z-50">
-        <NavTrigger />
+        <NavBrandButton />
       </div>
       <main className="min-w-0 flex-1 bg-background overflow-x-hidden">{children}</main>
       <footer className="bg-background border-t border-border/60 px-6 py-8 mt-auto">
