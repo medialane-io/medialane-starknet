@@ -5,20 +5,11 @@ import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { Toaster, toast } from "sonner";
 import Link from "next/link";
-import { Wallet } from "lucide-react";
-import {
-  NavCommandMenu,
-  useNavCommandMenu,
-  NavBrandButton,
-  NavIconButton,
-  NavAccountSheet,
-  useNavAccountSheet,
-} from "@medialane/ui";
+import { NavCommandMenu, useNavCommandMenu, NavBrandButton } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
 
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
-import { useWallet } from "@/hooks/use-wallet";
 import { NavAccountPanel } from "@/components/nav-account-panel";
 import { NavThemeToggle } from "@/components/nav-theme-toggle";
 import { SWRConfig } from "swr";
@@ -32,28 +23,12 @@ function NavTrigger() {
   return <NavBrandButton onClick={open} />;
 }
 
-function NavWalletTrigger() {
-  const { open } = useNavAccountSheet();
-  const { isConnected } = useWallet();
-  return (
-    <NavIconButton onClick={open} aria-label="Wallet" indicator={isConnected}>
-      <Wallet className="h-[18px] w-[18px]" />
-    </NavIconButton>
-  );
-}
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
       <NavCommandMenu commands={NAV_COMMANDS} accountSlot={<NavAccountPanel />} footerSlot={<NavThemeToggle />} />
-      <NavAccountSheet title="Wallet">
-        <NavAccountPanel />
-      </NavAccountSheet>
       <div className="fixed top-4 left-4 sm:left-6 lg:left-8 z-50">
         <NavTrigger />
-      </div>
-      <div className="fixed top-4 right-4 sm:right-6 lg:right-8 z-50">
-        <NavWalletTrigger />
       </div>
       <main className="min-w-0 flex-1 bg-background overflow-x-hidden">{children}</main>
       <footer className="bg-background border-t border-border/60 px-6 py-8 mt-auto">
