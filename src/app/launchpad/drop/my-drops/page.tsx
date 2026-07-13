@@ -44,7 +44,7 @@ function MyDropCard({ collection }: { collection: ApiCollection }) {
         {imageUrl ? (
           <Image src={imageUrl} alt={collection.name ?? "Drop"} fill className="object-cover" unoptimized />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-orange-900/50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-orange/40 to-brand-price/50 flex items-center justify-center">
             <span className="text-2xl font-black text-white/20">{initial}</span>
           </div>
         )}
@@ -88,7 +88,7 @@ export default function MyDropsPage() {
             <h1 className="text-2xl font-bold mt-1">My Drops</h1>
             <p className="text-sm text-muted-foreground">Drops you&apos;ve deployed on Starknet</p>
           </div>
-          <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white gap-1.5">
+          <Button asChild size="sm" className="bg-brand-orange hover:brightness-110 text-white gap-1.5">
             <Link href="/launchpad/drop/create">
               <Plus className="h-3.5 w-3.5" />
               New drop
@@ -108,7 +108,7 @@ export default function MyDropsPage() {
           <div className="bento-cell border-dashed p-16 text-center space-y-3">
             <Package className="h-10 w-10 text-muted-foreground/20 mx-auto" />
             <p className="text-sm text-muted-foreground">You haven&apos;t launched any drops yet.</p>
-            <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white gap-1.5">
+            <Button asChild size="sm" className="bg-brand-orange hover:brightness-110 text-white gap-1.5">
               <Link href="/launchpad/drop/create">
                 <Plus className="h-3.5 w-3.5" />
                 Launch your first drop

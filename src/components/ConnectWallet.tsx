@@ -94,7 +94,7 @@ function getWalletBadge(
     return {
       label: "Cartridge",
       icon: <Gamepad2 className="h-3 w-3" />,
-      className: "border-purple-500/30 text-purple-400 bg-purple-500/5",
+      className: "border-brand-purple/30 text-brand-purple bg-brand-purple/5",
       hint: "Instant setup",
     };
   }
@@ -102,7 +102,7 @@ function getWalletBadge(
     return {
       label: "Social Login",
       icon: <Mail className="h-3 w-3" />,
-      className: "border-blue-500/30 text-blue-400 bg-blue-500/5",
+      className: "border-brand-blue/30 text-brand-blue bg-brand-blue/5",
       hint: "No setup needed",
     };
   }
@@ -543,7 +543,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 onClick={handleCartridgeConnect}
                 disabled={sessionConnecting}
               >
-                <Gamepad2 className="h-4 w-4 shrink-0 text-purple-400" />
+                <Gamepad2 className="h-4 w-4 shrink-0 text-brand-purple" />
                 <span>
                   {sessionConnecting ? "Connecting…" : "Connect with Cartridge"}
                 </span>
@@ -574,7 +574,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 }}
                 disabled={sessionConnecting}
               >
-                <Mail className="h-4 w-4 shrink-0 text-blue-400" />
+                <Mail className="h-4 w-4 shrink-0 text-brand-blue" />
                 <span>
                   {sessionConnecting ? "Connecting…" : "Sign in with Email or Social"}
                 </span>

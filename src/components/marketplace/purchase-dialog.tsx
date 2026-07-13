@@ -50,7 +50,7 @@ function TokenHero({ order, quantity }: { order: ApiOrder; quantity: number }) {
         {image ? (
           <Image src={image} alt={name} fill sizes="448px" className="h-full w-full object-cover" unoptimized />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-transparent flex items-center justify-center text-4xl font-bold text-muted-foreground/30">
+          <div className="h-full w-full bg-gradient-to-br from-primary/20 via-brand-purple/10 to-transparent flex items-center justify-center text-4xl font-bold text-muted-foreground/30">
             #{order.nftTokenId}
           </div>
         )}
@@ -149,7 +149,7 @@ function SuccessScreen({
         {image ? (
           <Image src={image} alt={name ?? ""} fill sizes="448px" className="h-full w-full object-cover" unoptimized />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-emerald-500/10 flex items-center justify-center">
+          <div className="h-full w-full bg-gradient-to-br from-primary/20 via-brand-purple/10 to-emerald-500/10 flex items-center justify-center">
             <CheckCircle2 className="h-16 w-16 text-emerald-500/40" />
           </div>
         )}

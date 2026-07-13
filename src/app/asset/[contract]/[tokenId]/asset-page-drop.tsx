@@ -43,9 +43,9 @@ function getTokenByAddress(address: string) {
 function DropStatusBadge({ status }: { status: ReturnType<typeof getDropStatus> }) {
   const map = {
     live:     { label: "Live",     cls: "text-green-400 bg-green-500/10 border-green-500/20", dot: true  },
-    upcoming: { label: "Upcoming", cls: "text-blue-400 bg-blue-500/10 border-blue-500/20",   dot: false },
+    upcoming: { label: "Upcoming", cls: "text-brand-blue bg-brand-blue/10 border-brand-blue/20",   dot: false },
     ended:    { label: "Ended",    cls: "text-muted-foreground bg-muted border-border",       dot: false },
-    sold_out: { label: "Sold out", cls: "text-orange-400 bg-orange-500/10 border-orange-500/20", dot: false },
+    sold_out: { label: "Sold out", cls: "text-brand-orange bg-brand-orange/10 border-brand-orange/20", dot: false },
   } as const;
   const { label, cls, dot } = map[status];
   return (
@@ -65,7 +65,7 @@ function SupplyProgress({ minted, max }: { minted: number; max: number }) {
         <span>of {max.toLocaleString()}</span>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div className="h-full rounded-full bg-orange-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-brand-orange transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
       <p className="text-xs text-muted-foreground">{pct.toFixed(1)}% minted</p>
     </div>
@@ -97,7 +97,7 @@ function DropInfoPanel({
   return (
     <div className="rounded-xl border border-border p-4 space-y-4">
       <div className="flex items-center gap-2">
-        <Package className="h-4 w-4 text-orange-500" />
+        <Package className="h-4 w-4 text-brand-orange" />
         <p className="text-sm font-semibold">Drop</p>
         <DropStatusBadge status={status} />
       </div>
@@ -217,8 +217,8 @@ export function AssetPageDrop() {
             imgError={imgError}
             onImageError={() => setImgError(true)}
             fallback={(
-              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-orange-500/10 to-amber-600/10">
-                <Package className="h-20 w-20 text-orange-500/30" />
+              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-orange/10 to-amber-600/10">
+                <Package className="h-20 w-20 text-brand-orange/30" />
               </div>
             )}
           />
@@ -239,7 +239,7 @@ export function AssetPageDrop() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-2">
                     {token.metadata?.ipType && <IpTypeBadge ipType={token.metadata.ipType} size="md" />}
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-500">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange">
                       <Package className="h-3 w-3" />
                       Collection Drop
                     </span>
@@ -348,10 +348,10 @@ export function AssetPageDrop() {
         name={name}
         imageUrl={imageUrl}
         commentTotal={commentTotal}
-        accentBorderClassName="border-orange-500/20"
+        accentBorderClassName="border-brand-orange/20"
         accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-orange) / 0.10), hsl(var(--brand-purple) / 0.08))"
         accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-orange) / 0.3), hsl(var(--brand-purple) / 0.3))"
-        accentLabelClassName="text-orange-400"
+        accentLabelClassName="text-brand-orange"
         accentCountStyle={{ background: "hsl(var(--brand-orange))" }}
       />
 

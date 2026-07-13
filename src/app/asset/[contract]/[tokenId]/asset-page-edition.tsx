@@ -119,8 +119,8 @@ export function AssetPageEdition() {
             imgError={imgError}
             onImageError={() => setImgError(true)}
             fallback={(
-              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-violet-500/20 to-purple-600/20">
-                <Layers className="h-24 w-24 text-violet-500/40" />
+              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-purple/20 to-brand-purple/20">
+                <Layers className="h-24 w-24 text-brand-purple/40" />
               </div>
             )}
             stats={buildEditionStats(totalEditions, uniqueHolders)}

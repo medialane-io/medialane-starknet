@@ -33,7 +33,7 @@ function TokenCard({ token }: { token: NonNullable<ApiSearchResult["tokens"]>[nu
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-purple-500/5" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-brand-purple/5" />
             <span className="text-2xl tabular-nums text-muted-foreground z-10">
               #{token.tokenId}
             </span>
@@ -63,7 +63,7 @@ function CollectionCard({ col }: { col: NonNullable<ApiSearchResult["collections
       href={`/collections/${col.contractAddress}`}
       className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/30 hover:bg-muted/30 transition-all"
     >
-      <div className="relative h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-base font-bold shrink-0 overflow-hidden">
+      <div className="relative h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-brand-purple/20 flex items-center justify-center text-base font-bold shrink-0 overflow-hidden">
         {showImage ? (
           <Image
             src={imageUrl}

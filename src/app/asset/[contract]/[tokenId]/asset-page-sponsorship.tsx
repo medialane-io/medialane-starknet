@@ -102,7 +102,7 @@ export function AssetPageSponsorship({ nftContract, tokenId, isOwner }: AssetPag
   return (
     <div className="rounded-2xl border border-border/40 p-5 space-y-4">
       <div className="flex items-center gap-2">
-        <Handshake className="h-4 w-4 text-rose-500" />
+        <Handshake className="h-4 w-4 text-brand-rose" />
         <p className="font-semibold text-sm">Sponsorship</p>
       </div>
 

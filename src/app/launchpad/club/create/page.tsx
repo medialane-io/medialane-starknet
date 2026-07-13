@@ -261,8 +261,8 @@ export default function CreateClubPage() {
     return (
       <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
         <div className="flex justify-center">
-          <div className="h-20 w-20 rounded-full bg-indigo-500/10 flex items-center justify-center">
-            <CheckCircle2 className="h-10 w-10 text-indigo-400" />
+          <div className="h-20 w-20 rounded-full bg-brand-indigo/10 flex items-center justify-center">
+            <CheckCircle2 className="h-10 w-10 text-brand-indigo" />
           </div>
         </div>
         <div className="space-y-2">
@@ -278,7 +278,7 @@ export default function CreateClubPage() {
           </Button>
           <Button
             onClick={() => { setDone(false); form.reset(); clearImage(); }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="bg-brand-indigo hover:brightness-110 text-white"
           >
             Create another
           </Button>
@@ -468,7 +468,7 @@ export default function CreateClubPage() {
                 </FormItem>
               )} />
 
-              <Button type="submit" size="lg" className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white" disabled={isSubmitting || imageUploading}>
+              <Button type="submit" size="lg" className="w-full rounded-xl bg-brand-indigo hover:brightness-110 text-white" disabled={isSubmitting || imageUploading}>
                 {isSubmitting
                   ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating…</>
                   : <><Users className="h-4 w-4 mr-2" />Create Club</>}

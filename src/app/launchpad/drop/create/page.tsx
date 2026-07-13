@@ -218,8 +218,8 @@ export default function CreateDropPage() {
     return (
       <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
         <div className="flex justify-center">
-          <div className="h-20 w-20 rounded-full bg-orange-500/10 flex items-center justify-center">
-            <CheckCircle2 className="h-10 w-10 text-orange-500" />
+          <div className="h-20 w-20 rounded-full bg-brand-orange/10 flex items-center justify-center">
+            <CheckCircle2 className="h-10 w-10 text-brand-orange" />
           </div>
         </div>
         <div className="space-y-2">
@@ -230,7 +230,7 @@ export default function CreateDropPage() {
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild variant="outline"><Link href="/launchpad/drop">Back to Drops</Link></Button>
-          <Button onClick={resetAll} className="bg-orange-600 hover:bg-orange-700 text-white">Launch another</Button>
+          <Button onClick={resetAll} className="bg-brand-orange hover:brightness-110 text-white">Launch another</Button>
         </div>
       </div>
     );

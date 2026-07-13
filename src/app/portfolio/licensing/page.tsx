@@ -164,7 +164,7 @@ export default function PortfolioRemixOffersPage() {
 function StatusBadge({ status }: { status: RemixOffer["status"] }) {
   const config: Record<RemixOffer["status"], { label: string; className: string }> = {
     PENDING:      { label: "Pending",   className: "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20" },
-    AUTO_PENDING: { label: "Auto",      className: "bg-blue-500/10 text-blue-500 border border-blue-500/20" },
+    AUTO_PENDING: { label: "Auto",      className: "bg-brand-blue/10 text-brand-blue border border-brand-blue/20" },
     APPROVED:     { label: "Approved",  className: "bg-primary/10 text-primary border border-primary/20" },
     COMPLETED:    { label: "Completed", className: "bg-green-500/10 text-green-500 border border-green-500/20" },
     REJECTED:     { label: "Rejected",  className: "bg-destructive/10 text-destructive border border-destructive/20" },

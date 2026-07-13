@@ -115,7 +115,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
               {image ? (
                 <Image src={image} alt={name} fill sizes="384px" className="h-full w-full object-cover" unoptimized />
               ) : (
-                <div className="h-full w-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-transparent flex items-center justify-center">
+                <div className="h-full w-full bg-gradient-to-br from-primary/20 via-brand-purple/10 to-transparent flex items-center justify-center">
                   <DollarSign className="h-12 w-12 text-muted-foreground/30" />
                 </div>
               )}

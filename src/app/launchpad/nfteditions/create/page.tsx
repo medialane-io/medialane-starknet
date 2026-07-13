@@ -410,7 +410,7 @@ export default function CreateNFTEditionsCollectionPage() {
             <button
               type="submit"
               disabled={collectionStep !== "idle" || imageUploading}
-              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-violet-600 ${collectionStep !== "idle" || imageUploading ? "opacity-40 pointer-events-none" : ""}`}
+              className={`w-full h-12 text-base font-semibold text-white rounded-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-brand-purple ${collectionStep !== "idle" || imageUploading ? "opacity-40 pointer-events-none" : ""}`}
             >
               <Layers className="h-4 w-4" />
               Publish Collection

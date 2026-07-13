@@ -30,7 +30,7 @@ export function ClubContent() {
               title="IP Club"
               subtitle="Membership clubs backed by an on-chain card — give your closest fans a way in, with or without an entry fee."
               headerAccessory={
-                <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5">
+                <Button asChild size="sm" className="bg-brand-indigo hover:brightness-110 text-white gap-1.5">
                   <Link href="/launchpad/club/create">
                     <Plus className="h-3.5 w-3.5" />
                     Create Club
@@ -50,7 +50,7 @@ export function ClubContent() {
                 key={f}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 border border-border/30 text-xs font-medium text-muted-foreground"
               >
-                <Check className="h-3 w-3 text-indigo-400 shrink-0" />
+                <Check className="h-3 w-3 text-brand-indigo shrink-0" />
                 {f}
               </span>
             ))}
@@ -76,15 +76,15 @@ export function ClubContent() {
           <FadeIn>
             <div className="bento-cell border-dashed p-12 text-center space-y-4">
               <div className="flex justify-center">
-                <div className="h-16 w-16 rounded-2xl bg-indigo-500/8 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-indigo-400/30" />
+                <div className="h-16 w-16 rounded-2xl bg-brand-indigo/8 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-brand-indigo/30" />
                 </div>
               </div>
               <div className="space-y-1">
                 <p className="font-semibold text-sm">No clubs yet</p>
                 <p className="text-xs text-muted-foreground">Be the first to launch one on Medialane.</p>
               </div>
-              <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5">
+              <Button asChild size="sm" className="bg-brand-indigo hover:brightness-110 text-white gap-1.5">
                 <Link href="/launchpad/club/create">
                   <Plus className="h-3.5 w-3.5" />
                   Create Club

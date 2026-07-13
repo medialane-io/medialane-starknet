@@ -42,8 +42,8 @@ export function ClaimPageClient() {
         <SectionDivider label="Genesis drop" />
         <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-4">
           <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Package className="h-5 w-5 text-violet-500" />
+            <div className="h-10 w-10 rounded-xl bg-brand-purple/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Package className="h-5 w-5 text-brand-purple" />
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-bold">Genesis NFT</h2>
@@ -54,7 +54,7 @@ export function ClaimPageClient() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2 pt-1 border-t border-border/60">
-            <Button asChild className="bg-violet-600 hover:bg-violet-700 text-white">
+            <Button asChild className="bg-brand-purple hover:brightness-110 text-white">
               <Link href="/launchpad/drop">
                 View Genesis Drop <ArrowRight className="h-3.5 w-3.5 ml-1" />
               </Link>
@@ -119,8 +119,8 @@ export function ClaimPageClient() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Share2 className="h-4 w-4 text-blue-500" />
+                <div className="h-9 w-9 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Share2 className="h-4 w-4 text-brand-blue" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold">One shareable link</p>

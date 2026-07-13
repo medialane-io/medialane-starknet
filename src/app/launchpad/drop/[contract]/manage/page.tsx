@@ -65,7 +65,7 @@ function AllowlistToggle({
     <div className="bento-cell p-5 space-y-4">
       <div className="flex items-center gap-2">
         {enabled ? (
-          <ShieldCheck className="h-4 w-4 text-orange-500" />
+          <ShieldCheck className="h-4 w-4 text-brand-orange" />
         ) : (
           <ShieldOff className="h-4 w-4 text-muted-foreground" />
         )}
@@ -74,7 +74,7 @@ function AllowlistToggle({
           className={cn(
             "ml-auto text-xs font-bold uppercase tracking-widest rounded-full px-2.5 py-0.5",
             enabled
-              ? "text-orange-400 bg-orange-500/10"
+              ? "text-brand-orange bg-brand-orange/10"
               : "text-green-400 bg-green-500/10"
           )}
         >
@@ -116,7 +116,7 @@ function BatchAddSection({
   return (
     <div className="bento-cell p-5 space-y-3">
       <div className="flex items-center gap-2">
-        <Users className="h-4 w-4 text-orange-500" />
+        <Users className="h-4 w-4 text-brand-orange" />
         <span className="font-semibold text-sm">Add to allowlist</span>
         {parsed.length > 0 && (
           <span className="ml-auto text-xs text-muted-foreground">
@@ -134,7 +134,7 @@ function BatchAddSection({
       />
       <Button
         size="sm"
-        className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+        className="w-full bg-brand-orange hover:brightness-110 text-white"
         disabled={parsed.length === 0 || overLimit || isSubmitting}
         onClick={() => {
           onAdd(parsed);
@@ -355,7 +355,7 @@ export default function DropManagePage({
         <FadeIn delay={0.2}>
           <div className="bento-cell p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-orange-500" />
+              <DollarSign className="h-4 w-4 text-brand-orange" />
               <span className="font-semibold text-sm">Withdraw payments</span>
             </div>
             <p className="text-xs text-muted-foreground">

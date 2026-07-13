@@ -127,7 +127,7 @@ function SearchBar() {
                     href={`/collections/${c.contractAddress}`}
                     className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                   >
-                    <div className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
+                    <div className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-brand-purple/20 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
                       {imgUrl ? (
                         <Image src={imgUrl} alt="" fill className="object-cover" unoptimized />
                       ) : (

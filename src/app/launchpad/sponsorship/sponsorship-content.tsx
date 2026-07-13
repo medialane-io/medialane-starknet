@@ -65,7 +65,7 @@ export function SponsorshipContent() {
                 key={f}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 border border-border/30 text-xs font-medium text-muted-foreground"
               >
-                <Check className="h-3 w-3 text-rose-500 shrink-0" />
+                <Check className="h-3 w-3 text-brand-rose shrink-0" />
                 {f}
               </span>
             ))}
@@ -75,14 +75,14 @@ export function SponsorshipContent() {
 
       <section className="px-4 max-w-5xl mx-auto">
         <FadeIn>
-          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="rounded-2xl border border-brand-rose/20 bg-brand-rose/5 p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="space-y-0.5">
               <p className="text-sm font-semibold">Own IP assets on Medialane?</p>
               <p className="text-xs text-muted-foreground">
                 Open a sponsorship offer from any asset you own — sponsors bid, you accept, they receive a license.
               </p>
             </div>
-            <Button asChild variant="outline" size="sm" className="shrink-0 border-rose-500/30 text-rose-500 hover:bg-rose-500/5 gap-1.5">
+            <Button asChild variant="outline" size="sm" className="shrink-0 border-brand-rose/30 text-brand-rose hover:bg-brand-rose/5 gap-1.5">
               <Link href="/portfolio">
                 Go to my assets
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -110,8 +110,8 @@ export function SponsorshipContent() {
           <FadeIn>
             <div className="bento-cell border-dashed p-12 text-center space-y-4">
               <div className="flex justify-center">
-                <div className="h-16 w-16 rounded-2xl bg-rose-500/8 flex items-center justify-center">
-                  <Handshake className="h-8 w-8 text-rose-500/30" />
+                <div className="h-16 w-16 rounded-2xl bg-brand-rose/8 flex items-center justify-center">
+                  <Handshake className="h-8 w-8 text-brand-rose/30" />
                 </div>
               </div>
               <div className="space-y-1">

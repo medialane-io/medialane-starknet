@@ -36,15 +36,15 @@ const PHASES = [
     label: "Distribution rounds",
     milestone: "Every $1,000",
     desc: "Each time the Creator's Fund reaches $1,000, that amount is airdropped to all participants. Every dollar of revenue is returned — $5,000 means 5 rounds, $10,000 means 10.",
-    color: "border-blue-500/30 bg-blue-500/5",
-    badge: "bg-blue-500/10 text-blue-400",
+    color: "border-brand-blue/30 bg-brand-blue/5",
+    badge: "bg-brand-blue/10 text-brand-blue",
   },
   {
     label: "Your share",
     milestone: "Score Board points",
     desc: "Each round is split by Score Board points. You earn points by creating, trading, and engaging on Medialane — your points are your share of every distribution.",
-    color: "border-purple-500/30 bg-purple-500/5",
-    badge: "bg-purple-500/10 text-purple-400",
+    color: "border-brand-purple/30 bg-brand-purple/5",
+    badge: "bg-brand-purple/10 text-brand-purple",
   },
 ];
 
@@ -66,13 +66,13 @@ export default function AirdropPage() {
 
               {/* Left: badge + title + description + CTA */}
               <div className="space-y-5">
-                <div className="inline-flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/5 px-3 py-1">
-                  <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
-                  <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">Airdrop Campaign</span>
+                <div className="inline-flex items-center gap-2 rounded-full border border-brand-orange/30 bg-brand-orange/5 px-3 py-1">
+                  <Sparkles className="h-3.5 w-3.5 text-brand-orange" />
+                  <span className="text-xs font-semibold text-brand-orange">Airdrop Campaign</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
                   Creator&apos;s{" "}
-                  <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-brand-rose to-brand-orange bg-clip-text text-transparent">
                     Fund
                   </span>
                 </h1>
@@ -103,22 +103,22 @@ export default function AirdropPage() {
               {[
                 {
                   icon: FileCheck,
-                  color: "text-blue-400",
-                  bg: "bg-blue-500/10",
+                  color: "text-brand-blue",
+                  bg: "bg-brand-blue/10",
                   title: "Airdrop participation",
                   desc: "Medialane will run airdrop campaigns to reward early supporters. By joining now, you secure your spot in the first distribution and future rewards.",
                 },
                 {
                   icon: Coins,
-                  color: "text-yellow-500",
-                  bg: "bg-yellow-500/10",
+                  color: "text-brand-price",
+                  bg: "bg-brand-price/10",
                   title: "Creator fund distributions",
                   desc: "Each time the Creator's Fund reaches $1,000, it is distributed to participants by Score Board points. The more you contribute, the larger your share.",
                 },
                 {
                   icon: Star,
-                  color: "text-orange-400",
-                  bg: "bg-orange-500/10",
+                  color: "text-brand-orange",
+                  bg: "bg-brand-orange/10",
                   title: "Founding member status",
                   desc: "Early participants are permanently recognized as founding members of the community.",
                 },
@@ -168,10 +168,10 @@ export default function AirdropPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-2xl border border-border/40 bg-card/30 p-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                    <PenLine className="h-5 w-5 text-purple-400" />
+                  <div className="h-10 w-10 rounded-xl bg-brand-purple/10 flex items-center justify-center">
+                    <PenLine className="h-5 w-5 text-brand-purple" />
                   </div>
-                  <span className="text-xs font-semibold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-full">Bonus</span>
+                  <span className="text-xs font-semibold text-brand-purple bg-brand-purple/10 px-2.5 py-1 rounded-full">Bonus</span>
                 </div>
                 <div>
                   <p className="font-bold">Create content</p>
@@ -182,10 +182,10 @@ export default function AirdropPage() {
               </div>
               <div className="rounded-2xl border border-border/40 bg-card/30 p-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                    <ShoppingCart className="h-5 w-5 text-orange-400" />
+                  <div className="h-10 w-10 rounded-xl bg-brand-orange/10 flex items-center justify-center">
+                    <ShoppingCart className="h-5 w-5 text-brand-orange" />
                   </div>
-                  <span className="text-xs font-semibold text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-full">Biggest bonus</span>
+                  <span className="text-xs font-semibold text-brand-orange bg-brand-orange/10 px-2.5 py-1 rounded-full">Biggest bonus</span>
                 </div>
                 <div>
                   <p className="font-bold">Trade &amp; collect</p>

@@ -387,7 +387,7 @@ export default function MintNFTEditionsPage() {
   if (!isConnected) {
     return (
       <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
-        <Sparkles className="h-10 w-10 text-violet-500 mx-auto" />
+        <Sparkles className="h-10 w-10 text-brand-purple mx-auto" />
         <h1 className="text-2xl font-bold">Connect wallet to mint</h1>
         <p className="text-muted-foreground">Connect your Starknet wallet to mint tokens into your ERC-1155 collection.</p>
         <ConnectWallet label="Connect wallet" />
@@ -452,7 +452,7 @@ export default function MintNFTEditionsPage() {
                     tabIndex={0}
                     onClick={() => !imageUploading && fileInputRef.current?.click()}
                     onKeyDown={(e) => { if (e.key === "Enter") fileInputRef.current?.click(); }}
-                    className="relative h-20 w-20 rounded-2xl border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-violet-500/50 transition-colors"
+                    className="relative h-20 w-20 rounded-2xl border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-brand-purple/50 transition-colors"
                   >
                     {imagePreview
                       ? <Image src={imagePreview} alt="Token" fill className="object-cover" />
@@ -480,7 +480,7 @@ export default function MintNFTEditionsPage() {
                     )}
                     <p className="text-xs text-muted-foreground">
                       {imageUri
-                        ? <span className="text-violet-500">✓ Uploaded to IPFS</span>
+                        ? <span className="text-brand-purple">✓ Uploaded to IPFS</span>
                         : "JPG, PNG, SVG or WebP · max 10 MB"}
                     </p>
                   </div>

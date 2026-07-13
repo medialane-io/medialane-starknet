@@ -35,7 +35,7 @@ function TokenHero({ order, variant }: { order: ApiOrder; variant: "listing" | "
         {image ? (
           <Image src={image} alt={name} fill sizes="448px" className="h-full w-full object-cover" unoptimized />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-destructive/20 via-rose-500/10 to-transparent flex items-center justify-center text-4xl font-bold text-muted-foreground/30">
+          <div className="h-full w-full bg-gradient-to-br from-destructive/20 via-brand-rose/10 to-transparent flex items-center justify-center text-4xl font-bold text-muted-foreground/30">
             #{order.nftTokenId}
           </div>
         )}
