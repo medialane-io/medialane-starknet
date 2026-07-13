@@ -200,7 +200,14 @@ export default function CreateTicketCollectionPage() {
   }
 
   if (!isConnected) {
-    return <ConnectGate><div /></ConnectGate>;
+    return (
+      <ConnectGate
+        title="Connect wallet to sell tickets"
+        subtitle="Connect your Starknet wallet to create a ticket collection."
+      >
+        <div />
+      </ConnectGate>
+    );
   }
 
   return (
