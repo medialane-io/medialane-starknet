@@ -11,40 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type Step = "input" | "verifying" | "success" | "manual" | "pending";
 
 /** Loose Starknet address check — catches typos without rejecting valid (often
  *  leading-zero-trimmed) contract addresses. */
 const isValidAddress = (a: string) => /^0x[0-9a-fA-F]{40,64}$/.test(a.trim());
-
-function StepIndicator({ step }: { step: Step }) {
-  const atStep2 = step === "manual" || step === "pending";
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2">
-        <div className={cn(
-          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-          !atStep2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-        )}>1</div>
-        <span className={cn("text-sm", !atStep2 ? "text-foreground font-medium" : "text-muted-foreground")}>
-          Verify ownership
-        </span>
-      </div>
-      <div className="w-8 h-px bg-border shrink-0" />
-      <div className="flex items-center gap-2">
-        <div className={cn(
-          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-          atStep2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-        )}>2</div>
-        <span className={cn("text-sm", atStep2 ? "text-foreground font-medium" : "text-muted-foreground")}>
-          Confirm claim
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /** Default (generic) helper — collection + coin. Overridden per surface. */
 const DEFAULT_HELPER_TEXT =
@@ -105,8 +77,6 @@ export function ClaimCollectionPanel({ helperText }: { helperText?: string } = {
 
   return (
     <div className="space-y-6 max-w-lg">
-      <StepIndicator step={step} />
-
       {step === "success" && (
         <div className="rounded-xl border border-green-500/40 bg-green-500/5 p-5 space-y-4">
           <div>
