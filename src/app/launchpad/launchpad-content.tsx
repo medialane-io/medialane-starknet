@@ -51,9 +51,9 @@ const DAPP_OVERRIDES: ServiceOverrides = {
   "mint-editions": { href: "/launchpad/nfteditions" },
   "creator-coins": { href: "/launchpad/coin/create" },
   "claim-memecoin": { href: "/launchpad/memecoin" },
-  "claim-username": { href: "/claim" },
-  "claim-collection": { href: "/claim" },
-  "claim-collection-name": { href: "/claim" },
+  "claim-username": { href: "/claim/username" },
+  "claim-collection": { href: "/claim/collection" },
+  "claim-collection-name": { href: "/claim/collection-name" },
 };
 
 export function LaunchpadContent() {
