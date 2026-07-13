@@ -103,12 +103,12 @@ function SearchBar() {
                   href={`/asset/${t.contractAddress}/${t.tokenId}`}
                   className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-xs font-mono shrink-0">
+                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-xs tabular-nums shrink-0">
                     #{t.tokenId}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{t.name ?? `Token #${t.tokenId}`}</p>
-                    <p className="text-xs text-muted-foreground font-mono truncate">{t.contractAddress.slice(0, 14)}…</p>
+                    <p className="text-xs text-muted-foreground tabular-nums truncate">{t.contractAddress.slice(0, 14)}…</p>
                   </div>
                 </Link>
               ))}
@@ -136,7 +136,7 @@ function SearchBar() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{c.name}</p>
-                      <p className="text-xs text-muted-foreground font-mono truncate">{c.contractAddress.slice(0, 14)}…</p>
+                      <p className="text-xs text-muted-foreground tabular-nums truncate">{c.contractAddress.slice(0, 14)}…</p>
                     </div>
                   </Link>
                 );

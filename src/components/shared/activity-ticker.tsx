@@ -25,7 +25,7 @@ function ActivityPill({ listing }: { listing: ApiOrder }) {
             alt=""
             width={32}
             height={32}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover"
             onError={() => setImgError(true)}
             unoptimized
           />

@@ -138,7 +138,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
                 </div>
                 <div className="flex items-center justify-between px-4 py-2.5">
                   <span className="text-muted-foreground">Offer from</span>
-                  <span className="font-mono text-xs">
+                  <span className="tabular-nums text-xs">
                     {order.offerer.slice(0, 8)}…{order.offerer.slice(-6)}
                   </span>
                 </div>

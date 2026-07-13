@@ -63,7 +63,7 @@ export default function MyEventsPage() {
       title="Connect your wallet"
       subtitle="Connect your Starknet wallet to see the POP events you've created."
     >
-    <div className="container max-w-2xl mx-auto px-4 pt-10 pb-16 space-y-8">
+    <div className="max-w-2xl mx-auto px-4 pt-10 pb-16 space-y-8">
       <FadeIn>
         <div className="flex items-center justify-between">
           <div>

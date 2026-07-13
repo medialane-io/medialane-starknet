@@ -199,7 +199,7 @@ export default function CoinCreatePage() {
               Couldn&apos;t save the image &amp; description right now — add them anytime from your collection settings.
             </p>
           )}
-          <p className="font-mono text-xs text-muted-foreground break-all text-center">{coinAddress}</p>
+          <p className="tabular-nums text-xs text-muted-foreground break-all text-center">{coinAddress}</p>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={handleReset}>Launch another</Button>
             <Button className="flex-1 bg-brand-rose hover:bg-brand-rose/90" onClick={() => router.push(`/coins/${coinAddress}`)}>

@@ -110,7 +110,7 @@ export default function CreateLicensingPage() {
 
   if (!isConnected) {
     return (
-      <div className="container max-w-2xl mx-auto px-4 py-24">
+      <div className="max-w-2xl mx-auto px-4 py-24">
         <div className="flex flex-col items-center justify-center gap-4 text-center">
           {isConnecting ? (
             <><Loader2 className="h-7 w-7 animate-spin text-muted-foreground" /><p className="text-sm text-muted-foreground">Connecting your wallet…</p></>
@@ -127,7 +127,7 @@ export default function CreateLicensingPage() {
 
   if (tokenLoading) {
     return (
-      <div className="container max-w-2xl mx-auto px-4 pt-14 pb-8 space-y-4">
+      <div className="max-w-2xl mx-auto px-4 pt-14 pb-8 space-y-4">
         <Skeleton className="h-8 w-48" />
         {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
       </div>
@@ -135,7 +135,7 @@ export default function CreateLicensingPage() {
   }
   if (!token) {
     return (
-      <div className="container max-w-2xl mx-auto px-4 py-24 text-center space-y-4">
+      <div className="max-w-2xl mx-auto px-4 py-24 text-center space-y-4">
         <p className="text-2xl font-bold">Asset not found</p>
         <Button asChild variant="outline"><Link href="/">Go home</Link></Button>
       </div>
@@ -148,7 +148,7 @@ export default function CreateLicensingPage() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 pt-14 pb-12 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 pt-14 pb-12 space-y-6">
       <div className="space-y-3">
         <Link href={`/asset/${contract}/${tokenId}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-4 w-4" /> Back to asset

@@ -181,7 +181,7 @@ export function AssetPageStandard() {
               onZoom={() => setLightboxOpen(true)}
               fallback={(
                 <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/10 to-purple-500/10">
-                  <span className="text-5xl font-mono text-muted-foreground">#{tokenId}</span>
+                  <span className="text-5xl tabular-nums text-muted-foreground">#{tokenId}</span>
                 </div>
               )}
             />

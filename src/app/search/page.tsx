@@ -28,13 +28,13 @@ function TokenCard({ token }: { token: NonNullable<ApiSearchResult["tokens"]>[nu
             src={image}
             alt={token.name ?? `Token #${token.tokenId}`}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover"
             onError={() => setImgError(true)}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-purple-500/5" />
-            <span className="text-2xl font-mono text-muted-foreground z-10">
+            <span className="text-2xl tabular-nums text-muted-foreground z-10">
               #{token.tokenId}
             </span>
           </div>
@@ -44,7 +44,7 @@ function TokenCard({ token }: { token: NonNullable<ApiSearchResult["tokens"]>[nu
         <p className="font-semibold text-sm truncate">
           {token.name ?? `Token #${token.tokenId}`}
         </p>
-        <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">
+        <p className="text-xs text-muted-foreground tabular-nums truncate mt-0.5">
           {token.contractAddress.slice(0, 14)}…
         </p>
       </div>
@@ -79,7 +79,7 @@ function CollectionCard({ col }: { col: NonNullable<ApiSearchResult["collections
       </div>
       <div className="min-w-0">
         <p className="font-semibold text-sm truncate">{col.name ?? "Unnamed"}</p>
-        <p className="text-xs text-muted-foreground font-mono truncate">
+        <p className="text-xs text-muted-foreground tabular-nums truncate">
           {col.contractAddress.slice(0, 20)}…
         </p>
       </div>

@@ -361,7 +361,7 @@ export function DropCreateForm({
             <div className="px-0 pb-4 sm:px-5 sm:pb-5 space-y-3 border-t border-border/60 pt-4">
               <FormField control={form.control} name="allowlistAddresses" render={({ field }) => (
                 <FormItem>
-                  <FormControl><Textarea placeholder={"Paste Starknet addresses, one per line:\n0x04a…\n0x06b…"} rows={5} {...field} className="font-mono text-xs resize-none" /></FormControl>
+                  <FormControl><Textarea placeholder={"Paste Starknet addresses, one per line:\n0x04a…\n0x06b…"} rows={5} {...field} className="tabular-nums text-xs resize-none" /></FormControl>
                   <FormDescription className="text-xs">Only these wallets can mint. You can open it to everyone later from Manage.</FormDescription>
                   <FormMessage />
                 </FormItem>

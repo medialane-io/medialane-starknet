@@ -198,7 +198,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                   {!own && (
                     <Link href={`/creator/${comment.author}`} className="shrink-0 mb-1">
                       <div
-                        className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-mono font-bold text-white select-none ring-2 ring-background"
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] tabular-nums font-bold text-white select-none ring-2 ring-background"
                         style={{ background: "linear-gradient(135deg, hsl(var(--brand-blue)), hsl(var(--brand-purple)))" }}
                       >
                         {comment.author.slice(2, 4).toUpperCase()}

@@ -106,7 +106,7 @@ export default function CreatorPageClient() {
             <AddressDisplay
               address={address ?? ""}
               chars={10}
-              className="text-base font-mono font-semibold"
+              className="text-base tabular-nums font-semibold"
             />
             <CreatorScoreInline address={address} size="sm" />
           </div>

@@ -30,7 +30,7 @@ export function ConnectGate({ children, title, subtitle, icon }: ConnectGateProp
 
   if (isConnecting) {
     return (
-      <div className="container max-w-lg mx-auto px-4 pt-24 pb-8 space-y-4">
+      <div className="max-w-lg mx-auto px-4 pt-24 pb-8 space-y-4">
         <Skeleton className="h-10 w-10 rounded-full mx-auto" />
         <Skeleton className="h-7 w-56 mx-auto" />
         <Skeleton className="h-4 w-72 mx-auto" />
@@ -41,7 +41,7 @@ export function ConnectGate({ children, title, subtitle, icon }: ConnectGateProp
 
   if (!isConnected) {
     return (
-      <div className="container max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
+      <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
         {icon ?? <Wallet className="h-10 w-10 text-muted-foreground mx-auto" />}
         <h1 className="text-2xl font-bold">{title ?? "Connect your wallet"}</h1>
         <p className="text-muted-foreground">

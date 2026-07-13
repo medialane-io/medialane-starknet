@@ -426,7 +426,7 @@ export default function CollectionPageClient() {
                     </span>
                   ) : null}
                   {collection.symbol && (
-                    <span className="font-mono text-[11px] bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
+                    <span className="tabular-nums text-[11px] bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
                       {collection.symbol}
                     </span>
                   )}

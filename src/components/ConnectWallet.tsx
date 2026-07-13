@@ -417,7 +417,7 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
               onClick={handleDisconnect}
               className="w-full h-11 border-border/40 hover:bg-destructive/10 hover:border-destructive/20 hover:text-destructive group transition-all"
             >
-              <LogOut className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+              <LogOut className="h-4 w-4 mr-2" />
               Disconnect Wallet
             </Button>
           </div>

@@ -63,7 +63,7 @@ export function CreatorAirdropBanner() {
             <div className="flex flex-col gap-2.5 w-full sm:w-auto shrink-0">
               <Link
                 href="/airdrop"
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98]"
               >
                 <Sparkles className="h-4 w-4" />
                 Read More

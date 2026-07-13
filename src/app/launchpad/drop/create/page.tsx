@@ -216,7 +216,7 @@ export default function CreateDropPage() {
   // ── Success ───────────────────────────────────────────────────────────────
   if (done) {
     return (
-      <div className="container max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
+      <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
         <div className="flex justify-center">
           <div className="h-20 w-20 rounded-full bg-orange-500/10 flex items-center justify-center">
             <CheckCircle2 className="h-10 w-10 text-orange-500" />

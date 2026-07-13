@@ -142,7 +142,7 @@ export function ActivityRow({
             <>
               <Link
                 href={`/creator/${actor}`}
-                className="hover:text-primary transition-colors font-mono shrink-0"
+                className="hover:text-primary transition-colors tabular-nums shrink-0"
               >
                 <AddressDisplay address={actor} chars={4} showCopy={false} />
               </Link>

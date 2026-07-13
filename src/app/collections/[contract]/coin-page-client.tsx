@@ -141,7 +141,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
         />
       )}
 
-      <div className="container mx-auto px-4 pt-20 pb-12 max-w-5xl">
+      <div className="mx-auto px-4 pt-20 pb-12 max-w-5xl">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,380px)] gap-8">
           {/* ── Left: identity + price + trust ── */}
           <div className="space-y-6">
@@ -250,7 +250,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
  */
 export function CoinPageSkeleton() {
   return (
-    <div className="container mx-auto px-4 pt-20 pb-12 max-w-5xl">
+    <div className="mx-auto px-4 pt-20 pb-12 max-w-5xl">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,380px)] gap-8">
         <div className="space-y-6">
           <div className="flex items-center gap-4">

@@ -261,7 +261,7 @@ export function SwapContent() {
             <div className="flex justify-center relative h-0">
               <button
                 onClick={swap.flipTokens}
-                className="absolute -top-5 z-10 h-10 w-10 rounded-xl bg-background border border-border/60 shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border transition-all hover:scale-105 active:scale-95"
+                className="absolute -top-5 z-10 h-10 w-10 rounded-xl bg-background border border-border/60 shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border transition-all active:scale-95"
               >
                 <ArrowDownUp className="h-4 w-4" />
               </button>
@@ -367,7 +367,7 @@ export function SwapContent() {
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 flex items-center justify-between gap-3 text-sm">
             <div className="space-y-0.5">
               <p className="font-semibold text-green-600 dark:text-green-400">Swap submitted</p>
-              <p className="text-muted-foreground text-xs font-mono truncate max-w-[200px]">
+              <p className="text-muted-foreground text-xs tabular-nums truncate max-w-[200px]">
                 {swap.txHash}
               </p>
             </div>

@@ -40,7 +40,7 @@ function EventCard({ token, contract }: { token: ApiToken; contract: string }) {
             <Calendar className="h-10 w-10 text-muted-foreground/20" />
           </div>
         )}
-        <span className="absolute top-2 left-2 text-[10px] font-mono bg-black/60 text-white px-2 py-0.5 rounded-full">
+        <span className="absolute top-2 left-2 text-[10px] tabular-nums bg-black/60 text-white px-2 py-0.5 rounded-full">
           #{tokenId}
         </span>
       </div>
@@ -75,7 +75,7 @@ function CopyAddress({ address }: { address: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
+      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors tabular-nums"
     >
       {shortenAddress("STARKNET", address)}
       {copied ? <Check className="h-3 w-3 text-brand-blue" /> : <Copy className="h-3 w-3" />}
@@ -143,7 +143,7 @@ export default function TicketCollectionPage() {
 
                   <div className="flex items-center gap-3 flex-wrap">
                     {collection?.symbol && (
-                      <span className="text-xs font-mono text-muted-foreground">{collection.symbol}</span>
+                      <span className="text-xs tabular-nums text-muted-foreground">{collection.symbol}</span>
                     )}
                     <CopyAddress address={contract} />
                     <a
@@ -193,7 +193,7 @@ export default function TicketCollectionPage() {
             </div>
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">Standard</p>
-              <p className="text-2xl font-bold font-mono text-muted-foreground/70 text-lg leading-none pt-1">
+              <p className="text-2xl font-bold tabular-nums text-muted-foreground/70 text-lg leading-none pt-1">
                 ERC-1155
               </p>
             </div>

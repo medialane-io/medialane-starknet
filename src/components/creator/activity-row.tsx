@@ -35,7 +35,7 @@ export function ActivityRow({ event, isLast }: { event: ApiActivity; isLast: boo
   return (
     <div className="flex gap-4 group">
       <div className="flex flex-col items-center shrink-0 w-9">
-        <div className={cn("h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105", meta.bg)}>
+        <div className={cn("h-9 w-9 rounded-xl border flex items-center justify-center shrink-0", meta.bg)}>
           <Icon className={cn("h-3.5 w-3.5", meta.textColor)} />
         </div>
         {!isLast && <div className="flex-1 w-px bg-border/50 mt-1.5 min-h-4" />}
@@ -48,15 +48,15 @@ export function ActivityRow({ event, isLast }: { event: ApiActivity; isLast: boo
                 {meta.label}
               </span>
               {contract && tokenId ? (
-                <Link href={`/asset/${contract}/${tokenId}`} className="text-xs text-muted-foreground font-mono hover:text-foreground transition-colors">
+                <Link href={`/asset/${contract}/${tokenId}`} className="text-xs text-muted-foreground tabular-nums hover:text-foreground transition-colors">
                   Token #{tokenId}
                 </Link>
               ) : (
-                <span className="text-xs text-muted-foreground font-mono">Token #{tokenId ?? "—"}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">Token #{tokenId ?? "—"}</span>
               )}
             </div>
             {contract && (
-              <p className="text-[11px] text-muted-foreground/60 font-mono mt-0.5 truncate">
+              <p className="text-[11px] text-muted-foreground/60 tabular-nums mt-0.5 truncate">
                 {contract.slice(0, 10)}…{contract.slice(-6)}
               </p>
             )}

@@ -69,7 +69,7 @@ function CoinScanRow({ coin }: { coin: CoinCollectionLike }) {
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold leading-tight">{coin.name ?? "Untitled"}</p>
-        <p className="truncate text-xs font-mono text-muted-foreground">${coin.symbol ?? "—"}</p>
+        <p className="truncate text-xs tabular-nums text-muted-foreground">${coin.symbol ?? "—"}</p>
       </div>
 
       <span className={cn(

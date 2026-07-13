@@ -195,7 +195,7 @@ export default function CreatePage() {
               {/* Icon */}
               <div
                 className={cn(
-                  "h-11 w-11 rounded-xl flex items-center justify-center mb-4 sm:mb-5 transition-all duration-300 group-hover:scale-110",
+                  "h-11 w-11 rounded-xl flex items-center justify-center mb-4 sm:mb-5",
                   iconBg
                 )}
               >

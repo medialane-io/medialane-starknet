@@ -29,7 +29,7 @@ export function MarketplaceTxLink({ txHash, explorerUrl, className }: Marketplac
         className
       )}
     >
-      <span className="font-mono">{txHash.slice(0, 10)}…{txHash.slice(-8)}</span>
+      <span className="tabular-nums">{txHash.slice(0, 10)}…{txHash.slice(-8)}</span>
       <ExternalLink className="h-3 w-3" />
     </a>
   );

@@ -205,12 +205,12 @@ export function AssetProvenanceTab({
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="hover:text-foreground transition-colors font-mono"
+                                    className="hover:text-foreground transition-colors tabular-nums"
                                   >
                                     {actor.slice(0, 6)}…{actor.slice(-4)}
                                   </a>
                                 ) : (
-                                  <span className="font-mono">{actor.slice(0, 6)}…{actor.slice(-4)}</span>
+                                  <span className="tabular-nums">{actor.slice(0, 6)}…{actor.slice(-4)}</span>
                                 )}
                               </span>
                             )}
@@ -222,7 +222,7 @@ export function AssetProvenanceTab({
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
+                                  className="text-xs text-muted-foreground hover:text-foreground transition-colors tabular-nums"
                                 >
                                   {counterpart.slice(0, 6)}…{counterpart.slice(-4)}
                                 </a>
@@ -234,7 +234,7 @@ export function AssetProvenanceTab({
                         {/* Price + amount + time + tx link */}
                         <div className="flex items-center gap-2 shrink-0">
                           {amount && BigInt(amount) > 1n && (
-                            <span className="text-[11px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.5 rounded">
+                            <span className="text-[11px] text-muted-foreground tabular-nums bg-muted/60 px-1.5 py-0.5 rounded">
                               ×{amount}
                             </span>
                           )}

@@ -280,7 +280,7 @@ export default function CreatorPageClient() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="pill-badge">Creator</span>
                 {profile?.username && (
-                  <span className="text-xs font-mono text-muted-foreground">@{profile.username}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground">@{profile.username}</span>
                 )}
               </div>
               <h1 className="text-xl sm:text-2xl font-bold leading-tight truncate text-foreground">

@@ -98,11 +98,11 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   // ── Not found ────────────────────────────────────────────────────────────────
   if (error || !creator) {
     return (
-      <div className="container mx-auto px-4 py-24 max-w-lg text-center space-y-4">
+      <div className="mx-auto px-4 py-24 max-w-lg text-center space-y-4">
         <p className="text-5xl">🔍</p>
         <h1 className="text-2xl font-bold">Creator not found</h1>
         <p className="text-muted-foreground">
-          <span className="font-mono">@{username}</span> hasn&apos;t been claimed yet or doesn&apos;t exist.
+          <span className="tabular-nums">@{username}</span> hasn&apos;t been claimed yet or doesn&apos;t exist.
         </p>
         <Button variant="outline" asChild>
           <Link href="/marketplace">Browse Marketplace</Link>
@@ -185,7 +185,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             <div className="flex-1 min-w-0 pb-1 space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="pill-badge">Creator</span>
-                <span className="text-xs font-mono text-muted-foreground">@{creator.username}</span>
+                <span className="text-xs tabular-nums text-muted-foreground">@{creator.username}</span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold leading-tight truncate">{displayName}</h1>
               {creator.bio && (

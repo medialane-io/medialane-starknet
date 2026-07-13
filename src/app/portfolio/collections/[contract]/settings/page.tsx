@@ -80,7 +80,7 @@ function CollectionSlugClaimSection({
             Active
           </Badge>
         </div>
-        <p className="text-xs text-muted-foreground font-mono">
+        <p className="text-xs text-muted-foreground tabular-nums">
           medialane.io/collection/{profile.slug}
         </p>
       </div>
@@ -99,7 +99,7 @@ function CollectionSlugClaimSection({
         </div>
         <p className="text-xs text-muted-foreground">
           Your claim for{" "}
-          <span className="font-mono text-foreground">medialane.io/collection/{slugInput}</span>{" "}
+          <span className="tabular-nums text-foreground">medialane.io/collection/{slugInput}</span>{" "}
           is under review.
         </p>
       </div>
@@ -140,7 +140,7 @@ function CollectionSlugClaimSection({
       {checkState === "available" && (
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-emerald-600 font-medium truncate">
-            ✓ Available — <span className="font-mono">medialane.io/collection/{slugInput}</span>
+            ✓ Available — <span className="tabular-nums">medialane.io/collection/{slugInput}</span>
           </p>
           <Button size="sm" onClick={handleSubmit} disabled={submitState === "submitting"} className="shrink-0">
             {submitState === "submitting" ? "Claiming…" : "Claim this URL"}

@@ -313,7 +313,7 @@ export default function CreateRemixPage() {
   // state (show the connect prompt) so the page never hangs on a dead spinner.
   if (!isConnected) {
     return (
-      <div className="container max-w-5xl mx-auto px-4 py-24">
+      <div className="max-w-5xl mx-auto px-4 py-24">
         <div className="flex flex-col items-center justify-center gap-4 text-center">
           {isConnecting ? (
             <>
@@ -336,7 +336,7 @@ export default function CreateRemixPage() {
 
   if (tokenLoading) {
     return (
-      <div className="container max-w-5xl mx-auto px-4 pt-14 pb-8 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 pt-14 pb-8 space-y-6">
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
           <div className="space-y-4">
@@ -350,7 +350,7 @@ export default function CreateRemixPage() {
 
   if (!token) {
     return (
-      <div className="container max-w-5xl mx-auto px-4 py-24 text-center space-y-4">
+      <div className="max-w-5xl mx-auto px-4 py-24 text-center space-y-4">
         <p className="text-2xl font-bold">Asset not found</p>
         <Button asChild variant="outline"><Link href="/">Go home</Link></Button>
       </div>
@@ -379,7 +379,7 @@ export default function CreateRemixPage() {
         listingError={null}
       />
 
-      <div className="container max-w-5xl mx-auto px-4 pt-14 pb-12 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 pt-14 pb-12 space-y-6">
         {/* Header */}
         <div className="space-y-3">
           <Link
@@ -608,7 +608,7 @@ export default function CreateRemixPage() {
                   <Image src={originalImage} alt={originalName} fill className="object-cover" />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl font-mono text-muted-foreground">#{tokenId}</span>
+                    <span className="text-4xl tabular-nums text-muted-foreground">#{tokenId}</span>
                   </div>
                 )}
                 <div className="absolute top-2 left-2">

@@ -127,7 +127,7 @@ export function TransferCollectionOwnershipDialog({
                 placeholder="0x…"
                 value={newOwner}
                 onChange={(e) => setNewOwner(e.target.value)}
-                className="font-mono text-sm"
+                className="tabular-nums text-sm"
                 spellCheck={false}
                 autoComplete="off"
               />

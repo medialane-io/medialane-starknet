@@ -23,7 +23,7 @@ function SectionDivider({ label }: { label: string }) {
 
 export function ClaimPageClient() {
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-12 max-w-5xl space-y-16 pb-20">
+    <div className="mx-auto px-4 sm:px-6 py-12 max-w-5xl space-y-16 pb-20">
       {/* Page header */}
       <div>
         <ClaimBackButton />
@@ -84,7 +84,7 @@ export function ClaimPageClient() {
           <h2 className="text-xl font-bold mb-1">Creator Username</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Reserve your creator URL at{" "}
-            <span className="font-mono text-foreground">medialane.io/creator/yourname</span>.
+            <span className="tabular-nums text-foreground">medialane.io/creator/yourname</span>.
           </p>
           <WalletGate>
             <UsernameClaimPanel />
@@ -102,7 +102,7 @@ export function ClaimPageClient() {
           </p>
           <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-5">
             {/* URL bar mockup */}
-            <div className="flex items-center gap-2 bg-muted/50 border border-border/60 rounded-lg px-3 py-2 font-mono text-sm max-w-md">
+            <div className="flex items-center gap-2 bg-muted/50 border border-border/60 rounded-lg px-3 py-2 tabular-nums text-sm max-w-md">
               <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="text-muted-foreground text-xs">medialane.io/collections/</span>
               <span className="text-foreground text-xs font-semibold truncate">0x04f5…1a3b</span>
