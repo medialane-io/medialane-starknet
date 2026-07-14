@@ -44,7 +44,7 @@ function HeroStats({ address }: { address: string }) {
 const DAPP_OVERRIDES: ServiceOverrides = {
   "nfts": { href: "/launchpad/nfts" },
   "limited-editions": { href: "/launchpad/nfteditions" },
-  "remix-asset": { href: "/marketplace" },
+  "remix-asset": { href: "/launchpad/remix" },
   "pop-protocol": { href: "/launchpad/pop" },
   "collection-drop": { href: "/launchpad/drop" },
   "ip-tickets": { href: "/launchpad/tickets" },
