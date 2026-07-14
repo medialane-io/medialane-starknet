@@ -39,16 +39,14 @@ function HeroStats({ address }: { address: string }) {
 
 // ── dapp-specific service overrides (hrefs + rollout flips) ─────────────────
 const DAPP_OVERRIDES: ServiceOverrides = {
-  "mint-ip-asset": { href: "/create/asset" },
-  "create-collection": { href: "/create/collection" },
+  "nfts": { href: "/launchpad/nfts" },
+  "limited-editions": { href: "/launchpad/nfteditions" },
   "remix-asset": { href: "/marketplace" },
-  "pop-protocol": { href: "/launchpad/pop/create", browseHref: "/launchpad/pop" },
-  "collection-drop": { href: "/launchpad/drop/create", browseHref: "/launchpad/drop" },
-  "ip-tickets": { href: "/launchpad/tickets/create", browseHref: "/launchpad/tickets" },
-  "ip-club": { href: "/launchpad/club/create", browseHref: "/launchpad/club" },
+  "pop-protocol": { href: "/launchpad/pop" },
+  "collection-drop": { href: "/launchpad/drop" },
+  "ip-tickets": { href: "/launchpad/tickets" },
+  "ip-club": { href: "/launchpad/club" },
   "ip-sponsorship": { href: "/launchpad/sponsorship" },
-  "ip-collection-1155": { href: "/launchpad/nfteditions/create" },
-  "mint-editions": { href: "/launchpad/nfteditions" },
   "creator-coins": { href: "/launchpad/coin/create" },
   "claim-memecoin": { href: "/launchpad/memecoin" },
   "claim-username": { href: "/claim/username" },
