@@ -42,7 +42,7 @@ function HeroStats({ address }: { address: string }) {
 
 // ── dapp-specific service overrides (hrefs + rollout flips) ─────────────────
 const DAPP_OVERRIDES: ServiceOverrides = {
-  "nfts": { href: "/launchpad/nfts" },
+  "nfts": { href: "/launchpad/single-editions" },
   "limited-editions": { href: "/launchpad/nfteditions" },
   "remix-asset": { href: "/launchpad/remix" },
   "pop-protocol": { href: "/launchpad/pop" },
