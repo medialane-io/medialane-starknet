@@ -439,8 +439,8 @@ await updateCollectionProfile(contract, { image: imageUri });  // ← only valid
 ### Pages that are architecturally correct (reference implementations)
 
 - `launchpad/nfteditions/create/page.tsx` — pins metadata, throws on failure, passes `collectionMetaUri` as `base_uri`
-- `launchpad/tickets/create/page.tsx` — pins metadata, throws on failure, passes `baseUri` as third arg to `deploy_collection`
-- `launchpad/tickets/[contract]/create-event/page.tsx` — `metadataUri` goes into `create_event` calldata
+- `launchpad/tickets/create/page.tsx` — pins metadata, throws on failure, passes `baseUri` (bare file URI — never slash-suffixed) as third arg to `deploy_collection`
+- `components/tickets/create-tickets-dialog.tsx` — `metadataUri` goes into `create_ticket` calldata (dialog on the collection page)
 - `launchpad/pop/create/page.tsx` — metadata pin inside single outer try/catch, fatal
 - `launchpad/club/create/page.tsx` — metadata pin fatal, no inner catch
 - `create/collection/page.tsx` — `uploadJsonToIpfs` throws to outer catch
@@ -474,11 +474,26 @@ Multi-gateway fallback: Pinata → ipfs.io → Cloudflare → dweb.link. 24h loc
 `/asset/[contract]/[tokenId]` resolves the asset type and renders one of four
 variant pages, all built on a shared component set ported to match medialane.io.
 
-**Dispatcher:** `asset-page-client.tsx` → `asset-page-{standard,edition,drop,pop}.tsx`
+**Dispatcher:** `asset-page-client.tsx` → `asset-page-{standard,edition,drop,pop,ticket}.tsx`
 - `standard` — ERC-721 IP asset (license, remix, full marketplace)
 - `edition` — ERC-1155 multi-edition (edition stats, holders grid)
 - `drop` — Collection Drop (drop info panel + primary `CollectionDropMintButton` + secondary market)
 - `pop` — POP soulbound credential (claim-only, no marketplace)
+- `ticket` — IP Ticket (edition page shape + on-chain validity window/status chip from
+  `get_ticket`, minted-of-supply, and a holder "Valid ticket — ready to present" door
+  panel via `is_valid`; tickets trade like any edition)
+
+### IP Tickets (rebuilt 2026-07-14 — contract `version()` "4.0.0")
+
+Ticket collections are **regular collections** at `/collections/[contract]` — the
+launchpad only launches (`/launchpad/tickets` browse + `/create`; there are NO
+`launchpad/tickets/[contract]/*` pages, that shape was removed). The owner's single
+entry point is one featured **"Mint tickets"** button in the right owner cluster
+(`components/tickets/ticket-owner-actions.tsx`, pure `btn-border-animated` gradient
+fill): its dialog lists tickets read from chain (`useTicketList` — sequential
+`get_ticket` probe, so never-minted tickets appear) with a "New ticket" branch into
+the create dialog (`create_ticket` — the UI never says "event"). Same structure on
+medialane-io (teal accent, ChipiPay rails).
 
 **Shared modules** (all under `src/app/asset/[contract]/[tokenId]/`):
 
