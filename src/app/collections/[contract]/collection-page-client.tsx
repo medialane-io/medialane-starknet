@@ -28,6 +28,7 @@ import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
+import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
@@ -471,11 +472,10 @@ export default function CollectionPageClient() {
                 </>
               )}
 
-              {/* Service action slot (POP claim, ticket create/mint, etc.) */}
+              {/* Service action slot (POP claim, etc.) */}
               <CollectionServiceAction
                 service={collection.service}
                 contractAddress={collection.contractAddress}
-                owner={collection.owner}
               />
             </div>
 
@@ -483,6 +483,12 @@ export default function CollectionPageClient() {
             <div className="flex flex-col gap-2.5 shrink-0 lg:items-end">
               {walletAddress && collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
                 <div className="flex items-center gap-2">
+                  {getService(collection.service)?.id === "ip-tickets" && (
+                    <TicketOwnerActions
+                      contractAddress={collection.contractAddress}
+                      owner={collection.owner}
+                    />
+                  )}
                   {collection.standard === "ERC1155" && getService(collection.service)?.id === "mip-erc1155" && (
                     <Link
                       href={`/launchpad/nfteditions/${contract}/mint`}
@@ -540,25 +546,6 @@ export default function CollectionPageClient() {
           gatedState={gatedState}
           onViewExclusive={() => setActiveTab("exclusive")}
         />
-      )}
-
-      {/* Owner setup checklist — shown only to the collection owner */}
-      {!colLoading && collection && walletAddress &&
-        collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
-        <>
-          <OwnerSetupPanel
-            contract={contract}
-            profile={profile}
-          />
-          {collection.collectionId && collection.standard === "ERC721" && (
-            <div className="px-4 sm:px-6 -mt-2 mb-4 flex justify-end">
-              <TransferCollectionOwnershipDialog
-                collectionId={collection.collectionId}
-                currentOwner={collection.owner!}
-              />
-            </div>
-          )}
-        </>
       )}
 
       {/* ── Tabs ── */}
@@ -632,6 +619,25 @@ export default function CollectionPageClient() {
           )}
         </Tabs>
       </div>
+
+      {/* Owner setup checklist — after the items, before the footer */}
+      {!colLoading && collection && walletAddress &&
+        collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
+        <>
+          <OwnerSetupPanel
+            contract={contract}
+            profile={profile}
+          />
+          {collection.collectionId && collection.standard === "ERC721" && (
+            <div className="px-4 sm:px-6 -mt-2 mb-4 flex justify-end">
+              <TransferCollectionOwnershipDialog
+                collectionId={collection.collectionId}
+                currentOwner={collection.owner!}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       {/* Inline buy for listed items (Listings tab) */}
       {buyOrder && (
