@@ -179,7 +179,9 @@ export default function CreateTicketCollectionPage() {
         if (!res.ok || !pinData?.uri) {
           throw new Error(pinData?.error ?? "Collection metadata upload failed — please try again");
         }
-        baseUri = `${pinData.uri}/`;
+        // Bare file URI — a trailing slash makes resolvers treat it as a
+        // directory and probe <uri>/collection.json, which doesn't exist.
+        baseUri = pinData.uri;
       }
 
       const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });

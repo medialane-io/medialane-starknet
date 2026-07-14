@@ -366,7 +366,7 @@ export default function CollectionPageClient() {
         <Skeleton className="w-full h-[50svh]" />
       ) : (
         <div className="relative w-full overflow-hidden h-[50svh]">
-          <ParallaxBanner imageUrl={bannerUrl} contract={contract} />
+          <ParallaxBanner imageUrl={bannerUrl} />
 
           {/* Bottom overlay: title + stat chips — backdrop blur only, no borders, no scrim */}
           <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 z-10">
@@ -649,21 +649,14 @@ export default function CollectionPageClient() {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function ParallaxBanner({ imageUrl, contract }: { imageUrl: string | null; contract: string }) {
+function ParallaxBanner({ imageUrl }: { imageUrl: string | null }) {
   const { scrollY } = useScroll();
   const shouldReduce = useReducedMotion();
   const y = useTransform(scrollY, [0, 500], [0, shouldReduce ? 0 : 150]);
 
   if (!imageUrl) {
-    const hex = contract.replace(/^0x/i, "");
-    const a = `#${hex.slice(-6, -3).padStart(6, "a")}`;
-    const b = `#${hex.slice(-3).padStart(6, "5")}`;
-    return (
-      <div
-        className="absolute inset-0 w-full h-full"
-        style={{ background: `linear-gradient(135deg, ${a}, ${b})` }}
-      />
-    );
+    // No collection image yet — a quiet theme surface, never a generated color.
+    return <div className="absolute inset-0 w-full h-full bg-muted" />;
   }
 
   return (
