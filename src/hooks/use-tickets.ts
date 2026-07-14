@@ -1,65 +1,81 @@
 "use client";
 
 import useSWR from "swr";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-import type { ApiCollection, ApiToken } from "@medialane/sdk";
-
-const BASE = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
-
-async function backendFetch<T>(url: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`Backend fetch failed: ${res.status}`);
-  return res.json();
-}
-
-// ── useTicketCollections ──────────────────────────────────────────────────────
-
-export function useTicketCollections() {
-  const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[]; meta: unknown }>(
-    "ip-tickets-collections",
-    () => {
-      const params = new URLSearchParams({ service: "ip-tickets", limit: "50" });
-      return backendFetch(`${BASE}/v1/collections?${params}`);
-    },
-    { revalidateOnFocus: false }
-  );
-
-  return { collections: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
-}
+import { useMedialaneClient } from "./use-medialane-client";
+import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
+import { starknetProvider } from "@/lib/starknet";
+import { Contract, cairo } from "starknet";
+import { IPTicketCollectionABI } from "@medialane/sdk";
 
 // ── useMyTicketCollections ────────────────────────────────────────────────────
+// The connected creator's tickets collections (launchpad browse page).
 
 export function useMyTicketCollections(ownerAddress: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[] }>(
+  const client = useMedialaneClient();
+
+  const { data, error, isLoading, mutate } = useSWR(
     ownerAddress ? `my-ticket-collections-${ownerAddress}` : null,
-    () => {
-      const params = new URLSearchParams({ service: "ip-tickets", owner: ownerAddress!, limit: "50" });
-      return backendFetch(`${BASE}/v1/collections?${params}`);
-    },
+    () => client.api.getCollectionsByOwner(ownerAddress!),
     { revalidateOnFocus: false }
   );
 
-  return { collections: data?.data ?? [], isLoading, error, mutate };
+  const collections = (data?.data ?? []).filter((c) => c.service === "ip-tickets");
+  return { collections, isLoading, error, mutate };
 }
 
-// ── useTicketEvents ───────────────────────────────────────────────────────────
-// Returns indexed tokens for a ticket collection — each token ID = one event.
-// Shows events that have had at least one mint (backend indexes TransferSingle).
+// ── useTicketOnchain ──────────────────────────────────────────────────────────
+// Per-ticket on-chain record via get_ticket(token_id) — supply, minted count,
+// validity window, royalty. Failover-covered read provider + SWR, same pattern
+// as use-coin-supply. Returns null while loading or if the ticket doesn't exist.
 
-export function useTicketEvents(contractAddress: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<{ data: ApiToken[]; meta: unknown }>(
-    contractAddress ? `ticket-events-${contractAddress}` : null,
-    () => backendFetch(`${BASE}/v1/collections/${contractAddress}/tokens?limit=50`),
-    { revalidateOnFocus: false }
+export interface TicketOnchain {
+  maxSupply: bigint;
+  minted: bigint;
+  startTime: number | null;
+  endTime: number | null;
+  royaltyBps: number;
+}
+
+function parseOption(v: any): number | null {
+  if (v == null) return null;
+  // starknet.js parses Option<u64> as CairoOption ({ Some }, unwrap()) or undefined for None.
+  if (typeof v === "object" && typeof v.unwrap === "function") {
+    const inner = v.unwrap();
+    return inner != null ? Number(inner) : null;
+  }
+  if (typeof v === "bigint" || typeof v === "number") return Number(v);
+  return null;
+}
+
+async function readTicket(contract: string, tokenId: string): Promise<TicketOnchain> {
+  const col = new Contract({
+    abi: IPTicketCollectionABI as any,
+    address: contract,
+    providerOrAccount: starknetProvider,
+  });
+  const t: any = await col.call("get_ticket", [cairo.uint256(tokenId)]);
+  return {
+    maxSupply: BigInt(t.max_supply),
+    minted: BigInt(t.minted),
+    startTime: parseOption(t.start_time),
+    endTime: parseOption(t.end_time),
+    royaltyBps: Number(t.royalty_bps),
+  };
+}
+
+export function useTicketOnchain(contract: string | null, tokenId: string | null) {
+  const { data, error, isLoading } = useSWR<TicketOnchain>(
+    contract && tokenId ? `ticket-onchain-${contract}-${tokenId}` : null,
+    () => readTicket(contract!, tokenId!),
+    { revalidateOnFocus: false, shouldRetryOnError: false, dedupingInterval: 30_000 }
   );
 
-  return { events: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
+  return { ticket: data ?? null, isLoading, error };
 }
 
 // ── useTicketValidity ─────────────────────────────────────────────────────────
-// Pure on-chain read via the backend — true iff holder has balance > 0 AND within time window.
+// On-chain door check via the backend — true iff the holder has balance > 0
+// AND the current time is inside the ticket's validity window.
 
 export function useTicketValidity(
   contractAddress: string | null,
@@ -73,7 +89,12 @@ export function useTicketValidity(
 
   const { data, error, isLoading } = useSWR<{ data: { valid: boolean } }>(
     key,
-    () => backendFetch(`${BASE}/v1/tickets/${contractAddress}/${tokenId}/validity/${wallet}`),
+    async () => {
+      const base = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/v1/tickets/${contractAddress}/${tokenId}/validity/${wallet}`);
+      if (!res.ok) throw new Error(`Ticket validity check failed: ${res.status}`);
+      return res.json();
+    },
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 

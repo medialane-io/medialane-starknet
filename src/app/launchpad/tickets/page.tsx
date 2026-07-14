@@ -3,7 +3,7 @@ import { TicketsContent } from "./tickets-content";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "IP Tickets";
-const description = "Sell verifiable, redeemable tickets for events and experiences.";
+const description = "Create verifiable on-chain tickets — mint to attendees, trade like any collection.";
 
 export const metadata: Metadata = {
   title,

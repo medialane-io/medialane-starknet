@@ -161,6 +161,8 @@ export default function CreateTicketCollectionPage() {
     try {
       // Pin collection metadata to IPFS first so the URI can go on-chain in the deploy tx.
       // base_uri on the contract is the authoritative source — the backend is just a cache.
+      // If an image was provided, a failed pin is fatal: deploying with an empty
+      // base_uri would permanently strip the collection image (contracts are immutable).
       let baseUri = "";
       if (imageUri) {
         const token = await getValidToken();
@@ -174,7 +176,10 @@ export default function CreateTicketCollectionPage() {
           }),
         }));
         const pinData = await res.json();
-        if (pinData?.uri) baseUri = `${pinData.uri}/`;
+        if (!res.ok || !pinData?.uri) {
+          throw new Error(pinData?.error ?? "Collection metadata upload failed — please try again");
+        }
+        baseUri = `${pinData.uri}/`;
       }
 
       const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });
@@ -202,8 +207,8 @@ export default function CreateTicketCollectionPage() {
   if (!isConnected) {
     return (
       <ConnectGate
-        title="Connect wallet to sell tickets"
-        subtitle="Connect your Starknet wallet to create a ticket collection."
+        title="Connect wallet to create tickets"
+        subtitle="Connect your Starknet wallet to create a tickets collection."
       >
         <div />
       </ConnectGate>
@@ -223,14 +228,15 @@ export default function CreateTicketCollectionPage() {
         onCreateAnother={handleReset}
         createAnotherLabel="Create another"
         firstStepLabel="Deploy collection"
-        mintHref={deployedAddress ? `/launchpad/tickets/${deployedAddress}/create-event` : undefined}
+        mintHref={deployedAddress ? `/collections/${deployedAddress}` : undefined}
+        mintLabel="Create tickets"
         deployedAddress={deployedAddress}
       />
 
       <ClaimRouteShell
         icon={<Ticket className="h-4 w-4 text-white" />}
         title="Create Ticket Collection"
-        subtitle="One collection, as many events as you need."
+        subtitle="One collection — create tickets and mint them to attendees."
         gated={false}
         aside={
           <>
@@ -242,17 +248,17 @@ export default function CreateTicketCollectionPage() {
           />
           <ClaimRail
             included={[
-              { icon: Ticket, title: "One collection per creator", desc: "Add as many events as you need without creating a new collection." },
-              { icon: ChevronRight, title: "You keep full control", desc: "Only you can create events and mint tickets." },
+              { icon: Ticket, title: "One collection, many tickets", desc: "Create as many tickets as you need without deploying again." },
+              { icon: ChevronRight, title: "You keep full control", desc: "Only you can create and mint tickets." },
             ]}
             steps={[
-              "Create your ticket collection — set name, symbol, and cover image",
-              "Add events — each gets its own supply and optional time window",
+              "Create your tickets collection — set name, symbol, and cover image",
+              "Create tickets — each gets its own supply and optional validity window",
               "Mint tickets to attendees directly from your collection page",
             ]}
             trustIcon={Ticket}
             trustLead="Your tickets, your rules."
-            trust="Only you can create events and mint. Holders keep their tickets forever."
+            trust="Only you can create and mint tickets. Holders keep their tickets forever."
           />
           </>
         }
@@ -321,7 +327,7 @@ export default function CreateTicketCollectionPage() {
                 <FormItem>
                   <FormLabel>Collection name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="My Events" {...field} />
+                    <Input placeholder="My Tickets" {...field} />
                   </FormControl>
                   <FormDescription>Your brand name — shown in wallets and explorers.</FormDescription>
                   <FormMessage />
@@ -337,7 +343,7 @@ export default function CreateTicketCollectionPage() {
                   <FormLabel>Symbol <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="EVNT"
+                      placeholder="TIX"
                       maxLength={10}
                       {...field}
                       onChange={(e) => field.onChange(e.target.value.toUpperCase())}
@@ -357,7 +363,7 @@ export default function CreateTicketCollectionPage() {
                   <FormLabel>Description <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe your events and what kind of tickets you sell…"
+                      placeholder="Describe your tickets — what do they admit or unlock?"
                       rows={3}
                       {...field}
                     />

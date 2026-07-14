@@ -40,6 +40,8 @@ interface CollectionProgressDialogProps {
   firstStepLabel?: string;
   /** If provided, the "Mint" button navigates here. */
   mintHref?: string;
+  /** Label for the mintHref button. Defaults to "Mint tokens". */
+  mintLabel?: string;
   /** Deployed contract address shown in success state with explorer link. */
   deployedAddress?: string | null;
 }
@@ -75,6 +77,7 @@ export function CollectionProgressDialog({
   createAnotherLabel = "Create another",
   firstStepLabel = "Create collection intent",
   mintHref,
+  mintLabel,
   deployedAddress,
 }: CollectionProgressDialogProps) {
   const router = useRouter();
@@ -240,7 +243,7 @@ export function CollectionProgressDialog({
                   {createAnotherLabel}
                 </Button>
                 <Button className="flex-1" onClick={() => router.push(mintHref ?? "/launchpad")}>
-                  {mintHref ? "Mint tokens" : "Go to Launchpad"}
+                  {mintHref ? (mintLabel ?? "Mint tokens") : "Go to Launchpad"}
                 </Button>
               </div>
             </div>

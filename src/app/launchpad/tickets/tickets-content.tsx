@@ -28,7 +28,7 @@ export function TicketsContent() {
               plain
               icon={<Ticket className="h-4 w-4 text-white" />}
               title="IP Tickets"
-              subtitle="Deploy a collection, add events, and mint tickets to attendees."
+              subtitle="Create a tickets collection, then mint tickets from its collection page."
               headerAccessory={
                 <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
                   <Link href="/launchpad/tickets/create">
@@ -67,7 +67,7 @@ export function TicketsContent() {
               <div className="space-y-1">
                 <p className="font-semibold text-sm">No collections yet</p>
                 <p className="text-xs text-muted-foreground">
-                  Create your first ticket collection to start adding events.
+                  Create your first tickets collection.
                 </p>
               </div>
               <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
@@ -84,7 +84,7 @@ export function TicketsContent() {
               <StaggerItem key={col.contractAddress}>
                 <CollectionCard
                   collection={col}
-                  href={`/launchpad/tickets/${col.contractAddress}`}
+                  href={`/collections/${col.contractAddress}`}
                 />
               </StaggerItem>
             ))}

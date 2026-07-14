@@ -1,67 +1,46 @@
 "use client";
 
+// Create tickets — the ip-tickets service action on the collection page.
+// One transaction: pins the ticket metadata to IPFS, then calls create_ticket
+// on the (immutable) collection. Everything the ticket is — supply, validity
+// window, royalty, metadata — is permanent on-chain once created.
+
 import { useState, useRef, useEffect } from "react";
-import { rewardToast } from "@/lib/reward-toast";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
-import { useSiwsToken } from "@/hooks/use-siws-token";
-import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { Calendar, Loader2, ImagePlus, X, ShieldCheck, ChevronDown } from "lucide-react";
+import { Ticket, Loader2, ImagePlus, X, ShieldCheck, ChevronDown } from "lucide-react";
+import { toast } from "sonner";
+import { Contract, CairoOption, CairoOptionVariant, cairo, hash } from "starknet";
+import { normalizeAddress, IPTicketCollectionABI } from "@medialane/sdk";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  MintProgressDialog,
-  type MintStep,
-} from "@/components/marketplace/mint-progress-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { MintProgressDialog, type MintStep } from "@/components/marketplace/mint-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
-import { ConnectGate } from "@/components/connect-gate";
-import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
-import { toast } from "sonner";
-import { FadeIn } from "@/components/ui/motion-primitives";
-import { Contract, CairoOption, CairoOptionVariant, cairo } from "starknet";
-import { normalizeAddress, IPTicketCollectionABI } from "@medialane/sdk";
+import { useSiwsToken } from "@/hooks/use-siws-token";
+import { withSiwsAuth } from "@/lib/pinata-fetch";
+import { uploadFailureToast } from "@/lib/upload-error";
+import { rewardToast } from "@/lib/reward-toast";
 import { starknetProvider } from "@/lib/starknet";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
-import { useTicketEvents } from "@/hooks/use-tickets";
-import {
-  LICENSE_TYPES,
-  GEOGRAPHIC_SCOPES,
-  AI_POLICIES,
-  DERIVATIVES_OPTIONS,
-} from "@/types/ip";
+import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
+
+const TICKET_CREATED_SELECTOR = hash.getSelectorFromName("TicketCreated");
 
 const schema = z.object({
-  name: z.string().min(1, "Event name required").max(100),
+  name: z.string().min(1, "Ticket name required").max(100),
   description: z.string().max(1000).optional(),
   external_url: z
     .string()
@@ -92,6 +71,21 @@ function dateToUnixTimestamp(dateStr: string | undefined): number | undefined {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return undefined;
   return Math.floor(d.getTime() / 1000);
+}
+
+async function readCreatedTicketId(txHash: string): Promise<string | null> {
+  try {
+    const receipt = await starknetProvider.getTransactionReceipt(txHash);
+    const events = (receipt as any).events ?? [];
+    for (const ev of events) {
+      if (ev.keys?.[0] === TICKET_CREATED_SELECTOR && ev.keys?.[1] != null) {
+        const low = BigInt(ev.keys[1]);
+        const high = BigInt(ev.keys[2] ?? "0x0");
+        return (low + (high << 128n)).toString();
+      }
+    }
+  } catch {}
+  return null;
 }
 
 function ToggleGroup({
@@ -125,18 +119,24 @@ function ToggleGroup({
   );
 }
 
-export default function CreateEventPage() {
-  const params = useParams<{ contract: string }>();
-  const contract = normalizeAddress("STARKNET", params.contract);
+export function CreateTicketsDialog({
+  contractAddress,
+  open,
+  onOpenChange,
+}: {
+  contractAddress: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const contract = normalizeAddress("STARKNET", contractAddress);
   const { isConnected } = useWallet();
   const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
-  const { mutate } = useTicketEvents(contract);
-  const router = useRouter();
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
+  const [createdTicketId, setCreatedTicketId] = useState<string | null>(null);
   const [licensingOpen, setLicensingOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
@@ -153,7 +153,7 @@ export default function CreateEventPage() {
     defaultValues: {
       name: "",
       description: "",
-      external_url: "",
+      external_url: absoluteUrl(`/collections/${contract}`),
       maxSupply: "100",
       royalty: 2.5,
       licenseType: "CC BY-SA",
@@ -165,18 +165,23 @@ export default function CreateEventPage() {
     },
   });
 
-  useEffect(() => {
-    if (!contract) return;
-    const suggested = absoluteUrl(`/collections/${contract}`);
-    if (!form.getValues("external_url")) {
-      form.setValue("external_url", suggested);
-    }
-  }, [contract, form]);
-
-  const handleReset = () => {
+  const resetTx = () => {
     setMintStep("idle");
     setDialogTxStatus("idle");
     setMintError(null);
+    setCreatedTicketId(null);
+  };
+
+  const handleCreateMore = () => {
+    resetTx();
+    form.reset({ ...form.getValues(), name: "", description: "", maxSupply: "100" });
+    setImagePreview(null);
+    setImageUri(null);
+  };
+
+  const handleDone = () => {
+    resetTx();
+    onOpenChange(false);
   };
 
   const handleLicenseChange = (value: string) => {
@@ -223,7 +228,7 @@ export default function CreateEventPage() {
 
   async function onSubmit(values: FormValues) {
     if (!isConnected) { toast.error("Connect your wallet first"); return; }
-    if (!imageUri) { toast.error("Upload an event image first"); return; }
+    if (!imageUri) { toast.error("Upload a ticket image first"); return; }
 
     setMintError(null);
     setDialogTxStatus("idle");
@@ -266,7 +271,7 @@ export default function CreateEventPage() {
       const royaltyBps = Math.round(values.royalty * 100);
 
       const col = new Contract({ abi: IPTicketCollectionABI as any, address: contract, providerOrAccount: starknetProvider });
-      const call = col.populate("create_event", [
+      const call = col.populate("create_ticket", [
         cairo.uint256(values.maxSupply),
         startTime != null
           ? new CairoOption(CairoOptionVariant.Some, startTime)
@@ -281,19 +286,16 @@ export default function CreateEventPage() {
       const txH = await executeAuto([call]);
       if (!txH) throw new Error("Transaction failed");
       setDialogTxStatus("confirming");
+      const ticketId = await readCreatedTicketId(txH);
+      setCreatedTicketId(ticketId);
       setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");
-      void mutate();
       setMintStep("success");
     } catch (err: any) {
-      setMintError(err?.message ?? "Failed to create event");
+      setMintError(err?.message ?? "Failed to create tickets");
       setDialogTxStatus("idle");
       setMintStep("error");
     }
-  }
-
-  if (!isConnected) {
-    return <ConnectGate><div /></ConnectGate>;
   }
 
   const busy = mintStep === "uploading" || mintStep === "processing";
@@ -308,50 +310,39 @@ export default function CreateEventPage() {
         imagePreview={imagePreview}
         txHash={null}
         error={mintError}
-        onMintAnother={handleReset}
-        uploadStepLabel="Upload event metadata"
-        processingTitle="Creating event on Starknet…"
-        successTitle="Event created!"
-        successSubtitle={`"${form.getValues("name")}" is now live — you can start minting tickets.`}
-        mintAnotherLabel="Add another event"
-        primaryActionLabel="Back to collection"
-        primaryActionHref={`/launchpad/tickets/${contract}`}
+        onMintAnother={handleCreateMore}
+        uploadStepLabel="Upload ticket metadata"
+        processingTitle="Creating tickets on Starknet…"
+        successTitle="Tickets created!"
+        successSubtitle={
+          createdTicketId
+            ? `"${form.getValues("name")}" is live as ticket #${createdTicketId} — mint tickets to attendees whenever you're ready.`
+            : `"${form.getValues("name")}" is live — mint tickets to attendees whenever you're ready.`
+        }
+        mintAnotherLabel="Create more tickets"
+        primaryActionLabel="Done"
+        onPrimaryAction={handleDone}
       />
 
-      <ClaimRouteShell
-        icon={<Calendar className="h-4 w-4 text-white" />}
-        title="Create event"
-        subtitle="Add a new event to your ticket collection."
-        gated={false}
-        aside={
-          <>
-          <MedialaneCollectionCard
-            image={imagePreview}
-            name={form.watch("name")}
-            collection="Event"
-          />
-          <ClaimRail
-            steps={[
-              "Upload an event image and fill in the details",
-              "Set licensing terms — saved permanently with the event",
-              "Set ticket supply and optional time window",
-              "Metadata is pinned to IPFS and the event is registered on-chain",
-            ]}
-            trustIcon={Calendar}
-            trustLead="Immutable on-chain."
-            trust="Once created, the event record is permanent. The metadata and licensing terms are locked to this event forever."
-          />
-          </>
-        }
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <Dialog open={open && mintStep === "idle"} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ticket className="h-4 w-4 text-brand-blue" />
+              Create tickets
+            </DialogTitle>
+            <DialogDescription>
+              Set supply, an optional validity window, and royalty — permanent, on-chain.
+            </DialogDescription>
+          </DialogHeader>
 
-            {/* ── Image ── */}
-            <FadeIn delay={0.04}>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+
+              {/* Image */}
               <div className="space-y-2">
                 <p className="text-sm font-medium">
-                  Event image <span className="text-destructive">*</span>
+                  Ticket image <span className="text-destructive">*</span>
                 </p>
                 <div className="flex items-center gap-4">
                   <div
@@ -362,7 +353,7 @@ export default function CreateEventPage() {
                     className="relative h-20 w-20 rounded-2xl border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-brand-blue/50 transition-colors"
                   >
                     {imagePreview
-                      ? <Image src={imagePreview} alt="Event" fill className="object-cover" />
+                      ? <Image src={imagePreview} alt="Ticket" fill className="object-cover" />
                       : <ImagePlus className="h-6 w-6 text-muted-foreground" />}
                     {imageUploading && (
                       <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
@@ -387,53 +378,45 @@ export default function CreateEventPage() {
                     )}
                     <p className="text-xs text-muted-foreground">
                       {imageUri
-                        ? <span className="text-brand-blue">✓ Uploaded to IPFS</span>
+                        ? <span className="text-brand-blue">✓ Uploaded</span>
                         : "JPG, PNG, SVG or WebP · max 10 MB"}
                     </p>
                   </div>
                 </div>
               </div>
-            </FadeIn>
 
-            {/* ── Name ── */}
-            <FadeIn delay={0.06}>
+              {/* Name */}
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event name <span className="text-destructive">*</span></FormLabel>
-                  <FormControl><Input placeholder="Summer Concert 2026" {...field} /></FormControl>
+                  <FormLabel>Ticket name <span className="text-destructive">*</span></FormLabel>
+                  <FormControl><Input placeholder="Summer Concert 2026 — General Admission" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-            </FadeIn>
 
-            {/* ── Description ── */}
-            <FadeIn delay={0.08}>
+              {/* Description */}
               <FormField control={form.control} name="description" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                   <FormControl>
-                    <Textarea placeholder="What is this event about?" rows={3} {...field} />
+                    <Textarea placeholder="What does this ticket admit or unlock?" rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-            </FadeIn>
 
-            {/* ── External URL ── */}
-            <FadeIn delay={0.1}>
+              {/* External URL */}
               <FormField control={form.control} name="external_url" render={({ field }) => (
                 <FormItem>
                   <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="https://yourwebsite.com/event" {...field} />
+                    <Input placeholder="https://yourwebsite.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-            </FadeIn>
 
-            {/* ── Licensing Terms ── */}
-            <FadeIn delay={0.12}>
+              {/* Licensing */}
               <Collapsible open={licensingOpen} onOpenChange={setLicensingOpen}>
                 <div className="sm:overflow-hidden sm:rounded-xl sm:border sm:border-border">
                   <CollapsibleTrigger asChild>
@@ -530,10 +513,8 @@ export default function CreateEventPage() {
                   </CollapsibleContent>
                 </div>
               </Collapsible>
-            </FadeIn>
 
-            {/* ── Supply + Royalty ── */}
-            <FadeIn delay={0.14}>
+              {/* Supply + Royalty */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="maxSupply" render={({ field }) => (
                   <FormItem>
@@ -564,50 +545,38 @@ export default function CreateEventPage() {
                   </FormItem>
                 )} />
               </div>
-            </FadeIn>
 
-            {/* ── Date window ── */}
-            <FadeIn delay={0.16}>
+              {/* Validity window */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="startDate" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start date <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                    <FormLabel>Valid from <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                     <FormControl><Input type="datetime-local" {...field} /></FormControl>
-                    <FormDescription>Tickets valid from.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="endDate" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End date <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                    <FormLabel>Valid until <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                     <FormControl><Input type="datetime-local" {...field} /></FormControl>
-                    <FormDescription>Tickets expire after.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
               </div>
-            </FadeIn>
 
-            {/* ── Submit ── */}
-            <FadeIn delay={0.2}>
+              {/* Submit */}
               <Button
                 type="submit"
                 disabled={busy || imageUploading}
                 className="w-full bg-brand-blue hover:bg-brand-electric text-white"
               >
-                {mintStep === "uploading" ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Uploading metadata…</>
-                ) : mintStep === "processing" ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating event…</>
-                ) : (
-                  <><Calendar className="h-4 w-4 mr-2" />Create event</>
-                )}
+                <Ticket className="h-4 w-4 mr-2" />
+                Create tickets
               </Button>
-            </FadeIn>
-
-          </form>
-        </Form>
-      </ClaimRouteShell>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -42,6 +42,8 @@ interface MintProgressDialogProps {
   primaryActionLabel?: string;
   /** Override primary success button href (default: "/portfolio/assets") */
   primaryActionHref?: string;
+  /** When set, the primary success button calls this instead of navigating. */
+  onPrimaryAction?: () => void;
   /** Override processing title */
   processingTitle?: string;
   /** Override success title */
@@ -88,6 +90,7 @@ export function MintProgressDialog({
   mintAnotherLabel = "Mint another",
   primaryActionLabel = "View portfolio",
   primaryActionHref = "/portfolio/assets",
+  onPrimaryAction,
   processingTitle,
   successTitle,
   successSubtitle,
@@ -298,7 +301,7 @@ export function MintProgressDialog({
               <Button variant="outline" className="flex-1" onClick={onMintAnother}>
                 {mintAnotherLabel}
               </Button>
-              <Button className="flex-1" onClick={() => router.push(primaryActionHref)}>
+              <Button className="flex-1" onClick={() => (onPrimaryAction ? onPrimaryAction() : router.push(primaryActionHref))}>
                 {primaryActionLabel}
               </Button>
             </div>
