@@ -123,10 +123,14 @@ export function CreateTicketsDialog({
   contractAddress,
   open,
   onOpenChange,
+  onCreated,
 }: {
   contractAddress: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called from the success state — hands back the created ticket id so the
+   *  mint flow can continue with it selected. */
+  onCreated?: (ticketId: string | null) => void;
 }) {
   const contract = normalizeAddress("STARKNET", contractAddress);
   const { isConnected } = useWallet();
@@ -180,8 +184,13 @@ export function CreateTicketsDialog({
   };
 
   const handleDone = () => {
+    const id = createdTicketId;
     resetTx();
-    onOpenChange(false);
+    if (onCreated) {
+      onCreated(id);
+    } else {
+      onOpenChange(false);
+    }
   };
 
   const handleLicenseChange = (value: string) => {
@@ -320,7 +329,7 @@ export function CreateTicketsDialog({
             : `"${form.getValues("name")}" is live — mint tickets to attendees whenever you're ready.`
         }
         mintAnotherLabel="Create more tickets"
-        primaryActionLabel="Done"
+        primaryActionLabel={onCreated ? "Mint these tickets" : "Done"}
         onPrimaryAction={handleDone}
       />
 
