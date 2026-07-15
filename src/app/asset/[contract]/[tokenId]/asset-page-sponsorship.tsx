@@ -1,16 +1,11 @@
 "use client";
 
 /**
- * Sponsorship affordance for an asset page — NOT yet wired into
- * asset-page-standard.tsx/asset-page-edition.tsx (see the 2026-07-02
- * Launchpad plan: deferred to avoid touching a file in the direct blast
- * radius of feat/asset-page-redesign, which is actively rewriting
- * AssetMarketplacePanel). Self-contained and ready to render once wired.
- *
- * Per the approved design, this only ever renders for Medialane-native
- * assets (mip-erc721/ip-erc721/mip-erc1155) — callers must gate on
- * collection.service before rendering this component; it does not gate
- * itself.
+ * Sponsorship affordance for an asset page. Rendered from
+ * asset-page-standard.tsx/asset-page-edition.tsx, gated on
+ * collection.service resolving to a Medialane-native asset
+ * (mip-erc721/ip-erc721/mip-erc1155) — callers gate on collection.service
+ * before rendering this component; it does not gate itself.
  */
 
 import { useState } from "react";
@@ -22,10 +17,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
-import { useSponsorshipOffers } from "@/hooks/use-sponsorship";
+import { useSponsorshipOffers, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { getTokenBySymbol } from "@medialane/sdk";
+import { getTokenBySymbol, getTokenByAddress } from "@medialane/sdk";
 import { toast } from "sonner";
+import { SponsorshipAcceptButton } from "@/components/sponsorship/sponsorship-accept-button";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function OfferBids({ offerId, licenseTermsUri, onAccepted }: { offerId: string; licenseTermsUri: string; onAccepted: () => void }) {
+  const { bids, isLoading } = useSponsorshipBids(offerId);
+  const activeBids = bids.filter((b) => b.status === "ACTIVE");
+
+  if (isLoading) return <Skeleton className="h-6 w-full" />;
+  if (activeBids.length === 0) return <p className="text-xs text-muted-foreground">No bids yet.</p>;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold text-muted-foreground">Bids</p>
+      {activeBids.map((bid) => (
+        <div key={bid.id} className="flex items-center justify-between gap-2 text-xs">
+          <span className="truncate text-muted-foreground">{bid.sponsor}</span>
+          <SponsorshipAcceptButton
+            offerId={offerId}
+            sponsor={bid.sponsor}
+            licenseTermsUri={licenseTermsUri}
+            onAccepted={onAccepted}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export interface AssetPageSponsorshipProps {
   nftContract: string;
@@ -81,12 +103,14 @@ export function AssetPageSponsorship({ nftContract, tokenId, isOwner }: AssetPag
     if (!signer) { toast.error("Connect a wallet first"); return; }
     const amount = bidAmounts[offer.offerId];
     if (!amount) { toast.error("Enter a bid amount"); return; }
+    const paymentToken = getTokenByAddress(offer.paymentToken);
+    if (!paymentToken) { toast.error("Unsupported payment token"); return; }
     setIsSubmitting(true);
     try {
       const client = getMedialaneClient();
       await client.services.sponsorship.placeBid(signer, {
         offerId: offer.offerId,
-        amount: BigInt(Math.round(Number(amount) * 1e6)), // assumes USDC-class 6-decimal token; refine once a real offer's paymentToken decimals are resolved
+        amount: BigInt(Math.round(Number(amount) * 10 ** paymentToken.decimals)),
         paymentToken: offer.paymentToken,
       });
       toast.success("Bid placed");
@@ -123,6 +147,17 @@ export function AssetPageSponsorship({ nftContract, tokenId, isOwner }: AssetPag
             {isSubmitting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
             Create Offer
           </Button>
+
+          {tokenOffers.length > 0 && (
+            <div className="space-y-3 pt-2 border-t border-border/30">
+              {tokenOffers.map((offer) => (
+                <div key={offer.offerId} className="rounded-xl border border-border/30 p-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">Min: {offer.minAmount} · {offer.duration}s license</p>
+                  <OfferBids offerId={offer.offerId} licenseTermsUri={offer.licenseTermsUri} onAccepted={mutate} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : isLoading ? (
         <p className="text-xs text-muted-foreground">Loading offers…</p>

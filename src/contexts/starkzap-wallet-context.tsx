@@ -28,6 +28,9 @@ import {
   STARKNET_DROP_FACTORY_CONTRACT,
   STARKNET_CREATOR_COIN_FACTORY_CONTRACT,
   STARKNET_IP_TICKETS_FACTORY_CONTRACT,
+  STARKNET_IP_CLUB_FACTORY_CONTRACT,
+  STARKNET_IP_SPONSORSHIP_CONTRACT,
+  STARKNET_IP_SPONSORSHIP_LICENSE_CONTRACT,
 } from "@medialane/sdk";
 import {
   STARKNET_COLLECTION_721_CONTRACT,
@@ -84,6 +87,22 @@ export const CARTRIDGE_POLICIES = (
     // ── IP Tickets factory (static — per-collection create_event/mint
     // have dynamic addresses and remain outside this list) ────────────
     { target: STARKNET_IP_TICKETS_FACTORY_CONTRACT, method: "deploy_collection" },
+    // ── IP Club factory (static — per-club mint/set_open have dynamic
+    // addresses and remain outside this list, same as Tickets above) ───
+    { target: STARKNET_IP_CLUB_FACTORY_CONTRACT, method: "deploy_club" },
+    // ── IP Sponsorship (single static contract — no factory, so every
+    // method can be session-scoped) ─────────────────────────────────────
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "create_offer" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "place_bid" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "accept_bid" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "set_offer_open" },
+    // `mint_item` on the dedicated sponsorship-license receipt instance —
+    // never the genesis-mint instance. Also static (one shared instance).
+    { target: STARKNET_IP_SPONSORSHIP_LICENSE_CONTRACT, method: "mint_item" },
+    // `approve` for place_bid's payment token deliberately stays OFF this
+    // list, matching the marketplace/creator-coin precedent for
+    // fund-moving ERC-20 calls — a per-tx Cartridge prompt instead of
+    // silent session scope.
     // ── NFT comments ────────────────────────────────────────────────────
     { target: STARKNET_NFTCOMMENTS_CONTRACT, method: "add_comment" },
     // ── Static airdrop / launch mint contracts ──────────────────────────
