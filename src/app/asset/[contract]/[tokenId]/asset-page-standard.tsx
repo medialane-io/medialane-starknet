@@ -33,9 +33,6 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 import { useFullTokenData } from "@/hooks/use-full-token-data";
-import { AssetPageSponsorship } from "./asset-page-sponsorship";
-
-const SPONSORSHIP_ELIGIBLE_SERVICES = new Set(["mip-erc721", "ip-erc721", "mip-erc1155"]);
 
 export function AssetPageStandard() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
@@ -248,10 +245,6 @@ export function AssetPageStandard() {
             {isERC1155 && balances.length > 0 ? (
               <AssetOwnersPanel balances={balances} maxVisible={5} />
             ) : null}
-
-            {SPONSORSHIP_ELIGIBLE_SERVICES.has(getService(collection?.service)?.id ?? "") && (
-              <AssetPageSponsorship nftContract={contract} tokenId={tokenId} isOwner={isOwner} />
-            )}
 
             <div className="pt-5 space-y-5">
               {ownerAddress ? (

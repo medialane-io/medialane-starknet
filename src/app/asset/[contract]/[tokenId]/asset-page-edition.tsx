@@ -18,7 +18,6 @@ import { useDominantColor } from "@/hooks/use-dominant-color";
 import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
-import { getService } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
@@ -30,9 +29,6 @@ import { HelpIcon } from "@/components/ui/help-icon";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
-import { AssetPageSponsorship } from "./asset-page-sponsorship";
-
-const SPONSORSHIP_ELIGIBLE_SERVICES = new Set(["mip-erc721", "ip-erc721", "mip-erc1155"]);
 
 export function AssetPageEdition() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
@@ -180,10 +176,6 @@ export function AssetPageEdition() {
             />
 
             <AssetOwnersPanel balances={holders} maxVisible={8} />
-
-            {SPONSORSHIP_ELIGIBLE_SERVICES.has(getService(collection?.service)?.id ?? "") && (
-              <AssetPageSponsorship nftContract={contract} tokenId={tokenId} isOwner={isOwner} />
-            )}
 
             <AssetCollectionBar
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
