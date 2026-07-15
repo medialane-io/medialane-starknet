@@ -170,7 +170,7 @@ export default function CreatePage() {
             Creator Studio
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.06] tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.06] tracking-tight text-foreground">
             Mint, protect &amp;{" "}
             <span className="gradient-text">generate revenue</span>
           </h1>

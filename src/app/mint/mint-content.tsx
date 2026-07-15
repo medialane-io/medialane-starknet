@@ -93,7 +93,7 @@ export function MintContent() {
                     Creators Fund Campaign
                   </span>
                 </div>
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.05]">
                   Join the{" "}
                   <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                     Creator&apos;s Airdrop

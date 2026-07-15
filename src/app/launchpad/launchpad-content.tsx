@@ -4,41 +4,11 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useTokensByOwner } from "@/hooks/use-tokens";
-import { useUserOrders } from "@/hooks/use-orders";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { FadeIn } from "@/components/ui/motion-primitives";
-import { BRAND } from "@/lib/brand";
 import { getService } from "@medialane/sdk";
 import { LaunchpadGroupedSections, LaunchpadFilterBar, useLaunchpadFilter, type ServiceOverrides } from "@medialane/ui";
-import {
-  Package, Tag, ShoppingCart, ArrowRight, ExternalLink,
-} from "lucide-react";
-
-function HeroStats({ address }: { address: string }) {
-  const { tokens, isLoading: tl } = useTokensByOwner(address);
-  const { orders, isLoading: ol } = useUserOrders(address);
-  const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721");
-  const totalSales = orders.filter((o) => o.status === "FULFILLED");
-  const pills = [
-    { label: "Owned", value: tl ? null : tokens.length, icon: Package, color: BRAND.purple.text },
-    { label: "Listed", value: ol ? null : activeListings.length, icon: Tag, color: BRAND.blue.text },
-    { label: "Sold", value: ol ? null : totalSales.length, icon: ShoppingCart, color: BRAND.orange.text },
-  ];
-
-  return (
-    <div className="flex flex-wrap gap-2 mt-5">
-      {pills.map(({ label, value, icon: Icon, color }) => (
-        <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-sm">
-          <Icon className={`h-3.5 w-3.5 ${color}`} />
-          {value === null ? <Skeleton className="h-4 w-6 inline-block" /> : <span className="font-bold">{value}</span>}
-          <span className="text-muted-foreground">{label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+import { ArrowRight, ExternalLink } from "lucide-react";
 
 // ── dapp-specific service overrides (hrefs + rollout flips) ─────────────────
 const DAPP_OVERRIDES: ServiceOverrides = {
@@ -79,19 +49,15 @@ export function LaunchpadContent() {
         href="https://medialane.io/launchpad"
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-3 right-4 sm:right-6 lg:right-8 z-20 flex items-center gap-2 h-10 pl-3.5 pr-4 rounded-full border border-border/50 bg-background/70 backdrop-blur-xl shadow-lg shadow-black/10 text-sm hover:bg-background/90 active:scale-[0.98] transition-all"
+        className="absolute top-3 right-4 sm:right-6 lg:right-8 z-20 flex items-center gap-2 h-11 px-4 rounded-full bg-background/10 backdrop-blur-xl text-sm font-semibold hover:bg-background/20 active:scale-[0.98] transition-all"
       >
-        <span className="hidden sm:inline text-muted-foreground">New to wallets?</span>
-        <span className="font-semibold">Sign in with email</span>
+        Sign in with email
         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
       </a>
 
       <section className="px-4 pt-16 sm:pt-20 space-y-5">
         <FadeIn>
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-black leading-tight">Launchpad</h1>
-            <p className="text-muted-foreground mt-1.5">Create, mint, and launch your work.</p>
-          </div>
+          <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">Launchpad</h1>
         </FadeIn>
         <FadeIn delay={0.08}>
           <LaunchpadFilterBar
@@ -100,14 +66,8 @@ export function LaunchpadContent() {
             groups={filter.filterableGroups}
             activeGroups={filter.activeGroups}
             onToggleGroup={filter.toggleGroup}
-            resultCount={filter.totalMatches}
           />
         </FadeIn>
-        {isConnected && walletAddress ? (
-          <FadeIn delay={0.16}>
-            <HeroStats address={walletAddress} />
-          </FadeIn>
-        ) : null}
       </section>
 
       {/* Grouped services (shared @medialane/ui component) */}

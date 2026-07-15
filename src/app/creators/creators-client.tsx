@@ -168,7 +168,7 @@ export default function CreatorsPageClient() {
             </span>
           </FadeIn>
           <FadeIn delay={0.08}>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight mb-3">
               Meet the{" "}
               <span className="gradient-text">Creators</span>
             </h1>
