@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { useMedialaneClient } from "./use-medialane-client";
-import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
 import { starknetProvider } from "@/lib/starknet";
 import { Contract, cairo } from "starknet";
 import { IPTicketCollectionABI } from "@medialane/sdk";
@@ -119,32 +118,4 @@ export function useTicketOnchain(contract: string | null, tokenId: string | null
   );
 
   return { ticket: data ?? null, isLoading, error };
-}
-
-// ── useTicketValidity ─────────────────────────────────────────────────────────
-// On-chain door check via the backend — true iff the holder has balance > 0
-// AND the current time is inside the ticket's validity window.
-
-export function useTicketValidity(
-  contractAddress: string | null,
-  tokenId: string | null,
-  wallet: string | null
-) {
-  const key =
-    contractAddress && tokenId && wallet
-      ? `ticket-validity-${contractAddress}-${tokenId}-${wallet}`
-      : null;
-
-  const { data, error, isLoading } = useSWR<{ data: { valid: boolean } }>(
-    key,
-    async () => {
-      const base = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
-      const res = await fetch(`${base}/v1/tickets/${contractAddress}/${tokenId}/validity/${wallet}`);
-      if (!res.ok) throw new Error(`Ticket validity check failed: ${res.status}`);
-      return res.json();
-    },
-    { revalidateOnFocus: false, shouldRetryOnError: false }
-  );
-
-  return { valid: data?.data?.valid ?? false, isLoading, error };
 }

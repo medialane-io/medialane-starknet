@@ -486,14 +486,15 @@ variant pages, all built on a shared component set ported to match medialane.io.
 ### IP Tickets (rebuilt 2026-07-14 — contract `version()` "4.0.0")
 
 Ticket collections are **regular collections** at `/collections/[contract]` — the
-launchpad only launches (`/launchpad/tickets` browse + `/create`; there are NO
-`launchpad/tickets/[contract]/*` pages, that shape was removed). The owner's single
-entry point is one featured **"Mint tickets"** button in the right owner cluster
-(`components/tickets/ticket-owner-actions.tsx`, pure `btn-border-animated` gradient
-fill): its dialog lists tickets read from chain (`useTicketList` — sequential
-`get_ticket` probe, so never-minted tickets appear) with a "New ticket" branch into
-the create dialog (`create_ticket` — the UI never says "event"). Same structure on
-medialane-io (teal accent, ChipiPay rails).
+launchpad launches (`/launchpad/tickets` browse + `/create`) and hosts one owner
+page: `/launchpad/tickets/[contract]/mint` (create a ticket type + mint its full
+supply to the creator in ONE multicall — the creator lists on the marketplace like
+any asset). The owner's single entry point is one featured **"Mint tickets"**
+button in the right owner cluster (`components/tickets/ticket-owner-actions.tsx`,
+pure `btn-border-animated` gradient fill) linking to that page. The earlier
+dialog-based flow was replaced 2026-07-15. Same structure on medialane-io (teal
+accent, ChipiPay rails), and the same shape as IP Club memberships
+(`/launchpad/club/[contract]/mint`, 2026-07-16 rebuild).
 
 **Shared modules** (all under `src/app/asset/[contract]/[tokenId]/`):
 
