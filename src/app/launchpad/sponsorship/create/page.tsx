@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
-import { Handshake, Loader2, CheckCircle2 } from "lucide-react";
+import { Handshake, Loader2, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConnectGate } from "@/components/connect-gate";
@@ -14,11 +14,12 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useSiwsToken } from "@/hooks/use-siws-token";
+import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
-import { resolveTokenImage } from "@/lib/utils";
+import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
@@ -27,6 +28,47 @@ const LISTABLE_TOKENS = SUPPORTED_TOKENS.filter((t) => t.listable);
 const TOKEN_SYMBOLS = LISTABLE_TOKENS.map((t) => t.symbol);
 
 type Mode = "offer" | "propose";
+
+/** Pending proposals on a specific owned asset, with accept/reject actions. */
+function PendingProposalsPanel({ nftContract, signer }: { nftContract: string; signer: AccountInterface | undefined }) {
+  const { proposals, isLoading, mutate } = usePendingProposalsForAsset(nftContract);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const respond = async (proposalId: string, action: "acceptProposal" | "rejectProposal") => {
+    if (!signer) { toast.error("Connect a wallet first"); return; }
+    setActiveId(proposalId);
+    try {
+      const client = getMedialaneClient();
+      await client.services.sponsorship[action](signer, { proposalId });
+      await mutate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to respond to proposal");
+    } finally {
+      setActiveId(null);
+    }
+  };
+
+  if (isLoading || proposals.length === 0) return null;
+
+  return (
+    <div className="space-y-2 rounded-xl border border-border/40 p-3">
+      <p className="text-xs font-semibold text-muted-foreground">Pending proposals on this asset</p>
+      {proposals.map((p) => (
+        <div key={p.id} className="flex items-center justify-between gap-2 text-xs">
+          <span className="truncate text-muted-foreground">{shortenAddress(p.proposer)} — {p.amount}</span>
+          <div className="flex gap-1.5 shrink-0">
+            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "rejectProposal")}>
+              {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+            </Button>
+            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "acceptProposal")}>
+              {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Pins the deal's plain-text terms as a small JSON document — the contract
  *  only ever sees the resulting ipfs:// URI, never the terms themselves. */
@@ -198,6 +240,7 @@ export default function CreateSponsorshipPage() {
                   emptyStateHref="/create/asset"
                   emptyStateLabel="Create one"
                 />
+                {selectedAsset ? <PendingProposalsPanel nftContract={selectedAsset.contractAddress} signer={signer} /> : null}
               </div>
             ) : (
               <div className="space-y-3">
