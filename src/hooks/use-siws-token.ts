@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "@starknet-react/core";
+import { toast } from "sonner";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useWallet } from "@/hooks/use-wallet";
 import {
@@ -49,8 +50,16 @@ export function useSiwsToken() {
 
     setIsSigningIn(true);
     setError(null);
+    // Every SIWS-gated action (image upload, metadata upload, etc.) routes
+    // through here — this is the single place to tell the user a wallet
+    // signature is pending. Extensions don't reliably self-focus, so a
+    // spinner alone can look like a stuck upload with no visible cause
+    // (reported: user didn't notice the wallet needed a signature until they
+    // happened to check it — the loading UI gave no hint why it wasn't moving).
+    const signToast = toast.loading("Check your wallet to sign in and continue.");
     try {
       const newToken = await requestSiwsToken({ walletAddress: activeAddress, signer });
+      toast.dismiss(signToast);
       setToken(newToken);
       return newToken;
     } catch (err) {
@@ -63,6 +72,7 @@ export function useSiwsToken() {
       // the SNIP wallet-api's own "An error occurred (UNKNOWN_ERROR)").
       console.error("[siws] error:", err);
       const message = getFriendlyWalletError(err).message;
+      toast.dismiss(signToast);
       setError(message);
       throw new Error(message);
     } finally {

@@ -17,7 +17,7 @@ import {
   Ticket, Loader2, ImagePlus, X, ShieldCheck, ChevronDown, AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Contract, CairoOption, CairoOptionVariant, cairo, hash } from "starknet";
+import { Contract, CairoOption, CairoOptionVariant, cairo } from "starknet";
 import { normalizeAddress, IPTicketCollectionABI } from "@medialane/sdk";
 
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useCollection } from "@/hooks/use-collections";
+import { predictNextTicketId } from "@/hooks/use-tickets";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
@@ -49,28 +50,11 @@ import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
 
-const TICKET_CREATED_SELECTOR = hash.getSelectorFromName("TicketCreated");
-
 function dateToUnixTimestamp(dateStr: string | undefined): number | undefined {
   if (!dateStr) return undefined;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return undefined;
   return Math.floor(d.getTime() / 1000);
-}
-
-async function readCreatedTicketId(txHash: string): Promise<string | null> {
-  try {
-    const receipt = await starknetProvider.getTransactionReceipt(txHash);
-    const events = (receipt as any).events ?? [];
-    for (const ev of events) {
-      if (ev.keys?.[0] === TICKET_CREATED_SELECTOR && ev.keys?.[1] != null) {
-        const low = BigInt(ev.keys[1]);
-        const high = BigInt(ev.keys[2] ?? "0x0");
-        return (low + (high << 128n)).toString();
-      }
-    }
-  } catch {}
-  return null;
 }
 
 function ToggleGroup({ value, options, onChange }: { value: string; options: readonly string[]; onChange: (v: string) => void }) {
@@ -231,6 +215,12 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
 
       const col = new Contract({ abi: IPTicketCollectionABI as any, address: contract, providerOrAccount: starknetProvider });
 
+      // Ids are sequential and only the owner can ever call create_ticket, so
+      // the id can be predicted ahead of the tx and both calls bundled into
+      // one multicall — one wallet signature for what is one "mint" action.
+      const ticketId = await predictNextTicketId(contract);
+      setMintedTicketId(String(ticketId));
+
       const createCall = col.populate("create_ticket", [
         cairo.uint256(values.maxSupply),
         startTime != null ? new CairoOption(CairoOptionVariant.Some, startTime) : new CairoOption(CairoOptionVariant.None),
@@ -238,15 +228,10 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
         royaltyBps,
         metadataUri,
       ]);
-      const createTxHash = await executeAuto([createCall]);
-      if (!createTxHash) throw new Error("Failed to create ticket");
-      const ticketId = await readCreatedTicketId(createTxHash);
-      if (!ticketId) throw new Error("Ticket created, but could not read its id — check the collection page");
-      setMintedTicketId(ticketId);
-
       const mintCall = col.populate("mint", [address, cairo.uint256(ticketId), cairo.uint256(values.maxSupply)]);
-      const mintTxHash = await executeAuto([mintCall]);
-      if (!mintTxHash) throw new Error("Ticket created, but minting to your wallet failed — mint it from the collection page");
+
+      const txHash = await executeAuto([createCall, mintCall]);
+      if (!txHash) throw new Error("Failed to mint tickets");
 
       setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");
