@@ -18,36 +18,6 @@ import { StarkZapWalletProvider } from "@/contexts/starkzap-wallet-context";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
 
-// TEMPORARY (2026-07-16) — surfaces any uncaught client-side JS error as a
-// visible toast, to diagnose the launchpad "Upload image does nothing" report
-// on prod (where wallet-gated flows make local repro impossible). Remove once
-// the root cause is found — this is not meant to ship long-term.
-function DebugErrorToast() {
-  useEffect(() => {
-    const onError = (e: ErrorEvent) => {
-      toast.error(`Debug JS error: ${e.message}`, {
-        description: (e.error?.stack ?? "").slice(0, 300),
-        duration: 15000,
-      });
-    };
-    const onRejection = (e: PromiseRejectionEvent) => {
-      const reason = e.reason instanceof Error ? e.reason.message : String(e.reason);
-      const stack = e.reason instanceof Error ? e.reason.stack : undefined;
-      toast.error(`Debug promise rejection: ${reason}`, {
-        description: (stack ?? "").slice(0, 300),
-        duration: 15000,
-      });
-    };
-    window.addEventListener("error", onError);
-    window.addEventListener("unhandledrejection", onRejection);
-    return () => {
-      window.removeEventListener("error", onError);
-      window.removeEventListener("unhandledrejection", onRejection);
-    };
-  }, []);
-  return null;
-}
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
@@ -181,7 +151,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StarknetProvider>
           <StarkZapWalletProvider onRequestPrivy={handleRequestPrivy} PrivyConnector={PrivyConnectorMount}>
             <WalletProvider>
-            <DebugErrorToast />
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
             {!isStandalone && <NotificationSpotlight />}
