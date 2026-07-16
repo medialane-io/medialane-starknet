@@ -86,9 +86,9 @@ export const CARTRIDGE_POLICIES = (
     // ── IP Tickets factory (static — per-collection create_event/mint
     // have dynamic addresses and remain outside this list) ────────────
     { target: STARKNET_IP_TICKETS_FACTORY_CONTRACT, method: "deploy_collection" },
-    // ── IP Club factory (static — per-club mint/set_open have dynamic
-    // addresses and remain outside this list, same as Tickets above) ───
-    { target: STARKNET_IP_CLUB_FACTORY_CONTRACT, method: "deploy_club" },
+    // ── IP Club factory (static — per-club create_membership/mint have
+    // dynamic addresses and remain outside this list, same as Tickets) ─
+    { target: STARKNET_IP_CLUB_FACTORY_CONTRACT, method: "deploy_collection" },
     // ── IP Sponsorship v3 (single static contract — registry + license
     // collection in one, no factory, so every method can be session-scoped;
     // the license mints internally from accept_bid/accept_proposal, so

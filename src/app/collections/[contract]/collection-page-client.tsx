@@ -29,6 +29,7 @@ import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
+import { ClubOwnerActions } from "@/components/club/club-owner-actions";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
@@ -485,6 +486,12 @@ export default function CollectionPageClient() {
                 <div className="flex items-center gap-2">
                   {getService(collection.service)?.id === "ip-tickets" && (
                     <TicketOwnerActions
+                      contractAddress={collection.contractAddress}
+                      owner={collection.owner}
+                    />
+                  )}
+                  {getService(collection.service)?.id === "ip-club" && (
+                    <ClubOwnerActions
                       contractAddress={collection.contractAddress}
                       owner={collection.owner}
                     />

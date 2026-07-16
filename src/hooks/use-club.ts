@@ -1,106 +1,149 @@
 "use client";
 
 import useSWR from "swr";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { useMedialaneClient } from "./use-medialane-client";
 import { starknetProvider } from "@/lib/starknet";
-import { normalizeAddress, type ApiCollection } from "@medialane/sdk";
+import { Contract, cairo } from "starknet";
+import { IPClubCollectionABI } from "@medialane/sdk";
 
-const BASE = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
+// ── useMyClubCollections ──────────────────────────────────────────────────────
+// The connected creator's club collections (launchpad browse page).
 
-async function backendFetch<T>(url: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`Backend fetch failed: ${res.status}`);
-  return res.json();
-}
+export function useMyClubCollections(ownerAddress: string | null) {
+  const client = useMedialaneClient();
 
-// deploy_club encodes an unlimited member cap as u64::MAX.
-const UNLIMITED = 0xffffffffffffffffn;
-
-function u256(res: string[], i = 0): bigint {
-  return BigInt(res[i] ?? "0") + (BigInt(res[i + 1] ?? "0") << 128n);
-}
-
-// ── useClubCollections ────────────────────────────────────────────────────────
-
-export function useClubCollections() {
-  const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[]; meta: unknown }>(
-    "ip-club-collections",
-    () => {
-      const params = new URLSearchParams({ service: "ip-club", limit: "50" });
-      return backendFetch(`${BASE}/v1/collections?${params}`);
-    },
+  const { data, error, isLoading, mutate } = useSWR(
+    ownerAddress ? `my-club-collections-${ownerAddress}` : null,
+    () => client.api.getCollectionsByOwner(ownerAddress!),
     { revalidateOnFocus: false }
   );
 
-  return { collections: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
+  const collections = (data?.data ?? []).filter((c) => c.service === "ip-club");
+  return { collections, isLoading, error, mutate };
 }
 
-// ── useClubInfo ────────────────────────────────────────────────────────────────
+// ── useMembershipOnchain ──────────────────────────────────────────────────────
+// Per-tier on-chain record via get_membership(token_id) — supply, minted count,
+// validity window, royalty. Failover-covered read provider + SWR, same pattern
+// as use-tickets. Returns null while loading or if the tier doesn't exist.
 
-export interface ClubInfo {
-  open: boolean;
-  numMembers: number;
-  maxMembers: number | null;
-  entryFee: string | null;
-  paymentToken: string | null;
+export interface MembershipOnchain {
+  maxSupply: bigint;
+  minted: bigint;
+  startTime: number | null;
+  endTime: number | null;
+  royaltyBps: number;
 }
 
-/**
- * Club state read straight from the IPClubCollection contract — the authority.
- * A club is a standalone ERC-721 deployed by the factory; there is no backend
- * club record. Uses the failover RPC provider so it works signed-out.
- */
-export function useClubInfo(clubAddress: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<ClubInfo>(
-    clubAddress ? `club-info-${clubAddress}` : null,
-    async () => {
-      const call = (entrypoint: string) =>
-        starknetProvider.callContract({ contractAddress: clubAddress!, entrypoint, calldata: [] });
-      const [openR, feeR, tokenR, maxR, mintedR] = await Promise.all([
-        call("is_open"),
-        call("entry_fee"),
-        call("payment_token"),
-        call("max_supply"),
-        call("total_minted"),
-      ]);
-      const entryFee = u256(feeR);
-      const paymentTokenRaw = BigInt(tokenR[0] ?? "0");
-      const maxSupply = u256(maxR);
-      return {
-        open: BigInt(openR[0] ?? "0") !== 0n,
-        numMembers: Number(u256(mintedR)),
-        maxMembers: maxSupply >= UNLIMITED ? null : Number(maxSupply),
-        entryFee: entryFee > 0n ? entryFee.toString() : null,
-        paymentToken:
-          paymentTokenRaw > 0n ? normalizeAddress("STARKNET", "0x" + paymentTokenRaw.toString(16)) : null,
-      };
-    },
-    { revalidateOnFocus: false, shouldRetryOnError: false }
+function parseOption(v: any): number | null {
+  if (v == null) return null;
+  // starknet.js parses Option<u64> as CairoOption ({ Some }, unwrap()) or undefined for None.
+  if (typeof v === "object" && typeof v.unwrap === "function") {
+    const inner = v.unwrap();
+    return inner != null ? Number(inner) : null;
+  }
+  if (typeof v === "bigint" || typeof v === "number") return Number(v);
+  return null;
+}
+
+async function readMembership(contract: string, tokenId: string): Promise<MembershipOnchain> {
+  const col = new Contract({
+    abi: IPClubCollectionABI as any,
+    address: contract,
+    providerOrAccount: starknetProvider,
+  });
+  const m: any = await col.call("get_membership", [cairo.uint256(tokenId)]);
+  return {
+    maxSupply: BigInt(m.max_supply),
+    minted: BigInt(m.minted),
+    startTime: parseOption(m.start_time),
+    endTime: parseOption(m.end_time),
+    royaltyBps: Number(m.royalty_bps),
+  };
+}
+
+// ── useMembershipList ─────────────────────────────────────────────────────────
+// All membership tiers in a club, straight from the chain. Tier ids are
+// sequential from 1 and there is no count getter, so we probe get_membership
+// until the first miss (capped). This includes tiers that have never been
+// minted — which the indexer can't know about yet.
+
+export interface MembershipListItem extends MembershipOnchain {
+  id: string;
+}
+
+const MEMBERSHIP_PROBE_CAP = 64;
+
+async function readMembershipList(contract: string): Promise<MembershipListItem[]> {
+  const memberships: MembershipListItem[] = [];
+  for (let id = 1; id <= MEMBERSHIP_PROBE_CAP; id++) {
+    try {
+      const m = await readMembership(contract, String(id));
+      memberships.push({ id: String(id), ...m });
+    } catch {
+      break; // sequential ids — first miss is the end
+    }
+  }
+  return memberships;
+}
+
+// ── predictNextMembershipId ───────────────────────────────────────────────────
+// Ids are assigned sequentially on-chain starting at 1, and only the collection
+// owner can ever call create_membership. That means the caller minting a new
+// tier can safely predict its id ahead of time (current count + 1) and bundle
+// create_membership + mint into ONE multicall — one wallet signature instead of
+// two separate transactions for what is, from the creator's point of view, a
+// single "create a membership" action.
+
+export async function predictNextMembershipId(contract: string): Promise<number> {
+  const memberships = await readMembershipList(contract);
+  return memberships.length + 1;
+}
+
+export function useMembershipList(contract: string | null) {
+  const { data, error, isLoading, mutate } = useSWR<MembershipListItem[]>(
+    contract ? `membership-list-${contract}` : null,
+    () => readMembershipList(contract!),
+    { revalidateOnFocus: false, dedupingInterval: 15_000 }
   );
 
-  return { info: data ?? null, isLoading, error, mutate };
+  return { memberships: data ?? [], isLoading, error, mutate };
 }
 
-// ── useClubMembership ──────────────────────────────────────────────────────────
+export function useMembershipOnchain(contract: string | null, tokenId: string | null) {
+  const { data, error, isLoading } = useSWR<MembershipOnchain>(
+    contract && tokenId ? `membership-onchain-${contract}-${tokenId}` : null,
+    () => readMembership(contract!, tokenId!),
+    { revalidateOnFocus: false, shouldRetryOnError: false, dedupingInterval: 30_000 }
+  );
 
-/** Membership = holding a card: `balance_of(wallet) > 0` on the club contract. */
-export function useClubMembership(clubAddress: string | null, wallet: string | null) {
-  const key = clubAddress && wallet ? `club-membership-${clubAddress}-${wallet}` : null;
+  return { membership: data ?? null, isLoading, error };
+}
 
-  const { data, error, isLoading, mutate } = useSWR<{ isMember: boolean }>(
+// ── useIsMemberOf ─────────────────────────────────────────────────────────────
+// On-chain member check for one tier — true iff the holder has balance > 0
+// AND the current time is inside the tier's validity window.
+
+export function useIsMemberOf(
+  contract: string | null,
+  tokenId: string | null,
+  wallet: string | null
+) {
+  const key =
+    contract && tokenId && wallet ? `is-member-of-${contract}-${tokenId}-${wallet}` : null;
+
+  const { data, error, isLoading } = useSWR<boolean>(
     key,
     async () => {
-      const res = await starknetProvider.callContract({
-        contractAddress: clubAddress!,
-        entrypoint: "balance_of",
-        calldata: [wallet!],
+      const col = new Contract({
+        abi: IPClubCollectionABI as any,
+        address: contract!,
+        providerOrAccount: starknetProvider,
       });
-      return { isMember: u256(res) > 0n };
+      return Boolean(await col.call("is_member_of", [cairo.uint256(tokenId!), wallet!]));
     },
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
-  return { isMember: data?.isMember ?? false, isLoading, error, mutate };
+  return { isMember: data ?? false, isLoading, error };
 }

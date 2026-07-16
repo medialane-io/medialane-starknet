@@ -9,6 +9,7 @@ import { AssetPagePop } from "./asset-page-pop";
 import { AssetPageDrop } from "./asset-page-drop";
 import { AssetPageEdition } from "./asset-page-edition";
 import { AssetPageTicket } from "./asset-page-ticket";
+import { AssetPageMembership } from "./asset-page-membership";
 import { getService } from "@medialane/sdk";
 
 // Registry-driven (05-service-model). Falls back to standard-based generic
@@ -52,6 +53,7 @@ export default function AssetPageClient() {
   if (assetType === "pop")     return <AssetPagePop />;
   if (assetType === "drop")    return <AssetPageDrop />;
   if (assetType === "ticket")  return <AssetPageTicket />;
+  if (assetType === "club")    return <AssetPageMembership />;
   if (assetType === "edition") return <AssetPageEdition />;
   return <AssetPageStandard />;
 }
