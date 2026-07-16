@@ -15,7 +15,7 @@ import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { useTicketOnchain, useTicketValidity, type TicketOnchain } from "@/hooks/use-tickets";
+import { useTicketOnchain, type TicketOnchain } from "@/hooks/use-tickets";
 import { ipfsToHttp, resolveTokenImage, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
@@ -80,32 +80,16 @@ function TicketStatusChip({ status }: { status: TicketStatus }) {
   );
 }
 
-// ── Ticket panel — one card: identity, supply, royalty, and (if the
-// connected wallet holds this ticket) its validity — no separate "Your
-// ticket" card duplicating the same status.
+// ── Ticket panel — identity, quantity, royalty, and validity window. Holder
+// status (quantity held, valid/ready-to-present) lives in the owner row
+// after the action buttons — not duplicated here.
 
-function TicketPanel({
-  contract,
-  tokenId,
-  quantity,
-  ticket,
-}: {
-  contract: string;
-  tokenId: string;
-  quantity: number;
-  ticket: TicketOnchain;
-}) {
-  const { address } = useWallet();
-  const { valid, isLoading } = useTicketValidity(contract, tokenId, address && quantity > 0 ? address : null);
+function TicketPanel({ ticket }: { ticket: TicketOnchain }) {
   const status = ticketStatus(ticket);
-  const showHolderStatus = !!address && quantity > 0;
-  const invalidReason =
-    status === "upcoming" ? "Not valid yet — the validity window hasn't opened." :
-    status === "ended" ? "The validity window has ended." :
-    "No valid ticket for this wallet.";
+  const hasWindow = ticket.startTime != null || ticket.endTime != null;
 
   return (
-    <div className="rounded-2xl border border-border bg-card/60 p-4 space-y-3">
+    <div className="rounded-2xl bg-gradient-to-br from-muted/40 to-transparent p-4 space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <Ticket className="h-4 w-4 text-brand-blue" />
@@ -113,35 +97,17 @@ function TicketPanel({
         </div>
         <TicketStatusChip status={status} />
       </div>
-      <p className="text-sm text-muted-foreground">{windowLabel(ticket)}</p>
+      {hasWindow && <p className="text-sm text-muted-foreground">{windowLabel(ticket)}</p>}
       <div className="flex gap-8">
         <div>
-          <p className="text-xs text-muted-foreground">Minted</p>
-          <p className="text-sm font-semibold tabular-nums">
-            {ticket.minted.toString()} of {ticket.maxSupply.toString()}
-          </p>
+          <p className="text-xs text-muted-foreground">Quantity</p>
+          <p className="text-sm font-semibold tabular-nums">{ticket.maxSupply.toString()}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Royalty</p>
           <p className="text-sm font-semibold tabular-nums">{(ticket.royaltyBps / 100).toFixed(1)}%</p>
         </div>
       </div>
-
-      {showHolderStatus && (
-        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground tabular-nums">You hold ×{quantity}</span>
-          {isLoading ? (
-            <p className="text-xs text-muted-foreground">Checking on-chain…</p>
-          ) : valid ? (
-            <div className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <p className="text-xs font-medium">Valid — ready to present</p>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">{invalidReason}</p>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -265,14 +231,7 @@ export function AssetPageTicket() {
               />
             </div>
 
-            {ticket && (
-              <TicketPanel
-                contract={contract}
-                tokenId={tokenId}
-                quantity={myQuantity}
-                ticket={ticket}
-              />
-            )}
+            {ticket && <TicketPanel ticket={ticket} />}
 
             <AssetMarketplacePanel
               cheapest={cheapest}
