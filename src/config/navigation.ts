@@ -46,8 +46,8 @@ export const navigation = {
     launchpad: [
         { title: "Creator Launchpad", href: "/launchpad", icon: Rocket, description: "Creator tools dashboard" },
         { title: "Creator Studio", href: "/create", icon: Rocket, description: "Creator studio" },
-        { title: "Standard Collection", href: "/create/collection", icon: PlusCircle, description: "Start from scratch" },
-        { title: "Mint Asset", href: "/create/asset", icon: Box, description: "Mint single asset" },
+        { title: "Standard Collection", href: "/launchpad/single-editions/collection", icon: PlusCircle, description: "Start from scratch" },
+        { title: "Mint Asset", href: "/launchpad/single-editions", icon: Box, description: "Mint single asset" },
         { title: "Create with IP Templates", href: "/create/templates", icon: LayoutTemplate, description: "Use legal templates" },
     ],
     portfolio: [
@@ -67,8 +67,8 @@ export const navigation = {
     ],
     create: [
         { title: "Creator Studio", href: "/create", icon: Rocket, description: "Creator tools dashboard" },
-        { title: "IP Collection", href: "/create/collection", icon: PlusCircle, description: "Start from scratch" },
-        { title: "IP Asset", href: "/create/asset", icon: Box, description: "Mint single asset" },
+        { title: "IP Collection", href: "/launchpad/single-editions/collection", icon: PlusCircle, description: "Start from scratch" },
+        { title: "IP Asset", href: "/launchpad/single-editions", icon: Box, description: "Mint single asset" },
         { title: "Create NFT", href: "/create/templates/nft", icon: Box, description: "Create NFT" },
         { title: "IP Templates", href: "/create/templates", icon: LayoutTemplate, description: "Use legal templates" },
     ],

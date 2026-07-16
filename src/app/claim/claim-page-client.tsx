@@ -140,7 +140,7 @@ export function ClaimPageClient() {
             {/* CTAs */}
             <div className="flex flex-wrap gap-2 pt-1 border-t border-border/60">
               <Button size="sm" asChild>
-                <Link href="/create/collection">
+                <Link href="/launchpad/single-editions/collection">
                   Create a collection <ArrowRight className="h-3.5 w-3.5 ml-1" />
                 </Link>
               </Button>

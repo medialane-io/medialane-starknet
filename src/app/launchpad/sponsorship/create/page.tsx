@@ -237,7 +237,7 @@ export default function CreateSponsorshipPage() {
                   isLoading={assetsLoading}
                   selected={selectedAsset}
                   onSelect={setSelectedAsset}
-                  emptyStateHref="/create/asset"
+                  emptyStateHref="/launchpad/single-editions"
                   emptyStateLabel="Create one"
                 />
                 {selectedAsset ? <PendingProposalsPanel nftContract={selectedAsset.contractAddress} signer={signer} /> : null}

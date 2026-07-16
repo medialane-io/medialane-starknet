@@ -391,8 +391,8 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
                 <p className="text-xs font-semibold text-muted-foreground px-1">Creator Tools</p>
                 <div className="grid gap-1">
                   {[
-                    { label: "Mint IP Asset", icon: PlusCircle, href: "/create/asset" },
-                    { label: "Deploy Collection", icon: Rocket, href: "/create/collection" },
+                    { label: "Mint IP Asset", icon: PlusCircle, href: "/launchpad/single-editions" },
+                    { label: "Deploy Collection", icon: Rocket, href: "/launchpad/single-editions/collection" },
                     { label: "IP Templates", icon: ShieldCheck, href: "/create/templates" },
                     { label: "Account Settings", icon: Settings, href: "/portfolio/settings" },
                   ].map((item) => (

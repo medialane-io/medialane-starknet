@@ -51,7 +51,7 @@ export default function CreateDropPage() {
 
   const [items, setItems] = useState<DraftItem[]>([]);
   // Read only at submit time — keep in a ref so each keystroke in IPTypeFields
-  // doesn't re-render this whole form (see /create/asset flicker fix).
+  // doesn't re-render this whole form (see /launchpad/single-editions flicker fix).
   const metadataFieldsRef = useRef<MetadataField[]>([]);
   const handleMetadataFields = useCallback((fields: MetadataField[]) => {
     metadataFieldsRef.current = fields;

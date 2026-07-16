@@ -55,7 +55,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function CreateCollectionPage() {
+export default function LaunchpadCreateCollectionPage() {
   const { execute: executeTransaction, status, txHash } = useTx();
   const { address: walletAddress, isConnected: hasWallet } = useWallet();
   const client = useMedialaneClient();
@@ -228,7 +228,7 @@ export default function CreateCollectionPage() {
         txHash={txHash}
         error={collectionError}
         onCreateAnother={handleCreateAnother}
-        mintHref="/create/asset"
+        mintHref="/launchpad/single-editions"
       />
 
       <ConnectGate

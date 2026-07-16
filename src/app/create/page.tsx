@@ -126,7 +126,7 @@ const FEATURES = [
 
 const ACTIONS = [
   {
-    href: "/create/asset",
+    href: "/launchpad/single-editions",
     icon: ImagePlus,
     label: "Mint IP Asset",
     description:
@@ -137,7 +137,7 @@ const ACTIONS = [
     iconColor: "text-violet-600 dark:text-violet-400",
   },
   {
-    href: "/create/collection",
+    href: "/launchpad/single-editions/collection",
     icon: Layers,
     label: "Deploy Collection",
     description:

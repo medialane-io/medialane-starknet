@@ -168,7 +168,7 @@ export function DropCreateForm({
         <DropItemList items={items} collectionName={collectionName} onAddFiles={onAddItemFiles} onRemove={onRemoveItem} onEdit={onEditItem} />
       </Section>
 
-      {/* Licensing Terms — collapsible panel (matches /create/asset) */}
+      {/* Licensing Terms — collapsible panel (matches /launchpad/single-editions) */}
       <Collapsible open={licensingOpen} onOpenChange={setLicensingOpen}>
         <div className="sm:overflow-hidden sm:rounded-xl sm:border sm:border-border">
           <CollapsibleTrigger asChild>
@@ -241,7 +241,7 @@ export function DropCreateForm({
         </div>
       </Collapsible>
 
-      {/* IP Type & Metadata — collapsible panel (matches /create/asset) */}
+      {/* IP Type & Metadata — collapsible panel (matches /launchpad/single-editions) */}
       <Collapsible open={ipTypeOpen} onOpenChange={onSetIpTypeOpen}>
         <div className="sm:overflow-hidden sm:rounded-xl sm:border sm:border-border">
           <CollapsibleTrigger asChild>
