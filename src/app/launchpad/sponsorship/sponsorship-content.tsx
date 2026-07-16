@@ -27,7 +27,7 @@ function SponsorshipOfferCard({ offer }: { offer: SponsorshipOffer }) {
 
   return (
     <AssetCard
-      href={`/asset/${offer.nftContract}/${offer.tokenId}`}
+      href={`/launchpad/sponsorship/${offer.offerId}`}
       name={token?.metadata?.name ?? `Token #${offer.tokenId}`}
       image={token?.metadata?.image ?? null}
       subtitle={shortenAddress("STARKNET", offer.nftContract)}
@@ -77,14 +77,14 @@ export function SponsorshipContent() {
         <FadeIn>
           <div className="rounded-2xl border border-brand-rose/20 bg-brand-rose/5 p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-sm font-semibold">Own IP assets on Medialane?</p>
+              <p className="text-sm font-semibold">Start a sponsorship deal</p>
               <p className="text-xs text-muted-foreground">
-                Open a sponsorship offer from any asset you own — sponsors bid, you accept, they receive a license.
+                Offer one of your assets for sponsors to bid on, or propose terms directly on one you&apos;d like to sponsor.
               </p>
             </div>
-            <Button asChild variant="outline" size="sm" className="shrink-0 border-brand-rose/30 text-brand-rose hover:bg-brand-rose/5 gap-1.5">
-              <Link href="/portfolio">
-                Go to my assets
+            <Button asChild size="sm" className="shrink-0 bg-brand-rose hover:brightness-110 text-white gap-1.5">
+              <Link href="/launchpad/sponsorship/create">
+                Get started
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>

@@ -30,7 +30,6 @@ import {
   STARKNET_IP_TICKETS_FACTORY_CONTRACT,
   STARKNET_IP_CLUB_FACTORY_CONTRACT,
   STARKNET_IP_SPONSORSHIP_CONTRACT,
-  STARKNET_IP_SPONSORSHIP_LICENSE_CONTRACT,
 } from "@medialane/sdk";
 import {
   STARKNET_COLLECTION_721_CONTRACT,
@@ -90,15 +89,19 @@ export const CARTRIDGE_POLICIES = (
     // ── IP Club factory (static — per-club mint/set_open have dynamic
     // addresses and remain outside this list, same as Tickets above) ───
     { target: STARKNET_IP_CLUB_FACTORY_CONTRACT, method: "deploy_club" },
-    // ── IP Sponsorship (single static contract — no factory, so every
-    // method can be session-scoped) ─────────────────────────────────────
+    // ── IP Sponsorship v3 (single static contract — registry + license
+    // collection in one, no factory, so every method can be session-scoped;
+    // the license mints internally from accept_bid/accept_proposal, so
+    // there is no separate receipt-mint entrypoint anymore) ────────────────
     { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "create_offer" },
-    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "place_bid" },
-    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "accept_bid" },
     { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "set_offer_open" },
-    // `mint_item` on the dedicated sponsorship-license receipt instance —
-    // never the genesis-mint instance. Also static (one shared instance).
-    { target: STARKNET_IP_SPONSORSHIP_LICENSE_CONTRACT, method: "mint_item" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "place_bid" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "retract_bid" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "accept_bid" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "propose_sponsorship" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "withdraw_proposal" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "accept_proposal" },
+    { target: STARKNET_IP_SPONSORSHIP_CONTRACT, method: "reject_proposal" },
     // `approve` for place_bid's payment token deliberately stays OFF this
     // list, matching the marketplace/creator-coin precedent for
     // fund-moving ERC-20 calls — a per-tx Cartridge prompt instead of
