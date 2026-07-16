@@ -83,6 +83,18 @@ export function AssetMarketplaceDialogs({
     setCancelOpen,
   } = dialogs;
 
+  // A dialog's on-chain tx confirming doesn't mean the backend has indexed
+  // the resulting event yet (~6s poll cycle) — an immediate mutate() can
+  // still return the pre-write list, leaving stale UI (e.g. "List on
+  // Marketplace" after a listing actually went through) until the next
+  // scheduled poll. One extra revalidation a few seconds later closes that
+  // gap without waiting for the full poll interval. Same pattern as io's
+  // useMarketplace() "stale order sync".
+  const handleSuccess = useCallback(() => {
+    mutateListings();
+    setTimeout(mutateListings, 8000);
+  }, [mutateListings]);
+
   return (
     <>
       {purchaseOrder && (
@@ -90,7 +102,7 @@ export function AssetMarketplaceDialogs({
           order={purchaseOrder}
           open
           onOpenChange={(v) => { if (!v) setPurchaseOrder(null); }}
-          onSuccess={mutateListings}
+          onSuccess={handleSuccess}
         />
       )}
       <ListingDialog
@@ -101,7 +113,7 @@ export function AssetMarketplaceDialogs({
         tokenName={tokenName}
         tokenImage={tokenImage}
         tokenStandard={tokenStandard}
-        onSuccess={mutateListings}
+        onSuccess={handleSuccess}
       />
       <OfferDialog
         open={offerOpen}
@@ -116,7 +128,7 @@ export function AssetMarketplaceDialogs({
         order={orderToCancel}
         open={cancelOpen}
         onOpenChange={(v) => { setCancelOpen(v); if (!v) setOrderToCancel(null); }}
-        onSuccess={mutateListings}
+        onSuccess={handleSuccess}
       />
       <TransferDialog
         open={transferOpen}
@@ -127,7 +139,7 @@ export function AssetMarketplaceDialogs({
         tokenImage={tokenImage}
         tokenStandard={tokenStandard === "ERC1155" ? "ERC1155" : "ERC721"}
         hasActiveListing={hasActiveListing}
-        onSuccess={mutateListings}
+        onSuccess={handleSuccess}
       />
     </>
   );
