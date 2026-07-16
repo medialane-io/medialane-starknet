@@ -45,7 +45,7 @@ export function AssetPagePop() {
       <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8 items-start">
           <motion.div
             initial={shouldReduce ? false : { scale: 1.0, opacity: 0 }}
             animate={{ scale: 1.02, opacity: 1 }}

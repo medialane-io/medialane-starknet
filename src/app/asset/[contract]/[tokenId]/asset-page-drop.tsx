@@ -174,7 +174,7 @@ export function AssetPageDrop() {
   if (isLoading) {
     return (
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8">
           <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
           <div className="space-y-4">
             <Skeleton className="h-8 w-3/4" />
@@ -209,7 +209,7 @@ export function AssetPageDrop() {
       <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8 items-start">
           <AssetMediaColumn
             shouldReduce={Boolean(shouldReduce)}
             image={image ?? ""}
