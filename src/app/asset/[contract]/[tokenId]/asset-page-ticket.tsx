@@ -6,6 +6,7 @@
 // "Your ticket" door panel driven by the on-chain is_valid check.
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, CheckCircle2, Clock, CalendarX2 } from "lucide-react";
@@ -16,7 +17,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
 import { useTicketOnchain, useTicketValidity, type TicketOnchain } from "@/hooks/use-tickets";
-import { ipfsToHttp, cn } from "@/lib/utils";
+import { ipfsToHttp, resolveTokenImage, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
@@ -25,7 +26,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
@@ -162,6 +163,74 @@ function YourTicketPanel({
   );
 }
 
+// ── Ticket media — a stub-shaped card, not a full-bleed artwork square ───────
+// Tickets aren't collectible art, so they don't get the generic
+// AssetMediaColumn (unbounded-aspect image + edition-count tiles). A fixed
+// aspect ratio keeps the image from ballooning to its native size, and the
+// perforated divider + "Admit One" footer reads as a ticket at a glance.
+
+function TicketMediaCard({
+  shouldReduce,
+  image,
+  imageAlt,
+  imgError,
+  onImageError,
+  totalMinted,
+  maxSupply,
+}: {
+  shouldReduce: boolean;
+  image: string | null;
+  imageAlt: string;
+  imgError: boolean;
+  onImageError: () => void;
+  totalMinted: number;
+  maxSupply: number | null;
+}) {
+  return (
+    <motion.div
+      initial={shouldReduce ? false : { scale: 1.0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="lg:sticky lg:top-16"
+    >
+      <div className="rounded-3xl overflow-hidden border border-border bg-card shadow-sm">
+        <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-brand-blue/15 to-brand-purple/15">
+          {image && !imgError ? (
+            <Image
+              src={image}
+              alt={imageAlt}
+              fill
+              sizes="(max-width: 1024px) 100vw, 66vw"
+              className="object-cover"
+              onError={onImageError}
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Ticket className="h-16 w-16 text-brand-blue/40" />
+            </div>
+          )}
+        </div>
+
+        <div className="relative h-6">
+          <div className="absolute inset-y-0 left-0 w-6 -translate-x-1/2 rounded-full bg-background" />
+          <div className="absolute inset-y-0 right-0 w-6 translate-x-1/2 rounded-full bg-background" />
+          <div className="absolute inset-x-9 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-border" />
+        </div>
+
+        <div className="flex items-center justify-between px-5 py-3.5">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Admit One
+          </span>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {totalMinted.toLocaleString()}{maxSupply != null ? ` of ${maxSupply.toLocaleString()}` : ""} minted
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function AssetPageTicket() {
@@ -229,10 +298,9 @@ export function AssetPageTicket() {
   }
 
   const name = token.metadata?.name || `Ticket #${token.tokenId}`;
-  const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
+  const image = resolveTokenImage(token.metadata?.image);
   const description = token.metadata?.description;
   const holders = token.balances ?? [];
-  const uniqueHolders = holders.length;
   const totalMinted = holders.reduce((sum, b) => sum + parseInt(b.amount, 10), 0);
   const myQuantity = walletAddress
     ? parseInt(
@@ -251,18 +319,14 @@ export function AssetPageTicket() {
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] lg:gap-10 gap-8 items-start">
-          <AssetMediaColumn
+          <TicketMediaCard
             shouldReduce={Boolean(shouldReduce)}
-            image={image ?? ""}
+            image={image}
             imageAlt={name}
             imgError={imgError}
             onImageError={() => setImgError(true)}
-            fallback={(
-              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-blue/20 to-brand-purple/20">
-                <Ticket className="h-24 w-24 text-brand-blue/40" />
-              </div>
-            )}
-            stats={buildEditionStats(totalMinted, uniqueHolders)}
+            totalMinted={totalMinted}
+            maxSupply={ticket ? Number(ticket.maxSupply) : null}
           />
 
           <motion.div
