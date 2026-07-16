@@ -1,13 +1,15 @@
 "use client";
 
-// Owner-only ticket management — a real page, not a popup. Create tickets and
-// mint them to attendees are both first-class page content, matching the
-// pop/drop/[contract]/manage pattern. The two dialogs this replaced
-// (create-tickets-dialog.tsx, mint-tickets-dialog.tsx) worked but stacked a
-// long scrollable form inside a fixed-height popup panel — poor on mobile.
-// Only transaction status stays a dialog (MintProgressDialog) — that's a
-// transient overlay, not the primary form surface, same split every other
-// launchpad create page already uses.
+// Owner-only ticket management — a real page, not a popup, built on the same
+// launchpad create-page standard every other service uses (ClaimRouteShell:
+// branded header, live MedialaneCollectionCard preview + ClaimRail aside).
+// The two dialogs this replaced (create-tickets-dialog.tsx,
+// mint-tickets-dialog.tsx) put a long, multi-section form in a fixed-height
+// popup — poor on mobile. A first pass moved the form to a page but reused
+// the bare-bones pop/drop/[contract]/manage shape (a plain utility page,
+// no header/preview/rail) instead of the create-page standard — this is the
+// corrected version. Only transaction status stays a dialog
+// (MintProgressDialog) — a transient overlay, not the primary form surface.
 
 import { use, useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -16,8 +18,8 @@ import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowLeft, Ticket, Loader2, ImagePlus, X, ShieldCheck, ChevronDown,
-  Plus, AlertCircle,
+  Ticket, Loader2, ImagePlus, X, ShieldCheck, ChevronDown,
+  Plus, AlertCircle, CheckCircle2, Gift,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Contract, CairoOption, CairoOptionVariant, cairo, hash } from "starknet";
@@ -33,7 +35,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConnectWallet } from "@/components/ConnectWallet";
+import { ConnectGate } from "@/components/connect-gate";
+import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { MedialaneCollectionCard, ClaimRail } from "@medialane/ui";
 import { MintProgressDialog, type MintStep } from "@/components/marketplace/mint-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
@@ -50,6 +54,32 @@ import { cn } from "@/lib/utils";
 import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
 
 const TICKET_CREATED_SELECTOR = hash.getSelectorFromName("TicketCreated");
+
+// ── Rail (aside) ────────────────────────────────────────────────────────────
+
+function ManageTicketsAside({ imagePreview, name, collectionSymbol, creator }: {
+  imagePreview: string | null; name: string; collectionSymbol: string; creator?: string;
+}) {
+  return (
+    <>
+      <MedialaneCollectionCard image={imagePreview} name={name || "Your ticket"} collection={collectionSymbol} creator={creator} />
+      <ClaimRail
+        included={[
+          { icon: Ticket, title: "One collection, many tickets", desc: "Create as many ticket types as you need — each with its own supply and validity window." },
+          { icon: Gift, title: "You keep full control", desc: "Only you can create and mint tickets for this collection." },
+        ]}
+        steps={[
+          "Create a ticket — set supply, image, and an optional validity window",
+          "Mint it to attendees directly, right here on this page",
+          "Attendees hold their tickets and can present them for validation",
+        ]}
+        trustIcon={Ticket}
+        trustLead="Your tickets, your rules."
+        trust="Only you can create and mint tickets. Holders keep their tickets forever."
+      />
+    </>
+  );
+}
 
 // ── Mint section ──────────────────────────────────────────────────────────
 
@@ -149,12 +179,12 @@ function MintSection({ contract, onOpenCreate }: { contract: string; onOpenCreat
         onPrimaryAction={() => { resetTx(); void mutateList(); }}
       />
 
-      <div className="bento-cell p-5 space-y-4">
+      <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Ticket className="h-4 w-4 text-brand-blue" />
           <span className="font-semibold text-sm">Mint tickets</span>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground -mt-2">
           Send tickets directly to a wallet. Recipients hold their tickets — you cannot revoke them.
         </p>
 
@@ -283,7 +313,18 @@ function ToggleGroup({ value, options, onChange }: { value: string; options: rea
   );
 }
 
-function CreateSection({ contract, forwardRef }: { contract: string; forwardRef: React.RefObject<HTMLDivElement | null> }) {
+interface CreateSectionProps {
+  contract: string;
+  forwardRef: React.RefObject<HTMLDivElement | null>;
+  form: ReturnType<typeof useForm<CreateFormValues>>;
+  imagePreview: string | null;
+  imageUri: string | null;
+  imageUploading: boolean;
+  onImageSelect: (file: File) => void;
+  onImageClear: () => void;
+}
+
+function CreateSection({ contract, forwardRef, form, imagePreview, imageUri, imageUploading, onImageSelect, onImageClear }: CreateSectionProps) {
   const { isConnected } = useWallet();
   const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
@@ -294,57 +335,9 @@ function CreateSection({ contract, forwardRef }: { contract: string; forwardRef:
   const [createdTicketId, setCreatedTicketId] = useState<string | null>(null);
   const [licensingOpen, setLicensingOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const previewRef = useRef<string | null>(null);
-
-  useEffect(() => () => { if (previewRef.current) URL.revokeObjectURL(previewRef.current); }, []);
-
-  const form = useForm<CreateFormValues>({
-    resolver: zodResolver(createSchema),
-    defaultValues: {
-      name: "", description: "", external_url: absoluteUrl(`/collections/${contract}`),
-      maxSupply: "100", royalty: 2.5, licenseType: "CC BY-SA", commercialUse: "Yes",
-      derivatives: "Share-Alike", attribution: "Required", geographicScope: "Worldwide", aiPolicy: "Not Allowed",
-    },
-  });
 
   const resetTx = () => { setMintStep("idle"); setDialogTxStatus("idle"); setMintError(null); setCreatedTicketId(null); };
-
-  const handleImageSelect = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-    const url = URL.createObjectURL(file);
-    previewRef.current = url;
-    setImagePreview(url);
-    setImageUri(null);
-    setImageUploading(true);
-    try {
-      const token = await getValidToken();
-      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
-      const signedData = await signedRes.json();
-      if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
-      const fd = new FormData();
-      fd.append("file", file, file.name);
-      fd.append("network", "public");
-      fd.append("name", file.name);
-      const up = await fetch(signedData.url, { method: "POST", body: fd });
-      const { data } = await up.json();
-      if (!data?.cid) throw new Error("No CID");
-      setImageUri(`ipfs://${data.cid}`);
-      toast.success("Image uploaded");
-    } catch (err) {
-      if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }
-      setImagePreview(null);
-      const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
-    } finally {
-      setImageUploading(false);
-    }
-  };
 
   async function onSubmit(values: CreateFormValues) {
     if (!isConnected) { toast.error("Connect your wallet first"); return; }
@@ -414,7 +407,7 @@ function CreateSection({ contract, forwardRef }: { contract: string; forwardRef:
   const busy = mintStep === "uploading" || mintStep === "processing";
 
   return (
-    <div ref={forwardRef} className="bento-cell p-5 space-y-5">
+    <div ref={forwardRef} className="space-y-5 pt-2 border-t border-border/30">
       <MintProgressDialog
         open={mintStep !== "idle"}
         mintStep={mintStep}
@@ -423,14 +416,14 @@ function CreateSection({ contract, forwardRef }: { contract: string; forwardRef:
         imagePreview={imagePreview}
         txHash={null}
         error={mintError}
-        onMintAnother={() => { resetTx(); form.reset({ ...form.getValues(), name: "", description: "", maxSupply: "100" }); setImagePreview(null); setImageUri(null); }}
+        onMintAnother={() => { resetTx(); form.reset({ ...form.getValues(), name: "", description: "", maxSupply: "100" }); onImageClear(); }}
         uploadStepLabel="Upload ticket metadata"
         processingTitle="Creating tickets on Starknet…"
         successTitle="Tickets created!"
         successSubtitle={createdTicketId ? `"${form.getValues("name")}" is live as ticket #${createdTicketId} — mint it to attendees above whenever you're ready.` : `"${form.getValues("name")}" is live — mint it to attendees above whenever you're ready.`}
         mintAnotherLabel="Create more tickets"
         primaryActionLabel="Done"
-        onPrimaryAction={() => { resetTx(); form.reset(); setImagePreview(null); setImageUri(null); }}
+        onPrimaryAction={() => { resetTx(); form.reset(); onImageClear(); }}
       />
 
       <div className="flex items-center gap-2">
@@ -454,12 +447,12 @@ function CreateSection({ contract, forwardRef }: { contract: string; forwardRef:
                 {imageUploading && <div className="absolute inset-0 bg-background/70 flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin" /></div>}
               </div>
               <div className="space-y-1.5">
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }} />
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onImageSelect(f); }} />
                 <Button type="button" variant="outline" size="sm" disabled={imageUploading} onClick={() => fileInputRef.current?.click()}>
                   {imageUploading ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Uploading…</> : imagePreview ? "Change" : "Upload image"}
                 </Button>
                 {imagePreview && (
-                  <button type="button" onClick={() => { setImagePreview(null); setImageUri(null); }} className="flex items-center gap-1 text-xs text-muted-foreground sm:hover:text-destructive transition-colors">
+                  <button type="button" onClick={onImageClear} className="flex items-center gap-1 text-xs text-muted-foreground sm:hover:text-destructive transition-colors">
                     <X className="h-3 w-3" /> Remove
                   </button>
                 )}
@@ -611,23 +604,72 @@ export default function TicketsManagePage({ params }: { params: Promise<{ contra
   const contract = normalizeAddress("STARKNET", rawContract);
   const { address, isConnected } = useWallet();
   const { collection, isLoading } = useCollection(contract);
+  const { getValidToken } = useSiwsToken();
   const createSectionRef = useRef<HTMLDivElement>(null);
+
+  // Lifted from CreateSection so the aside's live preview can reflect it.
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const previewRef = useRef<string | null>(null);
+  useEffect(() => () => { if (previewRef.current) URL.revokeObjectURL(previewRef.current); }, []);
+
+  const form = useForm<CreateFormValues>({
+    resolver: zodResolver(createSchema),
+    defaultValues: {
+      name: "", description: "", external_url: absoluteUrl(`/collections/${contract}`),
+      maxSupply: "100", royalty: 2.5, licenseType: "CC BY-SA", commercialUse: "Yes",
+      derivatives: "Share-Alike", attribution: "Required", geographicScope: "Worldwide", aiPolicy: "Not Allowed",
+    },
+  });
+
+  const handleImageSelect = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    const url = URL.createObjectURL(file);
+    previewRef.current = url;
+    setImagePreview(url);
+    setImageUri(null);
+    setImageUploading(true);
+    try {
+      const token = await getValidToken();
+      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
+      const signedData = await signedRes.json();
+      if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      fd.append("network", "public");
+      fd.append("name", file.name);
+      const up = await fetch(signedData.url, { method: "POST", body: fd });
+      const { data } = await up.json();
+      if (!data?.cid) throw new Error("No CID");
+      setImageUri(`ipfs://${data.cid}`);
+      toast.success("Image uploaded");
+    } catch (err) {
+      if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }
+      setImagePreview(null);
+      const t = uploadFailureToast(err);
+      toast.error(t.title, { description: t.description });
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleImageClear = () => { setImagePreview(null); setImageUri(null); };
 
   const isOwner = !!address && !!collection?.owner && address.toLowerCase() === collection.owner.toLowerCase();
 
   if (!isConnected) {
     return (
-      <div className="max-w-xl mx-auto px-4 pt-24 pb-8 text-center space-y-4">
-        <Ticket className="h-10 w-10 text-muted-foreground/20 mx-auto" />
-        <h1 className="text-xl font-bold">Connect your wallet</h1>
-        <div className="flex justify-center"><ConnectWallet /></div>
-      </div>
+      <ConnectGate title="Connect wallet to manage tickets" subtitle="Connect your Starknet wallet to create and mint tickets.">
+        <div />
+      </ConnectGate>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="max-w-xl mx-auto px-4 pt-10 pb-16 space-y-4">
+      <div className="max-w-5xl mx-auto px-4 pt-10 pb-16 space-y-4">
         <Skeleton className="h-6 w-24" />
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Skeleton className="h-64 w-full rounded-2xl" />
@@ -656,34 +698,35 @@ export default function TicketsManagePage({ params }: { params: Promise<{ contra
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 pt-10 pb-16 space-y-6">
+    <ClaimRouteShell
+      gated={false}
+      icon={<Ticket className="h-4 w-4 text-white" />}
+      title="Manage Tickets"
+      subtitle={`Create and mint tickets for ${collection.name ?? "your collection"} — all in one place.`}
+      aside={
+        <ManageTicketsAside
+          imagePreview={imagePreview}
+          name={form.watch("name")}
+          collectionSymbol={collection.symbol || "Tickets"}
+          creator={address ? `${address.slice(0, 6)}…${address.slice(-4)}` : undefined}
+        />
+      }
+    >
       <FadeIn>
-        <Button asChild variant="ghost" size="sm" className="-ml-2">
-          <Link href={`/collections/${contract}`}>
-            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-            Back to collection
-          </Link>
-        </Button>
-      </FadeIn>
-
-      <FadeIn delay={0.04}>
-        <div>
-          <span className="pill-badge inline-flex gap-1.5 mb-2">
-            <Ticket className="h-3 w-3" />
-            Owner
-          </span>
-          <h1 className="text-2xl font-bold mt-1">Manage Tickets</h1>
-          <p className="text-sm text-muted-foreground">{collection.name ?? contract}</p>
+        <div className="space-y-6">
+          <MintSection contract={contract} onOpenCreate={() => createSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+          <CreateSection
+            contract={contract}
+            forwardRef={createSectionRef}
+            form={form}
+            imagePreview={imagePreview}
+            imageUri={imageUri}
+            imageUploading={imageUploading}
+            onImageSelect={handleImageSelect}
+            onImageClear={handleImageClear}
+          />
         </div>
       </FadeIn>
-
-      <FadeIn delay={0.08}>
-        <MintSection contract={contract} onOpenCreate={() => createSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
-      </FadeIn>
-
-      <FadeIn delay={0.12}>
-        <CreateSection contract={contract} forwardRef={createSectionRef} />
-      </FadeIn>
-    </div>
+    </ClaimRouteShell>
   );
 }
