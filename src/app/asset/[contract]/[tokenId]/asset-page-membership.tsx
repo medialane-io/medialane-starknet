@@ -21,7 +21,6 @@ import { ipfsToHttp, resolveTokenImage, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
-import { useDominantColor } from "@/hooks/use-dominant-color";
 import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
@@ -163,7 +162,6 @@ export function AssetPageMembership() {
   const shouldReduce = useReducedMotion();
 
   const imageUrl = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
-  const { imgRef, dynamicTheme } = useDominantColor(imageUrl);
 
   const [imgError, setImgError] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -224,12 +222,9 @@ export function AssetPageMembership() {
     : 0;
 
   return (
-    <div
-      style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
-      className="relative z-0 min-h-screen"
-    >
+    <div className="relative z-0 min-h-screen">
       {token.isHidden && <HiddenContentBanner />}
-      <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} />
+      <AssetAtmosphere imageUrl={imageUrl} />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8 items-start">

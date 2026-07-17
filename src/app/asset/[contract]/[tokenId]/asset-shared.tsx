@@ -21,46 +21,30 @@ export type AssetToken = ApiToken & {
 
 type AssetAttribute = { trait_type?: string; value?: string };
 
-/** Hidden colour-extraction image + full-bleed blurred backdrop, shared by every asset page. */
+/** Full-bleed blurred backdrop from the asset image, shared by every asset page. */
 export function AssetAtmosphere({
   imageUrl,
-  imgRef,
   // Backdrop alpha. Standard (single IP asset) pages use the balanced
   // `opacity-30` (matches medialane-io); pop/drop/edition keep `opacity-20`.
   opacityClassName = "opacity-20",
 }: {
   imageUrl: string | null;
-  imgRef: React.RefObject<HTMLImageElement>;
   opacityClassName?: string;
 }) {
   if (!imageUrl) return null;
   return (
-    <>
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       <Image
-        ref={imgRef}
         src={imageUrl}
-        crossOrigin="anonymous"
-        aria-hidden
         alt=""
-        width={1}
-        height={1}
-        fetchPriority="high"
+        aria-hidden
+        fill
+        sizes="100vw"
+        className={`absolute inset-0 w-full h-full object-cover scale-110 ${opacityClassName}`}
+        style={{ filter: "blur(60px) saturate(1.5)" }}
         unoptimized
-        style={{ display: "none" }}
       />
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <Image
-          src={imageUrl}
-          alt=""
-          aria-hidden
-          fill
-          sizes="100vw"
-          className={`absolute inset-0 w-full h-full object-cover scale-110 ${opacityClassName}`}
-          style={{ filter: "blur(60px) saturate(1.5)" }}
-          unoptimized
-        />
-      </div>
-    </>
+    </div>
   );
 }
 

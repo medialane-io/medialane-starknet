@@ -11,7 +11,6 @@ import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useUserOrders } from "@/hooks/use-orders";
 import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
-import { useDominantColor } from "@/hooks/use-dominant-color";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
@@ -161,11 +160,6 @@ export default function CreatorPageClient() {
   const latestImage  = latestRawImg ? ipfsToHttp(latestRawImg) : null;
   const bannerImage  = latestImage && latestImage !== "/placeholder.svg" ? latestImage : null;
 
-  const { imgRef, dynamicTheme } = useDominantColor(bannerImage);
-  const dynamicPrimary = dynamicTheme
-    ? `hsl(var(--dynamic-primary))`
-    : `hsl(${h1}, 72%, 62%)`;
-
   // Tab count badges — only shown once that tab has been visited and loaded
   const tabBadge: Partial<Record<TabId, number>> = {
     ...(activeTab === "assets"      && !tokensLoading      && { assets:      tokens.length }),
@@ -175,24 +169,7 @@ export default function CreatorPageClient() {
   };
 
   return (
-    <div
-      className="pb-20 min-h-screen"
-      style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
-    >
-      {/* Hidden extraction image for dominant color */}
-      {bannerImage && (
-        <NextImage
-          ref={imgRef}
-          src={bannerImage}
-          crossOrigin="anonymous"
-          aria-hidden
-          alt=""
-          width={1}
-          height={1}
-          unoptimized
-          style={{ display: "none" }}
-        />
-      )}
+    <div className="pb-20 min-h-screen">
 
       {hiddenStatus?.isHidden === true && <HiddenContentBanner />}
 
@@ -273,7 +250,6 @@ export default function CreatorPageClient() {
               address={address ?? "0x0"}
               image={latestImage}
               size={112}
-              borderColor={dynamicTheme ? `hsl(var(--dynamic-primary))` : undefined}
             />
 
             <div className="flex-1 min-w-0 pb-1 space-y-1">
@@ -422,9 +398,7 @@ export default function CreatorPageClient() {
                     <span
                       className="absolute bottom-0 inset-x-0 h-0.5 rounded-full"
                       style={{
-                        background: dynamicTheme
-                          ? `linear-gradient(90deg, hsl(var(--dynamic-primary)), hsl(var(--dynamic-accent)))`
-                          : `linear-gradient(90deg, hsl(${h1}, 68%, 62%), hsl(${h2}, 68%, 58%))`,
+                        background: `linear-gradient(90deg, hsl(${h1}, 68%, 62%), hsl(${h2}, 68%, 58%))`,
                       }}
                     />
                   )}

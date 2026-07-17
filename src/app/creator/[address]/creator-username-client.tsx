@@ -8,7 +8,6 @@ import { useCreatorByUsername } from "@/hooks/use-username-claims";
 import { useUserOrders } from "@/hooks/use-orders";
 import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
-import { useDominantColor } from "@/hooks/use-dominant-color";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
 import { CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
@@ -69,7 +68,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   const { h1, h2, h3 } = addressPalette(walletAddress ?? "0x0");
   const bannerUrl = creator?.bannerImage ? ipfsToHttp(creator.bannerImage) : null;
   const avatarUrl = creator?.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
-  const { imgRef, dynamicTheme } = useDominantColor(bannerUrl);
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -114,12 +112,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   const displayName = creator.displayName || `@${creator.username}`;
 
   return (
-    <div className="pb-20 min-h-screen" style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}>
-      {/* Hidden extraction image for dominant color */}
-      {bannerUrl && (
-        <NextImage ref={imgRef} src={bannerUrl} crossOrigin="anonymous" aria-hidden alt="" width={1} height={1} unoptimized style={{ display: "none" }} />
-      )}
-
+    <div className="pb-20 min-h-screen">
       {/* ── Hero banner ───────────────────────────────────────────────────────── */}
       <div className="relative h-56 sm:h-80 overflow-hidden">
         {bannerUrl && (
@@ -265,9 +258,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
                     <span
                       className="absolute bottom-0 inset-x-0 h-0.5 rounded-full"
                       style={{
-                        background: dynamicTheme
-                          ? `linear-gradient(90deg, hsl(var(--dynamic-primary)), hsl(var(--dynamic-accent)))`
-                          : `linear-gradient(90deg, hsl(${h1}, 68%, 62%), hsl(${h2}, 68%, 58%))`,
+                        background: `linear-gradient(90deg, hsl(${h1}, 68%, 62%), hsl(${h2}, 68%, 58%))`,
                       }}
                     />
                   )}

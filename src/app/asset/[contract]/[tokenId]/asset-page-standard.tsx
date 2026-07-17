@@ -18,7 +18,6 @@ import { useComments } from "@/hooks/use-comments";
 import { EXPLORER_URL } from "@/lib/constants";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { useDominantColor } from "@/hooks/use-dominant-color";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
 import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
@@ -47,7 +46,6 @@ export function AssetPageStandard() {
   const shouldReduce = useReducedMotion();
 
   const imageUrl = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
-  const { imgRef, dynamicTheme } = useDominantColor(imageUrl);
 
   const [imgError, setImgError] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -162,12 +160,9 @@ export function AssetPageStandard() {
   const ownerAddress = !isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null;
 
   return (
-    <div
-      style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
-      className="relative z-0 min-h-screen"
-    >
+    <div className="relative z-0 min-h-screen">
       {token.isHidden && <HiddenContentBanner />}
-      <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} opacityClassName="opacity-30" />
+      <AssetAtmosphere imageUrl={imageUrl} opacityClassName="opacity-30" />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">

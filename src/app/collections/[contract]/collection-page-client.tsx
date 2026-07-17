@@ -7,7 +7,6 @@ import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion
 import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
 import { useCoin } from "@/hooks/use-coins";
 import { useOrders } from "@/hooks/use-orders";
-import { useDominantColor } from "@/hooks/use-dominant-color";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -282,7 +281,6 @@ export default function CollectionPageClient() {
   });
 
   const bannerUrl = collection?.image ? ipfsToHttp(collection.image) : null;
-  const { imgRef, dynamicTheme } = useDominantColor(bannerUrl);
 
   useEffect(() => {
     const el = descRef.current;
@@ -318,10 +316,7 @@ export default function CollectionPageClient() {
   ];
 
   return (
-    <div
-      style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
-      className="relative z-0 min-h-screen"
-    >
+    <div className="relative z-0 min-h-screen">
       {/* Atmospheric blur background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         {bannerUrl && (
@@ -336,32 +331,9 @@ export default function CollectionPageClient() {
             unoptimized
           />
         )}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: dynamicTheme
-              ? `hsl(var(--dynamic-primary) / 0.08)`
-              : "transparent",
-          }}
-        />
       </div>
 
       {(collection as any)?.isHidden && <HiddenContentBanner />}
-
-      {/* Hidden extraction img for dominant color */}
-      {bannerUrl && (
-        <Image
-          ref={imgRef}
-          src={bannerUrl}
-          crossOrigin="anonymous"
-          aria-hidden
-          alt=""
-          width={1}
-          height={1}
-          unoptimized
-          style={{ display: "none" }}
-        />
-      )}
 
       {/* ── Full-bleed hero banner ── */}
       {colLoading ? (

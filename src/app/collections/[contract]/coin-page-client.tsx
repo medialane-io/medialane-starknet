@@ -20,7 +20,6 @@ import { useCoinPrice } from "@/hooks/use-coin-price";
 import { useCoinBalance } from "@/hooks/use-coin-balance";
 import { useCoinSupply } from "@/hooks/use-coin-supply";
 import { useSwap, SWAP_TOKENS, type SwapToken } from "@/hooks/use-swap";
-import { useDominantColor } from "@/hooks/use-dominant-color";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,7 +85,6 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
 
   const bannerSource = coin.image;
   const bannerUrl = bannerSource ? ipfsToHttp(bannerSource) : null;
-  const { imgRef, dynamicTheme } = useDominantColor(bannerUrl);
 
   const serviceLabel = getService(coin.service)?.displayName ?? "Creator Coin";
 
@@ -106,10 +104,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
     !!address && !!coin.creator && address.toLowerCase() === coin.creator.toLowerCase();
 
   return (
-    <div
-      style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
-      className="relative z-0 min-h-screen"
-    >
+    <div className="relative z-0 min-h-screen">
       {/* Atmospheric blur background — identical settings to the standard asset
           pages' AssetAtmosphere (opacity-30, no color wash). */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -126,20 +121,6 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
           />
         )}
       </div>
-
-      {bannerUrl && (
-        <Image
-          ref={imgRef}
-          src={bannerUrl}
-          crossOrigin="anonymous"
-          aria-hidden
-          alt=""
-          width={1}
-          height={1}
-          unoptimized
-          style={{ display: "none" }}
-        />
-      )}
 
       <div className="mx-auto px-4 pt-20 pb-12 max-w-5xl">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,380px)] gap-8">
@@ -233,7 +214,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
               coinAddress={contract}
               coinSymbol={coin.symbol ?? "COIN"}
               coinName={coin.name ?? "Creator Coin"}
-              coinColor={dynamicTheme ? "var(--dynamic-primary)" : "hsl(var(--brand-purple))"}
+              coinColor="hsl(var(--brand-purple))"
               price={price}
             />
           </div>

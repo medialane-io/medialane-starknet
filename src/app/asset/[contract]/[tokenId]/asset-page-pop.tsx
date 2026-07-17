@@ -15,7 +15,6 @@ import { AddressDisplay } from "@/components/shared/address-display";
 import { PopClaimButton } from "@/components/claim/pop-claim-button";
 import { ShareButton } from "@/components/shared/share-button";
 import { ReportDialog } from "@/components/report-dialog";
-import { useDominantColor } from "@/hooks/use-dominant-color";
 import { AssetAtmosphere } from "./asset-shared";
 import { EXPLORER_URL } from "@/lib/constants";
 
@@ -28,7 +27,6 @@ export function AssetPagePop() {
   const shouldReduce = useReducedMotion();
 
   const imageUrl = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
-  const { imgRef, dynamicTheme } = useDominantColor(imageUrl);
   const [imgError, setImgError] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
 
@@ -38,11 +36,8 @@ export function AssetPagePop() {
   const creator = collection?.owner;
 
   return (
-    <div
-      style={dynamicTheme ? (dynamicTheme as React.CSSProperties) : {}}
-      className="relative z-0 min-h-screen"
-    >
-      <AssetAtmosphere imageUrl={imageUrl} imgRef={imgRef} />
+    <div className="relative z-0 min-h-screen">
+      <AssetAtmosphere imageUrl={imageUrl} />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8 items-start">
