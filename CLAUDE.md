@@ -511,6 +511,42 @@ Each page keeps the dapp's own wallet hooks (`useWallet`, `useMarketplace`) and
 dialog set — the shared modules are presentation + derivation only. Use the
 `AssetToken` type for page-level token state; never `(token as any)`.
 
+**IP Tickets is now v5** (redeployed 2026-07-16 — `ticket_count` view replaces the old
+sequential `get_ticket` probe loop; window-gated validity). Prior collections deployed
+on the v4 contract are re-tagged `service: "external-erc1155"` in the backend (see the
+service-ID table in `medialane-backend/CLAUDE.md`) — the platform can no longer mint
+into them, so they render through the generic `edition` asset-page variant, not
+`ticket` (`getService()` returns `undefined` for `external-*`, and `detectAssetType`
+falls back on `standard === "ERC1155" ? "edition" : "standard"`). This is intentional,
+not a bug — don't special-case `external-erc1155` back into the ticket variant.
+
+**Asset page "more from this collection" strip is proximity-based, not recency-based
+(2026-07-17).** `AssetAtmosphere`'s sibling-token feed (rendered via `AssetCollectionBar`
+in the asset pages, `@medialane/ui`) used to be `useCollectionTokens(contract)` —
+default `sort: "recent"`, meaning whatever minted most recently *anywhere* in the
+collection, unrelated to the piece being viewed (token #3 of 500 showing #497–500).
+`useNearbyCollectionTokens(contract, tokenId)` (`src/hooks/use-collections.ts`) pulls a
+bounded pool sorted `oldest` (ascending = tokenId order for every Medialane-issued
+collection) and windows ±N around the current token instead. Use this, not
+`useCollectionTokens`, for any new "siblings in this collection" surface.
+
+**`AssetAtmosphere` no longer does color extraction (2026-07-17).** It used to also
+render a hidden `crossOrigin` `<img>` for canvas-based dominant-color sampling
+(`useDominantColor` + `fast-average-color`, since removed entirely — see the design
+note below) and took an `imgRef` prop for it. It now only renders the visible blurred
+backdrop (`filter: blur(60px) saturate(1.5)`) — don't reintroduce a color-extraction
+prop here; per **user directive**, no color wash may ever layer on top of this blur
+again (a bright "screen"-blend highlight/tint was found actively fighting the
+backdrop's vibrancy — removed platform-wide, not just tuned down).
+
+**Tickets/club mint pages default External link to the collection's slug URL when
+claimed (2026-07-17).** `/collection/{slug}` (short, human-readable) beats
+`/collections/{contract}` (canonical, always works) whenever a name is claimed. The
+default-fill `useEffect` must wait for `useCollectionProfile`'s `isLoading` to settle
+before writing — firing once with no slug loaded yet sets the fallback and the "field
+already has a value" guard then blocks the nicer URL from ever landing once the
+profile arrives.
+
 ---
 
 ## Creator Coin pages (added 2026-06-04; Coin/Collection split 2026-06-14, SDK 0.38; design + Ekubo-swap pass 2026-06-26)
@@ -592,6 +628,22 @@ compartment provides the border now — drop the `btn-border-animated` wrapper, 
 `bg-*` button), and soften copy to plain language (no "IPFS"/"PIN"/"ERC-xxxx"). Keep all
 tx logic + dialogs + the page's `ConnectGate`/`WalletGate` untouched.
 
+### Single-editions folded into the launchpad — `/create/asset` and `/create/collection` are gone (2026-07-17)
+
+`/launchpad/single-editions` **is** the mint form now (was a browse/list page that
+dead-ended into `/create/asset` with an empty collection picker — new creators had to
+navigate through an empty intermediate page before they could act at all). The
+Collection field is a visual picker (thumbnail/name/work-count cards, `CollectionPicker`
+in `single-editions-content.tsx`) instead of a bare `<Select>`, auto-selects the
+creator's only/most-recent collection, and its "New collection" tile links to the new
+`/launchpad/single-editions/collection` route (moved from `/create/collection`) —
+consistent with how every other launchpad service (`nfteditions`, `pop`, `drop`, …)
+already namespaces its create routes under `/launchpad/*`, not a separate top-level
+`/create/*` tree. **`/create/asset` and `/create/collection` no longer exist** — every
+internal link now points at the new URLs. `/create/licensing`, `/create/remix`, and the
+`/create` hub page (pure marketing + links, unaffected) are untouched. Mirrored
+end-to-end in `medialane-io` the same session.
+
 **Footer copy — never claim free/sponsored gas (2026-07-03).** AVNU isn't currently
 sponsoring transactions on this dapp (tested working previously, not active now — no
 budget for it). Every real network transaction costs the connected wallet real gas
@@ -606,7 +658,7 @@ exact same `NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY` (`isStarkZapSponsorshipEnabled()
 claims either.
 
 **Applied to:** all claims (`/launchpad/memecoin` + `ClaimCollectionPanel`),
-`/create/{collection,asset}`, `/launchpad/nfteditions/{create,[contract]/mint}`,
+`/launchpad/single-editions{,/collection}`, `/launchpad/nfteditions/{create,[contract]/mint}`,
 `/launchpad/{pop,drop,coin}/create`. **Browse/list pages**
 (`/launchpad/{nfteditions,pop,drop}`) and the combined **`/claim`** hub use
 `ServiceHeader` + `ClaimBackButton` only (no animated form/rail), constrained to
@@ -684,7 +736,7 @@ Three conventions were added; keep new forms consistent with them:
   rounding, and horizontal padding on mobile so fields get the form card's full width. The
   `sm:`-gated pattern: wrapper `sm:overflow-hidden sm:rounded-xl sm:border sm:border-border`,
   trigger `px-0 py-3 sm:px-5 sm:py-4`, content `px-0 pb-4 sm:px-5 sm:pb-5 …`. Applies to
-  `/create/asset`, `/launchpad/nfteditions/[contract]/mint`, `/launchpad/drop/create`, remix.
+  `/launchpad/single-editions`, `/launchpad/nfteditions/[contract]/mint`, `/launchpad/drop/create`, remix.
 
 ---
 
