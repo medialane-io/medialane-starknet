@@ -39,6 +39,7 @@ import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useCollection } from "@/hooks/use-collections";
+import { useCollectionProfile } from "@/hooks/use-profiles";
 import { predictNextTicketId } from "@/hooks/use-tickets";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -103,6 +104,7 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
   const contract = normalizeAddress("STARKNET", rawContract);
   const { address, isConnected } = useWallet();
   const { collection, isLoading } = useCollection(contract);
+  const { profile, isLoading: profileLoading } = useCollectionProfile(contract);
   const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
@@ -130,10 +132,16 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
   });
 
   useEffect(() => {
-    if (!contract) return;
-    const suggested = absoluteUrl(`/collections/${contract}`);
+    // Wait for the profile fetch to settle before defaulting — otherwise this
+    // fires once with no slug (setting the plain contract URL), and the
+    // "field already has a value" guard blocks the nicer slug URL from ever
+    // landing once the profile actually loads.
+    if (!contract || profileLoading) return;
+    const suggested = profile?.slug
+      ? absoluteUrl(`/collection/${profile.slug}`)
+      : absoluteUrl(`/collections/${contract}`);
     if (!form.getValues("external_url")) form.setValue("external_url", suggested);
-  }, [contract, form]);
+  }, [contract, profileLoading, profile?.slug, form]);
 
   const isOwner = !!address && !!collection?.owner && address.toLowerCase() === collection.owner.toLowerCase();
 
