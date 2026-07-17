@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { Package, DollarSign, Shield, Calendar } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
-import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
+import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
 import { useOnChainDropState, getDropStatus } from "@/hooks/use-drops";
 import type { DropConditions } from "@/hooks/use-drops";
 import { useTokenListings } from "@/hooks/use-orders";
@@ -133,7 +133,7 @@ export function AssetPageDrop() {
   const { state: dropState } = useOnChainDropState(contract);
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
   const { history } = useTokenHistory(contract, tokenId);
-  const { tokens: collectionTokens } = useCollectionTokens(contract);
+  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
   const shouldReduce = useReducedMotion();
 

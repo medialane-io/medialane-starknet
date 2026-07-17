@@ -10,7 +10,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, CheckCircle2, Clock, CalendarX2 } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
-import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
+import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
 import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
@@ -123,7 +123,7 @@ export function AssetPageTicket() {
   const token = rawToken as AssetToken | null;
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
   const { history } = useTokenHistory(contract, tokenId);
-  const { tokens: collectionTokens } = useCollectionTokens(contract);
+  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
   const { ticket } = useTicketOnchain(contract, tokenId);
   const shouldReduce = useReducedMotion();

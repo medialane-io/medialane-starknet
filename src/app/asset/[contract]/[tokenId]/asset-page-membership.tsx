@@ -11,7 +11,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { Users, CheckCircle2, Clock, CalendarX2, Infinity as InfinityIcon } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
-import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
+import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
 import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
@@ -156,7 +156,7 @@ export function AssetPageMembership() {
   const token = rawToken as AssetToken | null;
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
   const { history } = useTokenHistory(contract, tokenId);
-  const { tokens: collectionTokens } = useCollectionTokens(contract);
+  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
   const { membership } = useMembershipOnchain(contract, tokenId);
   const { isMember } = useIsMemberOf(contract, tokenId, walletAddress ?? null);

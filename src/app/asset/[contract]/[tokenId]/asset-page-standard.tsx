@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useTokenListings } from "@/hooks/use-orders";
-import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
+import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
@@ -59,7 +59,7 @@ export function AssetPageStandard() {
 
   // Collection siblings for the filmstrip nav — from the (paged) collection
   // token list; the filmstrip hides itself when the collection has ≤1 item.
-  const { tokens: collectionTokens } = useCollectionTokens(contract);
+  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
 
   // Audited IPNft creation record — undefined for external/legacy contracts (hook returns null).
   const { data: fullTokenData } = useFullTokenData({
