@@ -633,9 +633,12 @@ tx logic + dialogs + the page's `ConnectGate`/`WalletGate` untouched.
 `/launchpad/single-editions` **is** the mint form now (was a browse/list page that
 dead-ended into `/create/asset` with an empty collection picker — new creators had to
 navigate through an empty intermediate page before they could act at all). The
-Collection field is a visual picker (thumbnail/name/work-count cards, `CollectionPicker`
-in `single-editions-content.tsx`) instead of a bare `<Select>`, auto-selects the
-creator's only/most-recent collection, and its "New collection" tile links to the new
+Collection field is a compact picker (`CollectionPicker` in
+`single-editions-content.tsx`): a single trigger row (thumbnail/name/work-count +
+"Change") opening a popover with a scrollable list, a name filter above 5 collections,
+and a "New collection" footer link — form height stays constant at any collection
+count (shadcn `Popover` + `Input`, no cmdk; redesigned from the card grid 2026-07-17).
+It auto-selects the creator's only/most-recent collection, and "New collection" links to the new
 `/launchpad/single-editions/collection` route (moved from `/create/collection`) —
 consistent with how every other launchpad service (`nfteditions`, `pop`, `drop`, …)
 already namespaces its create routes under `/launchpad/*`, not a separate top-level
