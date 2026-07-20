@@ -22,6 +22,17 @@ Medialane is a Next.js (App Router) dapp on **Starknet** with two primary featur
 
 The app is deployed at [medialane.io](https://medialane.io) on Starknet Mainnet.
 
+## Routing
+
+Asset/collection/coin detail pages are chain-scoped:
+`/asset/[chain]/[contract]/[tokenId]`, `/collections/[chain]/[contract]`,
+`/coins/[chain]/[address]` — matches medialane-io. `chainSlug`/`chainFromSlug`/
+`assetHref`/`collectionHref`/`coinHref` live in `@medialane/sdk` (single
+source, shared with io) and are re-exported at `src/lib/routes.ts`. Old flat
+`0x...`-only URLs 301-redirect to the `starknet`-scoped form via
+`next.config.ts`. Build any new internal asset/collection/coin link through
+these helpers — never a hand-written template literal.
+
 ## Key Environment Variables
 
 > **Mainnet-only.** Medialane runs on Starknet mainnet exclusively — there is no
