@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { starknetProvider } from "@/lib/starknet";
-import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk";
+import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk/starknet";
 import { STARKNET_COLLECTION_721_CONTRACT } from "@/lib/constants";
 import { normalizeAddress } from "@/lib/utils";
 import { toast } from "sonner";

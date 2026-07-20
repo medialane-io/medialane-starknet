@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { useMedialaneClient } from "./use-medialane-client";
 import { starknetProvider } from "@/lib/starknet";
 import { Contract, cairo } from "starknet";
-import { IPClubCollectionABI } from "@medialane/sdk";
+import { IPClubCollectionABI } from "@medialane/sdk/starknet";
 
 // ── useMyClubCollections ──────────────────────────────────────────────────────
 // The connected creator's club collections (launchpad browse page).

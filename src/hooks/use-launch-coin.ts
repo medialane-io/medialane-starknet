@@ -3,16 +3,15 @@
 import { useState, useCallback } from "react";
 import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
+import { getTokenBySymbol, normalizeAddress } from "@medialane/sdk";
 import {
   VALIDATED_EKUBO_PARAMS,
-  getTokenBySymbol,
-  normalizeAddress,
   parseCreatorCoinCreated,
   coinToRaw as toRaw,
   teamCoinsRaw,
   buybackQuoteRaw,
   type CreatorCoinReceiptLike,
-} from "@medialane/sdk";
+} from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { getMedialaneClient } from "@/lib/medialane-client";

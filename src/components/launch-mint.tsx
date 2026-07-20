@@ -6,7 +6,7 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import Image from "next/image";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { encodeByteArray } from "@medialane/sdk";
+import { encodeByteArray } from "@medialane/sdk/starknet";
 import {
   Sparkles,
   Zap,

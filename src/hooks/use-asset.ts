@@ -4,7 +4,7 @@ import { useMemo, useState, useRef } from "react";
 import { useContract } from "@starknet-react/core";
 import { useQuery } from "@tanstack/react-query";
 import type { Abi } from "starknet";
-import { IPNftABI as COLLECTION_NFT_ABI } from "@medialane/sdk";
+import { IPNftABI as COLLECTION_NFT_ABI } from "@medialane/sdk/starknet";
 import {
   fetchIPFSMetadata,
   processIPFSHashToUrl,

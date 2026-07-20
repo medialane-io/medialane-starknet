@@ -13,14 +13,14 @@ import { useMemo, useState } from "react";
 import { rewardToast } from "@/lib/reward-toast";
 import { useRouter } from "next/navigation";
 import { Coins, TrendingUp, ArrowRight, Lock, Sparkles, ImagePlus, X, Loader2 } from "lucide-react";
+import { getTokenBySymbol, formatAmount } from "@medialane/sdk";
 import {
-  getTokenBySymbol, formatAmount,
   validateCoinName as validateName,
   validateCoinSymbol as validateSymbol,
   validateCoinSupply as validateSupply,
   coinToRaw as toRaw,
   teamCoinsRaw, buybackQuoteRaw, fdvHuman,
-} from "@medialane/sdk";
+} from "@medialane/sdk/starknet";
 import { PageContainer } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";

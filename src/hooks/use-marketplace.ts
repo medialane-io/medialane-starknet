@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useContract, useProvider } from "@starknet-react/core";
 import { Abi, num } from "starknet";
 import { useSWRConfig } from "swr";
-import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk";
+import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk/starknet";
 import { toast } from "sonner";
 import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";

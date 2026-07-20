@@ -35,7 +35,8 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
 import { toast } from "sonner";
 import { Contract, hash } from "starknet";
-import { normalizeAddress, IPTicketCollectionFactoryABI, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@medialane/sdk";
+import { normalizeAddress, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@medialane/sdk";
+import { IPTicketCollectionFactoryABI } from "@medialane/sdk/starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 

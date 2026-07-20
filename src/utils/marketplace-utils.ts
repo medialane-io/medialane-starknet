@@ -4,7 +4,7 @@ import {
     build1155OrderTypedData,
     buildCancellationTypedData,
     build1155CancellationTypedData,
-} from "@medialane/sdk";
+} from "@medialane/sdk/starknet";
 
 // SNIP-12 typed-data construction is owned by @medialane/sdk (0.26.0 redesigned
 // schema: domain v4/v3, single `amount`, `marketplace`/`royalty_max_bps`/`counter`,

@@ -1,4 +1,4 @@
-import { MedialaneClient } from "@medialane/sdk";
+import { MedialaneClient } from "@medialane/sdk/starknet";
 import {
   STARKNET_COLLECTION_1155_CONTRACT,
   STARKNET_COLLECTION_721_CONTRACT,

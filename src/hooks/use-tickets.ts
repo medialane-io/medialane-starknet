@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { useMedialaneClient } from "./use-medialane-client";
 import { starknetProvider } from "@/lib/starknet";
 import { Contract, cairo } from "starknet";
-import { IPTicketCollectionABI } from "@medialane/sdk";
+import { IPTicketCollectionABI } from "@medialane/sdk/starknet";
 
 // ── useMyTicketCollections ────────────────────────────────────────────────────
 // The connected creator's tickets collections (launchpad browse page).
