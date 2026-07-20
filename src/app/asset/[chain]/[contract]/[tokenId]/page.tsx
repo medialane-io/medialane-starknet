@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { fetchTokenMeta, fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
 import { canonical, buildBreadcrumbJsonLd, buildProductJsonLd, buildSocialMetadata } from "@/lib/seo";
+import { chainFromSlug, assetHref, collectionHref } from "@/lib/routes";
 import { JsonLd } from "@/components/seo/json-ld";
 import AssetPageClient from "./asset-page-client";
 
 export const revalidate = 60;
 
 interface Props {
-  params: Promise<{ contract: string; tokenId: string }>;
+  params: Promise<{ chain: string; contract: string; tokenId: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { contract, tokenId } = await params;
+  const { chain, contract, tokenId } = await params;
+  const resolvedChain = chainFromSlug(chain);
+  if (!resolvedChain) notFound();
+
   const token = await fetchTokenMeta(contract, tokenId);
 
   const name        = token?.metadata?.name ?? token?.name ?? `Token #${tokenId}`;
@@ -22,13 +27,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: name,
     description,
-    alternates: canonical(`/asset/${contract}/${tokenId}`),
+    alternates: canonical(assetHref(resolvedChain, contract, tokenId)),
     ...buildSocialMetadata({ title: name, description, imageUrl }),
   };
 }
 
 export default async function AssetPage({ params }: Props) {
-  const { contract, tokenId } = await params;
+  const { chain, contract, tokenId } = await params;
+  const resolvedChain = chainFromSlug(chain);
+  if (!resolvedChain) notFound();
+
   const [token, collection] = await Promise.all([
     fetchTokenMeta(contract, tokenId),
     fetchCollectionMeta(contract),
@@ -43,7 +51,7 @@ export default async function AssetPage({ params }: Props) {
   const jsonLd = [
     buildProductJsonLd({
       name,
-      path: `/asset/${contract}/${tokenId}`,
+      path: assetHref(resolvedChain, contract, tokenId),
       description,
       image: imageUrl,
       sku: tokenId,
@@ -51,8 +59,8 @@ export default async function AssetPage({ params }: Props) {
     }),
     buildBreadcrumbJsonLd([
       { name: "Marketplace", path: "/marketplace" },
-      { name: collectionName, path: `/collections/${contract}` },
-      { name, path: `/asset/${contract}/${tokenId}` },
+      { name: collectionName, path: collectionHref(resolvedChain, contract) },
+      { name, path: assetHref(resolvedChain, contract, tokenId) },
     ]),
   ];
 

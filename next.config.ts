@@ -97,6 +97,14 @@ const nextConfig: NextConfig = {
         destination: "https://docs.medialane.io/learn/:path*",
         permanent: true,
       },
+      // ── Chain-in-URL (2026-07-20): 301 legacy asset/collection/coin paths
+      // to the chained `starknet` form, matching medialane-io. The (0x…)
+      // param regex keeps these from swallowing the new chained routes.
+      {
+        source: "/asset/:contract(0x[0-9a-fA-F]+)/:tokenId",
+        destination: "/asset/starknet/:contract/:tokenId",
+        permanent: true,
+      },
     ];
   },
 };
