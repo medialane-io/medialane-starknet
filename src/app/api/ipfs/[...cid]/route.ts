@@ -102,9 +102,12 @@ export async function GET(
     return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
   }
 
-  // Allowlist safe MIME type prefixes — reject text/html, text/javascript,
-  // image/svg+xml and other scriptable types that could execute in browser context.
-  const SAFE_PREFIXES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif",
+  // Allowlist safe MIME type prefixes; text/html, text/javascript, … are
+  // served as application/octet-stream so they can't render as scriptable
+  // documents. SVG keeps its type so it renders as image artwork, but the CSP
+  // below (`sandbox` = opaque origin, no scripts) neutralises the direct-
+  // navigation XSS an inline SVG would otherwise allow on this same-origin proxy.
+  const SAFE_PREFIXES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/svg+xml",
     "video/", "audio/", "model/", "font/", "application/json", "application/octet-stream"];
   const safeContentType = SAFE_PREFIXES.some((p) => upstreamContentType.startsWith(p))
     ? upstreamContentType
@@ -141,6 +144,11 @@ export async function GET(
     headers: {
       "Content-Type": safeContentType,
       "X-Content-Type-Options": "nosniff",
+      // Neutralise scripts if this response is opened as a top-level document
+      // (e.g. an SVG navigated to directly): `sandbox` gives it a unique opaque
+      // origin with no script execution. Harmless for media loaded via
+      // <img>/<video> (CSP doesn't apply to subresources).
+      "Content-Security-Policy": "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
       // Cache aggressively — IPFS content is immutable by CID. `s-maxage` (vs
       // browser-only `max-age`) lets Vercel's edge cache this across *all*
       // visitors, not just the requesting browser.
