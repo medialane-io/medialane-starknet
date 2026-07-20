@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getService } from "@medialane/sdk";
 import { fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
 import { absoluteUrl, canonical, buildBreadcrumbJsonLd, buildSocialMetadata } from "@/lib/seo";
+import { chainFromSlug, collectionHref, coinHref } from "@/lib/routes";
 import { JsonLd } from "@/components/seo/json-ld";
 import CollectionPageClient from "./collection-page-client";
 
 export const revalidate = 60;
 
 interface Props {
-  params: Promise<{ contract: string }>;
+  params: Promise<{ chain: string; contract: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { contract } = await params;
+  const { chain, contract } = await params;
+  const resolvedChain = chainFromSlug(chain);
+  if (!resolvedChain) notFound();
+
   const col = await fetchCollectionMeta(contract);
 
   const name        = col?.name ?? "Collection";
@@ -25,19 +29,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: name,
     description,
-    alternates: canonical(`/collections/${contract}`),
+    alternates: canonical(collectionHref(resolvedChain, contract)),
     ...buildSocialMetadata({ title: name, description, imageUrl }),
   };
 }
 
 export default async function CollectionPage({ params }: Props) {
-  const { contract } = await params;
-  // Creator Coins are canonical at /coins/[address]; redirect coin contracts
-  // hit under /collections so the friendlier URL is always the one in the bar.
-  // (The fetch is deduped with generateMetadata's identical request.)
+  const { chain, contract } = await params;
+  const resolvedChain = chainFromSlug(chain);
+  if (!resolvedChain) notFound();
+
+  // Creator Coins are canonical at /coins/[chain]/[address]; redirect coin
+  // contracts hit under /collections so the friendlier URL is always the one
+  // in the bar. (The fetch is deduped with generateMetadata's identical request.)
   const col = await fetchCollectionMeta(contract);
   if (col?.service && getService(col.service)?.uiVariant === "coin") {
-    redirect(`/coins/${contract}`);
+    redirect(coinHref(resolvedChain, contract));
   }
 
   const name = col?.name ?? "Collection";
@@ -51,14 +58,14 @@ export default async function CollectionPage({ params }: Props) {
       name,
       ...(col?.description && { description: col.description }),
       ...(imageUrl && { image: imageUrl }),
-      url: absoluteUrl(`/collections/${contract}`),
+      url: absoluteUrl(collectionHref(resolvedChain, contract)),
       ...(typeof col?.totalSupply === "number" && {
         mainEntity: { "@type": "ItemList", numberOfItems: col.totalSupply },
       }),
     },
     buildBreadcrumbJsonLd([
       { name: "Collections", path: "/collections" },
-      { name, path: `/collections/${contract}` },
+      { name, path: collectionHref(resolvedChain, contract) },
     ]),
   ];
 

@@ -105,6 +105,16 @@ const nextConfig: NextConfig = {
         destination: "/asset/starknet/:contract/:tokenId",
         permanent: true,
       },
+      {
+        source: "/collections/:contract(0x[0-9a-fA-F]+)",
+        destination: "/collections/starknet/:contract",
+        permanent: true,
+      },
+      {
+        source: "/coins/:address(0x[0-9a-fA-F]+)",
+        destination: "/coins/starknet/:address",
+        permanent: true,
+      },
     ];
   },
 };
