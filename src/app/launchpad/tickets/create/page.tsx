@@ -39,6 +39,7 @@ import { normalizeAddress, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@mediala
 import { IPTicketCollectionFactoryABI } from "@medialane/sdk/starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
+import { collectionHref } from "@/lib/routes";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 const FACTORY = STARKNET_IP_TICKETS_FACTORY_CONTRACT as string;
@@ -231,7 +232,7 @@ export default function CreateTicketCollectionPage() {
         onCreateAnother={handleReset}
         createAnotherLabel="Create another"
         firstStepLabel="Deploy collection"
-        mintHref={deployedAddress ? `/collections/${deployedAddress}` : undefined}
+        mintHref={deployedAddress ? collectionHref("STARKNET", deployedAddress) : undefined}
         mintLabel="Create tickets"
         deployedAddress={deployedAddress}
       />

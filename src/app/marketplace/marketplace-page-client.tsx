@@ -14,6 +14,7 @@ import { CurrencyIcon } from "@/components/shared/currency-icon";
 import type { ApiOrder, ApiSearchResult } from "@medialane/sdk";
 import { getTokenBySymbol, parseAmount, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { ipfsToHttp, cn } from "@/lib/utils";
+import { assetHref, collectionHref } from "@/lib/routes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePlatformStats } from "@/hooks/use-stats";
@@ -100,7 +101,7 @@ function SearchBar() {
               {results.tokens!.map((t) => (
                 <Link
                   key={`${t.contractAddress}-${t.tokenId}`}
-                  href={`/asset/${t.contractAddress}/${t.tokenId}`}
+                  href={assetHref("STARKNET", t.contractAddress, t.tokenId)}
                   className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                 >
                   <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-xs tabular-nums shrink-0">
@@ -124,7 +125,7 @@ function SearchBar() {
                 return (
                   <Link
                     key={c.contractAddress}
-                    href={`/collections/${c.contractAddress}`}
+                    href={collectionHref("STARKNET", c.contractAddress)}
                     className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                   >
                     <div className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-brand-purple/20 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">

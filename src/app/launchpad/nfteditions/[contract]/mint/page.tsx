@@ -53,6 +53,7 @@ import { hash } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
+import { assetHref, collectionHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { serializeByteArray, encodeU256 } from "@/lib/cairo-calldata";
@@ -213,7 +214,7 @@ export default function MintNFTEditionsPage() {
   // moment the metadata JSON is written to IPFS. Creators can still override.
   useEffect(() => {
     if (!collectionAddress) return;
-    const suggested = absoluteUrl(`/collections/${collectionAddress}`);
+    const suggested = absoluteUrl(collectionHref("STARKNET", collectionAddress));
     const current = form.getValues("external_url");
     if (!current || current === autoExternalUrl) {
       form.setValue("external_url", suggested);
@@ -783,7 +784,7 @@ export default function MintNFTEditionsPage() {
         error={mintError}
         onMintAnother={handleMintAnother}
         mintedTokenId={mintedTokenId ?? ""}
-        assetHref={`/asset/${collectionAddress}/${mintedTokenId ?? ""}`}
+        assetHref={assetHref("STARKNET", collectionAddress, mintedTokenId)}
         explorerAssetHref={`${EXPLORER_URL}/nft/${collectionAddress}/${mintedTokenId ?? ""}`}
       />
     </>

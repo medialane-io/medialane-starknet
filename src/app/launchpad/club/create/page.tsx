@@ -31,6 +31,7 @@ import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
+import { collectionHref } from "@/lib/routes";
 import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
 import { toast } from "sonner";
 import { Contract, hash } from "starknet";
@@ -229,7 +230,7 @@ export default function CreateClubPage() {
         onCreateAnother={handleReset}
         createAnotherLabel="Create another"
         firstStepLabel="Deploy club"
-        mintHref={deployedAddress ? `/collections/${deployedAddress}` : undefined}
+        mintHref={deployedAddress ? collectionHref("STARKNET", deployedAddress) : undefined}
         mintLabel="Create memberships"
         deployedAddress={deployedAddress}
       />

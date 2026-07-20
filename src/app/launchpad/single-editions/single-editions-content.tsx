@@ -48,6 +48,7 @@ import { CreateAssetAside } from "@/components/claim/create-asset-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { cn, ipfsToHttp } from "@/lib/utils";
 import { absoluteUrl } from "@/lib/seo";
+import { collectionHref } from "@/lib/routes";
 import {
   IP_TYPES,
   LICENSE_TYPES,
@@ -350,7 +351,7 @@ export function SingleEditionsContent() {
   useEffect(() => {
     const col = collections.find((c) => c.collectionId === selectedCollectionId);
     if (col?.contractAddress && !form.getValues("external_url")) {
-      form.setValue("external_url", absoluteUrl(`/collections/${col.contractAddress}`));
+      form.setValue("external_url", absoluteUrl(collectionHref("STARKNET", col.contractAddress)));
     }
   }, [selectedCollectionId, collections, form]);
 

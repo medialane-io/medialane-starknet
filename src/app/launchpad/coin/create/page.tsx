@@ -12,6 +12,7 @@
 import { useMemo, useState } from "react";
 import { rewardToast } from "@/lib/reward-toast";
 import { useRouter } from "next/navigation";
+import { coinHref } from "@/lib/routes";
 import { Coins, TrendingUp, ArrowRight, Lock, Sparkles, ImagePlus, X, Loader2 } from "lucide-react";
 import { getTokenBySymbol, formatAmount } from "@medialane/sdk";
 import {
@@ -202,7 +203,7 @@ export default function CoinCreatePage() {
           <p className="tabular-nums text-xs text-muted-foreground break-all text-center">{coinAddress}</p>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={handleReset}>Launch another</Button>
-            <Button className="flex-1 bg-brand-rose hover:bg-brand-rose/90" onClick={() => router.push(`/coins/${coinAddress}`)}>
+            <Button className="flex-1 bg-brand-rose hover:bg-brand-rose/90" onClick={() => router.push(coinHref("STARKNET", coinAddress))}>
               View &amp; trade <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </div>

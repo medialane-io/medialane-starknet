@@ -30,6 +30,7 @@ import { ReportDialog } from "@/components/report-dialog";
 import { HelpIcon } from "@/components/ui/help-icon";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
+import { assetHref, collectionHref } from "@/lib/routes";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 import { useFullTokenData } from "@/hooks/use-full-token-data";
 
@@ -248,13 +249,13 @@ export function AssetPageStandard() {
               <AssetCollectionBar
                 collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
                 collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
-                collectionHref={`/collections/${contract}`}
+                collectionHref={collectionHref("STARKNET", contract)}
                 currentTokenId={tokenId}
                 siblingTokens={collectionTokens.map((t) => ({
                   tokenId: t.tokenId,
                   image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
                 }))}
-                onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
+                onNavigate={(id) => router.push(assetHref("STARKNET", contract, id))}
               />
               <ReportDialog
                 target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name }}

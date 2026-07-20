@@ -9,6 +9,7 @@ import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { ConnectGate } from "@/components/connect-gate";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
+import { collectionHref } from "@/lib/routes";
 
 export function TicketsContent() {
   const { address, isConnected } = useWallet();
@@ -84,7 +85,7 @@ export function TicketsContent() {
               <StaggerItem key={col.contractAddress}>
                 <CollectionCard
                   collection={col}
-                  href={`/collections/${col.contractAddress}`}
+                  href={collectionHref("STARKNET", col.contractAddress)}
                 />
               </StaggerItem>
             ))}

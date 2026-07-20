@@ -47,6 +47,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import { starknetProvider } from "@/lib/starknet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
+import { assetHref, collectionHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
@@ -132,7 +133,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
 
   useEffect(() => {
     if (!contract) return;
-    const suggested = absoluteUrl(`/collections/${contract}`);
+    const suggested = absoluteUrl(collectionHref("STARKNET", contract));
     if (!form.getValues("external_url")) form.setValue("external_url", suggested);
   }, [contract, form]);
 
@@ -503,7 +504,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
         successTitle="Membership created!"
         successSubtitle={`${form.getValues("maxSupply")} membership card(s) are in your wallet — list them on the marketplace whenever you're ready.`}
         mintedTokenId={mintedTierId ?? ""}
-        assetHref={mintedTierId ? `/asset/${contract}/${mintedTierId}` : undefined}
+        assetHref={mintedTierId ? assetHref("STARKNET", contract, mintedTierId) : undefined}
         explorerAssetHref={mintedTierId ? `${EXPLORER_URL}/nft/${contract}/${mintedTierId}` : undefined}
         mintAnotherLabel="Create another membership"
       />
