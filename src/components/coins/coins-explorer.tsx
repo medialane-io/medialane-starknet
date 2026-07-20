@@ -9,6 +9,7 @@
 import { CoinsExplorer as UICoinsExplorer, type CoinFilter, type CoinSort, type CoinCollectionLike } from "@medialane/ui";
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
 import { useCoinPrice } from "@/hooks/use-coin-price";
+import { coinHref } from "@/lib/routes";
 
 function usePrice(coin: CoinCollectionLike) {
   const { price, isLoading } = useCoinPrice(coin.contractAddress);
@@ -34,7 +35,7 @@ export function CoinsExplorer({ heading = true }: { heading?: boolean }) {
     <UICoinsExplorer
       useCoins={useCoins}
       usePrice={usePrice}
-      coinHref={(c) => `/coins/${c.contractAddress}`}
+      coinHref={(c) => coinHref("STARKNET", c.contractAddress)}
       heading={heading}
     />
   );

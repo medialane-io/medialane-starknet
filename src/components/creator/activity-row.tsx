@@ -7,6 +7,7 @@ import {
 import { timeAgo, formatDisplayPrice } from "@/lib/utils";
 import type { ApiActivity } from "@medialane/sdk";
 import { cn } from "@/lib/utils";
+import { assetHref } from "@/lib/routes";
 
 export const ACTIVITY_META: Record<string, { label: string; textColor: string; bg: string }> = {
   mint:      { label: "Minted",    textColor: "text-yellow-400",  bg: "bg-yellow-500/8 border-yellow-500/15" },
@@ -48,7 +49,7 @@ export function ActivityRow({ event, isLast }: { event: ApiActivity; isLast: boo
                 {meta.label}
               </span>
               {contract && tokenId ? (
-                <Link href={`/asset/${contract}/${tokenId}`} className="text-xs text-muted-foreground tabular-nums hover:text-foreground transition-colors">
+                <Link href={assetHref("STARKNET", contract, tokenId)} className="text-xs text-muted-foreground tabular-nums hover:text-foreground transition-colors">
                   Token #{tokenId}
                 </Link>
               ) : (

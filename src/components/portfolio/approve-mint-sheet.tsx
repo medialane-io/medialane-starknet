@@ -24,6 +24,7 @@ import type { Call } from "starknet";
 import { INDEXER_REVALIDATION_DELAY_MS, EXPLORER_URL } from "@/lib/constants";
 import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-dialog-primitives";
 import { fireConfetti } from "@/lib/confetti";
+import { assetHref } from "@/lib/routes";
 
 interface Props {
   offer: RemixOffer | null;
@@ -200,7 +201,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
         await getValidToken()
       );
 
-      setNewAssetLink(`/asset/${selectedCollection.contractAddress}/${remixTokenId}`);
+      setNewAssetLink(assetHref("STARKNET", selectedCollection.contractAddress, remixTokenId));
       setDone(true);
       setTimeout(() => onSuccess?.(), INDEXER_REVALIDATION_DELAY_MS);
     } catch (err: unknown) {

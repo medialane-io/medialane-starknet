@@ -6,6 +6,7 @@ import { LayoutGrid, ChevronRight } from "lucide-react";
 import { TokenCard } from "@/components/shared/token-card";
 import { useCollectionTokens } from "@/hooks/use-collections";
 import type { ApiCollection } from "@medialane/sdk";
+import { collectionHref } from "@/lib/routes";
 
 function ViewAllCard({ href }: { href: string }) {
   return (
@@ -56,7 +57,7 @@ export function CollectionCarouselRow({ collection }: { collection: ApiCollectio
           {collection.name ?? "Unnamed Collection"}
         </h3>
         <Link
-          href={`/collections/${collection.contractAddress}`}
+          href={collectionHref("STARKNET", collection.contractAddress)}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
         >
           See all <ChevronRight className="h-3 w-3" />
@@ -81,7 +82,7 @@ export function CollectionCarouselRow({ collection }: { collection: ApiCollectio
               </div>
             ))
         }
-        <ViewAllCard href={`/collections/${collection.contractAddress}`} />
+        <ViewAllCard href={collectionHref("STARKNET", collection.contractAddress)} />
       </div>
     </div>
   );

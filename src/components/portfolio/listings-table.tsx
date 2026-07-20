@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import type { ApiOrder } from "@medialane/sdk";
+import { assetHref } from "@/lib/routes";
 
 interface ListingsTableProps {
   address: string;
@@ -48,7 +49,7 @@ function ListingRow({
       {/* Asset */}
       <div className="flex-1 min-w-0">
         <Link
-          href={`/asset/${order.nftContract}/${order.nftTokenId}`}
+          href={assetHref("STARKNET", order.nftContract, order.nftTokenId)}
           className="font-medium text-sm hover:text-primary transition-colors truncate block"
         >
           {name}

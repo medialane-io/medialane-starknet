@@ -22,6 +22,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { assetHref as buildAssetHref } from "@/lib/routes";
 import {
   MarketplaceErrorState,
   MarketplaceTxLink,
@@ -138,7 +139,7 @@ function SuccessScreen({
   const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
   const name = order.token?.name ?? null;
   const is1155 = order.offer?.itemType === "ERC1155";
-  const assetHref = `/asset/${order.nftContract}/${order.nftTokenId}`;
+  const assetHref = buildAssetHref("STARKNET", order.nftContract, order.nftTokenId);
   const unitPrice = order.price?.formatted ? parseFloat(order.price.formatted) : null;
   const totalPrice = unitPrice !== null ? unitPrice * quantity : null;
   const headline = is1155 && quantity > 1 ? `You own ${quantity} editions!` : "You own it!";

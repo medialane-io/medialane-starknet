@@ -8,6 +8,7 @@
 
 import { CoinCard as UICoinCard, CoinRow as UICoinRow, CoinCardSkeleton, type CoinCollectionLike } from "@medialane/ui";
 import { useCoinPrice } from "@/hooks/use-coin-price";
+import { coinHref as buildCoinHref } from "@/lib/routes";
 
 /** dapp price adapter: live Ekubo spot price for a Starknet coin. */
 function useDappCoinPrice(collection: CoinCollectionLike) {
@@ -15,7 +16,7 @@ function useDappCoinPrice(collection: CoinCollectionLike) {
   return { price, isLoading };
 }
 
-const coinHref = (c: CoinCollectionLike) => `/coins/${c.contractAddress}`;
+const coinHref = (c: CoinCollectionLike) => buildCoinHref("STARKNET", c.contractAddress);
 
 export function CoinCard({ collection, href }: { collection: CoinCollectionLike; href?: string }) {
   return <UICoinCard collection={collection} usePrice={useDappCoinPrice} href={href ?? coinHref(collection)} />;

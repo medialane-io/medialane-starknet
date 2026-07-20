@@ -10,6 +10,7 @@ import { CurrencyIcon } from "@/components/shared/currency-icon";
 import { ACTIVITY_TYPE_CONFIG } from "@/lib/activity";
 import { EXPLORER_URL } from "@/lib/constants";
 import type { ApiActivity, ApiRewardsBatchEntry } from "@medialane/sdk";
+import { assetHref } from "@/lib/routes";
 
 const ACTIVITY_MESSAGES: Record<string, string> = {
   mint: "Newly minted",
@@ -122,7 +123,7 @@ export function ActivityRow({
         <div className="flex items-center gap-1.5 leading-tight">
           {contract && tokenId ? (
             <Link
-              href={`/asset/${contract}/${tokenId}`}
+              href={assetHref("STARKNET", contract, tokenId)}
               className="text-sm font-semibold hover:text-primary transition-colors truncate block"
             >
               {tokenName}

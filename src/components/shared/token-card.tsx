@@ -19,6 +19,7 @@ import { IpTypeBadge } from "@/components/shared/ip-type-badge";
 import { ReportDialog } from "@/components/report-dialog";
 import { OfferDialog } from "@/components/marketplace/offer-dialog";
 import { cn, ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
+import { assetHref as buildAssetHref, collectionHref as buildCollectionHref } from "@/lib/routes";
 import type { ApiToken } from "@medialane/sdk";
 
 interface TokenCardProps {
@@ -58,8 +59,8 @@ export function TokenCard({
   const creator = typeof creatorAttr?.value === "string" ? creatorAttr.value : null;
   const owner = token.balances?.[0]?.owner ?? token.owner ?? null;
 
-  const assetHref = `/asset/${token.contractAddress}/${token.tokenId}`;
-  const collectionHref = `/collections/${token.contractAddress}`;
+  const assetHref = buildAssetHref("STARKNET", token.contractAddress, token.tokenId);
+  const collectionHref = buildCollectionHref("STARKNET", token.contractAddress);
 
 
   const handleBuy = (e: React.MouseEvent) => {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GitBranch, ExternalLink } from "lucide-react";
+import { assetHref } from "@/lib/routes";
 
 // ─── RemixesTab ───────────────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ export function RemixesTab({ contractAddress, tokenId }: RemixesTabProps) {
           remix.remixContract && remix.remixTokenId ? (
             <Link
               key={remix.id}
-              href={`/asset/${remix.remixContract}/${remix.remixTokenId}`}
+              href={assetHref("STARKNET", remix.remixContract, remix.remixTokenId)}
               className="group relative block"
             >
               <div className="card-base p-3 space-y-1 hover:border-primary/40 transition-colors">

@@ -10,6 +10,7 @@ import { useCoinPrice } from "@/hooks/use-coin-price";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
 import { coinKind, formatCoinPrice, type CoinCollectionLike, type CoinKind } from "@medialane/ui";
 import { ipfsToHttp, cn } from "@/lib/utils";
+import { coinHref } from "@/lib/routes";
 
 type CoinFilter = "all" | "creator" | "memecoin";
 
@@ -62,7 +63,7 @@ function CoinScanRow({ coin }: { coin: CoinCollectionLike }) {
   const kind = coinKind(coin.service);
   return (
     <Link
-      href={`/coins/${coin.contractAddress}`}
+      href={coinHref("STARKNET", coin.contractAddress)}
       className="group flex items-center gap-3 sm:gap-4 rounded-xl border border-border/40 bg-card px-4 py-3 transition-all hover:border-border/80 hover:bg-muted/20"
     >
       <CoinAvatar coin={coin} kind={kind} />

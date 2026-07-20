@@ -2,6 +2,7 @@
 
 import { HeroSlider as UiHeroSlider } from "@medialane/ui";
 import { useCollections } from "@/hooks/use-collections";
+import { collectionHref } from "@/lib/routes";
 import type { ApiCollection } from "@medialane/sdk";
 
 export function HeroSlider({ initial }: { initial?: ApiCollection[] }) {
@@ -10,7 +11,7 @@ export function HeroSlider({ initial }: { initial?: ApiCollection[] }) {
     <UiHeroSlider
       collections={collections}
       isLoading={isLoading}
-      getHref={(c) => `/collections/${c.contractAddress}`}
+      getHref={(c) => collectionHref("STARKNET", c.contractAddress)}
     />
   );
 }
