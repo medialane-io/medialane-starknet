@@ -98,9 +98,36 @@ function rpcError(code: number, message: string, status = 200, id: number | null
   );
 }
 
+// Per-IP rate limit. The same-origin guard only stops cross-origin *browsers*
+// (a request with no Origin header is allowed), so a script can still use this
+// as an open RPC relay and drain the keyed upstream's quota. Cap per-IP volume
+// — generous enough for legit heavy use (a single tx fires ~20-40 calls incl.
+// receipt polling), tight enough to bound abuse. Per-process (Vercel lambdas
+// don't share memory); acceptable for cost-drain protection, not correctness.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 600;
+const ipCounts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipCounts.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    ipCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count += 1;
+  return true;
+}
+
 export async function POST(req: NextRequest) {
   if (!isSameOrigin(req)) {
     return rpcError(-32600, "Cross-origin requests are not allowed", 403);
+  }
+
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  if (!checkRateLimit(ip)) {
+    return rpcError(-32005, "Too many requests", 429);
   }
 
   let body: unknown;

@@ -62,6 +62,11 @@ export async function GET(
   if (!/^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[a-z2-7]{58,})(\/[\w.\-/]*)?$/.test(cidPath)) {
     return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
   }
+  // The sub-path grammar allows dots — reject `..` traversal segments so a
+  // request can't escape the gateway's /ipfs/ path with our JWT attached.
+  if (cidPath.split("/").includes("..")) {
+    return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
+  }
 
   const isDedicatedGateway = !!process.env.PINATA_DEDICATED_GATEWAY;
   const width = Number.parseInt(req.nextUrl.searchParams.get("w") ?? "", 10);
@@ -105,9 +110,30 @@ export async function GET(
     ? upstreamContentType
     : "application/octet-stream";
 
-  const body = await upstream.arrayBuffer();
-  if (body.byteLength > MAX_RESPONSE_BYTES) {
-    return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
+  // Stream and abort past MAX_RESPONSE_BYTES. The Content-Length check above is
+  // advisory (origins can omit or lie), so `arrayBuffer()` would buffer the
+  // whole body BEFORE the size check — this caps memory during the read.
+  if (!upstream.body) {
+    return NextResponse.json({ error: "IPFS gateway returned no body" }, { status: 502 });
+  }
+  const reader = upstream.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_RESPONSE_BYTES) {
+      await reader.cancel();
+      return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(total) as Uint8Array<ArrayBuffer>;
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
   }
 
   return new NextResponse(body, {
