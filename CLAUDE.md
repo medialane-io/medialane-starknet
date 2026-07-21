@@ -469,10 +469,21 @@ Multi-gateway fallback: Pinata → ipfs.io → Cloudflare → dweb.link. 24h loc
 
 ---
 
-## Asset Detail Pages (modernized 2026-05-22)
+## Asset Detail Pages (modernized 2026-05-22; chain-scoped 2026-07-20)
 
-`/asset/[contract]/[tokenId]` resolves the asset type and renders one of four
-variant pages, all built on a shared component set ported to match medialane.io.
+`/asset/[chain]/[contract]/[tokenId]` resolves the asset type and renders one of
+four variant pages, all built on a shared component set ported to match medialane.io.
+
+> **URL scheme is chain-scoped (2026-07-20).** Asset/collection/coin routes carry
+> a `[chain]` slug first: `/asset/[chain]/[contract]/[tokenId]`,
+> `/collections/[chain]/[contract]`, `/coins/[chain]/[address]`. `page.tsx` parses
+> `chain` via `chainFromSlug` (`@/lib/routes`, re-exports the SDK helpers) and 404s
+> an unknown slug. **Never hand-build these URLs** — use `assetHref`/`collectionHref`/
+> `coinHref` from `@/lib/routes` (all callers do; the single chain is `"STARKNET"`).
+> Legacy non-chained `/asset/:0x…/…` paths 301 to the `starknet` form via
+> `next.config.ts` redirects. This unblocked adopting the shared `@medialane/ui`
+> `TokenCard` (0.75.0), which builds links internally from `token.chain` — the
+> local `token-card.tsx` is now a thin Offer/Report-dialog wrapper. Mirrors io.
 
 **Dispatcher:** `asset-page-client.tsx` → `asset-page-{standard,edition,drop,pop,ticket}.tsx`
 - `standard` — ERC-721 IP asset (license, remix, full marketplace)
@@ -485,7 +496,7 @@ variant pages, all built on a shared component set ported to match medialane.io.
 
 ### IP Tickets (rebuilt 2026-07-14 — contract `version()` "4.0.0")
 
-Ticket collections are **regular collections** at `/collections/[contract]` — the
+Ticket collections are **regular collections** at `/collections/[chain]/[contract]` — the
 launchpad launches (`/launchpad/tickets` browse + `/create`) and hosts one owner
 page: `/launchpad/tickets/[contract]/mint` (create a ticket type + mint its full
 supply to the creator in ONE multicall — the creator lists on the marketplace like
@@ -496,7 +507,7 @@ dialog-based flow was replaced 2026-07-15. Same structure on medialane-io (teal
 accent, ChipiPay rails), and the same shape as IP Club memberships
 (`/launchpad/club/[contract]/mint`, 2026-07-16 rebuild).
 
-**Shared modules** (all under `src/app/asset/[contract]/[tokenId]/`):
+**Shared modules** (all under `src/app/asset/[chain]/[contract]/[tokenId]/`):
 
 | File | Exports |
 |---|---|
@@ -570,10 +581,10 @@ rows. Coins are fetched from **`/v1/coins`** via the SDK's **`getCoins()` / `get
 - **`components/coins/coins-explorer.tsx`** — injects `useCoins` into the shared
   `@medialane/ui` `CoinsExplorer` (maps `ApiCoin.totalSupply` string→number for the UI's
   `CoinCollectionLike`). The marketplace **Tokens** tab embeds this explorer.
-- **`collections/[contract]/collection-page-client.tsx`** — the dispatcher resolves a **Coin**
-  on the `/coins/[address]` route (or as a fallback for an old `/collections/[coin]` link) and
+- **`collections/[chain]/[contract]/collection-page-client.tsx`** — the dispatcher resolves a **Coin**
+  on the `/coins/[chain]/[address]` route (or as a fallback for an old `/collections/[chain]/[coin]` link) and
   early-returns `<CoinPageClient coin={coin} />`. NFT collections take the normal path.
-- **`collections/[contract]/coin-page-client.tsx`** — `CoinPageClient({ coin }: { coin: ApiCoin })`:
+- **`collections/[chain]/[contract]/coin-page-client.tsx`** — `CoinPageClient({ coin }: { coin: ApiCoin })`:
   identity over the image-blur backdrop (same `AssetAtmosphere` settings: `opacity-30`, no tint),
   a brand-gradient-`Panel` live-price card with the price in `text-brand-orange`, supply/market-cap
   stats, and an embedded **buy-swap** (`CoinSwapCard`). Stats render only when they resolve (no
