@@ -42,6 +42,7 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useCollection } from "@/hooks/use-collections";
 import { predictNextMembershipId } from "@/hooks/use-club";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
+import { assetHref, collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
 import { starknetProvider } from "@/lib/starknet";
@@ -132,7 +133,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
 
   useEffect(() => {
     if (!contract) return;
-    const suggested = absoluteUrl(`/collections/${contract}`);
+    const suggested = absoluteUrl(collectionHref("STARKNET", contract));
     if (!form.getValues("external_url")) form.setValue("external_url", suggested);
   }, [contract, form]);
 
@@ -503,7 +504,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
         successTitle="Membership created!"
         successSubtitle={`${form.getValues("maxSupply")} membership card(s) are in your wallet — list them on the marketplace whenever you're ready.`}
         mintedTokenId={mintedTierId ?? ""}
-        assetHref={mintedTierId ? `/asset/${contract}/${mintedTierId}` : undefined}
+        assetHref={mintedTierId ? assetHref("STARKNET", contract, mintedTierId) : undefined}
         explorerAssetHref={mintedTierId ? `${EXPLORER_URL}/nft/${contract}/${mintedTierId}` : undefined}
         mintAnotherLabel="Create another membership"
       />

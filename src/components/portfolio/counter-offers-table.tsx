@@ -12,6 +12,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import Image from "next/image";
 import Link from "next/link";
 import type { ApiOrder } from "@medialane/sdk";
+import { assetHref } from "@/lib/routes";
 
 /**
  * Fetches and renders a single counter-offer row for one original bid.
@@ -43,7 +44,7 @@ function CounterOfferFetcher({
 
       <div className="flex-1 min-w-0">
         <Link
-          href={`/asset/${counter.nftContract}/${counter.nftTokenId}`}
+          href={assetHref("STARKNET", counter.nftContract, counter.nftTokenId)}
           className="font-medium text-sm hover:text-primary transition-colors truncate block"
         >
           {name}

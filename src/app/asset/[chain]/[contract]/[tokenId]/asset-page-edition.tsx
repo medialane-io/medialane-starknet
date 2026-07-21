@@ -3,37 +3,34 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
+import { assetHref, collectionHref } from "@/lib/routes";
+import { Layers } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
-import { useTokenListings } from "@/hooks/use-orders";
 import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
+import { useTokenListings } from "@/hooks/use-orders";
+import { useWallet } from "@/hooks/use-wallet";
+import { useComments } from "@/hooks/use-comments";
+import { useTokenRemixes } from "@/hooks/use-remix-offers";
+import { ipfsToHttp } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
-import { ipfsToHttp } from "@/lib/utils";
+import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
-import { getService } from "@medialane/sdk";
-import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
-import { useComments } from "@/hooks/use-comments";
-import { EXPLORER_URL } from "@/lib/constants";
-import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
-import { AssetMediaColumn } from "@/components/asset/asset-media-column";
-import { AssetLightbox } from "@/components/asset/asset-lightbox";
 import { ReportDialog } from "@/components/report-dialog";
 import { HelpIcon } from "@/components/ui/help-icon";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
-import { useFullTokenData } from "@/hooks/use-full-token-data";
 
-export function AssetPageStandard() {
+export function AssetPageEdition() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
   const { isConnected: isSignedIn, address: walletAddress } = useWallet();
@@ -42,6 +39,7 @@ export function AssetPageStandard() {
   const token = rawToken as AssetToken | null;
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
   const { history } = useTokenHistory(contract, tokenId);
+  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
   const shouldReduce = useReducedMotion();
 
@@ -50,28 +48,20 @@ export function AssetPageStandard() {
   const [imgError, setImgError] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
-  // Collection siblings for the filmstrip nav — from the (paged) collection
-  // token list; the filmstrip hides itself when the collection has ≤1 item.
-  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
-
-  // Audited IPNft creation record — undefined for external/legacy contracts (hook returns null).
-  const { data: fullTokenData } = useFullTokenData({
-    ipNftAddress: contract,
-    tokenId: tokenId ? (() => { try { return BigInt(tokenId); } catch { return undefined; } })() : undefined,
-  });
-
   const dialogs = useAssetMarketplaceDialogState();
   const {
     activeListings, activeBids, cheapest, isOwner, myListing,
-    attributes, hasTemplateData, isDisplayAttr, parentContract, parentTokenId,
+    attributes, hasTemplateData, isDisplayAttr,
   } = useAssetMarketState(token, listings, walletAddress);
 
-  const isERC1155 = (token?.standard ?? collection?.standard) === "ERC1155";
+  const handleAcceptClick = async (order: ApiOrder) => {
+    await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
+    mutateListings();
+  };
 
   // Most recent "sale" activity — `history`'s sort order isn't guaranteed, so
   // pick the max-timestamp entry explicitly rather than assuming array order.
@@ -80,64 +70,16 @@ export function AssetPageStandard() {
     .reduce<ApiActivity | null>((latest, h) => (!latest || h.timestamp > latest.timestamp ? h : latest), null);
   const lastSaleRaw = lastSale?.price ? `${lastSale.price.formatted} ${lastSale.price.currency ?? ""}`.trim() : null;
 
-  const handleAcceptClick = async (order: ApiOrder) => {
-    await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
-    mutateListings();
-  };
-
-  const remixPolicy = resolveRemixPolicy({
-    parentNoDerivatives: getDerivativesTerm(token?.metadata?.attributes) === "Not Allowed",
-    viewerIsParentOwner: isOwner,
-    dealAvailable: !!getService(collection?.service),
-  });
-
-  const handleAutoRemix = () => {
-    router.push(`/create/remix/${contract}/${tokenId}`);
-  };
-
-  const goToDeal = () => {
-    router.push(`/create/licensing/${contract}/${tokenId}`);
-  };
-
   if (isLoading) {
     return (
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8">
           <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <Skeleton className="h-3 w-28" />
-              <Skeleton className="h-9 w-3/4" />
-              <Skeleton className="h-5 w-16 rounded-full" />
-              <div className="space-y-1.5 pt-1">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-            </div>
-            <Skeleton className="h-9 w-28" />
-            <div className="grid grid-cols-2 gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 rounded-2xl" />
-              ))}
-            </div>
-            <div className="pt-5 border-t border-border/40 space-y-5">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-xl" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-4 w-28" />
-                </div>
-              </div>
-              <div className="space-y-2.5">
-                <Skeleton className="h-3 w-14" />
-                <Skeleton className="h-4 w-3/4" />
-                <div className="flex flex-wrap gap-2 pt-0.5">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-7 w-24 rounded-full" />
-                  ))}
-                </div>
-              </div>
-            </div>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
         </div>
       </div>
@@ -148,7 +90,6 @@ export function AssetPageStandard() {
     return (
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 text-center">
         <p className="text-2xl font-bold">Asset not found</p>
-        <p className="text-muted-foreground mt-2">This token hasn&apos;t been indexed yet.</p>
       </div>
     );
   }
@@ -156,31 +97,30 @@ export function AssetPageStandard() {
   const name = token.metadata?.name || `Token #${token.tokenId}`;
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const description = token.metadata?.description;
-  const balances = token.balances ?? [];
-  const ownerAddress = !isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null;
+  const holders = token.balances ?? [];
+  const uniqueHolders = holders.length;
+  const totalEditions = holders.reduce((sum, b) => sum + parseInt(b.amount, 10), 0);
 
   return (
     <div className="relative z-0 min-h-screen">
       {token.isHidden && <HiddenContentBanner />}
-      <AssetAtmosphere imageUrl={imageUrl} opacityClassName="opacity-30" />
+      <AssetAtmosphere imageUrl={imageUrl} />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">
-          <div className="space-y-3">
-            <AssetMediaColumn
-              shouldReduce={Boolean(shouldReduce)}
-              image={image}
-              imageAlt={name}
-              imgError={imgError}
-              onImageError={() => setImgError(true)}
-              onZoom={() => setLightboxOpen(true)}
-              fallback={(
-                <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/10 to-brand-purple/10">
-                  <span className="text-5xl tabular-nums text-muted-foreground">#{tokenId}</span>
-                </div>
-              )}
-            />
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8 items-start">
+          <AssetMediaColumn
+            shouldReduce={Boolean(shouldReduce)}
+            image={image ?? ""}
+            imageAlt={name}
+            imgError={imgError}
+            onImageError={() => setImgError(true)}
+            fallback={(
+              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-purple/20 to-brand-purple/20">
+                <Layers className="h-24 w-24 text-brand-purple/40" />
+              </div>
+            )}
+            stats={buildEditionStats(totalEditions, uniqueHolders)}
+          />
 
           <motion.div
             initial={shouldReduce ? false : { opacity: 0, y: 16 }}
@@ -193,9 +133,7 @@ export function AssetPageStandard() {
                 name={name}
                 description={description}
                 ipType={token.metadata?.ipType}
-                showMultiEditionBadge={Boolean(isERC1155)}
-                parentContract={parentContract}
-                parentTokenId={parentTokenId}
+                showMultiEditionBadge={true}
               />
               <AssetUtilityIcons
                 contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
@@ -210,11 +148,10 @@ export function AssetPageStandard() {
               isOwner={isOwner}
               isSignedIn={isSignedIn}
               isProcessing={isProcessing}
-              isERC1155={isERC1155}
+              isERC1155
               myListing={myListing}
               activeBids={activeBids}
               walletAddress={walletAddress}
-              remixEnabled={remixPolicy.canRemixDirect}
               floorPriceRaw={collection?.floorPrice}
               lastSaleRaw={lastSaleRaw}
               renderAuthAction={(label) => (
@@ -232,36 +169,26 @@ export function AssetPageStandard() {
               onOpenTransfer={() => dialogs.setTransferOpen(true)}
               onOpenPurchase={dialogs.setPurchaseOrder}
               onOpenOffer={() => dialogs.setOfferOpen(true)}
-              onOpenRemix={handleAutoRemix}
-              showDealOption={remixPolicy.showDealOption}
-              onProposeDeal={goToDeal}
             />
 
-            {isERC1155 && balances.length > 0 ? (
-              <AssetOwnersPanel balances={balances} maxVisible={5} />
-            ) : null}
+            <AssetOwnersPanel balances={holders} maxVisible={8} />
 
-            <div className="pt-5 space-y-5">
-              {ownerAddress ? (
-                <AssetOwnerRow ownerAddress={ownerAddress} ownerHref={`/creator/${ownerAddress}`} />
-              ) : null}
-              <AssetCollectionBar
-                collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
-                collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
-                collectionHref={`/collections/${contract}`}
-                currentTokenId={tokenId}
-                siblingTokens={collectionTokens.map((t) => ({
-                  tokenId: t.tokenId,
-                  image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
-                }))}
-                onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
-              />
-              <ReportDialog
-                target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name }}
-                open={reportOpen}
-                onOpenChange={setReportOpen}
-              />
-            </div>
+            <AssetCollectionBar
+              collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
+              collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
+              collectionHref={collectionHref("STARKNET", contract)}
+              currentTokenId={tokenId}
+              siblingTokens={collectionTokens.map((t) => ({
+                tokenId: t.tokenId,
+                image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
+              }))}
+              onNavigate={(id) => router.push(assetHref("STARKNET", contract, id))}
+            />
+            <ReportDialog
+              target={{ type: "TOKEN", contract, tokenId, name }}
+              open={reportOpen}
+              onOpenChange={setReportOpen}
+            />
           </motion.div>
         </div>
 
@@ -285,32 +212,14 @@ export function AssetPageStandard() {
           </TabsContent>
 
           <TabsContent value="markets">
-            <AssetMarketsTab
-              activeListings={activeListings}
-              activeBids={activeBids}
-              walletAddress={walletAddress ?? undefined}
-              isOwner={isOwner}
-              isProcessing={isProcessing}
-              onBuyClick={dialogs.setPurchaseOrder}
-              onCancelClick={dialogs.handleCancelClick}
-              onAcceptClick={handleAcceptClick}
-            />
+            <AssetMarketsTab activeListings={activeListings} activeBids={activeBids} walletAddress={walletAddress ?? undefined} isOwner={isOwner} isProcessing={isProcessing} onBuyClick={dialogs.setPurchaseOrder} onCancelClick={dialogs.handleCancelClick} onAcceptClick={handleAcceptClick} />
           </TabsContent>
 
           <TabsContent value="provenance">
-            <AssetProvenanceTab
-              history={history as ApiActivity[]}
-              contract={contract}
-              tokenId={tokenId}
-              remixCount={remixCount}
-              originalCreator={fullTokenData?.originalCreator}
-              registeredAt={fullTokenData?.registeredAt}
-            />
+            <AssetProvenanceTab history={history as ApiActivity[]} contract={contract} tokenId={tokenId} remixCount={remixCount} />
           </TabsContent>
         </Tabs>
       </div>
-
-      <AssetLightbox open={lightboxOpen} onOpenChange={setLightboxOpen} image={image} alt={name} />
 
       <FloatingCommentsButton onClick={() => setCommentOpen(true)} commentTotal={commentTotal} />
 
@@ -334,7 +243,7 @@ export function AssetPageStandard() {
         tokenId={tokenId}
         tokenName={name}
         tokenImage={imageUrl}
-        tokenStandard={collection?.standard}
+        tokenStandard="ERC1155"
         hasActiveListing={activeListings.length > 0}
         mutateListings={mutateListings}
         dialogs={dialogs}

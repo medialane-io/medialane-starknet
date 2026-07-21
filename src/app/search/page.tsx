@@ -12,6 +12,7 @@ import { ipfsToHttp } from "@/lib/utils";
 import { Search, Layers, ImageIcon, Users, AtSign, X } from "lucide-react";
 import type { ApiSearchResult, ApiSearchCreatorResult } from "@medialane/sdk";
 import { PageContainer } from "@medialane/ui";
+import { assetHref, collectionHref } from "@/lib/routes";
 
 function TokenCard({ token }: { token: NonNullable<ApiSearchResult["tokens"]>[number] }) {
   const [imgError, setImgError] = useState(false);
@@ -19,7 +20,7 @@ function TokenCard({ token }: { token: NonNullable<ApiSearchResult["tokens"]>[nu
 
   return (
     <Link
-      href={`/asset/${token.contractAddress}/${token.tokenId}`}
+      href={assetHref("STARKNET", token.contractAddress, token.tokenId)}
       className="group rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all"
     >
       <div className="relative aspect-square bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
@@ -60,7 +61,7 @@ function CollectionCard({ col }: { col: NonNullable<ApiSearchResult["collections
 
   return (
     <Link
-      href={`/collections/${col.contractAddress}`}
+      href={collectionHref("STARKNET", col.contractAddress)}
       className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/30 hover:bg-muted/30 transition-all"
     >
       <div className="relative h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-brand-purple/20 flex items-center justify-center text-base font-bold shrink-0 overflow-hidden">

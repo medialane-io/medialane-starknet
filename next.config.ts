@@ -58,6 +58,15 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // ── Chain-in-URL migration (2026-07-20) ───────────────────────────────
+      // Asset/collection/coin routes are now chain-scoped (/asset/[chain]/…).
+      // 301 the legacy non-chained paths to the STARKNET form. The (0x…) regex
+      // on the contract/address segment keeps these from swallowing the new
+      // chained routes (whose first segment is a chain slug, not 0x-hex) or any
+      // non-address sibling path.
+      { source: "/asset/:contract(0x[0-9a-fA-F]+)/:tokenId", destination: "/asset/starknet/:contract/:tokenId", permanent: true },
+      { source: "/collections/:contract(0x[0-9a-fA-F]+)",    destination: "/collections/starknet/:contract",    permanent: true },
+      { source: "/coins/:address(0x[0-9a-fA-F]+)",           destination: "/coins/starknet/:address",            permanent: true },
       // ── Docs ──────────────────────────────────────────────────────────────
       // Knowledge hub lives on docs.medialane.io since the 2026-05 docs
       // migration; redirect any stale /docs paths there. Direct in-app

@@ -1,22 +1,22 @@
 "use client";
 
-// Membership asset page — the ip-club uiVariant. Built on the same shared
-// modules as the edition page, with the token presented as a membership tier:
-// the on-chain validity window and supply from get_membership, and a
-// holder-facing "Your membership" state driven by the on-chain is_member_of
-// check. The window gates membership, never minting or trading.
+// Ticket asset page — the ip-tickets uiVariant. Built on the same shared
+// modules as the edition page, with the token presented as a ticket: the
+// on-chain validity window and supply from get_ticket, and a holder-facing
+// "Your ticket" door panel driven by the on-chain is_valid check.
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
-import { Users, CheckCircle2, Clock, CalendarX2, Infinity as InfinityIcon } from "lucide-react";
+import { assetHref, collectionHref } from "@/lib/routes";
+import { Ticket, CheckCircle2, Clock, CalendarX2 } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
 import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { useMembershipOnchain, useIsMemberOf, type MembershipOnchain } from "@/hooks/use-club";
+import { useTicketOnchain, type TicketOnchain } from "@/hooks/use-tickets";
 import { ipfsToHttp, resolveTokenImage, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
@@ -36,16 +36,15 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 
-// ── Membership status (window-derived only) ───────────────────────────────────
+// ── Ticket status (window-derived only — the ticket is what affects holders) ──
 
-type MembershipStatus = "upcoming" | "active" | "ended" | "lifetime";
+type TicketStatus = "upcoming" | "valid" | "ended";
 
-function membershipStatus(m: MembershipOnchain): MembershipStatus {
-  if (m.startTime == null && m.endTime == null) return "lifetime";
+function ticketStatus(t: TicketOnchain): TicketStatus {
   const now = Date.now() / 1000;
-  if (m.startTime != null && now < m.startTime) return "upcoming";
-  if (m.endTime != null && now >= m.endTime) return "ended";
-  return "active";
+  if (t.startTime != null && now < t.startTime) return "upcoming";
+  if (t.endTime != null && now >= t.endTime) return "ended";
+  return "valid";
 }
 
 const fmtDate = (ts: number) =>
@@ -54,30 +53,25 @@ const fmtDate = (ts: number) =>
     timeStyle: "short",
   });
 
-function windowLabel(m: MembershipOnchain): string {
-  if (m.startTime != null && m.endTime != null) return `Valid from ${fmtDate(m.startTime)} to ${fmtDate(m.endTime)}`;
-  if (m.startTime != null) return `Valid from ${fmtDate(m.startTime)}`;
-  if (m.endTime != null) return `Valid until ${fmtDate(m.endTime)}`;
-  return "Lifetime membership";
+function windowLabel(t: TicketOnchain): string {
+  if (t.startTime != null && t.endTime != null) return `Valid from ${fmtDate(t.startTime)} to ${fmtDate(t.endTime)}`;
+  if (t.startTime != null) return `Valid from ${fmtDate(t.startTime)}`;
+  if (t.endTime != null) return `Valid until ${fmtDate(t.endTime)}`;
+  return "Always valid";
 }
 
-function MembershipStatusChip({ status }: { status: MembershipStatus }) {
-  const styles: Record<MembershipStatus, string> = {
+function TicketStatusChip({ status }: { status: TicketStatus }) {
+  const styles: Record<TicketStatus, string> = {
     upcoming: "bg-muted text-muted-foreground border-border",
-    active: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30",
+    valid: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30",
     ended: "bg-muted text-muted-foreground border-border",
-    lifetime: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30",
   };
-  const labels: Record<MembershipStatus, string> = {
+  const labels: Record<TicketStatus, string> = {
     upcoming: "Upcoming",
-    active: "Active",
+    valid: "Valid now",
     ended: "Ended",
-    lifetime: "Lifetime",
   };
-  const Icon =
-    status === "active" ? CheckCircle2 :
-    status === "upcoming" ? Clock :
-    status === "lifetime" ? InfinityIcon : CalendarX2;
+  const Icon = status === "valid" ? CheckCircle2 : status === "upcoming" ? Clock : CalendarX2;
   return (
     <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border", styles[status])}>
       <Icon className="h-3.5 w-3.5" />
@@ -86,67 +80,41 @@ function MembershipStatusChip({ status }: { status: MembershipStatus }) {
   );
 }
 
-// ── Membership panel — identity, supply, royalty, validity window, and the
-// connected holder's own state (quantity + on-chain is_member_of).
+// ── Ticket panel — identity, quantity, royalty, and validity window. Holder
+// status (quantity held, valid/ready-to-present) lives in the owner row
+// after the action buttons — not duplicated here.
 
-function MembershipPanel({
-  membership,
-  myQuantity,
-  isMember,
-}: {
-  membership: MembershipOnchain;
-  myQuantity: number;
-  isMember: boolean;
-}) {
-  const status = membershipStatus(membership);
-  const hasWindow = membership.startTime != null || membership.endTime != null;
+function TicketPanel({ ticket }: { ticket: TicketOnchain }) {
+  const status = ticketStatus(ticket);
+  const hasWindow = ticket.startTime != null || ticket.endTime != null;
 
   return (
     <div className="rounded-2xl bg-gradient-to-br from-muted/40 to-transparent p-4 space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-brand-purple" />
-          <span className="text-sm font-semibold">Membership</span>
+          <Ticket className="h-4 w-4 text-brand-blue" />
+          <span className="text-sm font-semibold">Ticket</span>
         </div>
-        <MembershipStatusChip status={status} />
+        <TicketStatusChip status={status} />
       </div>
-      {hasWindow && <p className="text-sm text-muted-foreground">{windowLabel(membership)}</p>}
+      {hasWindow && <p className="text-sm text-muted-foreground">{windowLabel(ticket)}</p>}
       <div className="flex gap-8">
         <div>
-          <p className="text-xs text-muted-foreground">Supply</p>
-          <p className="text-sm font-semibold tabular-nums">{membership.maxSupply.toString()}</p>
+          <p className="text-xs text-muted-foreground">Quantity</p>
+          <p className="text-sm font-semibold tabular-nums">{ticket.maxSupply.toString()}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Royalty</p>
-          <p className="text-sm font-semibold tabular-nums">{(membership.royaltyBps / 100).toFixed(1)}%</p>
+          <p className="text-sm font-semibold tabular-nums">{(ticket.royaltyBps / 100).toFixed(1)}%</p>
         </div>
       </div>
-      {myQuantity > 0 && (
-        <div className="flex items-center gap-2 border-t border-border/60 pt-3">
-          {isMember ? (
-            <>
-              <CheckCircle2 className="h-4 w-4 text-teal-500" />
-              <p className="text-sm font-medium">
-                Active member · {myQuantity} card{myQuantity > 1 ? "s" : ""}
-              </p>
-            </>
-          ) : (
-            <>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {status === "upcoming" ? "Not yet valid" : "Membership ended"} · {myQuantity} card{myQuantity > 1 ? "s" : ""}
-              </p>
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export function AssetPageMembership() {
+export function AssetPageTicket() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
   const { isConnected: isSignedIn, address: walletAddress } = useWallet();
@@ -157,8 +125,7 @@ export function AssetPageMembership() {
   const { history } = useTokenHistory(contract, tokenId);
   const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
   const { acceptOffer, isProcessing } = useMarketplace();
-  const { membership } = useMembershipOnchain(contract, tokenId);
-  const { isMember } = useIsMemberOf(contract, tokenId, walletAddress ?? null);
+  const { ticket } = useTicketOnchain(contract, tokenId);
   const shouldReduce = useReducedMotion();
 
   const imageUrl = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
@@ -210,7 +177,7 @@ export function AssetPageMembership() {
     );
   }
 
-  const name = token.metadata?.name || `Membership #${token.tokenId}`;
+  const name = token.metadata?.name || `Ticket #${token.tokenId}`;
   const image = resolveTokenImage(token.metadata?.image);
   const description = token.metadata?.description;
   const holders = token.balances ?? [];
@@ -235,8 +202,8 @@ export function AssetPageMembership() {
             imgError={imgError}
             onImageError={() => setImgError(true)}
             fallback={(
-              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-purple/20 to-brand-blue/20">
-                <Users className="h-24 w-24 text-brand-purple/40" />
+              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-blue/20 to-brand-purple/20">
+                <Ticket className="h-24 w-24 text-brand-blue/40" />
               </div>
             )}
           />
@@ -260,9 +227,7 @@ export function AssetPageMembership() {
               />
             </div>
 
-            {membership && (
-              <MembershipPanel membership={membership} myQuantity={myQuantity} isMember={isMember} />
-            )}
+            {ticket && <TicketPanel ticket={ticket} />}
 
             <AssetMarketplacePanel
               cheapest={cheapest}
@@ -298,13 +263,13 @@ export function AssetPageMembership() {
             <AssetCollectionBar
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
               collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
-              collectionHref={`/collections/${contract}`}
+              collectionHref={collectionHref("STARKNET", contract)}
               currentTokenId={tokenId}
               siblingTokens={collectionTokens.map((t) => ({
                 tokenId: t.tokenId,
                 image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
               }))}
-              onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
+              onNavigate={(id) => router.push(assetHref("STARKNET", contract, id))}
             />
             <ReportDialog
               target={{ type: "TOKEN", contract, tokenId, name }}
@@ -353,11 +318,11 @@ export function AssetPageMembership() {
         name={name}
         imageUrl={imageUrl}
         commentTotal={commentTotal}
-        accentBorderClassName="border-brand-purple/20"
-        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-purple) / 0.10), hsl(var(--brand-blue) / 0.08))"
-        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-purple) / 0.3), hsl(var(--brand-blue) / 0.3))"
-        accentLabelClassName="text-brand-purple"
-        accentCountStyle={{ background: "hsl(var(--brand-purple))" }}
+        accentBorderClassName="border-brand-blue/20"
+        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.10), hsl(var(--brand-purple) / 0.08))"
+        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.3), hsl(var(--brand-purple) / 0.3))"
+        accentLabelClassName="text-brand-blue"
+        accentCountStyle={{ background: "hsl(var(--brand-blue))" }}
       />
 
       <AssetMarketplaceDialogs

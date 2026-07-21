@@ -12,6 +12,7 @@ import { submitRemixOffer } from "@/hooks/use-remix-offers";
 import { getListableTokens, getTokenBySymbol, getService } from "@medialane/sdk";
 import { LICENSE_TYPES } from "@/types/ip";
 import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
+import { assetHref } from "@/lib/routes";
 import { ipfsToHttp } from "@/lib/utils";
 import { ToggleGroup, Section } from "@/components/create/create-form-primitives";
 import { Button } from "@/components/ui/button";
@@ -143,14 +144,14 @@ export default function CreateLicensingPage() {
   }
   // You can't license your own work; licensing needs a reachable Medialane owner.
   if (viewerIsOwner || !policy.dealAvailable) {
-    router.replace(`/asset/${contract}/${tokenId}`);
+    router.replace(assetHref("STARKNET", contract, tokenId));
     return null;
   }
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-14 pb-12 space-y-6">
       <div className="space-y-3">
-        <Link href={`/asset/${contract}/${tokenId}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href={assetHref("STARKNET", contract, tokenId)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-4 w-4" /> Back to asset
         </Link>
         <div className="flex items-center gap-2 text-primary">

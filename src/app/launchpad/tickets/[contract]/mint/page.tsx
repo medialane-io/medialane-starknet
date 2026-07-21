@@ -43,6 +43,7 @@ import { useCollection } from "@/hooks/use-collections";
 import { useCollectionProfile } from "@/hooks/use-profiles";
 import { predictNextTicketId } from "@/hooks/use-tickets";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
+import { assetHref, collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
 import { starknetProvider } from "@/lib/starknet";
@@ -140,7 +141,7 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
     if (!contract || profileLoading) return;
     const suggested = profile?.slug
       ? absoluteUrl(`/collection/${profile.slug}`)
-      : absoluteUrl(`/collections/${contract}`);
+      : absoluteUrl(collectionHref("STARKNET", contract));
     if (!form.getValues("external_url")) form.setValue("external_url", suggested);
   }, [contract, profileLoading, profile?.slug, form]);
 
@@ -511,7 +512,7 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
         successTitle="Tickets minted!"
         successSubtitle={`${form.getValues("maxSupply")} ticket(s) are in your wallet — list them on the marketplace whenever you're ready.`}
         mintedTokenId={mintedTicketId ?? ""}
-        assetHref={mintedTicketId ? `/asset/${contract}/${mintedTicketId}` : undefined}
+        assetHref={mintedTicketId ? assetHref("STARKNET", contract, mintedTicketId) : undefined}
         explorerAssetHref={mintedTicketId ? `${EXPLORER_URL}/nft/${contract}/${mintedTicketId}` : undefined}
         mintAnotherLabel="Mint another ticket"
       />

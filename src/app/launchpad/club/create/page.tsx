@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { rewardToast } from "@/lib/reward-toast";
+import { collectionHref } from "@/lib/routes";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -229,7 +230,7 @@ export default function CreateClubPage() {
         onCreateAnother={handleReset}
         createAnotherLabel="Create another"
         firstStepLabel="Deploy club"
-        mintHref={deployedAddress ? `/collections/${deployedAddress}` : undefined}
+        mintHref={deployedAddress ? collectionHref("STARKNET", deployedAddress) : undefined}
         mintLabel="Create memberships"
         deployedAddress={deployedAddress}
       />

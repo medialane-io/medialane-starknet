@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { GitBranch, Check, X, Clock } from "lucide-react";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { timeAgo } from "@/lib/utils";
+import { assetHref } from "@/lib/routes";
 import type { RemixOffer } from "@/types/remix-offers";
 import Link from "next/link";
 
@@ -62,7 +63,7 @@ export default function PortfolioRemixOffersPage() {
                   <div className="flex items-center gap-2">
                     <StatusBadge status={offer.status} />
                     <Link
-                      href={`/asset/${offer.originalContract}/${offer.originalTokenId}`}
+                      href={assetHref("STARKNET", offer.originalContract, offer.originalTokenId)}
                       className="text-sm font-medium hover:text-primary transition-colors truncate"
                     >
                       Token #{offer.originalTokenId}
@@ -92,7 +93,7 @@ export default function PortfolioRemixOffersPage() {
                 )}
                 {offer.status === "APPROVED" && offer.remixContract && offer.remixTokenId && (
                   <Button size="sm" variant="outline" asChild>
-                    <Link href={`/asset/${offer.remixContract}/${offer.remixTokenId}`}>View remix</Link>
+                    <Link href={assetHref("STARKNET", offer.remixContract, offer.remixTokenId)}>View remix</Link>
                   </Button>
                 )}
               </div>
@@ -124,7 +125,7 @@ export default function PortfolioRemixOffersPage() {
                   <div className="flex items-center gap-2">
                     <StatusBadge status={offer.status} />
                     <Link
-                      href={`/asset/${offer.originalContract}/${offer.originalTokenId}`}
+                      href={assetHref("STARKNET", offer.originalContract, offer.originalTokenId)}
                       className="text-sm font-medium hover:text-primary transition-colors truncate"
                     >
                       Token #{offer.originalTokenId}
@@ -139,7 +140,7 @@ export default function PortfolioRemixOffersPage() {
                 </div>
                 {offer.status === "COMPLETED" && offer.remixContract && offer.remixTokenId && (
                   <Button size="sm" variant="outline" asChild>
-                    <Link href={`/asset/${offer.remixContract}/${offer.remixTokenId}`}>
+                    <Link href={assetHref("STARKNET", offer.remixContract, offer.remixTokenId)}>
                       <GitBranch className="h-3.5 w-3.5 mr-1" />
                       Buy remix
                     </Link>

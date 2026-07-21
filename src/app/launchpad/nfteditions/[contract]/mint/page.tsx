@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { rewardToast } from "@/lib/reward-toast";
+import { assetHref, collectionHref } from "@/lib/routes";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -213,7 +214,7 @@ export default function MintNFTEditionsPage() {
   // moment the metadata JSON is written to IPFS. Creators can still override.
   useEffect(() => {
     if (!collectionAddress) return;
-    const suggested = absoluteUrl(`/collections/${collectionAddress}`);
+    const suggested = absoluteUrl(collectionHref("STARKNET", collectionAddress));
     const current = form.getValues("external_url");
     if (!current || current === autoExternalUrl) {
       form.setValue("external_url", suggested);
@@ -783,7 +784,7 @@ export default function MintNFTEditionsPage() {
         error={mintError}
         onMintAnother={handleMintAnother}
         mintedTokenId={mintedTokenId ?? ""}
-        assetHref={`/asset/${collectionAddress}/${mintedTokenId ?? ""}`}
+        assetHref={assetHref("STARKNET", collectionAddress, mintedTokenId ?? "")}
         explorerAssetHref={`${EXPLORER_URL}/nft/${collectionAddress}/${mintedTokenId ?? ""}`}
       />
     </>

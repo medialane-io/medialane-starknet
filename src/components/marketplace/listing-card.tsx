@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, ExternalLink, Layers, Flag } from "lucide-react";
 import { ReportDialog } from "@/components/report-dialog";
 import type { ApiOrder } from "@medialane/sdk";
+import { assetHref, collectionHref } from "@/lib/routes";
 
 export { ListingCardSkeleton };
 
@@ -50,13 +51,13 @@ export function ListingCard({ order, onBuy, compact = false }: ListingCardProps)
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem asChild>
-          <Link href={`/asset/${order.nftContract}/${order.nftTokenId}`} className="flex items-center gap-2">
+          <Link href={assetHref("STARKNET", order.nftContract, order.nftTokenId)} className="flex items-center gap-2">
             <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
             View Asset
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={`/collections/${order.nftContract}`} className="flex items-center gap-2">
+          <Link href={collectionHref("STARKNET", order.nftContract)} className="flex items-center gap-2">
             <Layers className="h-3.5 w-3.5 text-muted-foreground" />
             View Collection
           </Link>

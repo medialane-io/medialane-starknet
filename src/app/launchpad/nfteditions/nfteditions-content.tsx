@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ServiceHeader } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { ipfsToHttp } from "@/lib/utils";
+import { collectionHref } from "@/lib/routes";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import {
   Layers, Sparkles, Plus, ArrowRight, Package,
@@ -55,7 +56,7 @@ function CollectionRow({ col }: { col: any }) {
               )}
             </div>
             <Link
-              href={`/collections/${col.contractAddress}`}
+              href={collectionHref("STARKNET", col.contractAddress)}
               className="shrink-0 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
               title="View collection page"
             >
@@ -97,7 +98,7 @@ function CollectionRow({ col }: { col: any }) {
             Mint editions
           </Link>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/collections/${col.contractAddress}`}>
+            <Link href={collectionHref("STARKNET", col.contractAddress)}>
               View collection
             </Link>
           </Button>

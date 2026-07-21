@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
+import { assetHref } from "@/lib/routes";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -298,7 +299,7 @@ export default function CreateRemixPage() {
 
       setMintStep("success");
       setTimeout(() => {
-        router.push(`/asset/${selectedCollection.contractAddress}/${remixTokenId}`);
+        router.push(assetHref("STARKNET", selectedCollection.contractAddress, remixTokenId));
       }, INDEXER_REVALIDATION_DELAY_MS);
     } catch (err: unknown) {
       setMintError(err instanceof Error ? err.message : "Something went wrong");
@@ -383,7 +384,7 @@ export default function CreateRemixPage() {
         {/* Header */}
         <div className="space-y-3">
           <Link
-            href={`/asset/${contract}/${tokenId}`}
+            href={assetHref("STARKNET", contract, tokenId)}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />

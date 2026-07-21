@@ -1,0 +1,345 @@
+"use client";
+
+import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useParams, useRouter } from "next/navigation";
+import { assetHref, collectionHref } from "@/lib/routes";
+import { useToken, useTokenHistory } from "@/hooks/use-tokens";
+import { useTokenListings } from "@/hooks/use-orders";
+import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
+import { HiddenContentBanner } from "@/components/hidden-content-banner";
+import { ipfsToHttp } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ApiActivity, ApiOrder } from "@medialane/sdk";
+import { getService } from "@medialane/sdk";
+import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
+import { useComments } from "@/hooks/use-comments";
+import { EXPLORER_URL } from "@/lib/constants";
+import { useWallet } from "@/hooks/use-wallet";
+import { useMarketplace } from "@/hooks/use-marketplace";
+import { useTokenRemixes } from "@/hooks/use-remix-offers";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow } from "@medialane/ui";
+import { AssetMarketsTab } from "./asset-markets-tab";
+import { AssetProvenanceTab } from "./asset-provenance-tab";
+import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
+import { AssetOverviewContent } from "./asset-overview-content";
+import { AssetMediaColumn } from "@/components/asset/asset-media-column";
+import { AssetLightbox } from "@/components/asset/asset-lightbox";
+import { ReportDialog } from "@/components/report-dialog";
+import { HelpIcon } from "@/components/ui/help-icon";
+import { ConnectWallet } from "@/components/ConnectWallet";
+import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
+import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
+import { useFullTokenData } from "@/hooks/use-full-token-data";
+
+export function AssetPageStandard() {
+  const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
+  const router = useRouter();
+  const { isConnected: isSignedIn, address: walletAddress } = useWallet();
+  const { collection } = useCollection(contract);
+  const { token: rawToken, isLoading } = useToken(contract, tokenId);
+  const token = rawToken as AssetToken | null;
+  const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
+  const { history } = useTokenHistory(contract, tokenId);
+  const { acceptOffer, isProcessing } = useMarketplace();
+  const shouldReduce = useReducedMotion();
+
+  const imageUrl = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
+
+  const [imgError, setImgError] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
+  const { total: remixCount } = useTokenRemixes(contract, tokenId);
+
+  // Collection siblings for the filmstrip nav — from the (paged) collection
+  // token list; the filmstrip hides itself when the collection has ≤1 item.
+  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
+
+  // Audited IPNft creation record — undefined for external/legacy contracts (hook returns null).
+  const { data: fullTokenData } = useFullTokenData({
+    ipNftAddress: contract,
+    tokenId: tokenId ? (() => { try { return BigInt(tokenId); } catch { return undefined; } })() : undefined,
+  });
+
+  const dialogs = useAssetMarketplaceDialogState();
+  const {
+    activeListings, activeBids, cheapest, isOwner, myListing,
+    attributes, hasTemplateData, isDisplayAttr, parentContract, parentTokenId,
+  } = useAssetMarketState(token, listings, walletAddress);
+
+  const isERC1155 = (token?.standard ?? collection?.standard) === "ERC1155";
+
+  // Most recent "sale" activity — `history`'s sort order isn't guaranteed, so
+  // pick the max-timestamp entry explicitly rather than assuming array order.
+  const lastSale = (history as ApiActivity[])
+    .filter((h) => h.type === "sale" && h.price?.formatted)
+    .reduce<ApiActivity | null>((latest, h) => (!latest || h.timestamp > latest.timestamp ? h : latest), null);
+  const lastSaleRaw = lastSale?.price ? `${lastSale.price.formatted} ${lastSale.price.currency ?? ""}`.trim() : null;
+
+  const handleAcceptClick = async (order: ApiOrder) => {
+    await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
+    mutateListings();
+  };
+
+  const remixPolicy = resolveRemixPolicy({
+    parentNoDerivatives: getDerivativesTerm(token?.metadata?.attributes) === "Not Allowed",
+    viewerIsParentOwner: isOwner,
+    dealAvailable: !!getService(collection?.service),
+  });
+
+  const handleAutoRemix = () => {
+    router.push(`/create/remix/${contract}/${tokenId}`);
+  };
+
+  const goToDeal = () => {
+    router.push(`/create/licensing/${contract}/${tokenId}`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">
+          <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-9 w-3/4" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <div className="space-y-1.5 pt-1">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-28" />
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 rounded-2xl" />
+              ))}
+            </div>
+            <div className="pt-5 border-t border-border/40 space-y-5">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-xl" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                <Skeleton className="h-3 w-14" />
+                <Skeleton className="h-4 w-3/4" />
+                <div className="flex flex-wrap gap-2 pt-0.5">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-7 w-24 rounded-full" />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 text-center">
+        <p className="text-2xl font-bold">Asset not found</p>
+        <p className="text-muted-foreground mt-2">This token hasn&apos;t been indexed yet.</p>
+      </div>
+    );
+  }
+
+  const name = token.metadata?.name || `Token #${token.tokenId}`;
+  const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
+  const description = token.metadata?.description;
+  const balances = token.balances ?? [];
+  const ownerAddress = !isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null;
+
+  return (
+    <div className="relative z-0 min-h-screen">
+      {token.isHidden && <HiddenContentBanner />}
+      <AssetAtmosphere imageUrl={imageUrl} opacityClassName="opacity-30" />
+
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">
+          <div className="space-y-3">
+            <AssetMediaColumn
+              shouldReduce={Boolean(shouldReduce)}
+              image={image}
+              imageAlt={name}
+              imgError={imgError}
+              onImageError={() => setImgError(true)}
+              onZoom={() => setLightboxOpen(true)}
+              fallback={(
+                <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/10 to-brand-purple/10">
+                  <span className="text-5xl tabular-nums text-muted-foreground">#{tokenId}</span>
+                </div>
+              )}
+            />
+          </div>
+
+          <motion.div
+            initial={shouldReduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-6"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <AssetHeaderBlock
+                name={name}
+                description={description}
+                ipType={token.metadata?.ipType}
+                showMultiEditionBadge={Boolean(isERC1155)}
+                parentContract={parentContract}
+                parentTokenId={parentTokenId}
+              />
+              <AssetUtilityIcons
+                contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+                shareTitle={name}
+                onReportClick={() => setReportOpen(true)}
+              />
+            </div>
+
+            <AssetMarketplacePanel
+              cheapest={cheapest}
+              isMarketLoading={listingsLoading}
+              isOwner={isOwner}
+              isSignedIn={isSignedIn}
+              isProcessing={isProcessing}
+              isERC1155={isERC1155}
+              myListing={myListing}
+              activeBids={activeBids}
+              walletAddress={walletAddress}
+              remixEnabled={remixPolicy.canRemixDirect}
+              floorPriceRaw={collection?.floorPrice}
+              lastSaleRaw={lastSaleRaw}
+              renderAuthAction={(label) => (
+                <div className="btn-border-animated p-[1px] rounded-2xl">
+                  <ConnectWallet
+                    label={label}
+                    className="w-full h-12 text-base bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                  />
+                </div>
+              )}
+              renderHelp={(content) => <HelpIcon content={content} side="top" />}
+              onCancelClick={dialogs.handleCancelClick}
+              onAcceptBid={handleAcceptClick}
+              onOpenListing={() => dialogs.setListOpen(true)}
+              onOpenTransfer={() => dialogs.setTransferOpen(true)}
+              onOpenPurchase={dialogs.setPurchaseOrder}
+              onOpenOffer={() => dialogs.setOfferOpen(true)}
+              onOpenRemix={handleAutoRemix}
+              showDealOption={remixPolicy.showDealOption}
+              onProposeDeal={goToDeal}
+            />
+
+            {isERC1155 && balances.length > 0 ? (
+              <AssetOwnersPanel balances={balances} maxVisible={5} />
+            ) : null}
+
+            <div className="pt-5 space-y-5">
+              {ownerAddress ? (
+                <AssetOwnerRow ownerAddress={ownerAddress} ownerHref={`/creator/${ownerAddress}`} />
+              ) : null}
+              <AssetCollectionBar
+                collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
+                collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
+                collectionHref={collectionHref("STARKNET", contract)}
+                currentTokenId={tokenId}
+                siblingTokens={collectionTokens.map((t) => ({
+                  tokenId: t.tokenId,
+                  image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
+                }))}
+                onNavigate={(id) => router.push(assetHref("STARKNET", contract, id))}
+              />
+              <ReportDialog
+                target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name }}
+                open={reportOpen}
+                onOpenChange={setReportOpen}
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="markets">
+              Markets {(activeListings.length + activeBids.length) > 0 && `(${activeListings.length + activeBids.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="provenance">
+              Provenance {history.length > 0 && `(${history.length})`}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <AssetOverviewContent
+              attributes={attributes}
+              hasTemplateData={hasTemplateData}
+              isDisplayAttr={isDisplayAttr}
+            />
+          </TabsContent>
+
+          <TabsContent value="markets">
+            <AssetMarketsTab
+              activeListings={activeListings}
+              activeBids={activeBids}
+              walletAddress={walletAddress ?? undefined}
+              isOwner={isOwner}
+              isProcessing={isProcessing}
+              onBuyClick={dialogs.setPurchaseOrder}
+              onCancelClick={dialogs.handleCancelClick}
+              onAcceptClick={handleAcceptClick}
+            />
+          </TabsContent>
+
+          <TabsContent value="provenance">
+            <AssetProvenanceTab
+              history={history as ApiActivity[]}
+              contract={contract}
+              tokenId={tokenId}
+              remixCount={remixCount}
+              originalCreator={fullTokenData?.originalCreator}
+              registeredAt={fullTokenData?.registeredAt}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <AssetLightbox open={lightboxOpen} onOpenChange={setLightboxOpen} image={image} alt={name} />
+
+      <FloatingCommentsButton onClick={() => setCommentOpen(true)} commentTotal={commentTotal} />
+
+      <AssetCommentsDialog
+        open={commentOpen}
+        onOpenChange={setCommentOpen}
+        contract={contract}
+        tokenId={tokenId}
+        name={name}
+        imageUrl={imageUrl}
+        commentTotal={commentTotal}
+        accentBorderClassName="border-brand-blue/20"
+        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.10), hsl(var(--brand-purple) / 0.08))"
+        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.3), hsl(var(--brand-purple) / 0.3))"
+        accentLabelClassName="text-brand-blue"
+        accentCountStyle={{ background: "hsl(var(--brand-blue))" }}
+      />
+
+      <AssetMarketplaceDialogs
+        contract={contract}
+        tokenId={tokenId}
+        tokenName={name}
+        tokenImage={imageUrl}
+        tokenStandard={collection?.standard}
+        hasActiveListing={activeListings.length > 0}
+        mutateListings={mutateListings}
+        dialogs={dialogs}
+      />
+    </div>
+  );
+}

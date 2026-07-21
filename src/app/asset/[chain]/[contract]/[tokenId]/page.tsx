@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { fetchTokenMeta, fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
 import { canonical, buildBreadcrumbJsonLd, buildProductJsonLd, buildSocialMetadata } from "@/lib/seo";
+import { chainFromSlug, assetHref, collectionHref } from "@/lib/routes";
 import { JsonLd } from "@/components/seo/json-ld";
 import AssetPageClient from "./asset-page-client";
 
 export const revalidate = 60;
 
 interface Props {
-  params: Promise<{ contract: string; tokenId: string }>;
+  params: Promise<{ chain: string; contract: string; tokenId: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { contract, tokenId } = await params;
+  const { chain, contract, tokenId } = await params;
+  const parsedChain = chainFromSlug(chain);
   const token = await fetchTokenMeta(contract, tokenId);
 
   const name        = token?.metadata?.name ?? token?.name ?? `Token #${tokenId}`;
@@ -22,13 +25,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: name,
     description,
-    alternates: canonical(`/asset/${contract}/${tokenId}`),
+    alternates: canonical(assetHref(parsedChain ?? "STARKNET", contract, tokenId)),
     ...buildSocialMetadata({ title: name, description, imageUrl }),
   };
 }
 
 export default async function AssetPage({ params }: Props) {
-  const { contract, tokenId } = await params;
+  const { chain, contract, tokenId } = await params;
+  const parsedChain = chainFromSlug(chain);
+  if (!parsedChain) notFound();
   const [token, collection] = await Promise.all([
     fetchTokenMeta(contract, tokenId),
     fetchCollectionMeta(contract),
@@ -39,11 +44,12 @@ export default async function AssetPage({ params }: Props) {
   const rawImage    = token?.metadata?.image ?? token?.image;
   const imageUrl    = rawImage ? ipfsToHttpServer(rawImage) : undefined;
   const collectionName = collection?.name ?? "Collection";
+  const assetPath = assetHref(parsedChain, contract, tokenId);
 
   const jsonLd = [
     buildProductJsonLd({
       name,
-      path: `/asset/${contract}/${tokenId}`,
+      path: assetPath,
       description,
       image: imageUrl,
       sku: tokenId,
@@ -51,8 +57,8 @@ export default async function AssetPage({ params }: Props) {
     }),
     buildBreadcrumbJsonLd([
       { name: "Marketplace", path: "/marketplace" },
-      { name: collectionName, path: `/collections/${contract}` },
-      { name, path: `/asset/${contract}/${tokenId}` },
+      { name: collectionName, path: collectionHref(parsedChain, contract) },
+      { name, path: assetPath },
     ]),
   ];
 

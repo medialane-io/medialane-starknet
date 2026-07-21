@@ -18,6 +18,7 @@ import { IP_TYPE_MAP, IP_TYPE_CONFIG } from "@/lib/ip-type-config";
 import { ipfsToHttp, formatDisplayPrice, cn } from "@/lib/utils";
 import { OfferDialog } from "@/components/marketplace/offer-dialog";
 import type { ApiToken } from "@medialane/sdk";
+import { assetHref } from "@/lib/routes";
 
 const PAGE_SIZE = 24;
 
@@ -65,7 +66,7 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
   return (
     <div className="rounded-xl border border-border overflow-hidden bg-card flex flex-col">
       {/* Image + info — clickable to asset page */}
-      <Link href={`/asset/${token.contractAddress}/${token.tokenId}`} className="block flex-1">
+      <Link href={assetHref("STARKNET", token.contractAddress, token.tokenId)} className="block flex-1">
         <div className="aspect-square overflow-hidden bg-muted relative">
           {image && !imgError ? (
             <Image

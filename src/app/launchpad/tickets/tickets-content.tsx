@@ -6,6 +6,7 @@ import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives"
 import { Button } from "@/components/ui/button";
 import { ServiceHeader, CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
+import { collectionHref } from "@/lib/routes";
 import { ConnectGate } from "@/components/connect-gate";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
@@ -84,7 +85,7 @@ export function TicketsContent() {
               <StaggerItem key={col.contractAddress}>
                 <CollectionCard
                   collection={col}
-                  href={`/collections/${col.contractAddress}`}
+                  href={collectionHref("STARKNET", col.contractAddress)}
                 />
               </StaggerItem>
             ))}

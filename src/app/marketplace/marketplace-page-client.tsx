@@ -21,6 +21,7 @@ import { IP_TYPES } from "@/types/ip";
 import { HelpIcon } from "@/components/ui/help-icon";
 import { PageContainer } from "@medialane/ui";
 import { CoinsScanList } from "@/components/coins/coins-scan-list";
+import { assetHref, collectionHref } from "@/lib/routes";
 
 const SORT_OPTIONS = [
   { label: "Recent", value: "recent" },
@@ -100,7 +101,7 @@ function SearchBar() {
               {results.tokens!.map((t) => (
                 <Link
                   key={`${t.contractAddress}-${t.tokenId}`}
-                  href={`/asset/${t.contractAddress}/${t.tokenId}`}
+                  href={assetHref("STARKNET", t.contractAddress, t.tokenId)}
                   className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                 >
                   <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-xs tabular-nums shrink-0">
@@ -124,7 +125,7 @@ function SearchBar() {
                 return (
                   <Link
                     key={c.contractAddress}
-                    href={`/collections/${c.contractAddress}`}
+                    href={collectionHref("STARKNET", c.contractAddress)}
                     className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                   >
                     <div className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-brand-purple/20 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">

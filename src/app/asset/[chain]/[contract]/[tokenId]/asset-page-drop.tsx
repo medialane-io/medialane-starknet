@@ -3,39 +3,134 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
-import { Layers } from "lucide-react";
+import { assetHref, collectionHref } from "@/lib/routes";
+import { Package, DollarSign, Shield, Calendar } from "lucide-react";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
+import { useOnChainDropState, getDropStatus } from "@/hooks/use-drops";
+import type { DropConditions } from "@/hooks/use-drops";
 import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { ipfsToHttp } from "@/lib/utils";
+import { ipfsToHttp, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IpTypeBadge } from "@/components/shared/ip-type-badge";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
+import { ParentAttributionBanner } from "@/components/asset/remixes-tab";
 import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { ApiActivity, ApiOrder } from "@medialane/sdk";
-import { useMarketplace } from "@/hooks/use-marketplace";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
-import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
+import { AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
 import { ReportDialog } from "@/components/report-dialog";
 import { HelpIcon } from "@/components/ui/help-icon";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
+import { getListableTokens } from "@medialane/sdk";
+import type { ApiActivity, ApiOrder } from "@medialane/sdk";
+import { useMarketplace } from "@/hooks/use-marketplace";
+import { CollectionDropMintButton } from "@/components/claim/collection-drop-mint-button";
 
-export function AssetPageEdition() {
+function getTokenByAddress(address: string) {
+  return getListableTokens().find((t) => t.address.toLowerCase() === address.toLowerCase()) ?? null;
+}
+
+function DropStatusBadge({ status }: { status: ReturnType<typeof getDropStatus> }) {
+  const map = {
+    live:     { label: "Live",     cls: "text-green-400 bg-green-500/10 border-green-500/20", dot: true  },
+    upcoming: { label: "Upcoming", cls: "text-brand-blue bg-brand-blue/10 border-brand-blue/20",   dot: false },
+    ended:    { label: "Ended",    cls: "text-muted-foreground bg-muted border-border",       dot: false },
+    sold_out: { label: "Sold out", cls: "text-brand-orange bg-brand-orange/10 border-brand-orange/20", dot: false },
+  } as const;
+  const { label, cls, dot } = map[status];
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full px-2.5 py-1 border", cls)}>
+      {dot && <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />}
+      {label}
+    </span>
+  );
+}
+
+function SupplyProgress({ minted, max }: { minted: number; max: number }) {
+  const pct = max > 0 ? Math.min(100, (minted / max) * 100) : 0;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>{minted.toLocaleString()} minted</span>
+        <span>of {max.toLocaleString()}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className="h-full rounded-full bg-brand-orange transition-all duration-500" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-xs text-muted-foreground">{pct.toFixed(1)}% minted</p>
+    </div>
+  );
+}
+
+function DropInfoPanel({
+  conditions,
+  totalMinted,
+  contract,
+}: {
+  conditions: DropConditions | null;
+  totalMinted: number;
+  contract: string;
+}) {
+  if (!conditions) return null;
+  const status = getDropStatus(conditions, totalMinted);
+  const maxSupply = parseInt(conditions.maxSupply, 10);
+  const formatTs = (ts: number) =>
+    new Date(ts * 1000).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const priceToken =
+    conditions.price !== "0" && conditions.paymentToken !== "0x0"
+      ? getTokenByAddress(conditions.paymentToken)
+      : null;
+  const priceNum = priceToken
+    ? Number(BigInt(conditions.price) * 10000n / BigInt(10 ** priceToken.decimals)) / 10000
+    : null;
+
+  return (
+    <div className="rounded-xl border border-border p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <Package className="h-4 w-4 text-brand-orange" />
+        <p className="text-sm font-semibold">Drop</p>
+        <DropStatusBadge status={status} />
+      </div>
+      {maxSupply > 0 && <SupplyProgress minted={totalMinted} max={maxSupply} />}
+      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <DollarSign className="h-3.5 w-3.5 shrink-0" />
+          {priceNum !== null ? `${priceNum} ${priceToken?.symbol}` : "Free mint"}
+        </div>
+        {conditions.maxPerWallet !== "0" && (
+          <div className="flex items-center gap-1.5">
+            <Shield className="h-3.5 w-3.5 shrink-0" />
+            Max {conditions.maxPerWallet} per wallet
+          </div>
+        )}
+        <div className="flex items-center gap-1.5 col-span-2">
+          <Calendar className="h-3.5 w-3.5 shrink-0" />
+          {formatTs(conditions.startTime)} → {formatTs(conditions.endTime)}
+        </div>
+      </div>
+      <CollectionDropMintButton collectionAddress={contract} conditions={conditions} />
+    </div>
+  );
+}
+
+export function AssetPageDrop() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
   const { isConnected: isSignedIn, address: walletAddress } = useWallet();
   const { collection } = useCollection(contract);
   const { token: rawToken, isLoading } = useToken(contract, tokenId);
   const token = rawToken as AssetToken | null;
+  const { state: dropState } = useOnChainDropState(contract);
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
   const { history } = useTokenHistory(contract, tokenId);
   const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
@@ -54,12 +149,18 @@ export function AssetPageEdition() {
   const dialogs = useAssetMarketplaceDialogState();
   const {
     activeListings, activeBids, cheapest, isOwner, myListing,
-    attributes, hasTemplateData, isDisplayAttr,
+    attributes, hasTemplateData, isDisplayAttr, parentContract, parentTokenId,
   } = useAssetMarketState(token, listings, walletAddress);
+
+  const isERC1155 = collection?.standard === "ERC1155";
 
   const handleAcceptClick = async (order: ApiOrder) => {
     await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
     mutateListings();
+  };
+
+  const handleAutoRemix = () => {
+    router.push(`/create/remix/${contract}/${tokenId}`);
   };
 
   // Most recent "sale" activity — `history`'s sort order isn't guaranteed, so
@@ -96,9 +197,7 @@ export function AssetPageEdition() {
   const name = token.metadata?.name || `Token #${token.tokenId}`;
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const description = token.metadata?.description;
-  const holders = token.balances ?? [];
-  const uniqueHolders = holders.length;
-  const totalEditions = holders.reduce((sum, b) => sum + parseInt(b.amount, 10), 0);
+  const totalMinted = dropState?.totalMinted ?? collection?.totalSupply ?? 0;
 
   return (
     <div className="relative z-0 min-h-screen">
@@ -114,11 +213,10 @@ export function AssetPageEdition() {
             imgError={imgError}
             onImageError={() => setImgError(true)}
             fallback={(
-              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-purple/20 to-brand-purple/20">
-                <Layers className="h-24 w-24 text-brand-purple/40" />
+              <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-brand-orange/10 to-amber-600/10">
+                <Package className="h-20 w-20 text-brand-orange/30" />
               </div>
             )}
-            stats={buildEditionStats(totalEditions, uniqueHolders)}
           />
 
           <motion.div
@@ -127,19 +225,35 @@ export function AssetPageEdition() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-6"
           >
-            <div className="flex items-start justify-between gap-3">
-              <AssetHeaderBlock
-                name={name}
-                description={description}
-                ipType={token.metadata?.ipType}
-                showMultiEditionBadge={true}
-              />
-              <AssetUtilityIcons
-                contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
-                shareTitle={name}
-                onReportClick={() => setReportOpen(true)}
-              />
+            <div>
+              {parentContract && parentTokenId && (
+                <div className="mb-3">
+                  <ParentAttributionBanner parentContract={parentContract} parentTokenId={parentTokenId} parentName={`Token #${parentTokenId}`} />
+                </div>
+              )}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    {token.metadata?.ipType && <IpTypeBadge ipType={token.metadata.ipType} size="md" />}
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange">
+                      <Package className="h-3 w-3" />
+                      Collection Drop
+                    </span>
+                  </div>
+                  <h1 className="text-3xl lg:text-5xl font-bold">{name}</h1>
+                  {description && <p className="text-sm text-muted-foreground leading-relaxed mt-1">{description}</p>}
+                </div>
+                <AssetUtilityIcons
+                  contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+                  shareTitle={name}
+                  onReportClick={() => setReportOpen(true)}
+                />
+              </div>
             </div>
+
+            {dropState?.conditions && (
+              <DropInfoPanel conditions={dropState.conditions} totalMinted={totalMinted} contract={contract} />
+            )}
 
             <AssetMarketplacePanel
               cheapest={cheapest}
@@ -147,10 +261,11 @@ export function AssetPageEdition() {
               isOwner={isOwner}
               isSignedIn={isSignedIn}
               isProcessing={isProcessing}
-              isERC1155
+              isERC1155={isERC1155}
               myListing={myListing}
               activeBids={activeBids}
               walletAddress={walletAddress}
+              remixEnabled
               floorPriceRaw={collection?.floorPrice}
               lastSaleRaw={lastSaleRaw}
               renderAuthAction={(label) => (
@@ -168,23 +283,22 @@ export function AssetPageEdition() {
               onOpenTransfer={() => dialogs.setTransferOpen(true)}
               onOpenPurchase={dialogs.setPurchaseOrder}
               onOpenOffer={() => dialogs.setOfferOpen(true)}
+              onOpenRemix={handleAutoRemix}
             />
-
-            <AssetOwnersPanel balances={holders} maxVisible={8} />
 
             <AssetCollectionBar
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
               collectionImage={collection?.image ? ipfsToHttp(collection.image, 96) : null}
-              collectionHref={`/collections/${contract}`}
+              collectionHref={collectionHref("STARKNET", contract)}
               currentTokenId={tokenId}
               siblingTokens={collectionTokens.map((t) => ({
                 tokenId: t.tokenId,
                 image: t.metadata?.image ? ipfsToHttp(t.metadata.image, 96) : null,
               }))}
-              onNavigate={(id) => router.push(`/asset/${contract}/${id}`)}
+              onNavigate={(id) => router.push(assetHref("STARKNET", contract, id))}
             />
             <ReportDialog
-              target={{ type: "TOKEN", contract, tokenId, name }}
+              target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name }}
               open={reportOpen}
               onOpenChange={setReportOpen}
             />
@@ -230,11 +344,11 @@ export function AssetPageEdition() {
         name={name}
         imageUrl={imageUrl}
         commentTotal={commentTotal}
-        accentBorderClassName="border-brand-blue/20"
-        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.10), hsl(var(--brand-purple) / 0.08))"
-        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.3), hsl(var(--brand-purple) / 0.3))"
-        accentLabelClassName="text-brand-blue"
-        accentCountStyle={{ background: "hsl(var(--brand-blue))" }}
+        accentBorderClassName="border-brand-orange/20"
+        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-orange) / 0.10), hsl(var(--brand-purple) / 0.08))"
+        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-orange) / 0.3), hsl(var(--brand-purple) / 0.3))"
+        accentLabelClassName="text-brand-orange"
+        accentCountStyle={{ background: "hsl(var(--brand-orange))" }}
       />
 
       <AssetMarketplaceDialogs
@@ -242,7 +356,7 @@ export function AssetPageEdition() {
         tokenId={tokenId}
         tokenName={name}
         tokenImage={imageUrl}
-        tokenStandard="ERC1155"
+        tokenStandard={collection?.standard}
         hasActiveListing={activeListings.length > 0}
         mutateListings={mutateListings}
         dialogs={dialogs}

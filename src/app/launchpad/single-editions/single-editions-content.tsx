@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { rewardToast } from "@/lib/reward-toast";
+import { collectionHref } from "@/lib/routes";
 import Image from "next/image";
 import Link from "next/link";
 import { getService } from "@medialane/sdk";
@@ -350,7 +351,7 @@ export function SingleEditionsContent() {
   useEffect(() => {
     const col = collections.find((c) => c.collectionId === selectedCollectionId);
     if (col?.contractAddress && !form.getValues("external_url")) {
-      form.setValue("external_url", absoluteUrl(`/collections/${col.contractAddress}`));
+      form.setValue("external_url", absoluteUrl(collectionHref("STARKNET", col.contractAddress)));
     }
   }, [selectedCollectionId, collections, form]);
 
