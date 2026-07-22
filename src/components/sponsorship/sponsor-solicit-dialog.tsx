@@ -6,7 +6,7 @@ import { type AccountInterface } from "starknet";
 import { Handshake, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, type SponsorshipTerms } from "@medialane/ui";
+import { LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useSiwsToken } from "@/hooks/use-siws-token";
@@ -45,21 +45,17 @@ export function SponsorSolicitDialog({
 
   const onSubmit = async () => {
     if (!signer) { toast.error("Connect a wallet first"); return; }
-    if (!terms.amount || Number(terms.amount) <= 0) { toast.error("Enter a minimum bid"); return; }
-    if (!terms.licenseText.trim()) { toast.error("Add license terms"); return; }
+    if (!terms.amount || Number(terms.amount) <= 0) { toast.error("Set a minimum bid before continuing"); return; }
     const token = getTokenBySymbol(terms.paymentTokenSymbol);
-    if (!token) { toast.error("Unsupported currency"); return; }
+    if (!token) { toast.error("Pick a currency"); return; }
     const durationDays = Number(terms.durationDays);
-    if (!durationDays || durationDays <= 0) { toast.error("Enter a license length"); return; }
+    if (!durationDays || durationDays <= 0) { toast.error("How many days should the license last?"); return; }
 
     setIsSubmitting(true);
     try {
       const siwsToken = await getValidToken();
       if (!siwsToken) throw new Error("Sign in with your wallet to save the license terms.");
-      const licenseTermsUri = await uploadJsonToIpfs(
-        { terms: terms.licenseText, transferable: terms.transferable, royaltyPercent: Number(terms.royaltyPercent || "0") },
-        siwsToken,
-      );
+      const licenseTermsUri = await uploadJsonToIpfs(toLicenseMetadata(terms), siwsToken);
 
       const amount = BigInt(Math.round(Number(terms.amount) * 10 ** token.decimals));
       const royaltyBps = BigInt(Math.round(Number(terms.royaltyPercent || "0") * 100));
@@ -109,7 +105,7 @@ export function SponsorSolicitDialog({
               <Handshake className="h-4 w-4 text-brand-rose" />
               Open {tokenName ?? "this asset"} for sponsorship
             </DialogTitle>
-            <DialogDescription>Sponsors can bid on these terms — you accept whichever bid you want.</DialogDescription>
+            <DialogDescription>Set your terms and let sponsors come to you. You choose which bid to accept — nothing happens without your say-so.</DialogDescription>
             <div className="space-y-4">
               <LicenseTermsBuilder
                 value={terms}
