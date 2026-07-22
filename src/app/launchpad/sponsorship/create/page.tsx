@@ -6,10 +6,9 @@ import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
 import { Handshake, Loader2, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { AssetPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
+import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useTokensByOwner } from "@/hooks/use-tokens";
@@ -21,6 +20,7 @@ import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
+import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 
@@ -91,10 +91,9 @@ export default function CreateSponsorshipPage() {
   const signer = (szWallet ?? account) as AccountInterface | undefined;
   const { getValidToken } = useSiwsToken();
 
-  const [mode, setMode] = useState<Mode>("offer");
+  const [mode, setMode] = useState<Mode>("propose");
   const [selectedAsset, setSelectedAsset] = useState<OwnedAsset | null>(null);
-  const [proposeContract, setProposeContract] = useState("");
-  const [proposeTokenId, setProposeTokenId] = useState("");
+  const [proposeAsset, setProposeAsset] = useState<OwnedAsset | null>(null);
   const [terms, setTerms] = useState<SponsorshipTerms>({ ...EMPTY_SPONSORSHIP_TERMS, paymentTokenSymbol: "USDC" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -107,12 +106,28 @@ export default function CreateSponsorshipPage() {
     image: resolveTokenImage(t.metadata?.image),
   }));
 
-  const nftContract = mode === "offer" ? selectedAsset?.contractAddress : proposeContract.trim();
-  const tokenId = mode === "offer" ? selectedAsset?.tokenId : proposeTokenId.trim();
+  // search callback — this app's backend fetch has no shared apiFetch wrapper
+  // (see use-sponsorship.ts's own backendFetch), so build the request directly
+  const searchAssets = async (query: string): Promise<OwnedAsset[]> => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
+    const res = await fetch(`${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/search?q=${encodeURIComponent(query)}&limit=16`, { headers });
+    if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+    const json: { data: { tokens: { contractAddress: string; tokenId: string; name: string | null; image: string | null }[] } } = await res.json();
+    return json.data.tokens.map((t) => ({
+      contractAddress: t.contractAddress,
+      tokenId: t.tokenId,
+      name: t.name ?? `Token #${t.tokenId}`,
+      image: t.image ? resolveTokenImage(t.image) : null,
+    }));
+  };
+
+  const nftContract = mode === "offer" ? selectedAsset?.contractAddress : proposeAsset?.contractAddress;
+  const tokenId = mode === "offer" ? selectedAsset?.tokenId : proposeAsset?.tokenId;
 
   const onSubmit = async () => {
     if (!signer || !activeAddress) { toast.error("Connect a wallet first"); return; }
-    if (!nftContract || !tokenId) { toast.error(mode === "offer" ? "Pick an asset first" : "Enter the asset's contract and token id"); return; }
+    if (!nftContract || !tokenId) { toast.error(mode === "offer" ? "Pick an asset first" : "Search for and pick an asset to sponsor"); return; }
     if (!terms.amount || Number(terms.amount) <= 0) { toast.error("Enter an amount"); return; }
     if (!terms.paymentTokenSymbol) { toast.error("Pick a currency"); return; }
     if (!terms.licenseText.trim()) { toast.error("Add license terms"); return; }
@@ -189,8 +204,7 @@ export default function CreateSponsorshipPage() {
             onClick={() => {
               setDone(false);
               setSelectedAsset(null);
-              setProposeContract("");
-              setProposeTokenId("");
+              setProposeAsset(null);
               setTerms({ ...EMPTY_SPONSORSHIP_TERMS, paymentTokenSymbol: "USDC" });
             }}
             className="bg-brand-rose hover:brightness-110 text-white"
@@ -243,24 +257,14 @@ export default function CreateSponsorshipPage() {
                 {selectedAsset ? <PendingProposalsPanel nftContract={selectedAsset.contractAddress} signer={signer} /> : null}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <p className="text-sm font-semibold">Which asset do you want to sponsor?</p>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
-                  <Input
-                    placeholder="Asset contract address (0x…)"
-                    value={proposeContract}
-                    onChange={(e) => setProposeContract(e.target.value)}
-                  />
-                  <Input
-                    className="w-28"
-                    placeholder="Token ID"
-                    value={proposeTokenId}
-                    onChange={(e) => setProposeTokenId(e.target.value)}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Find these on the asset&apos;s page — copy the URL&apos;s contract address and token id.
-                </p>
+                <AssetSearchPicker
+                  search={searchAssets}
+                  selected={proposeAsset}
+                  onSelect={setProposeAsset}
+                  placeholder="Search by asset name or creator"
+                />
               </div>
             )}
 
