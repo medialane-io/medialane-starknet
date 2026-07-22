@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
+import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, toDurationDays, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useTokensByOwner } from "@/hooks/use-tokens";
@@ -126,8 +126,8 @@ export default function CreateSponsorshipPage() {
     if (!terms.paymentTokenSymbol) { toast.error("Pick a currency"); return; }
     const token = getTokenBySymbol(terms.paymentTokenSymbol);
     if (!token) { toast.error("Pick a currency"); return; }
-    const durationDays = Number(terms.durationDays);
-    if (!durationDays || durationDays <= 0) { toast.error("How many days should the license last?"); return; }
+    const durationDays = toDurationDays(terms);
+    if (!durationDays) { toast.error("How long should the license last?"); return; }
 
     setIsSubmitting(true);
     try {
