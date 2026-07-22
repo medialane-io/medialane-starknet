@@ -6,6 +6,7 @@ import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
 import { Handshake, Loader2, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
@@ -172,42 +173,6 @@ export default function CreateSponsorshipPage() {
     }
   };
 
-  if (done) {
-    return (
-      <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
-        <div className="flex justify-center">
-          <div className="h-20 w-20 rounded-full bg-brand-rose/10 flex items-center justify-center">
-            <CheckCircle2 className="h-10 w-10 text-brand-rose" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{mode === "offer" ? "Offer created" : "Proposal sent"}</h1>
-          <p className="text-muted-foreground">
-            {mode === "offer"
-              ? "Sponsors can now bid on this asset. It will appear in the launchpad within a minute once indexed."
-              : "The asset's owner can now accept or decline your proposal."}
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button asChild variant="outline">
-            <Link href="/launchpad/sponsorship">Back to Sponsorship</Link>
-          </Button>
-          <Button
-            onClick={() => {
-              setDone(false);
-              setSelectedAsset(null);
-              setProposeAsset(null);
-              setTerms({ ...EMPTY_SPONSORSHIP_TERMS, paymentTokenSymbol: "USDC" });
-            }}
-            className="bg-brand-rose hover:brightness-110 text-white"
-          >
-            Create another
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <ConnectGate title="Connect your wallet" subtitle="Connect your Starknet wallet to set up a sponsorship.">
       <ClaimRouteShell
@@ -270,19 +235,67 @@ export default function CreateSponsorshipPage() {
               />
             </div>
 
-            <Button
-              size="lg"
-              className="w-full rounded-xl bg-brand-rose hover:brightness-110 text-white"
-              disabled={isSubmitting}
-              onClick={onSubmit}
-            >
-              {isSubmitting
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{mode === "offer" ? "Creating…" : "Sending…"}</>
-                : <><Handshake className="h-4 w-4 mr-2" />{mode === "offer" ? "Create offer" : "Send proposal"}</>}
-            </Button>
+            <div className="btn-border-animated p-[1px] rounded-2xl">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+                className="w-full h-12 rounded-[15px] flex items-center justify-center gap-2 text-base font-semibold text-white bg-transparent transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+              >
+                {isSubmitting
+                  ? <><Loader2 className="h-4 w-4 animate-spin" />{mode === "offer" ? "Creating…" : "Sending…"}</>
+                  : <><Handshake className="h-4 w-4" />{mode === "offer" ? "Create offer" : "Send proposal"}</>}
+              </button>
+            </div>
           </div>
         </FadeIn>
       </ClaimRouteShell>
+
+      <Dialog open={isSubmitting || done} onOpenChange={(open) => { if (!open) setDone(false); }}>
+        <DialogContent className="max-w-md">
+          {isSubmitting ? (
+            <div className="text-center space-y-4 py-4">
+              <Loader2 className="h-10 w-10 animate-spin text-brand-rose mx-auto" />
+              <div className="space-y-1">
+                <DialogTitle>{mode === "offer" ? "Creating your sponsorship offer…" : "Sending your proposal…"}</DialogTitle>
+                <DialogDescription>Confirm in your wallet, then hang tight — this settles onchain.</DialogDescription>
+              </div>
+            </div>
+          ) : done ? (
+            <div className="text-center space-y-4 py-4">
+              <div className="flex justify-center">
+                <div className="h-16 w-16 rounded-full bg-brand-rose/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-8 w-8 text-brand-rose" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <DialogTitle>{mode === "offer" ? "Offer created" : "Proposal sent"}</DialogTitle>
+                <DialogDescription>
+                  {mode === "offer"
+                    ? "Sponsors can now bid on this asset. It will appear in the launchpad within a minute once indexed."
+                    : "The asset's owner can now accept or decline your proposal."}
+                </DialogDescription>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button asChild variant="outline" className="flex-1">
+                  <Link href="/launchpad/sponsorship">Back to Sponsorship</Link>
+                </Button>
+                <Button
+                  className="flex-1 bg-brand-rose hover:brightness-110 text-white"
+                  onClick={() => {
+                    setDone(false);
+                    setSelectedAsset(null);
+                    setProposeAsset(null);
+                    setTerms({ ...EMPTY_SPONSORSHIP_TERMS, paymentTokenSymbol: "USDC" });
+                  }}
+                >
+                  Create another
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </ConnectGate>
   );
 }

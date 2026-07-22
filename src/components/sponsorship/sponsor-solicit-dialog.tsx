@@ -114,11 +114,18 @@ export function SponsorSolicitDialog({
                 amountLabel="Minimum accepted bid"
                 disabled={isSubmitting}
               />
-              <Button size="lg" className="w-full rounded-xl bg-brand-rose hover:brightness-110 text-white" disabled={isSubmitting} onClick={onSubmit}>
-                {isSubmitting
-                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating…</>
-                  : <><Handshake className="h-4 w-4 mr-2" />Create offer</>}
-              </Button>
+              <div className="btn-border-animated p-[1px] rounded-2xl">
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={onSubmit}
+                  className="w-full h-12 rounded-[15px] flex items-center justify-center gap-2 text-base font-semibold text-white bg-transparent transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isSubmitting
+                    ? <><Loader2 className="h-4 w-4 animate-spin" />Creating…</>
+                    : <><Handshake className="h-4 w-4" />Create offer</>}
+                </button>
+              </div>
             </div>
           </>
         )}
