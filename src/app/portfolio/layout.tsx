@@ -8,6 +8,7 @@ import { useRemixOffers } from "@/hooks/use-remix-offers";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { useRewards } from "@/hooks/use-rewards";
+import { useMySponsorshipDealCounts } from "@/hooks/use-sponsorship";
 import {
   PortfolioHeader,
   PortfolioNav,
@@ -35,6 +36,7 @@ const NAV_SECTIONS: PortfolioNavSection[] = [
       { label: "Offers sent",     href: "/portfolio/offers" },
       { label: "Counter-offers",  href: "/portfolio/counter-offers", badge: { key: "counters", variant: "warning" } },
       { label: "Licensing",       href: "/portfolio/licensing", badge: { key: "remixes", variant: "primary" } },
+      { label: "Sponsorships",    href: "/portfolio/sponsorships", badge: { key: "sponsorships", variant: "primary" } },
     ],
   },
   { label: "Activity", href: "/portfolio/activity" },
@@ -48,8 +50,9 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
   const { orders } = useUserOrders(address ?? null);
   const { offers: remixOffers } = useRemixOffers("creator");
   const { data: rewards } = useRewards(address);
+  const { pendingCount: sponsorshipPendingCount } = useMySponsorshipDealCounts(address);
 
-  const counts = derivePortfolioCounts(orders, remixOffers, address);
+  const counts = derivePortfolioCounts(orders, remixOffers, address, sponsorshipPendingCount);
 
   useEffect(() => {
     const receivedOffers = orders.filter(
@@ -86,6 +89,7 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
           offers: counts.received,
           remixes: counts.remix,
           counters: counts.counter,
+          sponsorships: counts.sponsorships,
         }}
       />
 
