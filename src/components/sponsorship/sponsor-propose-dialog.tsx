@@ -6,7 +6,7 @@ import { type AccountInterface } from "starknet";
 import { Handshake, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, type SponsorshipTerms } from "@medialane/ui";
+import { LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, toDurationDays, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useSiwsToken } from "@/hooks/use-siws-token";
@@ -47,8 +47,8 @@ export function SponsorProposeDialog({
     if (!terms.amount || Number(terms.amount) <= 0) { toast.error("Add an amount before continuing"); return; }
     const token = getTokenBySymbol(terms.paymentTokenSymbol);
     if (!token) { toast.error("Pick a currency"); return; }
-    const durationDays = Number(terms.durationDays);
-    if (!durationDays || durationDays <= 0) { toast.error("How many days should the license last?"); return; }
+    const durationDays = toDurationDays(terms);
+    if (!durationDays) { toast.error("How long should the license last?"); return; }
 
     setIsSubmitting(true);
     try {
