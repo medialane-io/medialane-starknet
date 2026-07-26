@@ -301,3 +301,15 @@ export function idResolvedReady() {
 export function idResolvedBraavos() {
   return new IdResolvedInjectedConnector("braavos", "Braavos");
 }
+
+/** The single source for how a connector id maps to its user-facing name —
+ *  every UI surface that lists/labels injected connectors imports this
+ *  instead of keeping its own copy. */
+export function getConnectorDisplayName(id: string, fallback: string): string {
+  const names: Record<string, string> = {
+    argentX: "Ready",
+    braavos: "Braavos",
+    webwallet: "Argent Web Wallet",
+  };
+  return names[id] ?? fallback;
+}

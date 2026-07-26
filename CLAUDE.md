@@ -58,27 +58,33 @@ PINATA_JWT                            # Server-side Pinata JWT (for uploads)
 # Explorer
 NEXT_PUBLIC_EXPLORER_URL              # Block explorer (default: voyager.online)
 
-# Privy (social/email wallet — server-side secret must never be exposed to client)
-NEXT_PUBLIC_PRIVY_APP_ID              # Privy app ID (public)
-PRIVY_APP_SECRET                      # Privy app secret (server only)
-
 # AVNU Paymaster (gasless/sponsored transactions)
 NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY    # AVNU API key — all tx types sponsored when present
 ```
 
 ## Wallet System
 
-The app supports three wallet connection strategies, unified by a single
+The app supports two wallet connection strategies, unified by a single
 active-wallet slot (`WalletProvider` + `useWallet()`):
 
-1. **Argent / Braavos** — injected browser wallets via `starknetkit` + `@starknet-react/core`
+1. **Argent (Ready) / Braavos** — injected browser wallets via `@starknet-react/core` connectors, configured in `src/lib/starknet-connectors.ts`.
 2. **Cartridge Controller** — session-key gaming wallet via StarkZap SDK (`OnboardStrategy.Cartridge`). Auto-gasless, policies scoped via `CARTRIDGE_POLICIES` in `src/contexts/starkzap-wallet-context.tsx`.
    - **Static targets are exhaustively whitelisted** as of PRs #20 + #24 (2026-05-26): MIP registry, ERC-1155 factory, marketplace ×2, POP factory, Drop factory, NFTComments, three airdrop mint contracts. Whenever a new (target, method) is invoked on a static-address contract, **add it to `CARTRIDGE_POLICIES`** — Cartridge session-keys reject any call outside the list.
    - **Per-instance contracts are a structural gap**: per-collection NFT contracts (transfers, approves, mint_item), per-pop event contracts (claim), per-drop contracts (manage actions) all have dynamic addresses the static list cannot cover. Cartridge users hit "additional approval needed" prompts mid-flow for these. Three follow-up paths possible: route through registry wrappers (e.g. MIP `transfer_token`), add a runtime UX nudge, or use Cartridge SDK wildcard support if available.
    - **Audit methodology**: `grep -rEo 'entrypoint:\s*"[a-zA-Z_]+"' src/ | awk -F'"' '{print $2}' | sort -u` lists every called entrypoint. Diff against `CARTRIDGE_POLICIES`. Anything called on a static-address contract but not in the list is a silent-failure bug.
    - **Cartridge needs its own RPC config — never the app's Lava pin** (`getCartridgeStarkZapSdk()` in `src/lib/starkzap.ts`, fixed 2026-07-02). `@cartridge/controller`'s chain-detector only recognizes RPC URLs whose *path* contains `starknet`/`mainnet` (its own hosted-RPC convention, `https://api.cartridge.gg/x/starknet/mainnet`) — our reliable Lava endpoint (`https://rpc.starknet.lava.build`, root path, no such segment) throws `Chain ... not supported` the instant `connectCartridge()` forwards it in. This broke Cartridge connect entirely for ~4 weeks (since the `ddb6484` Lava-pin fix) before being caught — the raw RPC URL leaked into a user-facing error banner and was shared on the public Starknet Telegram. Fixed with a **second, Cartridge-only StarkZap SDK instance** on StarkZap's `network: "mainnet"` preset (which resolves to Cartridge's hosted RPC); the main Lava-pinned singleton (`getStarkZapSdk()`) is untouched and still used for every other read/write. If StarkZap ever exposes a per-call rpcUrl override on `connectCartridge()`, this dual-instance workaround can collapse back to one.
-3. **Privy** — email/social login via StarkZap SDK (`OnboardStrategy.Privy`). Keys managed server-side; no seed phrase required. Requires the two Privy API routes.
-   - **`login()` failures must be caught** (fixed 2026-07-02, `privy-connector.tsx`): a blocked OAuth popup (Brave/Safari block by default) throws or rejects with zero visible UI change — previously unhandled, leaving the wallet button stuck as a permanently-disabled spinner ("authenticating" session state that never resolves). Now caught with a friendly "pop-up blocked" message plus a 45s timeout backstop.
+
+**Privy (email/social login) was removed 2026-07-26** — it never produced a
+reliable connect experience (the OAuth popup was silently blocked by browsers
+in a way that surfaced only as a 20s timeout with no earlier feedback) and its
+SDK dragged in ~2GB of unrelated dependency weight (react-native/hermes, a
+full WalletConnect/Reown/wagmi/x402 chain for EVM login methods this app never
+used). If social login is revisited, it needs a fundamentally different
+integration (e.g. a provider whose popup doesn't race an async bundle load)
+rather than restoring this one. `starknetkit` was also removed the same day —
+it had zero real call sites (superseded by the shared `<ConnectWallet />`
+picker below) and was itself dragging in a second, version-conflicted copy of
+`@cartridge/controller` plus an unrelated three.js/react-spring chain.
 
 **Architecture — one active-wallet slot (redesigned 2026-06-07; spec:
 `docs/superpowers/specs/2026-06-07-wallet-layer-redesign-design.md`).** A single
@@ -87,8 +93,9 @@ slot, written **ONLY by an explicit user `connect(type)`**. There is NO priority
 referee — one slot, last-explicit-choice-wins by construction, so a background
 session cannot outrank the wallet the user is actually using. (This replaced the
 old `useWalletSession`/`useUnifiedWallet` "StarkZap > injected" priority that
-silently let a stale Privy session hijack an actively-connected injected wallet —
-the 2026-06-07 "Privy hijack" incident.)
+silently let a stale StarkZap session hijack an actively-connected injected
+wallet — the 2026-06-07 hijack incident, historically caused by Privy's silent
+background reconnect, since removed along with Privy itself.)
 
 **`useWallet()` is the single hook** (`src/hooks/use-wallet.ts`): reads the slot →
 `{ address, isConnected, isConnecting, walletType, error, connect, disconnect,
@@ -104,19 +111,14 @@ identity to `account` made the asset page read "disconnected" for an
 actively-connected wallet (fixed `95aadcb`).
 
 **Persistence + reconnect.** One key `localStorage["ml_wallet"]`
-(`argent|braavos|cartridge|privy`, replaces the old `ml_privy_session`) records the
-user's last explicit choice; only that wallet restores on reload.
+(`argent|braavos|cartridge`) records the user's last explicit choice; only
+that wallet restores on reload.
 - **Injected**: `WalletProvider` owns a **retried** reconnect (~6s of
   `connector.ready()` polling, keyed on `ml_wallet`). starknet-react's built-in
   `autoConnect` is a single one-shot on mount and loses the race against async
   `window.starknet_*` extension injection on fresh loads — never relied on alone
   (fixed `276a714`).
 - **Cartridge**: silent `sdk.onboard({ strategy: Cartridge })` resume.
-- **Privy**: restores ONLY when `ml_wallet === "privy"` and Privy is still
-  authenticated — there is **NO silent background auto-reconnect** (the old one
-  hijacked injected wallets). Privy is lazy-mounted only when `ml_wallet === "privy"`
-  or on `/mint`,`/airdrop`,`/br/*`. First-ever connect eagerly deploys the mainnet
-  account (`deploy: "if_needed"`); later sign-ins are a light rehydrate.
 
 **Connector hardening** (`src/lib/starknet-connectors.ts`): on an empty
 `accountsChanged` the injected connector silently re-verifies (`wallet_getPermissions`
@@ -127,10 +129,9 @@ that as a hard disconnect dropped live sessions.
 **Provider tree** (`src/app/providers.tsx`):
 ```
 ThemeProvider
-  └─ (lazy) PrivyProvider     ← only when ml_wallet=privy or on mint/airdrop/br routes
-       └─ StarknetProvider     ← src/components/starknet-provider.tsx
-            └─ StarkZapWalletProvider  ← src/contexts/starkzap-wallet-context.tsx (Cartridge/Privy onboarding + active WalletInterface)
-                 └─ WalletProvider     ← src/contexts/wallet-context.tsx (the active-wallet slot)
+  └─ StarknetProvider     ← src/components/starknet-provider.tsx
+       └─ StarkZapWalletProvider  ← src/contexts/starkzap-wallet-context.tsx (Cartridge onboarding + active WalletInterface)
+            └─ WalletProvider     ← src/contexts/wallet-context.tsx (the active-wallet slot)
 ```
 `WalletProvider` is innermost so its injected adapter can read starknet-react's
 `useAccount()` and its StarkZap adapter the StarkZap context.
@@ -141,11 +142,10 @@ ThemeProvider
 - `src/lib/wallet-types.ts` — `ActiveWallet`/`WalletType` + `ml_wallet` persistence helpers
 - `src/lib/wallet-adapters.ts` — `makeInjectedExecute` / `makeStarkzapExecute`
 - `src/lib/wait-for-receipt.ts` — shared on-chain confirmation + revert detection
-- `src/contexts/starkzap-wallet-context.tsx` — StarkZap SDK onboarding + `useStarkZapWallet()` (Cartridge/Privy)
+- `src/contexts/starkzap-wallet-context.tsx` — StarkZap SDK onboarding + `useStarkZapWallet()` (Cartridge)
 - `src/lib/starkzap.ts` — SDK singleton (`getStarkZapSdk()`), token presets, staking config
-- `src/app/api/wallet/{starknet,sign}/route.ts` — Privy server wallet get-or-create + raw signing
 
-**StarkZap stays.** It is the modern, valued Starknet SDK powering Cartridge, Privy,
+**StarkZap stays.** It is the modern, valued Starknet SDK powering Cartridge,
 swaps, DeFi, and Creator Coins. Fix wallet bugs by **removing complexity** (referees,
 redundant hooks, auto-reconnect machinery), NOT by removing/replacing the SDK.
 Clerk + ChipiPay belong to **medialane-io**, not this dapp.
@@ -156,13 +156,13 @@ signatures as `string`/`string[]`) only; never mix Account objects across stacks
 
 ### Connect dialog — `<ConnectWallet />` is the single entry point (2026-05-27)
 
-Every page and component that prompts the user to connect renders the shared `<ConnectWallet />` from `src/components/ConnectWallet.tsx`. It contains the four-card picker (Ready / Braavos / Cartridge / Email or Social) and handles both StarkZap (Cartridge / Privy) and injected (Ready / Braavos) connectors internally.
+Every page and component that prompts the user to connect renders the shared `<ConnectWallet />` from `src/components/ConnectWallet.tsx`. It contains the three-card picker (Ready / Braavos / Cartridge) and handles both StarkZap (Cartridge) and injected (Ready / Braavos) connectors internally. Accepts an optional `children` override for custom trigger content (a full card, not just an icon+label button) — used by `SignedOutAssetActions`; the connecting-state branch preserves whatever shape was passed in instead of collapsing to a generic icon.
 
-- **Do NOT use `starknetkit`'s `useStarknetkitConnectModal`**. That path was removed across the launchpad pages, drop / pop mint flows, claim gate, and genesis mint. It silently auto-selected one wallet when only one connector was "available" — which masked extension-id rebrands (e.g. Ready X exposing `wallet.id = "ready"` instead of `"argentX"`) by falling through to Braavos with no picker.
+- **`starknetkit` is gone (removed 2026-07-26) — never reintroduce it.** It had zero real call sites (its `useStarknetkitConnectModal` was already fully replaced by this shared picker months earlier) but was still dragging in a version-conflicted `@cartridge/controller` plus an unrelated three.js/react-spring chain. If Cartridge ever needs its peer bumped, do it via an explicit `@cartridge/controller` dependency (see `package.json`), not by reintroducing starknetkit.
 - **Pattern for "connect or block" UI**: render `<ConnectWallet label="Connect wallet" />` in the not-connected branch. For inline guards mid-flow (form submits, mint handlers), use `toast.error("Connect your wallet first")` and return — the persistent `<ConnectWallet />` button is still on the page.
 - **Ready / Argent connector** (`src/lib/starknet-connectors.ts`): `idResolvedReady()` constructs an `IdResolvedInjectedConnector("argentX", …, ["ready"])` — the alias list lets it discover extensions that expose under either id. The connector's external `id` stays `"argentX"` so backend `WalletType` attribution doesn't drift across the rebrand.
 - **Missing-extension UX** (fixed 2026-07-02): both connectors are always configured regardless of which extensions are actually installed, so clicking one with nothing installed was a guaranteed `ConnectorNotFoundError`. `ConnectWallet.tsx` now checks `connector.available()` (synchronous) at render time and shows an "Install {name}" link instead of a doomed button.
-- **Connect failures must reopen the dialog.** `handleCartridgeConnect`/the Privy button used to close the dialog immediately and let the error land only in session state — with the dialog already closed, the user never saw it (reported as "the button does nothing, zero feedback"). A `useEffect` on `sessionError` now reopens the dialog whenever a connect attempt fails, so the (friendly) error banner is actually visible.
+- **Connect failures must reopen the dialog — but only the instance that started the connect.** `handleCartridgeConnect` used to close the dialog immediately and let the error land only in session state — with the dialog already closed, the user never saw it (reported as "the button does nothing, zero feedback"). A `useEffect` on `sessionError` reopens the dialog whenever a connect attempt fails, gated on a local `initiatedHereRef` (fixed 2026-07-26): `sessionError` is global (one shared wallet context), but a page can mount several `<ConnectWallet />` instances at once (e.g. a header icon plus an asset-page card) — without the gate, ANY instance would pop its full picker open on an error started by a totally different one.
 - **`getFriendlyWalletError` (`src/lib/wallet-error.ts`) must never leak a raw endpoint.** `looksTechnical()` flags any message containing `http(s)://` regardless of length — added 2026-07-02 after a raw `Chain https://rpc.starknet.lava.build/ not supported` message reached a user and got shared on the public Starknet Telegram. The final fallback message was also rewritten from a dead-end "Something went wrong" to an actionable one ("try again... try a different wallet or refresh the page").
 
 ### Onboarding — `/v1/users/register` via the BFF proxy (2026-05-27 incident note)
@@ -179,22 +179,21 @@ Every page and component that prompts the user to connect renders the shared `<C
 
 **Contract ABIs** come from `@medialane/sdk` (currently 0.38.0). Import `IPMarketplaceABI`, `Medialane1155ABI`, `IPCollectionABI`, `IPNftABI`, `POPFactoryABI`, `POPCollectionABI`, `DropFactoryABI`, `DropCollectionABI`, `IPCollection1155FactoryABI`, `IPCollection1155ABI` from the SDK. Each ABI lives in its own file under `src/abis/` in the SDK (split in v0.19.0); the public import path is unchanged via `abis/index.ts` barrel. The only local ABI that remains in this repo's `src/abis/` is `user_settings.ts` — everything contract-related lives in the SDK as the single source of truth.
 
-**Marketplace order flow** (in `src/hooks/use-marketplace.ts`) — **redesigned venues, SDK 0.26.0** (client-signing migration, 2026-05-31):
+**Marketplace order flow** (in `src/hooks/use-marketplace.ts`) — routed through the SDK's chain-neutral `StarknetVenue` adapter (`src/lib/starknet-venue.ts`'s `getStarknetVenue()`), not hand-rolled typed-data builders. The app's one implementation of the SDK's `VenueSigner` capability port is `src/lib/use-venue-signer.ts` — feature hooks never re-thread the signer/executor resolution themselves.
 - Order params use the new schema: single `amount` (no start/end), plus `marketplace`, `royalty_max_bps` (live EIP-2981 via `royalty_info`), and `counter` (`get_counter()`, replaces the removed nonce). Salt is a **wide 248-bit** value (sole order-hash uniqueness source).
-- Typed data is delegated to the SDK builders via `src/utils/marketplace-utils.ts` (`getOrderParametersTypedData`→`buildOrderTypedData` v4, `get1155OrderParametersTypedData`→`build1155OrderTypedData` v3, cancellation builders). **There is no fulfillment builder — fulfilment is UNSIGNED.**
 - Listings: sign → ERC721 `approve` + `register_order` multicall
 - Offers: sign → ERC20 `approve` + `register_order` multicall
 - Buying a listing / accepting an offer: **unsigned** — `fulfill_order(orderHash[, quantity])`, no `signMessage`; approve + (fee) executed atomically via the paymaster
 - Cancellations: signed `{ order_hash, offerer }` (no nonce) → `cancel_order`
 - Execution stays on dapp's AVNU paymaster (`executeAuto`) + creators-fund fee splice.
-- **Signer/executor resolution** (2026-06-12, supersedes `d039e43`): the StarkZap wallet is
-  **gated on the active-wallet slot** before any `szWallet ?? account` fallback —
-  `const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;`
-  (applied in `use-marketplace`, `use-tx`, `use-siws-token`, `use-launch-coin`). A bare
-  `szWallet ?? account` priority let a lingering Cartridge/Privy session sign/execute for a
-  different wallet than the one the user explicitly connected (and in `use-launch-coin` even
-  split signer vs owner across rails). Cartridge/Privy users still list/buy/offer normally, and
-  a momentarily-`undefined` injected `account` surfaces a retryable error instead of crashing.
+- **Signer/executor resolution**: the StarkZap wallet is **gated on the active-wallet slot**
+  before any `szWallet ?? account` fallback — `const szWallet = walletType === "cartridge" ?
+  szWalletRaw : null;` (the one implementation lives in `use-venue-signer.ts`; also applied
+  directly in `use-tx`, `use-siws-token`, `use-launch-coin`, and the sponsorship dialogs/pages,
+  which don't go through the venue). A bare `szWallet ?? account` priority let a lingering
+  Cartridge session sign/execute for a different wallet than the one the user explicitly
+  connected (and in `use-launch-coin` even split signer vs owner across rails). A
+  momentarily-`undefined` injected `account` surfaces a retryable error instead of crashing.
   **Any new hook that resolves a signer/executor must use this slot-gated pattern.**
 
 **Checkout totals — always via `orderTotal()` (`src/lib/checkout.ts`).** `order.consideration.startAmount` is the price **per edition** for ERC-1155 (the listing form labels it "Price per edition"); `fulfill_order` charges `price × quantity`. `orderTotal(order, quantity)` is the single source of truth for the ERC-20 amount to approve — never divide by `offer.startAmount`. `checkoutCart` takes a typed `CheckoutItem[]`; both call sites (`purchase-dialog`, `counter-offers-table`) build items through `orderTotal`. A prior bug under-approved ERC-1155 multi-buys by dividing by the edition count → `ERC20: insufficient allowance`.
@@ -238,9 +237,6 @@ First-load JS was cut ~30–57% on every key route (homepage 671→480 kB, marke
 are load-bearing — don't regress them:
 
 - **Lazy-loaded heavy modules — never re-add these as static imports:**
-  - `PrivyInlineLogin` is `next/dynamic` (`ssr: false`) in `airdrop-claim.tsx` and
-    `br-mint-content.tsx`. A static import anywhere in the mint-landing tree pulls the
-    whole `@privy-io/react-auth` bundle (~350 kB gz) back into the paid-ads pages.
   - `PriceHistoryChart` (recharts) is `next/dynamic` in `asset-provenance-tab.tsx`.
   - **StarkZap loads only inside `connectCartridge()`** (`starkzap-wallet-context.tsx`,
     via `await import("starkzap")` + `import("@/lib/starkzap")`) — that callback covers
@@ -271,8 +267,7 @@ are load-bearing — don't regress them:
   shared with the dialog's list, so counts still refresh whenever the dialog polls).
   `useTokensByOwner` polls at 30s. IPFS metadata fetches race the first two gateways
   (`Promise.any`) before falling back serially.
-- Type checking is enforced at build (`ignoreBuildErrors` removed); the Privy server
-  client is a lazy singleton (`getPrivyServer()`), so builds need no Privy env.
+- Type checking is enforced at build (`ignoreBuildErrors` removed).
 
 ## RPC resilience (added 2026-06-03)
 
@@ -307,7 +302,7 @@ failing call uses** (the first three are documented in full at the top of
    (`use-marketplace.ts`: `get_counter`, `royalty_info`, approvals).
 3. The SDK client's `getProvider` (`@medialane/sdk` ≥ 0.28.0) — SDK-routed ops.
 4. **StarkZap's internal provider** (`lib/starkzap.ts`) — all wallet ops
-   (Privy/Cartridge connect, deploy, balances, staking). StarkZap bundles its
+   (Cartridge connect, deploy, balances, staking). StarkZap bundles its
    own starknet v9 and its `SDKConfig` exposes **no `baseFetch`/provider hook**,
    so it **cannot use `failoverFetch`** — it's pinned to a single `rpcUrl`.
 
@@ -323,9 +318,28 @@ spec 0.8.1) in `lib/starkzap.ts`. Giving it `NEXT_PUBLIC_RPC_URL` (Alchemy) made
 its `starknet_chainId` chain-match check hit the intermittent `-32001` with
 nothing to fall back to → "Connection failed" on wallet connect (fixed
 `ddb6484`). All wallet-connect errors now route through `getFriendlyWalletError`
-(`lib/wallet-error.ts`) at the set sites (`privy-connector.tsx`,
-`starkzap-wallet-context.tsx`): users see "Network busy — try again", the raw
+(`lib/wallet-error.ts`) at the set sites (`starkzap-wallet-context.tsx`,
+`ConnectWallet.tsx`, `nav-account-panel.tsx`): users see "Network busy — try again", the raw
 RPC blob is `console.error`-only.
+
+**Injected connect has a hard timeout — a hung extension must never freeze
+wallet state forever** (fixed 2026-07-26, reported: Ready hanging mid-connect
+broke the nav command menu's own keyboard shortcut app-wide — unrelated
+components, but both depend on the same wallet context ever settling out of
+`isConnecting`). Injected wallets talk over `window.postMessage`/a content
+script; if the extension itself is stuck (crashed background worker, a wedged
+connection), `connectAsync` can hang indefinitely with **no error and no
+rejection** — there is nothing to catch, only a clock. `withTimeout()`
+(`src/lib/wallet-error.ts`) races any wallet-extension call against a bound
+and throws `WalletConnectTimeoutError` on expiry, mapped by
+`getFriendlyWalletError` to "Wallet not responding". Applied at both call
+sites in `wallet-context.tsx`: the explicit `connect()` path (20s — long
+enough for a real PIN/passkey prompt) and the silent background
+reconnect-on-load probe (3s per call — that path is invisible to the user, so
+a hang should fail fast and let the loop's own retry cadence continue rather
+than eating its whole ~6s budget on one stuck call). **Any new call into an
+injected wallet extension must go through `withTimeout`** — the extension is
+untrusted, unmonitored code we don't control.
 
 `StarknetConfig` is given a tuned `QueryClient` (`refetchOnWindowFocus: false`,
 bounded retries, 10s `staleTime`) so tab focus doesn't fire read bursts.
@@ -368,18 +382,15 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
    - **IP-type document upload (2026-06-12)**: Documents/Patents/Publications/Software types attach the work itself as the `"Document File"` trait (immutable IPFS copy — Berne Convention proof of authorship). Config = `docUpload` on the shared `IP_TEMPLATES` (`@medialane/ui`); rendered by `IPTypeDisplay` as a View-document card; the asset pages' template-key derivation includes `docUpload.traitType` (hides the raw trait + enables `hasTemplateData`).
 2. **Indexed data (primary read path)**: `getMedialaneClient()` from `src/lib/medialane-client.ts` wraps the Medialane backend REST API (`NEXT_PUBLIC_MEDIALANE_BACKEND_URL`). Use `client.api.*` for tokens, collections, orders, activities, and provenance. Available methods: `getOrders`, `getActiveOrdersForToken`, `getOrdersByUser`, `getToken`, `getTokensByOwner`, `getTokenHistory`, `getCollections`, `getCollection`, `getCollectionTokens`, `getCollectionsByOwner`, `getActivities`, `getActivitiesByAddress`.
 3. **On-chain reads (writes + approvals only)**: Direct RPC calls are reserved for: approval checks (`get_approved`, `is_approved_for_all`), nonce reads, and transaction execution. Never scan events or enumerate tokens on-chain — use the backend API instead.
-4. **Zustand stores**: Used for mint state (`src/hooks/use-mint.ts`).
-5. **User profiles**: Stored/fetched via `src/services/user_settings.ts` (off-chain).
+4. **User profiles**: Stored/fetched via `src/services/user_settings.ts` (off-chain).
 
 ## Directory Structure
 
 - `src/app/` — App Router pages/layouts. Key routes: `/marketplace`, `/launchpad`, `/create`, `/asset`, `/collections`, `/creator`, `/portfolio`, `/provenance`, `/licensing`, `/airdrop`, `/mint`
   - `/airdrop` (added 2026-05-20) — Creator's Airdrop **info** page (rewards, tiers, distribution phases, rules); uses `GenesisMint`. `/mint` is the separate, generic current-mint-event page. Two distinct pages — same airdrop content for now, intended to diverge. Do not couple them.
-  - `/br/mint` (Portuguese airdrop landing, 2026-05-28 trim) — paid-ads entry point. Hero only above the fold (no badge, short headline "Participe do Airdrop", trust strip above the form, `PrivyInlineLogin` when not connected, `GenesisMint` when connected). All detail sections collapsed behind a single `<details>` "Saiba mais sobre a campanha". Match this shape on any new locale-specific landing — adding inline sections kills conversion. Google Ads conversion `gtag` fires on mount; do not remove. Header keeps a hidden `<ConnectWallet />` ref so `PrivyInlineLogin`'s "outras formas de entrar" link can open the wallet picker.
+  - `/br/mint` (Portuguese airdrop landing, 2026-05-28 trim; Privy removed 2026-07-26) — paid-ads entry point. Hero only above the fold (no badge, short headline "Participe do Airdrop", trust strip above the form, `<ConnectWallet />` when not connected, `GenesisMint` when connected). All detail sections collapsed behind a single `<details>` "Saiba mais sobre a campanha". Match this shape on any new locale-specific landing — adding inline sections kills conversion. Google Ads conversion `gtag` fires on mount; do not remove. **Content-rule tension**: this page has a strict no-crypto-jargon rule (its whole point was hiding wallet complexity behind Privy's email/Google login); with Privy gone, sign-in necessarily surfaces `ConnectWallet`'s own picker (Browser Wallets / Cartridge) once opened. Visible page copy avoids wallet language as much as possible — that's a structural limit of the shared component, not something page copy can route around.
   - `/` — Homepage (`src/components/home/`): hero slider, activity ticker, trending collections, new-on-marketplace, `CreatorAirdropBanner`, and the Launchpad `AirdropSection` service cards. At parity with medialane.io as of 2026-05-22. Kept deliberately lean for load speed — community/activity feeds live on the discover page, not the homepage.
-  - `src/app/api/wallet/` — Privy signing endpoints (server-side)
 - `src/components/` — All UI components. `src/components/ui/` contains shadcn/ui base components
-  - `src/components/providers.tsx` — PrivyProvider + StarkZapWalletProvider
 - `src/contexts/` — React contexts (StarkZap wallet context)
 - `src/hooks/` — React hooks for contract interaction, data fetching, and state
   - `src/hooks/contracts/` — Low-level contract hooks
@@ -598,7 +609,7 @@ rows. Coins are fetched from **`/v1/coins`** via the SDK's **`getCoins()` / `get
   Ekubo through StarkZap's `EkuboSwapProvider` (`getQuote` → `prepareSwap` returns approve+swap
   `Call[]` → executed via the unified wallet/paymaster, so EVERY wallet type works). `starkzap` is
   on **3.0.0**; its barrel pulls optional provider peers (Solana/Tongo/Hyperlane/RN shims) which
-  `next.config.ts` stubs via `resolve.alias = false` (same approach as the Privy stubs). Pay-with
+  `next.config.ts` stubs via `resolve.alias = false`. Pay-with
   token presets live in `utils/swap-tokens.ts` (renamed from `avnu-swap.ts` — all AVNU REST code
   deleted). The standalone `/swap` page is an experiment; it and the coin page share `use-swap`.
   **The AVNU *Paymaster* (gas sponsorship) is unrelated and still in use** — do not confuse it with
@@ -665,8 +676,8 @@ unless/until that changes. Footers should say **"Free to publish/mint — no pla
 fee"** (true: Medialane doesn't charge a cut) — never "no gas fees" / "gas is free" /
 "gasless" / "sponsored", which are currently false and were removed from ~28 files
 across both apps in this pass (`getFriendlyWalletError` in `src/lib/wallet-error.ts`
-also got hardened the same session — see its own header comment). Cartridge/Privy
-"gasless" claims are equally false: their StarkZap-routed sponsorship depends on the
+also got hardened the same session — see its own header comment). Cartridge
+"gasless" claims are equally false: its StarkZap-routed sponsorship depends on the
 exact same `NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY` (`isStarkZapSponsorshipEnabled()` in
 `src/lib/starkzap.ts`), not a separate always-on mechanism — don't reintroduce those
 claims either.

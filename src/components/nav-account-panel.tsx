@@ -9,17 +9,7 @@ import { toast } from "sonner";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
-
-
-function getConnectorDisplayName(id: string, fallback: string) {
-  const names: Record<string, string> = {
-    argentX: "Ready",
-    braavos: "Braavos",
-    webwallet: "Argent Web Wallet",
-  };
-  return names[id] ?? fallback;
-}
-
+import { getConnectorDisplayName } from "@/lib/starknet-connectors";
 
 export function NavAccountPanel() {
   const { connectors } = useConnect();

@@ -5,6 +5,8 @@ import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { makeInjectedExecute, makeStarkzapExecute } from "@/lib/wallet-adapters";
+import { withTimeout } from "@/lib/wallet-error";
+import { getConnectorDisplayName } from "@/lib/starknet-connectors";
 import {
   clearPersistedWallet,
   writePersistedWallet,
@@ -12,6 +14,16 @@ import {
   type ActiveWallet,
   type WalletType,
 } from "@/lib/wallet-types";
+
+/** How long an explicit injected connect can hang before we give up and
+ *  surface "wallet not responding" instead of leaving the UI stuck. Long
+ *  enough to cover a PIN/passkey prompt the user is actively answering. */
+const INJECTED_CONNECT_TIMEOUT_MS = 20_000;
+/** Shorter bound for the silent background reconnect-on-load probe — this
+ *  path is invisible to the user, so a hang here should fail fast and let
+ *  the loop's own retry cadence take over rather than eating the whole
+ *  ~6s budget on one stuck call. */
+const INJECTED_RECONNECT_PROBE_TIMEOUT_MS = 3_000;
 
 interface WalletContextValue {
   active: ActiveWallet | null;
@@ -134,8 +146,20 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const connector = connectors.find((c) => c.id === targetId);
         if (connector) {
           try {
-            if (await connector.ready()) {
-              await connectAsync({ connector });
+            // Same hang risk as the explicit connect path below, but this
+            // probe is silent (no user-facing error) — fail fast per call so
+            // a single stuck extension can't eat the whole retry budget.
+            const isReady = await withTimeout(
+              connector.ready(),
+              INJECTED_RECONNECT_PROBE_TIMEOUT_MS,
+              targetId,
+            );
+            if (isReady) {
+              await withTimeout(
+                connectAsync({ connector }),
+                INJECTED_RECONNECT_PROBE_TIMEOUT_MS,
+                targetId,
+              );
               setReconnecting(false);
               return;
             }
@@ -163,7 +187,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
       // injected: explicit pick supersedes any StarkZap session.
       if (!connector) throw new Error("Injected connect requires a connector");
-      await connectAsync({ connector });
+      // Injected wallets talk over window.postMessage / a content script — if
+      // the extension itself is stuck (crashed background worker, a wedged
+      // connection), connectAsync can hang forever with no error and no
+      // rejection, leaving isConnecting stuck true indefinitely (reported:
+      // Ready hanging mid-connect broke wallet UI state app-wide). Bound it.
+      await withTimeout(
+        connectAsync({ connector }),
+        INJECTED_CONNECT_TIMEOUT_MS,
+        getConnectorDisplayName(connector.id, connector.name ?? "Your wallet"),
+      );
       // Retire any active/stale StarkZap session so it can't outrank or
       // silently restore over the wallet the user just picked.
       szDisconnect(); // also clears ml_wallet

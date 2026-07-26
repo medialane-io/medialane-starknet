@@ -5,6 +5,34 @@ export interface FriendlyWalletError {
   isUserRejection: boolean;
 }
 
+/** Thrown by `withTimeout` — a dedicated, recognizable sentinel so
+ *  `getFriendlyWalletError` can map it to an actionable message instead of
+ *  falling through to the generic "Something went wrong". */
+export class WalletConnectTimeoutError extends Error {
+  constructor(label: string) {
+    super(`WALLET_CONNECT_TIMEOUT: ${label} did not respond in time`);
+    this.name = "WalletConnectTimeoutError";
+  }
+}
+
+/**
+ * Races `promise` against a timeout so a hung wallet extension can never
+ * stall connect state forever. Injected wallets communicate over
+ * `window.postMessage`/content scripts — if the extension itself is stuck
+ * (crashed background worker, a stale connection, etc.), `connectAsync` can
+ * hang indefinitely with no error and no rejection. There is nothing on our
+ * side to detect that except a clock.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new WalletConnectTimeoutError(label)), ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 function collectErrorText(error: unknown): string {
   if (!error) return "";
   if (typeof error === "string") return error;
@@ -87,6 +115,15 @@ export function getFriendlyWalletError(error: unknown): FriendlyWalletError {
       message: "Request not completed. Nothing was submitted.",
       description: "Your wallet didn't complete this request — you may have closed or declined it, or your wallet may require extra verification (like 2FA) before it can sign. Check your wallet for details, then try again.",
       isUserRejection: true,
+    };
+  }
+
+  if (error instanceof WalletConnectTimeoutError) {
+    return {
+      title: "Wallet not responding",
+      message: "Your wallet extension isn't responding. Nothing was submitted.",
+      description: "Try reopening your wallet extension, reloading the page, or connecting a different wallet.",
+      isUserRejection: false,
     };
   }
 

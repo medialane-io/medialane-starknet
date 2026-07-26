@@ -47,6 +47,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/hooks/use-wallet";
 import type { WalletSessionType } from "@/lib/wallet-session";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { getConnectorDisplayName } from "@/lib/starknet-connectors";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -62,15 +63,6 @@ function getConnectorIconSrc(icon: ConnectorIconObj | string | undefined): strin
   if (!icon) return undefined;
   if (typeof icon === "string") return icon;
   return icon.dark ?? icon.light;
-}
-
-function getConnectorDisplayName(id: string, fallback: string): string {
-  const NAMES: Record<string, string> = {
-    argentX: "Ready",
-    braavos: "Braavos",
-    webwallet: "Argent Web Wallet",
-  };
-  return NAMES[id] ?? fallback;
 }
 
 const WALLET_INSTALL_URLS: Record<string, string> = {

@@ -60,9 +60,8 @@ Gas fees are sponsored for all users via the AVNU Paymaster.
 | Framework | Next.js 15 (App Router) |
 | Blockchain | Starknet Mainnet |
 | RPC | Alchemy |
-| Wallet — Browser | Argent / Braavos via starknetkit |
+| Wallet — Browser | Argent (Ready) / Braavos via `@starknet-react/core` |
 | Wallet — Gaming | Cartridge Controller (session keys, auto-gasless) |
-| Wallet — Social | Privy (email / Google / Twitter, no seed phrase) |
 | Wallet SDK | StarkZap |
 | Gasless Transactions | AVNU Paymaster |
 | IP Tokenization | Mediolano Protocol (zero-fee) |
@@ -77,15 +76,14 @@ Gas fees are sponsored for all users via the AVNU Paymaster.
 
 ## Wallet System
 
-All three strategies are unified under `useUnifiedWallet` — one hook, one interface:
+Both strategies are unified under `useWallet()` — one hook, one interface:
 
 | Strategy | Best for | Gas |
 |---|---|---|
-| **Argent / Braavos** | Existing Starknet users | Sponsored via AVNU |
+| **Argent (Ready) / Braavos** | Existing Starknet users | Sponsored via AVNU |
 | **Cartridge Controller** | Gamers, power users | Auto-gasless (session keys) |
-| **Privy (Email / Social)** | Web2 onboarding | Sponsored via AVNU |
 
-No Clerk. No ChipiPay. Disconnect: `const { disconnect } = useUnifiedWallet()`.
+No Clerk. No ChipiPay. Disconnect: `const { disconnect } = useWallet()`.
 
 ---
 
@@ -129,8 +127,6 @@ No Clerk. No ChipiPay. Disconnect: `const { disconnect } = useUnifiedWallet()`.
 src/
 ├── app/                        # Next.js App Router pages
 │   ├── api/
-│   │   ├── wallet/sign/        # Privy server-side signing
-│   │   ├── wallet/starknet/    # Privy wallet provisioning
 │   │   └── pinata/             # IPFS upload endpoints
 │   ├── marketplace/
 │   ├── launchpad/
@@ -210,8 +206,6 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_EXPLORER_URL` | Block explorer base URL |
 | `NEXT_PUBLIC_GATEWAY_URL` | IPFS gateway URL |
 | `PINATA_JWT` | Pinata JWT for server-side uploads |
-| `NEXT_PUBLIC_PRIVY_APP_ID` | Privy app ID (public) |
-| `PRIVY_APP_SECRET` | Privy app secret (**server only**) |
 | `NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY` | AVNU API key for sponsored gas |
 | `NEXT_PUBLIC_MEDIALANE_API_URL` | Backend API base URL |
 | `NEXT_PUBLIC_MEDIALANE_API_KEY` | Backend API key |
@@ -244,7 +238,7 @@ npm run lint         # ESLint
 
 **AVNU Paymaster** — All transactions attempt sponsored execution first (`executeAuto`), falling back silently if AVNU rejects. Users never need ETH/STRK.
 
-**StarkZap SDK** — Abstracts Cartridge Controller (session keys) and Privy (email/social, server-managed keys). Transaction monitoring, ERC20 balances, and STRK staking all powered by StarkZap.
+**StarkZap SDK** — Abstracts Cartridge Controller (session keys). Transaction monitoring, ERC20 balances, and STRK staking all powered by StarkZap.
 
 ---
 
