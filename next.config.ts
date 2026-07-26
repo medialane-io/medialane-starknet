@@ -1,35 +1,9 @@
 import type { NextConfig } from "next";
 
-// Privy bundles static imports for optional Farcaster/Solana features we don't use.
-// Stub the entire dependency tree so webpack doesn't chase transitive Solana packages.
-const PRIVY_UNUSED_OPTIONAL_MODULES = [
-  "@farcaster/mini-app-solana",
-  "@farcaster/miniapp-sdk",
-  "@solana/wallet-adapter-react",
-  "@solana/kit",
-  "@solana-program/memo",
-  "@solana-program/system",
-  "@solana-program/token",
-  "@abstract-foundation/agw-client",
-  "permissionless",
-  // Privy's optional Stripe fiat→crypto on-ramp — not used by the dapp and not
-  // declared as a Privy dependency, so webpack can't resolve the import. Stub it.
-  "@stripe/crypto",
-  // Privy's EVM external-wallet connectors. The dapp is Starknet-only and uses
-  // Privy ONLY for email/social → Starknet (embedded wallet), never Privy's
-  // "connect MetaMask/Coinbase/WalletConnect" path — so these never load at
-  // runtime. Excluding them from the bundle (NOT viem, which Privy core uses).
-  "@coinbase/wallet-sdk",
-  "@walletconnect/ethereum-provider",
-  "@walletconnect/universal-provider",
-  "@base-org/account",
-  "mipd",
-];
-
 // StarkZap v3 barrel-exports every provider (swap, bridge, confidential, solana
 // connect, …); each pulls an OPTIONAL peer dep (declared optional in starkzap's
 // peerDependenciesMeta). We only use wallet / erc20 / tx / staking / swap, so
-// stub the providers we don't touch — same approach as the Privy stubs above.
+// stub the providers we don't touch.
 // (@avnu/avnu-sdk + starknet are hard deps and stay; Ekubo routing is on-chain.)
 const STARKZAP_UNUSED_OPTIONAL_MODULES = [
   "@fatsolutions/tongo-sdk",       // confidential transfers (Tongo)
@@ -43,7 +17,7 @@ const STARKZAP_UNUSED_OPTIONAL_MODULES = [
 
 const nextConfig: NextConfig = {
   webpack(config) {
-    for (const mod of [...PRIVY_UNUSED_OPTIONAL_MODULES, ...STARKZAP_UNUSED_OPTIONAL_MODULES]) {
+    for (const mod of STARKZAP_UNUSED_OPTIONAL_MODULES) {
       config.resolve.alias[mod] = false;
     }
     return config;

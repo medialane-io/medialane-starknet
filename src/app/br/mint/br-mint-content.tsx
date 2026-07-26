@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -17,23 +17,9 @@ import {
   XCircle,
   ChevronDown,
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { GenesisMint } from "@/components/airdrop/genesis-mint";
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
-
-// Lazy-loaded: the static import pulled the whole @privy-io/react-auth bundle
-// (~350 kB gz) into the first load of this paid-ads landing page. The hero and
-// trust strip paint immediately; the email login streams in behind them.
-const PrivyInlineLogin = dynamic(
-  () => import("@/components/airdrop/privy-inline-login").then((m) => m.PrivyInlineLogin),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-40 w-full max-w-md animate-pulse rounded-2xl border border-border/40 bg-card/30" aria-hidden />
-    ),
-  },
-);
 import { useWallet } from "@/hooks/use-wallet";
 import { BR_MINT_CONTRACT, BR_NFT_URI } from "@/lib/constants";
 
@@ -66,7 +52,6 @@ function EventCard() {
 
 export function BrMintContent() {
   const { isConnected } = useWallet();
-  const headerConnectRef = useRef<HTMLDivElement | null>(null);
 
   // Google Ads conversion tracking — page-view goal for the /br/mint campaign.
   // gtag is loaded globally in app/layout.tsx; we just fire the conversion
@@ -82,22 +67,12 @@ export function BrMintContent() {
     }
   }, []);
 
-  const openWalletPicker = () => {
-    const btn = headerConnectRef.current?.querySelector("button");
-    btn?.click();
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="px-6 py-4 flex items-center border-b border-border/30 sticky top-0 bg-background/90 backdrop-blur-sm z-10">
+      <header className="px-6 py-4 flex items-center justify-between border-b border-border/30 sticky top-0 bg-background/90 backdrop-blur-sm z-10">
         <Link href="/"><MedialaneLogo /></Link>
-        {/* Wallet picker stays mounted but hidden — reachable only via the
-            "Outras formas de entrar" link in PrivyInlineLogin, so no crypto
-            UI is shown by default. */}
-        <div ref={headerConnectRef} className="hidden">
-          <ConnectWallet />
-        </div>
+        <ConnectWallet />
       </header>
 
       <div className="flex-1 w-full">
@@ -129,7 +104,13 @@ export function BrMintContent() {
                     locale="br"
                   />
                 ) : (
-                  <PrivyInlineLogin onOpenWalletPicker={openWalletPicker} />
+                  // This page has a strict no-crypto-jargon content rule.
+                  // All visible copy on the page avoids wallet language;
+                  // ConnectWallet's own picker dialog (Browser Wallets /
+                  // Cartridge Controller) still can't avoid it once opened —
+                  // that's a structural limit of the shared component, not
+                  // something this page's copy can route around.
+                  <ConnectWallet label="Entrar para participar" className="w-full" />
                 )}
               </div>
               <div className="lg:sticky lg:top-24">
@@ -152,7 +133,7 @@ export function BrMintContent() {
             <h2 className="text-2xl sm:text-3xl font-black">Fundo dos Criadores</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { icon: FileCheck, color: "text-blue-400",   bg: "bg-blue-500/10",   title: "Entre gratuitamente", desc: "Entre com e-mail ou Google — sem cartão, sem aprovação." },
+                { icon: FileCheck, color: "text-blue-400",   bg: "bg-blue-500/10",   title: "Entre gratuitamente", desc: "Ative sua participação em segundos — sem cartão, sem aprovação." },
                 { icon: Coins,     color: "text-yellow-500", bg: "bg-yellow-500/10", title: "Fundo dos criadores", desc: "Distribuições do fundo para todos os participantes." },
                 { icon: Users,     color: "text-purple-400", bg: "bg-purple-500/10", title: "Aumente suas chances", desc: "Crie, compartilhe e colecione!" },
               ].map(({ icon: Icon, color, bg, title, desc }) => (
@@ -175,7 +156,7 @@ export function BrMintContent() {
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Como funciona</p>
               <h2 className="text-2xl sm:text-3xl font-black">Entre em segundos.</h2>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Entre com e-mail ou Google — é tudo que você precisa.
+                Ative sua conta — é tudo que você precisa.
               </p>
             </div>
             <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/5 p-6">
@@ -185,13 +166,13 @@ export function BrMintContent() {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-black text-lg">Crie sua conta gratuita</p>
+                    <p className="font-black text-lg">Ative sua conta gratuita</p>
                     <span className="text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full">
                       Mínimo — você está dentro
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                    Entre com e-mail ou Google em segundos. Sem cartão, sem complicação.
+                    Toque em &quot;Entrar para participar&quot; e siga os passos. Sem cartão, sem complicação.
                   </p>
                 </div>
               </div>

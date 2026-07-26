@@ -21,7 +21,7 @@ export function makeInjectedExecute(account: AccountInterface) {
 }
 
 /**
- * StarkZap (Cartridge/Privy): the SDK handles gas via its configured
+ * StarkZap (Cartridge): the SDK handles gas via its configured
  * sponsorship; it waits internally. Mirrors the szWallet branch of the
  * old executeAuto (no feeMode arg — sponsorship is set on the SDK).
  */

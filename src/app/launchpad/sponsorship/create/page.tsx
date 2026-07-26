@@ -81,7 +81,7 @@ export default function CreateSponsorshipPage() {
   const { account } = useAccount();
   const { wallet: szWalletRaw } = useStarkZapWallet();
   const { walletType, address: activeAddress } = useWallet();
-  const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
+  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   const signer = (szWallet ?? account) as AccountInterface | undefined;
   const { getValidToken } = useSiwsToken();
 

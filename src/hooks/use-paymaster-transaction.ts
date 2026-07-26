@@ -189,7 +189,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
   const executeAuto = useCallback(
     async (calls: Call[]): Promise<string | null> => {
       // Routing lives in the active-wallet slot — injected executes through the
-      // AVNU paymaster, StarkZap (Cartridge/Privy) through its own session keys.
+      // AVNU paymaster, StarkZap (Cartridge) through its own session keys.
       // executeAuto just delegates; no more `if (szWallet)` priority branch.
       if (!active) {
         setError("Wallet not connected");

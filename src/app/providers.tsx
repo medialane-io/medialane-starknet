@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { Toaster, toast } from "sonner";
@@ -46,42 +45,6 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-// PrivyProvider and PrivyConnector are dynamically imported so they are
-// never bundled or executed for users who don't use Privy.
-//
-// PrivyConnector renders inside StarkZapWalletProvider (passed in as a prop)
-// so it has access to the provider's setters. PrivyProvider wraps the whole
-// tree so usePrivy() inside PrivyConnector resolves.
-import type { PrivyConnectorProps } from "@/contexts/privy-connector";
-
-let PrivyStack: React.ComponentType<{ children: React.ReactNode }> | null = null;
-let PrivyConnectorComponent: React.ComponentType<PrivyConnectorProps> | null = null;
-
-async function loadPrivyStack() {
-  if (PrivyStack && PrivyConnectorComponent) return;
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-  if (!appId) {
-    throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is not set — Privy onboarding cannot start.");
-  }
-  const [{ PrivyProvider }, connectorMod] = await Promise.all([
-    import("@privy-io/react-auth"),
-    import("@/contexts/privy-connector"),
-  ]);
-  PrivyConnectorComponent = connectorMod.PrivyConnector;
-  const PRIVY_CONFIG = {
-    loginMethods: ["email", "google", "twitter"] as Array<"email" | "google" | "twitter">,
-    appearance: { theme: "dark" as const },
-  };
-  function PrivyStackInner({ children }: { children: React.ReactNode }) {
-    return (
-      <PrivyProvider appId={appId!} config={PRIVY_CONFIG}>
-        {children}
-      </PrivyProvider>
-    );
-  }
-  PrivyStack = PrivyStackInner;
-}
-
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isStandalone =
@@ -89,50 +52,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     pathname === "/airdrop" ||
     pathname.startsWith("/br/");
 
-  // Privy is only mounted if the user has previously chosen it as their wallet.
-  const [privyActive, setPrivyActive] = useState(false);
-  const [PrivyWrapper, setPrivyWrapper] = useState<React.ComponentType<{ children: React.ReactNode }> | null>(null);
-  const [PrivyConnectorMount, setPrivyConnectorMount] = useState<React.ComponentType<PrivyConnectorProps> | null>(null);
-
-  const activatePrivy = () => {
-    setPrivyWrapper(() => PrivyStack);
-    setPrivyConnectorMount(() => PrivyConnectorComponent);
-    setPrivyActive(true);
-  };
-
-  useEffect(() => {
-    // Mount Privy on reload ONLY when it is the user's persisted wallet choice.
-    // (Previously this fired for any stale ml_privy_session on every route,
-    // which let Privy auto-reconnect and hijack an actively-connected wallet.)
-    if (localStorage.getItem("ml_wallet") === "privy") {
-      loadPrivyStack().then(activatePrivy).catch((err) => {
-        console.error("[Privy] restore load failed:", err);
-      });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const isMintLanding = pathname.startsWith("/br/") || pathname === "/mint" || pathname.startsWith("/mint/");
-    if (!isMintLanding) return;
-    loadPrivyStack().then(activatePrivy).catch((err) => {
-      console.error("[Privy] mint-landing pre-mount failed:", err);
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  const handleRequestPrivy = () => {
-    if (privyActive) return;
-    loadPrivyStack()
-      .then(activatePrivy)
-      .catch((err) => {
-        const msg = err instanceof Error ? err.message : "Failed to load Privy";
-        console.error("[Privy] loadPrivyStack failed:", err);
-        toast.error(msg);
-      });
-  };
-
-  const content = (
+  return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <SWRConfig
         value={{
@@ -149,7 +69,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         }}
       >
         <StarknetProvider>
-          <StarkZapWalletProvider onRequestPrivy={handleRequestPrivy} PrivyConnector={PrivyConnectorMount}>
+          <StarkZapWalletProvider>
             <WalletProvider>
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
@@ -175,7 +95,4 @@ export function Providers({ children }: { children: React.ReactNode }) {
       </SWRConfig>
     </ThemeProvider>
   );
-
-  // Wrap with Privy only when active — invisible to all other users
-  return PrivyWrapper ? <PrivyWrapper>{content}</PrivyWrapper> : content;
 }

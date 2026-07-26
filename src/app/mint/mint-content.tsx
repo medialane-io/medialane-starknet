@@ -123,7 +123,7 @@ export function MintContent() {
             <h2 className="text-2xl sm:text-3xl font-black">Creator Fund</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { icon: FileCheck, color: "text-blue-400",   bg: "bg-blue-500/10",   title: "Join for free",      desc: "Sign up with your Google account — no card, no approval needed." },
+                { icon: FileCheck, color: "text-blue-400",   bg: "bg-blue-500/10",   title: "Join for free",      desc: "Connect a Starknet wallet — no card, no approval needed." },
                 { icon: Coins,     color: "text-yellow-500", bg: "bg-yellow-500/10", title: "Creator fund",       desc: "Fund distributions for all participants." },
                 { icon: Users,     color: "text-purple-400", bg: "bg-purple-500/10", title: "Boost your chances", desc: "Create, share, and collect!" },
               ].map(({ icon: Icon, color, bg, title, desc }) => (
@@ -146,7 +146,7 @@ export function MintContent() {
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">How it works</p>
               <h2 className="text-2xl sm:text-3xl font-black">Join in seconds.</h2>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Connect your wallet or sign in with email — that&apos;s all you need.
+                Connect your wallet — that&apos;s all you need.
               </p>
             </div>
             <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/5 p-6">
@@ -162,7 +162,7 @@ export function MintContent() {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                    Use email, Google, Twitter, or any Starknet wallet. No seed phrase required with social login.
+                    Use Ready, Braavos, or Cartridge — Cartridge sets up a wallet for you in seconds, no seed phrase required.
                   </p>
                 </div>
               </div>

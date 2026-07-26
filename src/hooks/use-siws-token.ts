@@ -16,10 +16,10 @@ export function useSiwsToken() {
   const { account } = useAccount();
   const { wallet: starkZapWallet } = useStarkZapWallet();
   // The active-wallet slot decides WHO signs (2026-06-07 redesign) — the old
-  // `starkZapWallet ?? account` priority let a stale Cartridge/Privy session
-  // sign SIWS for a different wallet than the one the user is actually using.
+  // `starkZapWallet ?? account` priority let a stale Cartridge session sign
+  // SIWS for a different wallet than the one the user is actually using.
   const { address: activeAddress, walletType } = useWallet();
-  const isStarkZap = walletType === "cartridge" || walletType === "privy";
+  const isStarkZap = walletType === "cartridge";
   const [token, setToken] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);

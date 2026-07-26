@@ -4,23 +4,17 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useRef,
   useState,
 } from "react";
-import type { User } from "@privy-io/react-auth";
 import type { WalletInterface } from "starkzap";
-import { toast } from "sonner";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { writePersistedWallet, clearPersistedWallet } from "@/lib/wallet-types";
-import type { PrivyConnectorProps } from "./privy-connector";
 import {
   IDLE_WALLET_SESSION,
   isWalletSessionBusy,
   walletConnecting,
   walletError,
   walletReady,
-  walletAuthenticating,
   type WalletSession,
 } from "@/lib/wallet-session";
 import {
@@ -109,11 +103,11 @@ export const CARTRIDGE_POLICIES = (
     // ── NFT comments ────────────────────────────────────────────────────
     { target: STARKNET_NFTCOMMENTS_CONTRACT, method: "add_comment" },
     // ── Static airdrop / launch mint contracts ──────────────────────────
-    // GenesisMint (used by /mint, /airdrop, /br/mint, /launch via
-    // launch-mint.tsx) calls mint_item on these fixed env-driven targets.
-    // Each may be unconfigured (empty string) in environments without
-    // the campaign — `.filter(Boolean)` below drops those entries so we
-    // never send `target: ""` to the Cartridge SDK.
+    // GenesisMint (used by /mint, /airdrop, /br/mint) calls mint_item on
+    // these fixed env-driven targets. Each may be unconfigured (empty
+    // string) in environments without the campaign — `.filter(Boolean)`
+    // below drops those entries so we never send `target: ""` to the
+    // Cartridge SDK.
     { target: LAUNCH_MINT_CONTRACT, method: "mint_item" },
     { target: MINT_CONTRACT, method: "mint_item" },
     { target: BR_MINT_CONTRACT, method: "mint_item" },
@@ -124,7 +118,7 @@ export const CARTRIDGE_POLICIES = (
 // Context types
 // ---------------------------------------------------------------------------
 
-export type StarkZapWalletType = "cartridge" | "privy";
+export type StarkZapWalletType = "cartridge";
 
 export interface StarkZapWalletCtx {
   wallet: WalletInterface | null;
@@ -133,43 +127,20 @@ export interface StarkZapWalletCtx {
   address: string | null;
   isConnecting: boolean;
   error: string | null;
-  privyUser: User | null;
   connectCartridge: () => Promise<void>;
-  connectPrivy: () => Promise<void>;
-  /** Loads the Privy bundle (and mounts PrivyProvider) without opening the
-   *  login popup — call ahead of an expected click (e.g. when a connect
-   *  surface opens) so the actual login() call fires with no async gap
-   *  before it, which is what browsers require to not silently block the
-   *  OAuth popup as "not a direct result of a user gesture". */
-  prefetchPrivy: () => void;
   disconnect: () => void;
 }
 
 const StarkZapWalletContext = createContext<StarkZapWalletCtx | undefined>(undefined);
 
 // ---------------------------------------------------------------------------
-// Provider — owns Privy onboarding state directly; renders an injected
-// PrivyConnector component (lazy-loaded by providers.tsx) when available.
+// Provider — Cartridge onboarding only (Privy removed).
 // ---------------------------------------------------------------------------
 
-interface ProviderProps {
-  children: React.ReactNode;
-  onRequestPrivy: () => void;
-  PrivyConnector?: React.ComponentType<PrivyConnectorProps> | null;
-}
-
-export function StarkZapWalletProvider({
-  children,
-  onRequestPrivy,
-  PrivyConnector,
-}: ProviderProps) {
+export function StarkZapWalletProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<WalletInterface | null>(null);
   const [session, setSession] = useState<WalletSession>(IDLE_WALLET_SESSION);
-  const [privyUser, setPrivyUser] = useState<User | null>(null);
-  const [pendingPrivyConnect, setPendingPrivyConnect] = useState(false);
-  const walletType = session.walletType === "cartridge" || session.walletType === "privy"
-    ? session.walletType
-    : null;
+  const walletType = session.walletType === "cartridge" ? session.walletType : null;
   const address = session.address;
   const isConnecting = isWalletSessionBusy(session);
   const error = session.error;
@@ -202,50 +173,16 @@ export function StarkZapWalletProvider({
     }
   }, []);
 
-  const connectPrivy = useCallback(async () => {
-    writePersistedWallet("privy");
-    setSession(walletAuthenticating("privy"));
-    onRequestPrivy();
-    setPendingPrivyConnect(true);
-  }, [onRequestPrivy]);
-
   const disconnect = useCallback(() => {
     clearPersistedWallet();
     setWallet(null);
     setSession(IDLE_WALLET_SESSION);
-    setPrivyUser(null);
   }, []);
-
-  // Surface session errors as toasts (Privy-only — Cartridge errors are
-  // already shown inline in nav-account-panel).
-  const lastShownError = useRef<string | null>(null);
-  useEffect(() => {
-    if (session.walletType !== "privy") return;
-    if (session.status !== "error") {
-      lastShownError.current = null;
-      return;
-    }
-    if (!session.error || session.error === lastShownError.current) return;
-    lastShownError.current = session.error;
-    toast.error(session.error, { id: "privy-connect-error" });
-  }, [session.status, session.walletType, session.error]);
-
-  const clearPending = useCallback(() => setPendingPrivyConnect(false), []);
 
   return (
     <StarkZapWalletContext.Provider
-      value={{ wallet, session, walletType, address, isConnecting, error, privyUser, connectCartridge, connectPrivy, prefetchPrivy: onRequestPrivy, disconnect }}
+      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect }}
     >
-      {PrivyConnector ? (
-        <PrivyConnector
-          pendingConnect={pendingPrivyConnect}
-          clearPending={clearPending}
-          walletType={walletType}
-          setSession={setSession}
-          setWallet={setWallet}
-          setPrivyUser={setPrivyUser}
-        />
-      ) : null}
       {children}
     </StarkZapWalletContext.Provider>
   );
@@ -257,10 +194,8 @@ export function StarkZapWalletProvider({
 
 const STARKZAP_DEFAULT_CTX: StarkZapWalletCtx = {
   wallet: null, session: IDLE_WALLET_SESSION, walletType: null, address: null,
-  isConnecting: false, error: null, privyUser: null,
+  isConnecting: false, error: null,
   connectCartridge: async () => {},
-  connectPrivy: async () => {},
-  prefetchPrivy: () => {},
   disconnect: () => {},
 };
 

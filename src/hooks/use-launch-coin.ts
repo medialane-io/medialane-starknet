@@ -35,7 +35,7 @@ export function useLaunchCoin() {
   // signer = szWallet but owner = injected address when both were present.
   const { wallet: szWalletRaw } = useStarkZapWallet();
   const { walletType, address: activeAddress } = useWallet();
-  const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
+  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   const [status, setStatus] = useState<LaunchStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 

@@ -22,7 +22,7 @@ function useSigner() {
   const { account } = useAccount();
   const { wallet: szWalletRaw } = useStarkZapWallet();
   const { walletType, address } = useWallet();
-  const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
+  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   return { signer: (szWallet ?? account) as AccountInterface | undefined, address };
 }
 

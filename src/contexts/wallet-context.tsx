@@ -25,8 +25,7 @@ const WalletContext = createContext<WalletContextValue | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   // Injected (Argent/Braavos) via starknet-react. autoConnect (set in
-  // StarknetProvider) restores the last injected connector on reload — safe
-  // now that Privy no longer auto-mounts to race it.
+  // StarknetProvider) restores the last injected connector on reload.
   const {
     account: injectedAccount,
     address: injectedAddress,
@@ -38,7 +37,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { disconnect: injectedDisconnect } = useDisconnect();
   const injectedConnected = injectedConnectedRaw ?? false;
 
-  // StarkZap (Cartridge/Privy) — onboarding + the active WalletInterface.
+  // StarkZap (Cartridge) — onboarding + the active WalletInterface.
   const {
     wallet: szWallet,
     walletType: szType,
@@ -46,7 +45,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     isConnecting: szConnecting,
     error: szError,
     connectCartridge,
-    connectPrivy,
     disconnect: szDisconnect,
   } = useStarkZapWallet();
 
@@ -58,8 +56,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [injectedConnector]);
 
   // The slot. StarkZap is active ONLY because the user explicitly chose it (its
-  // session is set exclusively by connectCartridge/connectPrivy + persisted
-  // ml_wallet); there is no background path that sets szWallet anymore.
+  // session is set exclusively by connectCartridge + persisted ml_wallet);
+  // there is no background path that sets szWallet anymore.
   //
   // IDENTITY (slot existence) depends only on connected + address — NEVER on the
   // starknet-react `account` object, which can be momentarily undefined while
@@ -68,7 +66,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   // for an actively-connected injected wallet. The account is resolved lazily at
   // execute() time instead.
   const active: ActiveWallet | null = useMemo(() => {
-    if (szWallet && szAddress && (szType === "cartridge" || szType === "privy")) {
+    if (szWallet && szAddress && szType === "cartridge") {
       return { type: szType, address: szAddress, execute: makeStarkzapExecute(szWallet) };
     }
     if (injectedConnected && injectedAddress) {
@@ -163,10 +161,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         await connectCartridge();
         return;
       }
-      if (type === "privy") {
-        await connectPrivy();
-        return;
-      }
       // injected: explicit pick supersedes any StarkZap session.
       if (!connector) throw new Error("Injected connect requires a connector");
       await connectAsync({ connector });
@@ -177,11 +171,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const id = connector.id.toLowerCase();
       writePersistedWallet(id === "braavos" ? "braavos" : "argent");
     },
-    [connectCartridge, connectPrivy, connectAsync, szDisconnect],
+    [connectCartridge, connectAsync, szDisconnect],
   );
 
   const disconnect = useCallback(() => {
-    if (active?.type === "cartridge" || active?.type === "privy") {
+    if (active?.type === "cartridge") {
       szDisconnect();
     } else {
       injectedDisconnect();

@@ -32,7 +32,7 @@ import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
 import { ReportDialog } from "@/components/report-dialog";
 import { HelpIcon } from "@/components/ui/help-icon";
-import { ConnectWallet } from "@/components/ConnectWallet";
+import { SignedOutAssetActions } from "@/components/asset/signed-out-asset-actions";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 
@@ -241,13 +241,8 @@ export function AssetPageTicket() {
               walletAddress={walletAddress}
               floorPriceRaw={collection?.floorPrice}
               lastSaleRaw={lastSaleRaw}
-              renderAuthAction={(label) => (
-                <div className="btn-border-animated p-[1px] rounded-2xl">
-                  <ConnectWallet
-                    label={label}
-                    className="w-full h-12 text-base bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-                  />
-                </div>
+              renderAuthAction={() => (
+                <SignedOutAssetActions chain="STARKNET" contract={contract} tokenId={tokenId} />
               )}
               renderHelp={(content) => <HelpIcon content={content} side="top" />}
               onCancelClick={dialogs.handleCancelClick}

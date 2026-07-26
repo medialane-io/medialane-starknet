@@ -25,9 +25,9 @@ export function useVenueSigner(): StarknetVenueSigner | null {
   const { provider } = useProvider();
 
   // Active-wallet slot decides the rail — a bare `szWallet ?? account` priority
-  // would let a lingering Cartridge/Privy session sign/execute for a different
+  // would let a lingering Cartridge session sign/execute for a different
   // wallet than the one the user explicitly connected.
-  const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
+  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
 
   const signTypedData = useCallback(
     async (data: TypedData): Promise<string[]> => {

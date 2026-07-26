@@ -46,10 +46,10 @@ export type TxStatus =
 export function useTx() {
   const { account } = useAccount();
   // Gate the StarkZap wallet on the active-wallet slot — a lingering
-  // Cartridge/Privy session must not execute for an injected user.
+  // Cartridge session must not execute for an injected user.
   const { wallet: szWalletRaw } = useStarkZapWallet();
   const { walletType } = useWallet();
-  const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
+  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
 
   const [status, setStatus] = useState<TxStatus>("idle");
   const [txHash, setTxHash] = useState<string | null>(null);

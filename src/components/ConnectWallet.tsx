@@ -38,14 +38,12 @@ import {
   Gamepad2,
   Loader2,
   AlertCircle,
-  Mail,
 } from "lucide-react";
 import { useNetwork } from "@/components/starknet-provider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { useWallet } from "@/hooks/use-wallet";
 import type { WalletSessionType } from "@/lib/wallet-session";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
@@ -98,14 +96,6 @@ function getWalletBadge(
       hint: "Instant setup",
     };
   }
-  if (walletType === "privy") {
-    return {
-      label: "Social Login",
-      icon: <Mail className="h-3 w-3" />,
-      className: "border-brand-blue/30 text-brand-blue bg-brand-blue/5",
-      hint: "No setup needed",
-    };
-  }
   // argent / braavos are injected browser wallets — same badge as a generic
   // injected connection. (Argent rebranded to "Ready"; "argent" here is the
   // technical wallet-type id, not a user-facing label — the label stays generic.)
@@ -151,21 +141,11 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
     disconnect,
   } = useWallet();
 
-  // privyUser is only needed for the email/social label in the connected sheet.
-  const { privyUser, prefetchPrivy } = useStarkZapWallet();
-
-  // Warm up the Privy bundle as soon as this picker opens, well before the
-  // user reaches the "Sign in with Email or Social" button — see
-  // prefetchPrivy's doc comment for why the timing matters.
-  useEffect(() => {
-    if (connectDialogOpen) prefetchPrivy();
-  }, [connectDialogOpen, prefetchPrivy]);
-
   // ---------------------------------------------------------------------------
   // Unified state
   // ---------------------------------------------------------------------------
 
-  const hasStarkZap = activeWalletType === "cartridge" || activeWalletType === "privy";
+  const hasStarkZap = activeWalletType === "cartridge";
 
   const isWrongNetwork =
     injectedConnected &&
@@ -186,11 +166,11 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
     }
   }, [isConnected, address]);
 
-  // Cartridge/Privy connect failures happen asynchronously (a popup, a
-  // remote SDK call) after the dialog has already closed — without this the
-  // error is only recorded in session state and never actually seen, which
-  // reads as "the button does nothing" (reported 2026-07-02). Reopen so the
-  // sessionError banner below is visible whenever a connect attempt fails.
+  // Cartridge connect failures happen asynchronously (a remote SDK call)
+  // after the dialog has already closed — without this the error is only
+  // recorded in session state and never actually seen, which reads as "the
+  // button does nothing" (reported 2026-07-02). Reopen so the sessionError
+  // banner below is visible whenever a connect attempt fails.
   //
   // `sessionError` is global (one shared wallet context), but a page can
   // mount several `<ConnectWallet>` instances at once — gate the reopen on
@@ -364,14 +344,6 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
                     {isWrongNetwork ? "Connection Restricted" : "Securely Connected"}
                   </span>
                 </div>
-                {activeWalletType === "privy" && privyUser && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {privyUser.email?.address ??
-                      privyUser.google?.name ??
-                      privyUser.twitter?.name ??
-                      "Social Account"}
-                  </p>
-                )}
               </div>
               <Link
                 href={`${networkConfig.explorerUrl}/address/${address}`}
@@ -586,38 +558,6 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
                 <Gamepad2 className="h-4 w-4 shrink-0 text-brand-purple" />
                 <span>
                   {sessionConnecting ? "Connecting…" : "Connect with Cartridge"}
-                </span>
-                {sessionConnecting && <Loader2 className="ml-auto h-3 w-3 animate-spin" />}
-              </Button>
-            </section>
-
-            <div className="border-t border-border/50" />
-
-            {/* ── Social Login (Privy) ─────────────────────── */}
-            <section>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Social Login
-              </p>
-              <p className="text-xs text-muted-foreground mb-2">
-                Email · Google · Twitter — no seed phrase required
-              </p>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3"
-                onClick={async () => {
-                  initiatedHereRef.current = true;
-                  setConnectDialogOpen(false);
-                  try {
-                    await connect("privy");
-                  } catch {
-                    // error surfaced via session state
-                  }
-                }}
-                disabled={sessionConnecting}
-              >
-                <Mail className="h-4 w-4 shrink-0 text-brand-blue" />
-                <span>
-                  {sessionConnecting ? "Connecting…" : "Sign in with Email or Social"}
                 </span>
                 {sessionConnecting && <Loader2 className="ml-auto h-3 w-3 animate-spin" />}
               </Button>

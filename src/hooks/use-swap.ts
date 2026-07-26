@@ -9,7 +9,7 @@
  * integrator fee). StarkZap's `prepareSwap` returns ready-to-execute Starknet
  * `Call[]` (approve + swap), which we run through the app's unified
  * wallet/paymaster pipeline — so it works for every wallet type (injected
- * Argent/Braavos, Cartridge, Privy), not just StarkZap-native wallets.
+ * Argent/Braavos, Cartridge), not just StarkZap-native wallets.
  *
  * Lifecycle: token+amount selection → debounced Ekubo quote → prepareSwap →
  * execute via unified wallet.

@@ -35,7 +35,7 @@ export function SponsorSolicitDialog({
   const { account } = useAccount();
   const { wallet: szWalletRaw } = useStarkZapWallet();
   const { walletType } = useWallet();
-  const szWallet = walletType === "cartridge" || walletType === "privy" ? szWalletRaw : null;
+  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   const signer = (szWallet ?? account) as AccountInterface | undefined;
   const { getValidToken } = useSiwsToken();
 
