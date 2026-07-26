@@ -130,9 +130,11 @@ function getWalletBadge(
 interface ConnectWalletProps {
   label?: string;
   className?: string;
+  /** Overrides the default icon+label trigger content (not-connected state only). */
+  children?: React.ReactNode;
 }
 
-export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
+export function ConnectWallet({ label, className, children }: ConnectWalletProps = {}) {
   const { connectors } = useConnect();
   const { isConnected: injectedConnected, chainId } = useAccount();
   const [open, setOpen] = useState(false);
@@ -443,8 +445,12 @@ export function ConnectWallet({ label, className }: ConnectWalletProps = {}) {
         }
         onClick={() => setConnectDialogOpen(true)}
       >
-        <Wallet className="h-4 w-4" />
-        {label && <span>{label}</span>}
+        {children ?? (
+          <>
+            <Wallet className="h-4 w-4" />
+            {label && <span>{label}</span>}
+          </>
+        )}
       </Button>
 
       <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
