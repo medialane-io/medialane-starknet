@@ -136,6 +136,12 @@ export interface StarkZapWalletCtx {
   privyUser: User | null;
   connectCartridge: () => Promise<void>;
   connectPrivy: () => Promise<void>;
+  /** Loads the Privy bundle (and mounts PrivyProvider) without opening the
+   *  login popup — call ahead of an expected click (e.g. when a connect
+   *  surface opens) so the actual login() call fires with no async gap
+   *  before it, which is what browsers require to not silently block the
+   *  OAuth popup as "not a direct result of a user gesture". */
+  prefetchPrivy: () => void;
   disconnect: () => void;
 }
 
@@ -228,7 +234,7 @@ export function StarkZapWalletProvider({
 
   return (
     <StarkZapWalletContext.Provider
-      value={{ wallet, session, walletType, address, isConnecting, error, privyUser, connectCartridge, connectPrivy, disconnect }}
+      value={{ wallet, session, walletType, address, isConnecting, error, privyUser, connectCartridge, connectPrivy, prefetchPrivy: onRequestPrivy, disconnect }}
     >
       {PrivyConnector ? (
         <PrivyConnector
@@ -254,6 +260,7 @@ const STARKZAP_DEFAULT_CTX: StarkZapWalletCtx = {
   isConnecting: false, error: null, privyUser: null,
   connectCartridge: async () => {},
   connectPrivy: async () => {},
+  prefetchPrivy: () => {},
   disconnect: () => {},
 };
 

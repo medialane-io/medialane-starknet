@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useConnect, useAccount } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
@@ -152,7 +152,14 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
   } = useWallet();
 
   // privyUser is only needed for the email/social label in the connected sheet.
-  const { privyUser } = useStarkZapWallet();
+  const { privyUser, prefetchPrivy } = useStarkZapWallet();
+
+  // Warm up the Privy bundle as soon as this picker opens, well before the
+  // user reaches the "Sign in with Email or Social" button — see
+  // prefetchPrivy's doc comment for why the timing matters.
+  useEffect(() => {
+    if (connectDialogOpen) prefetchPrivy();
+  }, [connectDialogOpen, prefetchPrivy]);
 
   // ---------------------------------------------------------------------------
   // Unified state
@@ -168,10 +175,14 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
 
   const badge = getWalletBadge(activeWalletType);
 
+  // See the sessionError-reopen effect below for why this exists.
+  const initiatedHereRef = useRef(false);
+
   // Auto-close connect dialog when wallet connects
   useEffect(() => {
     if (isConnected && address) {
       setConnectDialogOpen(false);
+      initiatedHereRef.current = false;
     }
   }, [isConnected, address]);
 
@@ -180,8 +191,16 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
   // error is only recorded in session state and never actually seen, which
   // reads as "the button does nothing" (reported 2026-07-02). Reopen so the
   // sessionError banner below is visible whenever a connect attempt fails.
+  //
+  // `sessionError` is global (one shared wallet context), but a page can
+  // mount several `<ConnectWallet>` instances at once — gate the reopen on
+  // `initiatedHereRef` so only the instance the user actually clicked (e.g.
+  // NOT this one, if the user instead used the nav menu's own picker) pops
+  // its dialog back open. Otherwise an unrelated connect attempt started
+  // elsewhere on the page hijacks the screen with the full wallet picker.
   useEffect(() => {
-    if (sessionError && !isConnected) {
+    if (sessionError && !isConnected && initiatedHereRef.current) {
+      initiatedHereRef.current = false;
       setConnectDialogOpen(true);
     }
   }, [sessionError, isConnected]);
@@ -221,6 +240,7 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
   };
 
   const handleCartridgeConnect = async () => {
+    initiatedHereRef.current = true;
     setConnectDialogOpen(false);
     try {
       await connect("cartridge");
@@ -247,14 +267,28 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
   // ---------------------------------------------------------------------------
 
   if (sessionConnecting && !isConnected) {
+    // `sessionConnecting` is global (one shared wallet slot), so every
+    // mounted <ConnectWallet/> on the page hits this branch simultaneously —
+    // including ones rendered as a full custom card via `className`/
+    // `children` (e.g. the asset page's signed-out actions). This used to
+    // unconditionally collapse into a bare 8x8 icon button regardless of
+    // what was passed in, discarding the caller's layout entirely and
+    // reading as the component breaking. Preserve the caller's shape:
+    // custom content keeps rendering as-is (just disabled); the default
+    // icon/label trigger swaps its icon for a spinner as before.
     return (
       <Button
         variant="ghost"
-        size="icon"
-        className="rounded-full h-8 w-8"
+        size={label || children ? "default" : "icon"}
+        className={className ?? (label || children ? undefined : "rounded-full h-8 w-8")}
         disabled
       >
-        <Loader2 className="h-4 w-4 animate-spin" />
+        {children ?? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {label && <span>{label}</span>}
+          </>
+        )}
       </Button>
     );
   }
@@ -571,6 +605,7 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
                 variant="outline"
                 className="w-full justify-start gap-3"
                 onClick={async () => {
+                  initiatedHereRef.current = true;
                   setConnectDialogOpen(false);
                   try {
                     await connect("privy");

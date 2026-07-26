@@ -8,6 +8,7 @@ import { Gamepad2, Loader2, LogOut, Mail, User, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
+import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 
@@ -26,7 +27,23 @@ export function NavAccountPanel() {
   const { address, isConnected, disconnect, isConnecting, error, connect } = useWallet();
   const { networkConfig } = useNetwork();
   const { close } = useNavCommandMenu();
+  const { prefetchPrivy } = useStarkZapWallet();
   const [connectingId, setConnectingId] = React.useState<string | null>(null);
+
+  // Warm up the Privy bundle as soon as this panel is visible (well before
+  // any click) so login() fires with no async gap in front of it — closes
+  // the window browsers use to silently block an OAuth popup that isn't a
+  // direct result of a user gesture.
+  React.useEffect(() => {
+    prefetchPrivy();
+  }, [prefetchPrivy]);
+
+  // Auto-close once a connection actually completes — covers every wallet
+  // type from one place instead of each connect handler guessing when it's
+  // safe to close.
+  React.useEffect(() => {
+    if (isConnected) close();
+  }, [isConnected, close]);
 
   const connectInjected = async (connector: Connector) => {
     setConnectingId(connector.id);
@@ -47,7 +64,13 @@ export function NavAccountPanel() {
   };
 
   const connectStarkZap = async (type: "cartridge" | "privy") => {
-    close();
+    // Cartridge opens its own full-screen overlay, so getting our menu out
+    // of the way immediately is correct. Privy's flow is an external popup
+    // that can take a while (or silently fail to open) — keep the panel
+    // open so the inline status/error below stays visible instead of the
+    // screen going blank with no explanation. The success effect above
+    // closes the menu once the connection actually completes.
+    if (type === "cartridge") close();
     try {
       await connect(type);
     } catch {
@@ -119,7 +142,7 @@ export function NavAccountPanel() {
 
   return (
     <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {cards.map((card) => (
           <button
             key={card.key}
@@ -137,6 +160,12 @@ export function NavAccountPanel() {
           </button>
         ))}
       </div>
+
+      {!error && cards.find((c) => c.key === "privy")?.isLoading && (
+        <p className="mt-2 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+          Opening the sign-in window — check for a pop-up if nothing appears.
+        </p>
+      )}
 
       {error && (
         <p className="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-xs text-destructive">

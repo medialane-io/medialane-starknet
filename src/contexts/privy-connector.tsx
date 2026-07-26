@@ -136,8 +136,10 @@ export function PrivyConnector({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, pendingConnect]);
 
-  // Backstop: if sign-in hasn't completed within 45s of the explicit
+  // Backstop: if sign-in hasn't completed within 20s of the explicit
   // request, surface an error instead of leaving the UI stuck indefinitely.
+  // (Was 45s — far too long to leave a user staring at a spinner with zero
+  // feedback before finding out the popup never opened.)
   useEffect(() => {
     if (!pendingConnect && !needsOnboard) return;
     if (authenticated) return;
@@ -148,7 +150,7 @@ export function PrivyConnector({
           "Sign-in timed out. If your browser blocked a pop-up, allow pop-ups for this site and try again."
         )
       );
-    }, 45000);
+    }, 20000);
     return () => clearTimeout(timer);
   }, [pendingConnect, needsOnboard, authenticated, setSession]);
 
