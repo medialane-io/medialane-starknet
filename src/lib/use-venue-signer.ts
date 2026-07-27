@@ -6,12 +6,37 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
 import { withTimeout } from "@/lib/wallet-error";
+import { SUPPORTED_TOKENS } from "@/lib/constants";
 
 // Long enough for a real Cartridge policy-approval or PIN/passkey prompt
 // (mirrors the 20s used for connect, extended for the extra approval step
 // a first-time per-collection action can require) — bounded so a stuck
 // flow fails visibly instead of hanging `isProcessing` forever.
 const EXECUTE_TIMEOUT_MS = 45_000;
+
+// Compares Starknet addresses by value, not string — zero-padding varies
+// between the SDK's constants and what a Call's contractAddress carries.
+function sameAddress(a: string, b: string): boolean {
+  try {
+    return BigInt(a) === BigInt(b);
+  } catch {
+    return false;
+  }
+}
+
+const PAYMENT_TOKEN_ADDRESSES = SUPPORTED_TOKENS.map((t) => t.address);
+
+// Fund-moving ERC-20 `approve` calls (payment tokens: USDC/USDT/ETH/STRK/WBTC)
+// must NEVER be added to Cartridge session scope — a session key with a
+// standing approve grant over a payment token is a real privilege-escalation
+// risk, not just a UX nuance (same precedent CARTRIDGE_POLICIES documents for
+// the checkout/accept-offer/creator-coin flows: these stay a per-tx prompt).
+// Only per-instance NON-fungible contracts (a specific collection's `approve`
+// on a listing, etc.) are safe to extend session scope for.
+function isSessionScopable(call: Call): boolean {
+  if (call.entrypoint !== "approve" && call.entrypoint !== "set_approval_for_all") return true;
+  return !PAYMENT_TOKEN_ADDRESSES.some((addr) => sameAddress(addr, call.contractAddress));
+}
 
 /**
  * The app's single implementation of the SDK's chain-neutral `VenueSigner`. This
@@ -58,8 +83,10 @@ export function useVenueSigner(): StarknetVenueSigner | null {
         // are never in the static CARTRIDGE_POLICIES allowlist by
         // construction — request session scope for each call's target
         // just-in-time instead of letting execute() hang on an approval
-        // the app never asked Cartridge for.
+        // the app never asked Cartridge for. Payment-token approvals are
+        // deliberately skipped — see isSessionScopable.
         for (const call of calls) {
+          if (!isSessionScopable(call)) continue;
           markMarketplaceDebug("execute: ensuring Cartridge policy", { target: call.contractAddress, method: call.entrypoint });
           await withTimeout(
             ensureCartridgePolicy(call.contractAddress, call.entrypoint),
