@@ -20,9 +20,16 @@ export function NavAccountPanel() {
 
   // Auto-close once a connection actually completes — covers every wallet
   // type from one place instead of each connect handler guessing when it's
-  // safe to close.
+  // safe to close. Gated on a real false→true transition (not just "is
+  // connected"): NavCommandMenu only renders accountSlot while open, so this
+  // panel fully unmounts on close and remounts fresh on every open. Without
+  // the transition guard, an already-connected wallet made every reopen call
+  // close() the instant the panel mounted — the menu snapped shut before it
+  // could ever be seen again once a wallet was connected.
+  const wasConnectedRef = React.useRef(isConnected);
   React.useEffect(() => {
-    if (isConnected) close();
+    if (isConnected && !wasConnectedRef.current) close();
+    wasConnectedRef.current = isConnected;
   }, [isConnected, close]);
 
   const connectInjected = async (connector: Connector) => {
