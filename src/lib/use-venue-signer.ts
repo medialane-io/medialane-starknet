@@ -87,9 +87,9 @@ export function useVenueSigner(): StarknetVenueSigner | null {
           // produce, forever (confirmed: signing works and shows its own
           // modal fine, but execute() never shows anything and times out).
           // openExecute() is Cartridge's actual mechanism for an explicit,
-          // one-off confirmation — no artificial timeout here, same as
-          // signTypedData above: it's a human decision, not a technical wait.
-          markMarketplaceDebug("execute: awaiting Cartridge confirmation modal", { rail: "starkzap", callCount: calls.length });
+          // one-off confirmation. Bounded (90s) inside executeViaCartridgeModal
+          // itself, so a failure is always visible instead of hanging forever.
+          markMarketplaceDebug("execute: awaiting Cartridge confirmation modal", { rail: "starkzap", callCount: calls.length, calls });
           const tx = await executeViaCartridgeModal(calls);
           txHash = tx.txHash;
         } else {

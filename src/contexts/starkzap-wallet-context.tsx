@@ -8,7 +8,8 @@ import React, {
   useState,
 } from "react";
 import type { WalletInterface } from "starkzap";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { getFriendlyWalletError, withTimeout } from "@/lib/wallet-error";
+import { markMarketplaceDebug } from "@/lib/marketplace-debug";
 import { writePersistedWallet, clearPersistedWallet } from "@/lib/wallet-types";
 import {
   IDLE_WALLET_SESSION,
@@ -242,10 +243,16 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
     const controller = (wallet as { getController?: () => unknown }).getController?.() as
       | { openExecute: (calls: unknown) => Promise<{ status: boolean; transactionHash: string } | undefined> }
       | undefined;
+    markMarketplaceDebug("openExecute: controller resolved", {
+      hasController: !!controller,
+      hasOpenExecute: typeof controller?.openExecute === "function",
+      calls,
+    });
     if (!controller || typeof controller.openExecute !== "function") {
       throw new Error("Cartridge wallet is not ready for this action. Please reconnect and try again.");
     }
-    const reply = await controller.openExecute(calls);
+    const reply = await withTimeout(controller.openExecute(calls), 90_000, "Cartridge confirmation modal");
+    markMarketplaceDebug("openExecute: settled", { reply });
     if (!reply || !reply.status) {
       throw new Error("Cartridge declined or did not complete this transaction.");
     }
