@@ -11,7 +11,7 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, toDurationDays, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
@@ -79,7 +79,7 @@ async function pinLicenseTerms(terms: SponsorshipTerms, siwsToken: string): Prom
 
 export default function CreateSponsorshipPage() {
   const { account } = useAccount();
-  const { wallet: szWalletRaw } = useStarkZapWallet();
+  const { wallet: szWalletRaw } = useCartridgeWallet();
   const { walletType, address: activeAddress } = useWallet();
   const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   const signer = (szWallet ?? account) as AccountInterface | undefined;

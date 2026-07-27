@@ -30,7 +30,7 @@ import { useState, useCallback } from "react";
 import type { Call } from "starknet";
 import { useAccount } from "@starknet-react/core";
 import { useWallet } from "@/hooks/use-wallet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { starknetProvider } from "@/lib/starknet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 
@@ -47,7 +47,7 @@ export function useTx() {
   const { account } = useAccount();
   // Gate the StarkZap wallet on the active-wallet slot — a lingering
   // Cartridge session must not execute for an injected user.
-  const { wallet: szWalletRaw } = useStarkZapWallet();
+  const { wallet: szWalletRaw } = useCartridgeWallet();
   const { walletType } = useWallet();
   const szWallet = walletType === "cartridge" ? szWalletRaw : null;
 

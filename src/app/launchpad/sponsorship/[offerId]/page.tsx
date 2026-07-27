@@ -12,7 +12,7 @@ import { ServiceHeader } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { useWallet } from "@/hooks/use-wallet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { useToken } from "@/hooks/use-tokens";
 import { getMedialaneClient } from "@/lib/medialane-client";
@@ -26,7 +26,7 @@ export default function SponsorshipOfferPage() {
   const offerId = typeof params.offerId === "string" ? params.offerId : null;
 
   const { account } = useAccount();
-  const { wallet: szWalletRaw } = useStarkZapWallet();
+  const { wallet: szWalletRaw } = useCartridgeWallet();
   const { walletType, address: activeAddress, isConnected } = useWallet();
   const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   const signer = (szWallet ?? account) as AccountInterface | undefined;

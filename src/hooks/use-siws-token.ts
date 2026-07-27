@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "@starknet-react/core";
 import { toast } from "sonner";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { useWallet } from "@/hooks/use-wallet";
 import {
   getStoredSiwsToken,
@@ -14,7 +14,7 @@ import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export function useSiwsToken() {
   const { account } = useAccount();
-  const { wallet: starkZapWallet } = useStarkZapWallet();
+  const { wallet: starkZapWallet } = useCartridgeWallet();
   // The active-wallet slot decides WHO signs (2026-06-07 redesign) — the old
   // `starkZapWallet ?? account` priority let a stale Cartridge session sign
   // SIWS for a different wallet than the one the user is actually using.

@@ -13,7 +13,7 @@ import { NavAccountPanel } from "@/components/nav-account-panel";
 import { NavThemeToggle } from "@/components/nav-theme-toggle";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
-import { StarkZapWalletProvider } from "@/contexts/starkzap-wallet-context";
+import { CartridgeWalletProvider } from "@/contexts/cartridge-wallet-context";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
 
@@ -69,7 +69,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         }}
       >
         <StarknetProvider>
-          <StarkZapWalletProvider>
+          <CartridgeWalletProvider>
             <WalletProvider>
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
@@ -90,7 +90,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               }}
             />
             </WalletProvider>
-          </StarkZapWalletProvider>
+          </CartridgeWalletProvider>
         </StarknetProvider>
       </SWRConfig>
     </ThemeProvider>

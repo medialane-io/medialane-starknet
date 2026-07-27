@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, toDurationDays, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
@@ -32,7 +32,7 @@ export function SponsorProposeDialog({
   open, onOpenChange, nftContract, tokenId, tokenName, onSuccess,
 }: SponsorProposeDialogProps) {
   const { account } = useAccount();
-  const { wallet: szWalletRaw } = useStarkZapWallet();
+  const { wallet: szWalletRaw } = useCartridgeWallet();
   const { walletType } = useWallet();
   const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   const signer = (szWallet ?? account) as AccountInterface | undefined;

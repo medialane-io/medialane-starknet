@@ -3,7 +3,7 @@ import { useAccount, useProvider } from "@starknet-react/core";
 import type { Call, TypedData } from "starknet";
 import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
 import { withTimeout } from "@/lib/wallet-error";
 import { SUPPORTED_TOKENS } from "@/lib/constants";
@@ -38,6 +38,15 @@ function isSessionScopable(call: Call): boolean {
   return !PAYMENT_TOKEN_ADDRESSES.some((addr) => sameAddress(addr, call.contractAddress));
 }
 
+// ERC-20 approve(spender, amount: Uint256) calldata is [spender, low, high]
+// (Cairo's standard low/high felt split for a 256-bit value). Recombined into
+// the decimal-string amount Cartridge's Approval policy expects.
+function parseApproveCalldata(calldata: unknown): { spender: string; amount: string } {
+  const [spender, low, high] = calldata as string[];
+  const amount = (BigInt(low) + (BigInt(high ?? "0") << 128n)).toString();
+  return { spender, amount };
+}
+
 /**
  * The app's single implementation of the SDK's chain-neutral `VenueSigner`. This
  * is the ONE place the slot-gated `szWallet ?? account` execution rule lives (per
@@ -53,7 +62,7 @@ function isSessionScopable(call: Call): boolean {
  */
 export function useVenueSigner(): StarknetVenueSigner | null {
   const { account } = useAccount();
-  const { wallet: szWalletRaw, ensureCartridgePolicy, executeViaCartridgeModal } = useStarkZapWallet();
+  const { wallet: szWalletRaw, ensureCartridgePolicy, ensureCartridgeApproval } = useCartridgeWallet();
   const { walletType, address } = useWallet();
   const { provider } = useProvider();
 
@@ -79,27 +88,23 @@ export function useVenueSigner(): StarknetVenueSigner | null {
     async (calls: Call[]): Promise<{ txHash: string }> => {
       let txHash: string;
       if (szWallet) {
-        if (calls.some((call) => !isSessionScopable(call))) {
-          // Contains a fund-moving call (a payment-token approve) that must
-          // never be session-scoped. Cartridge's silent session-key execute()
-          // has NO UI fallback for a call outside session policy — it just
-          // waits on a signature the session key structurally cannot
-          // produce, forever (confirmed: signing works and shows its own
-          // modal fine, but execute() never shows anything and times out).
-          // openExecute() is Cartridge's actual mechanism for an explicit,
-          // one-off confirmation. Bounded (90s) inside executeViaCartridgeModal
-          // itself, so a failure is always visible instead of hanging forever.
-          markMarketplaceDebug("execute: awaiting Cartridge confirmation modal", { rail: "cartridge", callCount: calls.length, calls });
-          const tx = await executeViaCartridgeModal(calls);
-          txHash = tx.txHash;
-        } else {
-          // Every call here is already covered, or can be silently extended
-          // via session policy — per-instance contracts (a specific
-          // collection's `approve`, etc.) are never in the static
-          // CARTRIDGE_POLICIES allowlist by construction, so request scope
-          // just-in-time instead of letting execute() hang on an approval
-          // the app never asked Cartridge for.
-          for (const call of calls) {
+        // Every call must be session-scoped before execute() — the silent
+        // session-key path has no UI fallback for an out-of-policy call, it
+        // just hangs (confirmed repeatedly). Two grant mechanisms, chosen
+        // per call: a fund-moving ERC-20 approve gets a bounded Approval
+        // policy (exact spender+amount, never a blanket grant); everything
+        // else (register_order, a collection's own approve, etc.) gets a
+        // plain target+method CallPolicy via ensureCartridgePolicy.
+        for (const call of calls) {
+          if (!isSessionScopable(call)) {
+            const { spender, amount } = parseApproveCalldata(call.calldata);
+            markMarketplaceDebug("execute: ensuring Cartridge approval", { token: call.contractAddress, spender, amount });
+            await withTimeout(
+              ensureCartridgeApproval(call.contractAddress, spender, amount),
+              EXECUTE_TIMEOUT_MS,
+              "Cartridge approval",
+            );
+          } else {
             markMarketplaceDebug("execute: ensuring Cartridge policy", { target: call.contractAddress, method: call.entrypoint });
             await withTimeout(
               ensureCartridgePolicy(call.contractAddress, call.entrypoint),
@@ -107,10 +112,10 @@ export function useVenueSigner(): StarknetVenueSigner | null {
               "Cartridge approval",
             );
           }
-          markMarketplaceDebug("execute: awaiting wallet submit", { rail: "cartridge", callCount: calls.length });
-          const tx = await withTimeout(szWallet.execute(calls), EXECUTE_TIMEOUT_MS, "Cartridge wallet");
-          txHash = tx.hash;
         }
+        markMarketplaceDebug("execute: awaiting wallet submit", { rail: "cartridge", callCount: calls.length });
+        const tx = await withTimeout(szWallet.execute(calls), EXECUTE_TIMEOUT_MS, "Cartridge wallet");
+        txHash = tx.hash;
       } else {
         if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
         markMarketplaceDebug("execute: awaiting wallet submit", { rail: "injected", callCount: calls.length });
@@ -125,7 +130,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       }
       return { txHash };
     },
-    [szWallet, account, provider, ensureCartridgePolicy, executeViaCartridgeModal],
+    [szWallet, account, provider, ensureCartridgePolicy, ensureCartridgeApproval],
   );
 
   if (!address) return null;

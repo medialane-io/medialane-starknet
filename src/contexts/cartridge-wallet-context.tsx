@@ -8,8 +8,7 @@ import React, {
   useState,
 } from "react";
 import type { WalletInterface } from "starkzap";
-import { getFriendlyWalletError, withTimeout } from "@/lib/wallet-error";
-import { markMarketplaceDebug } from "@/lib/marketplace-debug";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { writePersistedWallet, clearPersistedWallet } from "@/lib/wallet-types";
 import {
   IDLE_WALLET_SESSION,
@@ -130,12 +129,12 @@ export const CARTRIDGE_POLICIES = (
 // Context types
 // ---------------------------------------------------------------------------
 
-export type StarkZapWalletType = "cartridge";
+export type CartridgeWalletType = "cartridge";
 
-export interface StarkZapWalletCtx {
+export interface CartridgeWalletCtx {
   wallet: WalletInterface | null;
   session: WalletSession;
-  walletType: StarkZapWalletType | null;
+  walletType: CartridgeWalletType | null;
   address: string | null;
   isConnecting: boolean;
   error: string | null;
@@ -152,22 +151,27 @@ export interface StarkZapWalletCtx {
    */
   ensureCartridgePolicy: (target: string, method: string) => Promise<void>;
   /**
-   * Executes calls via Cartridge's explicit confirmation modal
-   * (`Controller.openExecute`) instead of the silent session-key path. Use
-   * for any multicall containing a call that must never be session-scoped
-   * (fund-moving ERC-20 approvals) — the silent path has no UI fallback for
-   * out-of-policy calls and hangs indefinitely instead of prompting.
+   * Requests a session-scoped, amount-bounded ERC-20 approval — Cartridge's
+   * `Approval` policy type (`{ entrypoint: "approve", spender, amount }`),
+   * distinct from a plain target+method `CallPolicy`. This is the ONLY way
+   * an ERC-20 `approve` can ever be session-scoped: `toWasmPolicies` (in
+   * @cartridge/controller) requires both `spender` and `amount` on an
+   * approve method or it silently downgrades to a plain (unusable, per our
+   * own testing) CallPolicy. Bounded to the exact spender+amount requested —
+   * never an unlimited/standing approval — so this carries none of the
+   * privilege-escalation risk a blanket `ensureCartridgePolicy` grant would
+   * for a payment token. Throws if the user declines.
    */
-  executeViaCartridgeModal: (calls: unknown) => Promise<{ txHash: string }>;
+  ensureCartridgeApproval: (token: string, spender: string, amount: string) => Promise<void>;
 }
 
-const StarkZapWalletContext = createContext<StarkZapWalletCtx | undefined>(undefined);
+const CartridgeWalletContext = createContext<CartridgeWalletCtx | undefined>(undefined);
 
 // ---------------------------------------------------------------------------
 // Provider — Cartridge onboarding only (Privy removed).
 // ---------------------------------------------------------------------------
 
-export function StarkZapWalletProvider({ children }: { children: React.ReactNode }) {
+export function CartridgeWalletProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<WalletInterface | null>(null);
   const [session, setSession] = useState<WalletSession>(IDLE_WALLET_SESSION);
   const walletType = session.walletType === "cartridge" ? session.walletType : null;
@@ -177,6 +181,10 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
   // (target, method) pairs granted via updateSession this session — reset
   // on disconnect since a fresh connect starts from the static list again.
   const dynamicPoliciesRef = useRef<Map<string, { target: string; method: string }>>(new Map());
+  // ERC-20 Approval grants (target/spender/amount) — separate from the plain
+  // CallPolicy grants above since they're a structurally different Cartridge
+  // policy type (see ensureCartridgeApproval). Also reset on disconnect.
+  const approvalPoliciesRef = useRef<Map<string, { target: string; spender: string; amount: string }>>(new Map());
 
   const connectCartridge = useCallback(async () => {
     setSession(walletConnecting("cartridge"));
@@ -230,12 +238,6 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
 
       const provider = new RpcProvider({ nodeUrl: controller.rpcUrl() });
       const address = walletAccount.address as unknown as string;
-      // openExecute(calls, chainId?) — chainId is typed optional, but passing
-      // nothing here caused a "Cannot convert undefined to a BigInt" thrown
-      // from inside Cartridge's own call, i.e. it's not actually optional in
-      // practice. WalletAccount inherits Account.getChainId(); fetch it once
-      // at connect and carry it on the shim for executeViaCartridgeModal.
-      const chainId = await walletAccount.getChainId();
 
       // Minimal shim matching the exact surface every real consumer in this
       // app uses (grepped: only .address / .signMessage() / .execute() /
@@ -244,7 +246,6 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
       // already expect from StarkZap's own Tx wrapper.
       const cartridgeWallet = {
         address,
-        chainId,
         signMessage: (typedData: unknown) => walletAccount.signMessage(typedData as never),
         execute: async (calls: unknown) => {
           const response = await walletAccount.execute(calls as never);
@@ -270,6 +271,7 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
     setWallet(null);
     setSession(IDLE_WALLET_SESSION);
     dynamicPoliciesRef.current.clear();
+    approvalPoliciesRef.current.clear();
   }, []);
 
   const ensureCartridgePolicy = useCallback(async (target: string, method: string): Promise<void> => {
@@ -298,46 +300,52 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
     dynamicPoliciesRef.current.set(key, pending);
   }, [wallet]);
 
-  const executeViaCartridgeModal = useCallback(async (calls: unknown): Promise<{ txHash: string }> => {
-    if (!wallet) throw new Error("Wallet not ready. Please reconnect and try again.");
-    // The session-key execute() path (CartridgeWallet.execute(), used for
-    // in-policy calls) has NO UI fallback for a call outside session scope —
-    // it just waits on a signature the session key structurally cannot
-    // produce, forever. openExecute() is Cartridge's actual mechanism for an
-    // explicit, one-off confirmation prompt (what CARTRIDGE_POLICIES'
-    // comments always intended for fund-moving calls like a payment-token
-    // `approve` — "a per-tx Cartridge prompt instead of silent session
-    // scope" — but nothing ever called it until now).
+  const ensureCartridgeApproval = useCallback(async (token: string, spender: string, amount: string): Promise<void> => {
+    if (!wallet) return;
+    const key = `${token}:${spender}:${amount}`;
+    if (approvalPoliciesRef.current.has(key)) return;
+
     const controller = (wallet as { getController?: () => unknown }).getController?.() as
-      | { openExecute: (calls: unknown, chainId?: string) => Promise<{ status: boolean; transactionHash: string } | undefined> }
+      | { updateSession: (options: { policies: unknown }) => Promise<{ code: number } | undefined> }
       | undefined;
-    // chainId is typed optional on openExecute, but omitting it threw
-    // "Cannot convert undefined to a BigInt" from inside Cartridge's own
-    // code — pass the chain id resolved at connect time (see connectCartridge).
-    const chainId = (wallet as { chainId?: string }).chainId;
-    markMarketplaceDebug("openExecute: controller resolved", {
-      hasController: !!controller,
-      hasOpenExecute: typeof controller?.openExecute === "function",
-      chainId,
-      calls,
-    });
-    if (!controller || typeof controller.openExecute !== "function") {
-      throw new Error("Cartridge wallet is not ready for this action. Please reconnect and try again.");
+    if (!controller || typeof controller.updateSession !== "function") return;
+
+    const { toSessionPolicies } = await import("@cartridge/controller");
+    // updateSession SETS the session's policies — it does not merge with
+    // whatever's already active — so every call must carry every approval
+    // granted so far this session, not just the new one (mirrors
+    // ensureCartridgePolicy's [...CARTRIDGE_POLICIES, ...granted, pending]
+    // pattern for plain CallPolicy grants).
+    const base = toSessionPolicies(CARTRIDGE_POLICIES) as {
+      contracts?: Record<string, { methods?: unknown[] } | undefined>;
+      messages?: unknown[];
+    };
+    const contracts: Record<string, { methods: unknown[] }> = {};
+    for (const [addr, policy] of Object.entries(base.contracts ?? {})) {
+      contracts[addr] = { methods: [...(policy?.methods ?? [])] };
     }
-    const reply = await withTimeout(controller.openExecute(calls, chainId), 90_000, "Cartridge confirmation modal");
-    markMarketplaceDebug("openExecute: settled", { reply });
-    if (!reply || !reply.status) {
-      throw new Error("Cartridge declined or did not complete this transaction.");
+    const pending = { target: token, spender, amount };
+    for (const grant of [...approvalPoliciesRef.current.values(), pending]) {
+      const existing = contracts[grant.target] ?? { methods: [] };
+      contracts[grant.target] = {
+        methods: [...existing.methods, { entrypoint: "approve", spender: grant.spender, amount: grant.amount }],
+      };
     }
-    return { txHash: reply.transactionHash };
+
+    const reply = await controller.updateSession({ policies: { ...base, contracts } });
+    if (!reply) {
+      // undefined = user declined or the keychain closed without granting.
+      throw new Error("Cartridge declined the spending approval needed for this action.");
+    }
+    approvalPoliciesRef.current.set(key, pending);
   }, [wallet]);
 
   return (
-    <StarkZapWalletContext.Provider
-      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect, ensureCartridgePolicy, executeViaCartridgeModal }}
+    <CartridgeWalletContext.Provider
+      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect, ensureCartridgePolicy, ensureCartridgeApproval }}
     >
       {children}
-    </StarkZapWalletContext.Provider>
+    </CartridgeWalletContext.Provider>
   );
 }
 
@@ -345,17 +353,15 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
 // Public hook
 // ---------------------------------------------------------------------------
 
-const STARKZAP_DEFAULT_CTX: StarkZapWalletCtx = {
+const CARTRIDGE_DEFAULT_CTX: CartridgeWalletCtx = {
   wallet: null, session: IDLE_WALLET_SESSION, walletType: null, address: null,
   isConnecting: false, error: null,
   connectCartridge: async () => {},
   disconnect: () => {},
   ensureCartridgePolicy: async () => {},
-  executeViaCartridgeModal: async () => {
-    throw new Error("No active Cartridge wallet.");
-  },
+  ensureCartridgeApproval: async () => {},
 };
 
-export function useStarkZapWallet(): StarkZapWalletCtx {
-  return useContext(StarkZapWalletContext) ?? STARKZAP_DEFAULT_CTX;
+export function useCartridgeWallet(): CartridgeWalletCtx {
+  return useContext(CartridgeWalletContext) ?? CARTRIDGE_DEFAULT_CTX;
 }

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { useWallet } from "@/hooks/use-wallet";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import {
   useSponsorshipProposals, useSponsorshipOffers, useSponsorshipBids, useSponsorshipLicenses,
@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 function useSigner() {
   const { account } = useAccount();
-  const { wallet: szWalletRaw } = useStarkZapWallet();
+  const { wallet: szWalletRaw } = useCartridgeWallet();
   const { walletType, address } = useWallet();
   const szWallet = walletType === "cartridge" ? szWalletRaw : null;
   return { signer: (szWallet ?? account) as AccountInterface | undefined, address };

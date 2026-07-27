@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
-import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { makeInjectedExecute, makeStarkzapExecute } from "@/lib/wallet-adapters";
 import { withTimeout } from "@/lib/wallet-error";
 import { getConnectorDisplayName } from "@/lib/starknet-connectors";
@@ -58,7 +58,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     error: szError,
     connectCartridge,
     disconnect: szDisconnect,
-  } = useStarkZapWallet();
+  } = useCartridgeWallet();
 
   const injectedType: WalletType = useMemo(() => {
     const id = injectedConnector?.id?.toLowerCase();
