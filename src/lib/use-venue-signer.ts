@@ -26,25 +26,16 @@ function sameAddress(a: string, b: string): boolean {
 
 const PAYMENT_TOKEN_ADDRESSES = SUPPORTED_TOKENS.map((t) => t.address);
 
-// Fund-moving ERC-20 `approve` calls (payment tokens: USDC/USDT/ETH/STRK/WBTC)
-// must NEVER be added to Cartridge session scope — a session key with a
-// standing approve grant over a payment token is a real privilege-escalation
-// risk, not just a UX nuance (same precedent CARTRIDGE_POLICIES documents for
-// the checkout/accept-offer/creator-coin flows: these stay a per-tx prompt).
-// Only per-instance NON-fungible contracts (a specific collection's `approve`
-// on a listing, etc.) are safe to extend session scope for.
-function isSessionScopable(call: Call): boolean {
-  if (call.entrypoint !== "approve" && call.entrypoint !== "set_approval_for_all") return true;
-  return !PAYMENT_TOKEN_ADDRESSES.some((addr) => sameAddress(addr, call.contractAddress));
-}
-
-// ERC-20 approve(spender, amount: Uint256) calldata is [spender, low, high]
-// (Cairo's standard low/high felt split for a 256-bit value). Recombined into
-// the decimal-string amount Cartridge's Approval policy expects.
-function parseApproveCalldata(calldata: unknown): { spender: string; amount: string } {
-  const [spender, low, high] = calldata as string[];
-  const amount = (BigInt(low) + (BigInt(high ?? "0") << 128n)).toString();
-  return { spender, amount };
+// A payment-token approve/set_approval_for_all is already covered by a
+// connect-time Approval policy (PAYMENT_TOKEN_APPROVAL_CONTRACTS in
+// cartridge-wallet-context.tsx — bounded spender+amount grants presented
+// once, up front, alongside every other session policy). It needs no
+// runtime ensureCartridgePolicy call here — that would try to grant it as a
+// plain CallPolicy instead, which is both wrong (no amount bound) and
+// redundant (already scoped via the proper Approval policy type).
+function isPreGrantedPaymentApproval(call: Call): boolean {
+  if (call.entrypoint !== "approve" && call.entrypoint !== "set_approval_for_all") return false;
+  return PAYMENT_TOKEN_ADDRESSES.some((addr) => sameAddress(addr, call.contractAddress));
 }
 
 /**
@@ -62,7 +53,7 @@ function parseApproveCalldata(calldata: unknown): { spender: string; amount: str
  */
 export function useVenueSigner(): StarknetVenueSigner | null {
   const { account } = useAccount();
-  const { wallet: szWalletRaw, ensureCartridgePolicy, ensureCartridgeApproval } = useCartridgeWallet();
+  const { wallet: szWalletRaw, ensureCartridgePolicy } = useCartridgeWallet();
   const { walletType, address } = useWallet();
   const { provider } = useProvider();
 
@@ -90,28 +81,20 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       if (szWallet) {
         // Every call must be session-scoped before execute() — the silent
         // session-key path has no UI fallback for an out-of-policy call, it
-        // just hangs (confirmed repeatedly). Two grant mechanisms, chosen
-        // per call: a fund-moving ERC-20 approve gets a bounded Approval
-        // policy (exact spender+amount, never a blanket grant); everything
-        // else (register_order, a collection's own approve, etc.) gets a
-        // plain target+method CallPolicy via ensureCartridgePolicy.
+        // just hangs (confirmed repeatedly). Payment-token approvals are
+        // already covered by a connect-time Approval policy — nothing to do
+        // here. Everything else (register_order, a collection's own
+        // approve, etc.) gets a plain target+method CallPolicy, requested
+        // just-in-time since per-instance contract addresses can't be
+        // enumerated ahead of time the way payment tokens can.
         for (const call of calls) {
-          if (!isSessionScopable(call)) {
-            const { spender, amount } = parseApproveCalldata(call.calldata);
-            markMarketplaceDebug("execute: ensuring Cartridge approval", { token: call.contractAddress, spender, amount });
-            await withTimeout(
-              ensureCartridgeApproval(call.contractAddress, spender, amount),
-              EXECUTE_TIMEOUT_MS,
-              "Cartridge approval",
-            );
-          } else {
-            markMarketplaceDebug("execute: ensuring Cartridge policy", { target: call.contractAddress, method: call.entrypoint });
-            await withTimeout(
-              ensureCartridgePolicy(call.contractAddress, call.entrypoint),
-              EXECUTE_TIMEOUT_MS,
-              "Cartridge approval",
-            );
-          }
+          if (isPreGrantedPaymentApproval(call)) continue;
+          markMarketplaceDebug("execute: ensuring Cartridge policy", { target: call.contractAddress, method: call.entrypoint });
+          await withTimeout(
+            ensureCartridgePolicy(call.contractAddress, call.entrypoint),
+            EXECUTE_TIMEOUT_MS,
+            "Cartridge approval",
+          );
         }
         markMarketplaceDebug("execute: awaiting wallet submit", { rail: "cartridge", callCount: calls.length });
         const tx = await withTimeout(szWallet.execute(calls), EXECUTE_TIMEOUT_MS, "Cartridge wallet");
@@ -130,7 +113,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       }
       return { txHash };
     },
-    [szWallet, account, provider, ensureCartridgePolicy, ensureCartridgeApproval],
+    [szWallet, account, provider, ensureCartridgePolicy],
   );
 
   if (!address) return null;

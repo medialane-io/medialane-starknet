@@ -35,6 +35,7 @@ import {
   LAUNCH_MINT_CONTRACT,
   MINT_CONTRACT,
   BR_MINT_CONTRACT,
+  SUPPORTED_TOKENS,
 } from "@/lib/constants";
 
 // Cartridge's own hosted RPC — required by its chain-detector (see the
@@ -125,6 +126,31 @@ export const CARTRIDGE_POLICIES = (
   ] as { target: string; method: string }[]
 ).filter((p) => p.target);
 
+// Cartridge's entire design point is zero popups after the initial session
+// grant ("session keys eliminate transaction popups during gameplay" — their
+// own docs). A runtime per-order approval request (tried and abandoned: see
+// git history) fights that design — it's a SECOND interactive step mid-flow,
+// which never rendered reliably across three different Cartridge APIs.
+// The correct shape: grant marketplace spending up front, once, as part of
+// the same single session approval the user already sees at connect — an
+// `Approval` policy (`{ entrypoint: "approve", spender, amount }`, Cartridge's
+// actual mechanism for a session-scoped ERC-20 approve — see
+// toWasmPolicies in @cartridge/controller) for every (payment token,
+// marketplace) pair. Bounded to MAX_APPROVAL_AMOUNT, not literally
+// unlimited, but not re-requested per order either — Cartridge's own docs
+// use exactly this max-uint128 value as their approval-policy example.
+// Every marketplace action becomes a fully in-session, zero-interaction
+// execute() from here on, same as every other statically-covered call.
+const MAX_APPROVAL_AMOUNT = "0xffffffffffffffffffffffffffffffff"; // max uint128
+const MARKETPLACE_SPENDERS = [STARKNET_MARKETPLACE_721_CONTRACT, STARKNET_MARKETPLACE_1155_CONTRACT];
+const PAYMENT_TOKEN_APPROVAL_CONTRACTS: Record<string, { methods: { entrypoint: "approve"; spender: string; amount: string }[] }> =
+  Object.fromEntries(
+    SUPPORTED_TOKENS.map((token) => [
+      token.address,
+      { methods: MARKETPLACE_SPENDERS.map((spender) => ({ entrypoint: "approve" as const, spender, amount: MAX_APPROVAL_AMOUNT })) },
+    ]),
+  );
+
 // ---------------------------------------------------------------------------
 // Context types
 // ---------------------------------------------------------------------------
@@ -150,19 +176,6 @@ export interface CartridgeWalletCtx {
    * if the user declines the resulting Cartridge prompt.
    */
   ensureCartridgePolicy: (target: string, method: string) => Promise<void>;
-  /**
-   * Requests a session-scoped, amount-bounded ERC-20 approval — Cartridge's
-   * `Approval` policy type (`{ entrypoint: "approve", spender, amount }`),
-   * distinct from a plain target+method `CallPolicy`. This is the ONLY way
-   * an ERC-20 `approve` can ever be session-scoped: `toWasmPolicies` (in
-   * @cartridge/controller) requires both `spender` and `amount` on an
-   * approve method or it silently downgrades to a plain (unusable, per our
-   * own testing) CallPolicy. Bounded to the exact spender+amount requested —
-   * never an unlimited/standing approval — so this carries none of the
-   * privilege-escalation risk a blanket `ensureCartridgePolicy` grant would
-   * for a payment token. Throws if the user declines.
-   */
-  ensureCartridgeApproval: (token: string, spender: string, amount: string) => Promise<void>;
 }
 
 const CartridgeWalletContext = createContext<CartridgeWalletCtx | undefined>(undefined);
@@ -181,10 +194,6 @@ export function CartridgeWalletProvider({ children }: { children: React.ReactNod
   // (target, method) pairs granted via updateSession this session — reset
   // on disconnect since a fresh connect starts from the static list again.
   const dynamicPoliciesRef = useRef<Map<string, { target: string; method: string }>>(new Map());
-  // ERC-20 Approval grants (target/spender/amount) — separate from the plain
-  // CallPolicy grants above since they're a structurally different Cartridge
-  // policy type (see ensureCartridgeApproval). Also reset on disconnect.
-  const approvalPoliciesRef = useRef<Map<string, { target: string; spender: string; amount: string }>>(new Map());
 
   const connectCartridge = useCallback(async () => {
     setSession(walletConnecting("cartridge"));
@@ -204,6 +213,20 @@ export function CartridgeWalletProvider({ children }: { children: React.ReactNod
         import("starknet"),
       ]);
 
+      // Static CallPolicy grants + the pre-declared payment-token Approval
+      // grants (see PAYMENT_TOKEN_APPROVAL_CONTRACTS above), merged into one
+      // SessionPolicies object presented ONCE at connect — not requested
+      // reactively mid-transaction.
+      const basePolicies = toSessionPolicies(CARTRIDGE_POLICIES) as { contracts?: Record<string, { methods?: unknown[] }>; messages?: unknown[] };
+      const contracts: Record<string, { methods: unknown[] }> = {};
+      for (const [addr, policy] of Object.entries(basePolicies.contracts ?? {})) {
+        contracts[addr] = { methods: [...(policy?.methods ?? [])] };
+      }
+      for (const [addr, approvalPolicy] of Object.entries(PAYMENT_TOKEN_APPROVAL_CONTRACTS)) {
+        const existing = contracts[addr] ?? { methods: [] };
+        contracts[addr] = { methods: [...existing.methods, ...approvalPolicy.methods] };
+      }
+
       const controller = new Controller({
         // Cartridge's chain-detector only recognizes RPC URLs whose path
         // contains "starknet"/"mainnet" (its own hosted-RPC convention) —
@@ -212,7 +235,7 @@ export function CartridgeWalletProvider({ children }: { children: React.ReactNod
         // entirely for ~4 weeks previously; do not change without checking
         // that history first.
         chains: [{ rpcUrl: CARTRIDGE_RPC_URL }],
-        policies: toSessionPolicies(CARTRIDGE_POLICIES),
+        policies: { ...basePolicies, contracts },
         errorDisplayMode: "modal",
         propagateSessionErrors: false,
       });
@@ -271,7 +294,6 @@ export function CartridgeWalletProvider({ children }: { children: React.ReactNod
     setWallet(null);
     setSession(IDLE_WALLET_SESSION);
     dynamicPoliciesRef.current.clear();
-    approvalPoliciesRef.current.clear();
   }, []);
 
   const ensureCartridgePolicy = useCallback(async (target: string, method: string): Promise<void> => {
@@ -300,49 +322,9 @@ export function CartridgeWalletProvider({ children }: { children: React.ReactNod
     dynamicPoliciesRef.current.set(key, pending);
   }, [wallet]);
 
-  const ensureCartridgeApproval = useCallback(async (token: string, spender: string, amount: string): Promise<void> => {
-    if (!wallet) return;
-    const key = `${token}:${spender}:${amount}`;
-    if (approvalPoliciesRef.current.has(key)) return;
-
-    const controller = (wallet as { getController?: () => unknown }).getController?.() as
-      | { updateSession: (options: { policies: unknown }) => Promise<{ code: number } | undefined> }
-      | undefined;
-    if (!controller || typeof controller.updateSession !== "function") return;
-
-    const { toSessionPolicies } = await import("@cartridge/controller");
-    // updateSession SETS the session's policies — it does not merge with
-    // whatever's already active — so every call must carry every approval
-    // granted so far this session, not just the new one (mirrors
-    // ensureCartridgePolicy's [...CARTRIDGE_POLICIES, ...granted, pending]
-    // pattern for plain CallPolicy grants).
-    const base = toSessionPolicies(CARTRIDGE_POLICIES) as {
-      contracts?: Record<string, { methods?: unknown[] } | undefined>;
-      messages?: unknown[];
-    };
-    const contracts: Record<string, { methods: unknown[] }> = {};
-    for (const [addr, policy] of Object.entries(base.contracts ?? {})) {
-      contracts[addr] = { methods: [...(policy?.methods ?? [])] };
-    }
-    const pending = { target: token, spender, amount };
-    for (const grant of [...approvalPoliciesRef.current.values(), pending]) {
-      const existing = contracts[grant.target] ?? { methods: [] };
-      contracts[grant.target] = {
-        methods: [...existing.methods, { entrypoint: "approve", spender: grant.spender, amount: grant.amount }],
-      };
-    }
-
-    const reply = await controller.updateSession({ policies: { ...base, contracts } });
-    if (!reply) {
-      // undefined = user declined or the keychain closed without granting.
-      throw new Error("Cartridge declined the spending approval needed for this action.");
-    }
-    approvalPoliciesRef.current.set(key, pending);
-  }, [wallet]);
-
   return (
     <CartridgeWalletContext.Provider
-      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect, ensureCartridgePolicy, ensureCartridgeApproval }}
+      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect, ensureCartridgePolicy }}
     >
       {children}
     </CartridgeWalletContext.Provider>
@@ -359,7 +341,6 @@ const CARTRIDGE_DEFAULT_CTX: CartridgeWalletCtx = {
   connectCartridge: async () => {},
   disconnect: () => {},
   ensureCartridgePolicy: async () => {},
-  ensureCartridgeApproval: async () => {},
 };
 
 export function useCartridgeWallet(): CartridgeWalletCtx {
