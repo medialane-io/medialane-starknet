@@ -230,6 +230,12 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
 
       const provider = new RpcProvider({ nodeUrl: controller.rpcUrl() });
       const address = walletAccount.address as unknown as string;
+      // openExecute(calls, chainId?) — chainId is typed optional, but passing
+      // nothing here caused a "Cannot convert undefined to a BigInt" thrown
+      // from inside Cartridge's own call, i.e. it's not actually optional in
+      // practice. WalletAccount inherits Account.getChainId(); fetch it once
+      // at connect and carry it on the shim for executeViaCartridgeModal.
+      const chainId = await walletAccount.getChainId();
 
       // Minimal shim matching the exact surface every real consumer in this
       // app uses (grepped: only .address / .signMessage() / .execute() /
@@ -238,6 +244,7 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
       // already expect from StarkZap's own Tx wrapper.
       const cartridgeWallet = {
         address,
+        chainId,
         signMessage: (typedData: unknown) => walletAccount.signMessage(typedData as never),
         execute: async (calls: unknown) => {
           const response = await walletAccount.execute(calls as never);
@@ -302,17 +309,22 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
     // `approve` — "a per-tx Cartridge prompt instead of silent session
     // scope" — but nothing ever called it until now).
     const controller = (wallet as { getController?: () => unknown }).getController?.() as
-      | { openExecute: (calls: unknown) => Promise<{ status: boolean; transactionHash: string } | undefined> }
+      | { openExecute: (calls: unknown, chainId?: string) => Promise<{ status: boolean; transactionHash: string } | undefined> }
       | undefined;
+    // chainId is typed optional on openExecute, but omitting it threw
+    // "Cannot convert undefined to a BigInt" from inside Cartridge's own
+    // code — pass the chain id resolved at connect time (see connectCartridge).
+    const chainId = (wallet as { chainId?: string }).chainId;
     markMarketplaceDebug("openExecute: controller resolved", {
       hasController: !!controller,
       hasOpenExecute: typeof controller?.openExecute === "function",
+      chainId,
       calls,
     });
     if (!controller || typeof controller.openExecute !== "function") {
       throw new Error("Cartridge wallet is not ready for this action. Please reconnect and try again.");
     }
-    const reply = await withTimeout(controller.openExecute(calls), 90_000, "Cartridge confirmation modal");
+    const reply = await withTimeout(controller.openExecute(calls, chainId), 90_000, "Cartridge confirmation modal");
     markMarketplaceDebug("openExecute: settled", { reply });
     if (!reply || !reply.status) {
       throw new Error("Cartridge declined or did not complete this transaction.");
