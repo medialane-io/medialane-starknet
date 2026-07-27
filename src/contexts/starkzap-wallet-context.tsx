@@ -141,6 +141,14 @@ export interface StarkZapWalletCtx {
    * if the user declines the resulting Cartridge prompt.
    */
   ensureCartridgePolicy: (target: string, method: string) => Promise<void>;
+  /**
+   * Executes calls via Cartridge's explicit confirmation modal
+   * (`Controller.openExecute`) instead of the silent session-key path. Use
+   * for any multicall containing a call that must never be session-scoped
+   * (fund-moving ERC-20 approvals) — the silent path has no UI fallback for
+   * out-of-policy calls and hangs indefinitely instead of prompting.
+   */
+  executeViaCartridgeModal: (calls: unknown) => Promise<{ txHash: string }>;
 }
 
 const StarkZapWalletContext = createContext<StarkZapWalletCtx | undefined>(undefined);
@@ -221,9 +229,32 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
     dynamicPoliciesRef.current.set(key, pending);
   }, [wallet]);
 
+  const executeViaCartridgeModal = useCallback(async (calls: unknown): Promise<{ txHash: string }> => {
+    if (!wallet) throw new Error("Wallet not ready. Please reconnect and try again.");
+    // The session-key execute() path (CartridgeWallet.execute(), used for
+    // in-policy calls) has NO UI fallback for a call outside session scope —
+    // it just waits on a signature the session key structurally cannot
+    // produce, forever. openExecute() is Cartridge's actual mechanism for an
+    // explicit, one-off confirmation prompt (what CARTRIDGE_POLICIES'
+    // comments always intended for fund-moving calls like a payment-token
+    // `approve` — "a per-tx Cartridge prompt instead of silent session
+    // scope" — but nothing ever called it until now).
+    const controller = (wallet as { getController?: () => unknown }).getController?.() as
+      | { openExecute: (calls: unknown) => Promise<{ status: boolean; transactionHash: string } | undefined> }
+      | undefined;
+    if (!controller || typeof controller.openExecute !== "function") {
+      throw new Error("Cartridge wallet is not ready for this action. Please reconnect and try again.");
+    }
+    const reply = await controller.openExecute(calls);
+    if (!reply || !reply.status) {
+      throw new Error("Cartridge declined or did not complete this transaction.");
+    }
+    return { txHash: reply.transactionHash };
+  }, [wallet]);
+
   return (
     <StarkZapWalletContext.Provider
-      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect, ensureCartridgePolicy }}
+      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect, ensureCartridgePolicy, executeViaCartridgeModal }}
     >
       {children}
     </StarkZapWalletContext.Provider>
@@ -240,6 +271,9 @@ const STARKZAP_DEFAULT_CTX: StarkZapWalletCtx = {
   connectCartridge: async () => {},
   disconnect: () => {},
   ensureCartridgePolicy: async () => {},
+  executeViaCartridgeModal: async () => {
+    throw new Error("No active Cartridge wallet.");
+  },
 };
 
 export function useStarkZapWallet(): StarkZapWalletCtx {

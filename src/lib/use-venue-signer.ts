@@ -53,7 +53,7 @@ function isSessionScopable(call: Call): boolean {
  */
 export function useVenueSigner(): StarknetVenueSigner | null {
   const { account } = useAccount();
-  const { wallet: szWalletRaw, ensureCartridgePolicy } = useStarkZapWallet();
+  const { wallet: szWalletRaw, ensureCartridgePolicy, executeViaCartridgeModal } = useStarkZapWallet();
   const { walletType, address } = useWallet();
   const { provider } = useProvider();
 
@@ -79,24 +79,38 @@ export function useVenueSigner(): StarknetVenueSigner | null {
     async (calls: Call[]): Promise<{ txHash: string }> => {
       let txHash: string;
       if (szWallet) {
-        // Per-instance contracts (a specific collection's `approve`, etc.)
-        // are never in the static CARTRIDGE_POLICIES allowlist by
-        // construction — request session scope for each call's target
-        // just-in-time instead of letting execute() hang on an approval
-        // the app never asked Cartridge for. Payment-token approvals are
-        // deliberately skipped — see isSessionScopable.
-        for (const call of calls) {
-          if (!isSessionScopable(call)) continue;
-          markMarketplaceDebug("execute: ensuring Cartridge policy", { target: call.contractAddress, method: call.entrypoint });
-          await withTimeout(
-            ensureCartridgePolicy(call.contractAddress, call.entrypoint),
-            EXECUTE_TIMEOUT_MS,
-            "Cartridge approval",
-          );
+        if (calls.some((call) => !isSessionScopable(call))) {
+          // Contains a fund-moving call (a payment-token approve) that must
+          // never be session-scoped. Cartridge's silent session-key execute()
+          // has NO UI fallback for a call outside session policy — it just
+          // waits on a signature the session key structurally cannot
+          // produce, forever (confirmed: signing works and shows its own
+          // modal fine, but execute() never shows anything and times out).
+          // openExecute() is Cartridge's actual mechanism for an explicit,
+          // one-off confirmation — no artificial timeout here, same as
+          // signTypedData above: it's a human decision, not a technical wait.
+          markMarketplaceDebug("execute: awaiting Cartridge confirmation modal", { rail: "starkzap", callCount: calls.length });
+          const tx = await executeViaCartridgeModal(calls);
+          txHash = tx.txHash;
+        } else {
+          // Every call here is already covered, or can be silently extended
+          // via session policy — per-instance contracts (a specific
+          // collection's `approve`, etc.) are never in the static
+          // CARTRIDGE_POLICIES allowlist by construction, so request scope
+          // just-in-time instead of letting execute() hang on an approval
+          // the app never asked Cartridge for.
+          for (const call of calls) {
+            markMarketplaceDebug("execute: ensuring Cartridge policy", { target: call.contractAddress, method: call.entrypoint });
+            await withTimeout(
+              ensureCartridgePolicy(call.contractAddress, call.entrypoint),
+              EXECUTE_TIMEOUT_MS,
+              "Cartridge approval",
+            );
+          }
+          markMarketplaceDebug("execute: awaiting wallet submit", { rail: "starkzap", callCount: calls.length });
+          const tx = await withTimeout(szWallet.execute(calls), EXECUTE_TIMEOUT_MS, "Cartridge wallet");
+          txHash = tx.hash;
         }
-        markMarketplaceDebug("execute: awaiting wallet submit", { rail: "starkzap", callCount: calls.length });
-        const tx = await withTimeout(szWallet.execute(calls), EXECUTE_TIMEOUT_MS, "Cartridge wallet");
-        txHash = tx.hash;
       } else {
         if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
         markMarketplaceDebug("execute: awaiting wallet submit", { rail: "injected", callCount: calls.length });
@@ -111,7 +125,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       }
       return { txHash };
     },
-    [szWallet, account, provider, ensureCartridgePolicy],
+    [szWallet, account, provider, ensureCartridgePolicy, executeViaCartridgeModal],
   );
 
   if (!address) return null;
