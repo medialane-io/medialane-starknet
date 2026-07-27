@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useRef,
   useState,
 } from "react";
 import type { WalletInterface } from "starkzap";
@@ -47,9 +48,10 @@ import {
 //
 // Per-collection NFT / POP / Drop contracts have DYNAMIC addresses (one per
 // event / drop / minted collection). The static target list below cannot
-// cover them. Cartridge users hitting those flows currently fall back to
-// an additional approval prompt — known UX gap, tracked as the next item
-// after this PR.
+// cover them by construction. For those, callers must request scope at the
+// point of use via `ensureCartridgePolicy(target, method)` (below) instead
+// of assuming the static list already covers it — see the marketplace
+// listing/offer flow (`use-venue-signer.ts`) for the reference call site.
 
 export const CARTRIDGE_POLICIES = (
   [
@@ -129,6 +131,16 @@ export interface StarkZapWalletCtx {
   error: string | null;
   connectCartridge: () => Promise<void>;
   disconnect: () => void;
+  /**
+   * Requests session scope for a (target, method) pair not covered by the
+   * static `CARTRIDGE_POLICIES` list — the only way to cover per-instance
+   * contracts (a specific collection's `approve`, a specific event's
+   * `claim`, etc.), which by definition can never be enumerated ahead of
+   * time. No-ops if the pair is already covered (static or previously
+   * granted this session) or if there's no active Cartridge wallet. Throws
+   * if the user declines the resulting Cartridge prompt.
+   */
+  ensureCartridgePolicy: (target: string, method: string) => Promise<void>;
 }
 
 const StarkZapWalletContext = createContext<StarkZapWalletCtx | undefined>(undefined);
@@ -144,6 +156,9 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
   const address = session.address;
   const isConnecting = isWalletSessionBusy(session);
   const error = session.error;
+  // (target, method) pairs granted via updateSession this session — reset
+  // on disconnect since a fresh connect starts from the static list again.
+  const dynamicPoliciesRef = useRef<Map<string, { target: string; method: string }>>(new Map());
 
   const connectCartridge = useCallback(async () => {
     setSession(walletConnecting("cartridge"));
@@ -177,11 +192,38 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
     clearPersistedWallet();
     setWallet(null);
     setSession(IDLE_WALLET_SESSION);
+    dynamicPoliciesRef.current.clear();
   }, []);
+
+  const ensureCartridgePolicy = useCallback(async (target: string, method: string): Promise<void> => {
+    if (!wallet) return;
+    if (CARTRIDGE_POLICIES.some((p) => p.target === target && p.method === method)) return;
+    const key = `${target}:${method}`;
+    if (dynamicPoliciesRef.current.has(key)) return;
+
+    // Only CartridgeWallet exposes getController(); WalletInterface doesn't
+    // declare it. If it's ever missing (SDK shape change), let execute()
+    // fail downstream with its own error rather than throw here.
+    const controller = (wallet as { getController?: () => unknown }).getController?.() as
+      | { updateSession: (options: { policies: unknown }) => Promise<{ code: number } | undefined> }
+      | undefined;
+    if (!controller || typeof controller.updateSession !== "function") return;
+
+    const { toSessionPolicies } = await import("@cartridge/controller");
+    const pending = { target, method };
+    const reply = await controller.updateSession({
+      policies: toSessionPolicies([...CARTRIDGE_POLICIES, ...dynamicPoliciesRef.current.values(), pending]),
+    });
+    if (!reply) {
+      // undefined = user declined or the keychain closed without granting.
+      throw new Error("Cartridge declined the additional approval needed for this action.");
+    }
+    dynamicPoliciesRef.current.set(key, pending);
+  }, [wallet]);
 
   return (
     <StarkZapWalletContext.Provider
-      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect }}
+      value={{ wallet, session, walletType, address, isConnecting, error, connectCartridge, disconnect, ensureCartridgePolicy }}
     >
       {children}
     </StarkZapWalletContext.Provider>
@@ -197,6 +239,7 @@ const STARKZAP_DEFAULT_CTX: StarkZapWalletCtx = {
   isConnecting: false, error: null,
   connectCartridge: async () => {},
   disconnect: () => {},
+  ensureCartridgePolicy: async () => {},
 };
 
 export function useStarkZapWallet(): StarkZapWalletCtx {

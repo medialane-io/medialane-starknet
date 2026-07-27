@@ -5,6 +5,13 @@ import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
+import { withTimeout } from "@/lib/wallet-error";
+
+// Long enough for a real Cartridge policy-approval or PIN/passkey prompt
+// (mirrors the 20s used for connect, extended for the extra approval step
+// a first-time per-collection action can require) — bounded so a stuck
+// flow fails visibly instead of hanging `isProcessing` forever.
+const EXECUTE_TIMEOUT_MS = 45_000;
 
 /**
  * The app's single implementation of the SDK's chain-neutral `VenueSigner`. This
@@ -21,7 +28,7 @@ import { markMarketplaceDebug } from "@/lib/marketplace-debug";
  */
 export function useVenueSigner(): StarknetVenueSigner | null {
   const { account } = useAccount();
-  const { wallet: szWalletRaw } = useStarkZapWallet();
+  const { wallet: szWalletRaw, ensureCartridgePolicy } = useStarkZapWallet();
   const { walletType, address } = useWallet();
   const { provider } = useProvider();
 
@@ -46,13 +53,27 @@ export function useVenueSigner(): StarknetVenueSigner | null {
   const execute = useCallback(
     async (calls: Call[]): Promise<{ txHash: string }> => {
       let txHash: string;
-      markMarketplaceDebug("execute: awaiting wallet submit", { rail: szWallet ? "starkzap" : "injected", callCount: calls.length });
       if (szWallet) {
-        const tx = await szWallet.execute(calls);
+        // Per-instance contracts (a specific collection's `approve`, etc.)
+        // are never in the static CARTRIDGE_POLICIES allowlist by
+        // construction — request session scope for each call's target
+        // just-in-time instead of letting execute() hang on an approval
+        // the app never asked Cartridge for.
+        for (const call of calls) {
+          markMarketplaceDebug("execute: ensuring Cartridge policy", { target: call.contractAddress, method: call.entrypoint });
+          await withTimeout(
+            ensureCartridgePolicy(call.contractAddress, call.entrypoint),
+            EXECUTE_TIMEOUT_MS,
+            "Cartridge approval",
+          );
+        }
+        markMarketplaceDebug("execute: awaiting wallet submit", { rail: "starkzap", callCount: calls.length });
+        const tx = await withTimeout(szWallet.execute(calls), EXECUTE_TIMEOUT_MS, "Cartridge wallet");
         txHash = tx.hash;
       } else {
         if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
-        const tx = await account.execute(calls);
+        markMarketplaceDebug("execute: awaiting wallet submit", { rail: "injected", callCount: calls.length });
+        const tx = await withTimeout(account.execute(calls), EXECUTE_TIMEOUT_MS, "Wallet");
         txHash = tx.transaction_hash;
       }
       markMarketplaceDebug("execute: wallet submitted, awaiting confirmation", { txHash });
@@ -63,7 +84,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       }
       return { txHash };
     },
-    [szWallet, account, provider],
+    [szWallet, account, provider, ensureCartridgePolicy],
   );
 
   if (!address) return null;
