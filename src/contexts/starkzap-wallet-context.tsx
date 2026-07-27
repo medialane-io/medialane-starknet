@@ -38,6 +38,15 @@ import {
   BR_MINT_CONTRACT,
 } from "@/lib/constants";
 
+// Cartridge's own hosted RPC — required by its chain-detector (see the
+// comment at its use site in connectCartridge). Same value as StarkZap's
+// "mainnet" network preset, now inlined since Controller is constructed
+// directly instead of through StarkZap.
+const CARTRIDGE_RPC_URL = "https://api.cartridge.gg/x/starknet/mainnet";
+const CONTROLLER_MAX_WAIT_MS = 10_000;
+const CONTROLLER_INITIAL_POLL_MS = 100;
+const CONTROLLER_MAX_POLL_MS = 1_000;
+
 // ---------------------------------------------------------------------------
 // Cartridge session policies for Medialane contracts
 // ---------------------------------------------------------------------------
@@ -172,22 +181,74 @@ export function StarkZapWalletProvider({ children }: { children: React.ReactNode
   const connectCartridge = useCallback(async () => {
     setSession(walletConnecting("cartridge"));
     try {
-      // StarkZap (and its zod-heavy dependency graph) loads only when a
-      // Cartridge connect/resume actually happens — keeping it out of the
-      // first-load bundle of every page for every visitor. This callback is
-      // also the silent-resume path on reload, so both flows are covered.
-      const [{ OnboardStrategy }, { getCartridgeStarkZapSdk }] = await Promise.all([
-        import("starkzap"),
-        import("@/lib/starkzap"),
+      // Connect via @cartridge/controller directly — NOT through StarkZap.
+      // StarkZap's CartridgeWallet.create() has a fixed options type that
+      // cannot pass through `errorDisplayMode`/`propagateSessionErrors`
+      // (confirmed against Cartridge's own docs + its .d.ts — those fields
+      // structurally don't exist on CartridgeWalletOptions). Left unset,
+      // Cartridge's own default apparently never opens its confirmation
+      // modal for a call outside session policy — execute() just hangs
+      // with no UI and no error. Constructing Controller ourselves is the
+      // only way to set them. Loads only on connect/resume, same as the
+      // StarkZap import it replaces — kept out of the first-load bundle.
+      const [{ default: Controller, toSessionPolicies }, { RpcProvider }] = await Promise.all([
+        import("@cartridge/controller"),
+        import("starknet"),
       ]);
-      const sdk = getCartridgeStarkZapSdk();
-      const result = await sdk.onboard({
-        strategy: OnboardStrategy.Cartridge,
-        cartridge: { policies: CARTRIDGE_POLICIES },
-        deploy: "if_needed",
+
+      const controller = new Controller({
+        // Cartridge's chain-detector only recognizes RPC URLs whose path
+        // contains "starknet"/"mainnet" (its own hosted-RPC convention) —
+        // this exact URL is StarkZap's "mainnet" network preset, carried
+        // over verbatim. A different RPC URL here broke Cartridge connect
+        // entirely for ~4 weeks previously; do not change without checking
+        // that history first.
+        chains: [{ rpcUrl: CARTRIDGE_RPC_URL }],
+        policies: toSessionPolicies(CARTRIDGE_POLICIES),
+        errorDisplayMode: "modal",
+        propagateSessionErrors: false,
       });
-      setWallet(result.wallet);
-      setSession(walletReady("cartridge", result.wallet.address as unknown as string));
+
+      // Mirrors StarkZap's own CartridgeWallet.create() readiness poll —
+      // Controller needs to finish async init before connect() is reliable.
+      let waited = 0;
+      let pollMs = CONTROLLER_INITIAL_POLL_MS;
+      while (!controller.isReady() && waited < CONTROLLER_MAX_WAIT_MS) {
+        const sleepMs = Math.min(pollMs, CONTROLLER_MAX_WAIT_MS - waited);
+        await new Promise((resolve) => setTimeout(resolve, sleepMs));
+        waited += sleepMs;
+        pollMs = Math.min(pollMs * 2, CONTROLLER_MAX_POLL_MS);
+      }
+      if (!controller.isReady()) {
+        throw new Error("Cartridge Controller failed to initialize. Please try again.");
+      }
+
+      const walletAccount = await controller.connect();
+      if (!walletAccount) {
+        throw new Error("Cartridge connection failed. Make sure popups are allowed and try again.");
+      }
+
+      const provider = new RpcProvider({ nodeUrl: controller.rpcUrl() });
+      const address = walletAccount.address as unknown as string;
+
+      // Minimal shim matching the exact surface every real consumer in this
+      // app uses (grepped: only .address / .signMessage() / .execute() /
+      // .getController() — nothing StarkZap-specific like staking/bridging).
+      // `execute()` returns { hash, wait() } to match what those call sites
+      // already expect from StarkZap's own Tx wrapper.
+      const cartridgeWallet = {
+        address,
+        signMessage: (typedData: unknown) => walletAccount.signMessage(typedData as never),
+        execute: async (calls: unknown) => {
+          const response = await walletAccount.execute(calls as never);
+          const hash = response.transaction_hash;
+          return { hash, wait: () => provider.waitForTransaction(hash) };
+        },
+        getController: () => controller,
+      } as unknown as WalletInterface;
+
+      setWallet(cartridgeWallet);
+      setSession(walletReady("cartridge", address));
       writePersistedWallet("cartridge");
     } catch (err) {
       // Raw detail → console only; user sees a friendly message.
