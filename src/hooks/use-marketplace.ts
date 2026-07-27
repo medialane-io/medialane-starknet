@@ -10,6 +10,7 @@ import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
 import { getStarknetVenue } from "@/lib/starknet-venue";
 import { useVenueSigner } from "@/lib/use-venue-signer";
+import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
 import {
     SUPPORTED_TOKENS,
     STARKNET_MARKETPLACE_721_CONTRACT,
@@ -142,15 +143,24 @@ export function useMarketplace(): UseMarketplaceReturn {
     }, [invalidateMarketplaceCaches]);
 
     // Wraps an async operation with isProcessing state and unified error handling.
+    // `op` seeds a fresh breadcrumb trail (src/lib/marketplace-debug.ts, logged live
+    // via console.debug at each step in use-venue-signer.ts) so a hang with no
+    // thrown error (isProcessing never resolves) is still diagnosable from the
+    // console alone — the last "[marketplace-debug]" line is where it got stuck.
     const withProcessing = useCallback(async <T>(
+        op: string,
         fn: () => Promise<T>
     ): Promise<T | undefined> => {
+        resetMarketplaceDebug(op);
         setIsProcessing(true);
         setError(null);
         try {
-            return await fn();
+            const result = await fn();
+            markMarketplaceDebug(`${op}: done`);
+            return result;
         } catch (err: any) {
-            console.error("[marketplace] error:", JSON.stringify(err, null, 2), err);
+            markMarketplaceDebug(`${op}: threw`);
+            console.error("[marketplace] error:", getMarketplaceDebugText({ error: err }));
             const friendly = getFriendlyWalletError(err);
             setError(friendly.message);
             if (friendly.isUserRejection) {
@@ -201,7 +211,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         const is1155 = tokenStandard === "ERC1155";
-        return withProcessing(async () => {
+        return withProcessing("createListing", async () => {
             const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
             const now = Math.floor(Date.now() / 1000);
             const { txHash: hash } = await venue.registerOrder(signer, {
@@ -241,7 +251,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         const is1155 = tokenStandard === "ERC1155";
-        return withProcessing(async () => {
+        return withProcessing("makeOffer", async () => {
             const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
             const now = Math.floor(Date.now() / 1000);
             const { txHash: hash } = await venue.registerOrder(signer, {
@@ -276,7 +286,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
 
-        return withProcessing(async () => {
+        return withProcessing("checkoutCart", async () => {
             // Group required ERC20 approvals by token address, split by standard
             const tokenTotals721 = new Map<string, bigint>();
             const tokenTotals1155 = new Map<string, bigint>();
@@ -344,7 +354,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error("Connect your wallet first");
             return undefined;
         }
-        return withProcessing(async () => {
+        return withProcessing("cancelOrder", async () => {
             const { txHash: hash } = await venue.cancelOrder(signer, orderHash);
             setTxHash(hash);
             refreshMarketplaceCaches();
@@ -383,7 +393,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
 
-        return withProcessing(async () => {
+        return withProcessing("acceptOffer", async () => {
             const fulfillCall = is1155
                 ? contract.populate("fulfill_order", [orderHash, "1"])
                 : contract.populate("fulfill_order", [orderHash]);

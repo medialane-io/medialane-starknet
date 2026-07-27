@@ -4,6 +4,7 @@ import type { Call, TypedData } from "starknet";
 import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useStarkZapWallet } from "@/contexts/starkzap-wallet-context";
+import { markMarketplaceDebug } from "@/lib/marketplace-debug";
 
 /**
  * The app's single implementation of the SDK's chain-neutral `VenueSigner`. This
@@ -33,7 +34,9 @@ export function useVenueSigner(): StarknetVenueSigner | null {
     async (data: TypedData): Promise<string[]> => {
       const signer = szWallet ?? account;
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      markMarketplaceDebug("signTypedData: awaiting wallet signature", { rail: szWallet ? "starkzap" : "injected" });
       const sig = await signer.signMessage(data);
+      markMarketplaceDebug("signTypedData: signature received");
       // starknet account returns [] or {r,s}; StarkZap returns string[].
       return Array.isArray(sig) ? sig.map(String) : [String(sig.r), String(sig.s)];
     },
@@ -43,6 +46,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
   const execute = useCallback(
     async (calls: Call[]): Promise<{ txHash: string }> => {
       let txHash: string;
+      markMarketplaceDebug("execute: awaiting wallet submit", { rail: szWallet ? "starkzap" : "injected", callCount: calls.length });
       if (szWallet) {
         const tx = await szWallet.execute(calls);
         txHash = tx.hash;
@@ -51,7 +55,9 @@ export function useVenueSigner(): StarknetVenueSigner | null {
         const tx = await account.execute(calls);
         txHash = tx.transaction_hash;
       }
+      markMarketplaceDebug("execute: wallet submitted, awaiting confirmation", { txHash });
       const receipt: any = await provider.waitForTransaction(txHash);
+      markMarketplaceDebug("execute: confirmed", { status: receipt?.execution_status });
       if (receipt?.execution_status === "REVERTED") {
         throw new Error(receipt.revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
       }
