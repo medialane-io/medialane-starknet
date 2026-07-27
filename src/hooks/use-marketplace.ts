@@ -53,7 +53,8 @@ interface UseMarketplaceReturn {
         orderHash: string,
         nftContractAddress: string,
         tokenId: string,
-        tokenStandard?: string
+        tokenStandard?: string,
+        opts?: WriteOpts
     ) => Promise<string | undefined>;
 
     isProcessing: boolean;
@@ -147,9 +148,16 @@ export function useMarketplace(): UseMarketplaceReturn {
     // via console.debug at each step in use-venue-signer.ts) so a hang with no
     // thrown error (isProcessing never resolves) is still diagnosable from the
     // console alone — the last "[marketplace-debug]" line is where it got stuck.
+    //
+    // `opts.silent` suppresses the error toast too (not just success, below) —
+    // every dialog caller already renders `error` inline via its own <Alert>, so
+    // firing a toast on top duplicated the same message twice. Direct callers
+    // with no dialog (portfolio tables/grids) omit `opts` and keep the toast as
+    // their only feedback surface.
     const withProcessing = useCallback(async <T>(
         op: string,
-        fn: () => Promise<T>
+        fn: () => Promise<T>,
+        opts?: WriteOpts
     ): Promise<T | undefined> => {
         resetMarketplaceDebug(op);
         setIsProcessing(true);
@@ -163,10 +171,12 @@ export function useMarketplace(): UseMarketplaceReturn {
             console.error("[marketplace] error:", getMarketplaceDebugText({ error: err }));
             const friendly = getFriendlyWalletError(err);
             setError(friendly.message);
-            if (friendly.isUserRejection) {
-                toast.info(friendly.title, { description: friendly.description });
-            } else {
-                toast.error(friendly.title, { description: friendly.message });
+            if (!opts?.silent) {
+                if (friendly.isUserRejection) {
+                    toast.info(friendly.title, { description: friendly.description });
+                } else {
+                    toast.error(friendly.title, { description: friendly.message });
+                }
             }
             return undefined;
         } finally {
@@ -234,7 +244,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             }
             rewardToast("list_asset");
             return hash;
-        });
+        }, opts);
     }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
 
     const makeOffer = useCallback(async (
@@ -271,7 +281,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             rewardToast("make_offer");
             return hash;
-        });
+        }, opts);
     }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[], opts?: WriteOpts) => {
@@ -346,7 +356,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             rewardToast("buy_asset");
             return hash;
-        });
+        }, opts);
     }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
 
     const cancelOrder = useCallback(async (orderHash: string, _tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
@@ -365,7 +375,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 );
             }
             return hash;
-        });
+        }, opts);
     }, [signer, venue, withProcessing, refreshMarketplaceCaches]);
 
     /**
@@ -378,7 +388,8 @@ export function useMarketplace(): UseMarketplaceReturn {
         orderHash: string,
         nftContractAddress: string,
         tokenId: string,
-        tokenStandard?: string
+        tokenStandard?: string,
+        opts?: WriteOpts
     ) => {
         if (!signer) {
             toast.error("Connect your wallet first");
@@ -420,7 +431,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             refreshMarketplaceCaches();
             rewardToast("offer_accepted_seller");
             return hash;
-        });
+        }, opts);
     }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
 
     return {

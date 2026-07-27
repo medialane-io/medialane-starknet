@@ -58,7 +58,8 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
         order.orderHash,
         order.nftContract ?? "",
         order.nftTokenId ?? "",
-        tokenStandard
+        tokenStandard,
+        { silent: true }
       );
       if (hash) {
         setSuccessTxHash(hash);
