@@ -66,7 +66,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
     async (data: TypedData): Promise<string[]> => {
       const signer = szWallet ?? account;
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      markMarketplaceDebug("signTypedData: awaiting wallet signature", { rail: szWallet ? "starkzap" : "injected" });
+      markMarketplaceDebug("signTypedData: awaiting wallet signature", { rail: szWallet ? "cartridge" : "injected" });
       const sig = await signer.signMessage(data);
       markMarketplaceDebug("signTypedData: signature received");
       // starknet account returns [] or {r,s}; StarkZap returns string[].
@@ -89,7 +89,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
           // openExecute() is Cartridge's actual mechanism for an explicit,
           // one-off confirmation. Bounded (90s) inside executeViaCartridgeModal
           // itself, so a failure is always visible instead of hanging forever.
-          markMarketplaceDebug("execute: awaiting Cartridge confirmation modal", { rail: "starkzap", callCount: calls.length, calls });
+          markMarketplaceDebug("execute: awaiting Cartridge confirmation modal", { rail: "cartridge", callCount: calls.length, calls });
           const tx = await executeViaCartridgeModal(calls);
           txHash = tx.txHash;
         } else {
@@ -107,7 +107,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
               "Cartridge approval",
             );
           }
-          markMarketplaceDebug("execute: awaiting wallet submit", { rail: "starkzap", callCount: calls.length });
+          markMarketplaceDebug("execute: awaiting wallet submit", { rail: "cartridge", callCount: calls.length });
           const tx = await withTimeout(szWallet.execute(calls), EXECUTE_TIMEOUT_MS, "Cartridge wallet");
           txHash = tx.hash;
         }
