@@ -27,7 +27,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreatePopAside } from "@/components/claim/create-pop-aside";
 import { useWallet } from "@/hooks/use-wallet";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { POPFactoryABI, STARKNET_POP_FACTORY_CONTRACT, type PopEventType } from "@/lib/launchpad-contracts";
@@ -58,8 +57,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CreatePOPPage() {
-  const { isConnected, address: walletAddress } = useWallet();
-  const { executeAuto, isLoading: isTxLoading } = usePaymasterTransaction();
+  const { isConnected, address: walletAddress, execute } = useWallet();
+  const [isTxLoading, setIsTxLoading] = useState(false);
   const { getValidToken } = useSiwsToken();
 
   const [eventType, setEventType] = useState<PopEventType>("Conference");
@@ -118,6 +117,7 @@ export default function CreatePOPPage() {
       return;
     }
 
+    setIsTxLoading(true);
     try {
       const metadata: Record<string, unknown> = {
         name: values.name,
@@ -150,7 +150,7 @@ export default function CreatePOPPage() {
         { [eventType]: {} },
       ]);
 
-      await executeAuto([{
+      await execute([{
         contractAddress: STARKNET_POP_FACTORY_CONTRACT,
         entrypoint: "create_collection",
         calldata: call.calldata as string[],
@@ -160,6 +160,8 @@ export default function CreatePOPPage() {
       rewardToast("launch_launchpad");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create event");
+    } finally {
+      setIsTxLoading(false);
     }
   };
 

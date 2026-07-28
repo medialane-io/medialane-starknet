@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount } from "@starknet-react/core";
-import { type AccountInterface } from "starknet";
 import { getTokenBySymbol, normalizeAddress } from "@medialane/sdk";
 import {
   VALIDATED_EKUBO_PARAMS,
@@ -13,10 +11,10 @@ import {
   type CreatorCoinReceiptLike,
 } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
-import { useNetwork } from "@/components/starknet-provider";
+import { useSigner } from "@/hooks/use-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { starknetProvider } from "@/lib/starknet";
-import { assertCorrectNetwork, getFriendlyWalletError } from "@/lib/wallet-error";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export interface LaunchCoinInput {
   name: string;
@@ -29,16 +27,15 @@ export interface LaunchCoinInput {
 export type LaunchStatus = "idle" | "deploying" | "launching" | "indexing" | "done" | "error";
 
 export function useLaunchCoin() {
-  const { account, chainId } = useAccount();
+  const account = useSigner();
   const { address: activeAddress } = useWallet();
-  const { networkConfig } = useNetwork();
   const [status, setStatus] = useState<LaunchStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
   const launch = useCallback(
     async (input: LaunchCoinInput): Promise<{ coinAddress: string }> => {
       setError(null);
-      const signer = account as AccountInterface | undefined;
+      const signer = account;
       const owner = activeAddress;
       if (!signer || !owner) throw new Error("Connect a wallet first");
 
@@ -53,7 +50,6 @@ export function useLaunchCoin() {
       const salt = "0x" + Date.now().toString(16);
 
       try {
-        assertCorrectNetwork(chainId, networkConfig.chainId);
         // Tx1 — deploy the coin (full supply to the Factory).
         setStatus("deploying");
         const created = await client.services.creatorCoin.createCreatorCoin(signer, {
@@ -97,7 +93,7 @@ export function useLaunchCoin() {
         throw new Error(friendly.message);
       }
     },
-    [account, activeAddress, chainId, networkConfig.chainId]
+    [account, activeAddress]
   );
 
   return { launch, status, error };

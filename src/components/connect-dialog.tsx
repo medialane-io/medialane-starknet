@@ -16,7 +16,7 @@ import { Wallet, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/use-wallet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
-import { getConnectorDisplayName } from "@/lib/starknet-connectors";
+import { WALLET_INSTALL_URLS } from "@/lib/wallet-connectors";
 
 type ConnectorIconObj = { dark?: string; light?: string };
 
@@ -25,11 +25,6 @@ function getConnectorIconSrc(icon: ConnectorIconObj | string | undefined): strin
   if (typeof icon === "string") return icon;
   return icon.dark ?? icon.light;
 }
-
-const WALLET_INSTALL_URLS: Record<string, string> = {
-  argentX: "https://www.ready.co/download",
-  braavos: "https://braavos.app/download-braavos-wallet/",
-};
 
 // ---------------------------------------------------------------------------
 // Global open/close — same singleton-event pattern as @medialane/ui's
@@ -114,7 +109,7 @@ export function ConnectDialog() {
                   const iconSrc = getConnectorIconSrc(
                     connector.icon as ConnectorIconObj | string | undefined
                   );
-                  const displayName = getConnectorDisplayName(connector.id, connector.name);
+                  const displayName = connector.name;
                   const installed = connector.available();
                   const installUrl = WALLET_INSTALL_URLS[connector.id];
                   if (!installed && installUrl) {

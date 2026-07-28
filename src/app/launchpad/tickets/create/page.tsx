@@ -29,7 +29,6 @@ import {
   type CollectionStep,
 } from "@/components/marketplace/collection-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
@@ -71,8 +70,7 @@ async function readDeployedAddress(txHash: string): Promise<string | null> {
 }
 
 export default function CreateTicketCollectionPage() {
-  const { address, isConnected } = useWallet();
-  const { executeAuto } = usePaymasterTransaction();
+  const { address, isConnected, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
   const { mutate } = useMyTicketCollections(address ?? null);
   const router = useRouter();
@@ -190,7 +188,7 @@ export default function CreateTicketCollectionPage() {
       const call = factory.populate("deploy_collection", [values.name, values.symbol, baseUri]);
 
       setDialogTxStatus("submitting");
-      const txH = await executeAuto([call]);
+      const txH = await execute([call]);
       if (!txH) throw new Error("Transaction failed");
       setDialogTxStatus("confirming");
 

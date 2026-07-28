@@ -6,7 +6,6 @@ import { Loader2, CheckCircle2, Ban, Award, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { usePopClaimStatus } from "@/hooks/use-pop";
 import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
@@ -16,17 +15,18 @@ interface PopClaimButtonProps {
 }
 
 export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
-  const { address, isConnected } = useWallet();
+  const { address, isConnected, execute } = useWallet();
   const { claimStatus, isLoading, error, mutate } = usePopClaimStatus(
     collectionAddress,
     address ?? null
   );
-  const { executeAuto, isLoading: isTxLoading } = usePaymasterTransaction();
   const [result, setResult] = useState<TxResult | null>(null);
+  const [isTxLoading, setIsTxLoading] = useState(false);
 
   const handleClaim = async () => {
+    setIsTxLoading(true);
     try {
-      const hash = await executeAuto([
+      const hash = await execute([
         { contractAddress: collectionAddress, entrypoint: "claim", calldata: [] },
       ]);
       setResult({
@@ -47,6 +47,8 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
         description: friendly.message,
         onRetry: () => { setResult(null); void handleClaim(); },
       });
+    } finally {
+      setIsTxLoading(false);
     }
   };
 

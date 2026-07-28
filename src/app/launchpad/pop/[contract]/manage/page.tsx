@@ -11,7 +11,6 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useCollection } from "@/hooks/use-collections";
 import { toast } from "sonner";
 
@@ -121,29 +120,32 @@ export default function PopManagePage({
   params: Promise<{ contract: string }>;
 }) {
   const { contract } = use(params);
-  const { address, isConnected } = useWallet();
+  const { address, isConnected, execute } = useWallet();
   const { collection, isLoading } = useCollection(contract);
-  const { executeAuto, isLoading: isTxLoading } = usePaymasterTransaction();
+  const [isTxLoading, setIsTxLoading] = useState(false);
 
   const isOwner =
     address &&
     collection?.owner &&
     address.toLowerCase() === collection.owner.toLowerCase();
 
-  const execute = async (
+  const runTx = async (
     calls: Array<{ contractAddress: string; entrypoint: string; calldata: string[] }>,
     successMsg: string
   ) => {
+    setIsTxLoading(true);
     try {
-      await executeAuto(calls);
+      await execute(calls);
       toast.success(successMsg);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Transaction failed");
+    } finally {
+      setIsTxLoading(false);
     }
   };
 
   const handleBatchAdd = (addresses: string[]) =>
-    execute(
+    runTx(
       [{
         contractAddress: contract,
         entrypoint: "batch_add_to_allowlist",
@@ -153,7 +155,7 @@ export default function PopManagePage({
     );
 
   const handleRemove = (addr: string) =>
-    execute(
+    runTx(
       [{ contractAddress: contract, entrypoint: "remove_from_allowlist", calldata: [addr] }],
       "Participant removed from allowlist"
     );

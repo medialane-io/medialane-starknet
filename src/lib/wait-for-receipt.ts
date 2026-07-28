@@ -2,8 +2,6 @@ import { starknetProvider } from "@/lib/starknet";
 
 /**
  * Wait for a tx to reach on-chain finality and detect reverts.
- * (Moved out of use-paymaster-transaction.ts so the wallet adapters and the
- * paymaster hook can share one copy without a circular import.)
  *
  * Returns:
  *  - `{ ok: true }` on confirmed success

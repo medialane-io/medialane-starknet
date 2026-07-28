@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { useDropInfo, useOnChainDropState } from "@/hooks/use-drops";
 import { starknetProvider } from "@/lib/starknet";
@@ -209,7 +208,7 @@ export default function DropManagePage({
   params: Promise<{ contract: string }>;
 }) {
   const { contract } = use(params);
-  const { isConnected, address: walletAddress } = useWallet();
+  const { isConnected, address: walletAddress, execute: walletExecute } = useWallet();
   const { dropInfo, isLoading: dropLoading } = useDropInfo(contract);
   const { state: dropState } = useOnChainDropState(contract);
   const {
@@ -217,7 +216,7 @@ export default function DropManagePage({
     isLoading: allowlistLoading,
     mutate: mutateAllowlist,
   } = useAllowlistEnabled(contract);
-  const { executeAuto, isLoading: isProcessing } = usePaymasterTransaction();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const isOwner =
     walletAddress &&
@@ -230,12 +229,15 @@ export default function DropManagePage({
     calls: Array<{ contractAddress: string; entrypoint: string; calldata: string[] }>,
     successMsg: string
   ) => {
+    setIsProcessing(true);
     try {
-      await executeAuto(calls);
+      await walletExecute(calls);
       toast.success(successMsg);
       mutateAllowlist();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Transaction failed");
+    } finally {
+      setIsProcessing(false);
     }
   };
 

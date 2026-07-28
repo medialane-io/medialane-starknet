@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
+import { useWallet } from "@/hooks/use-wallet";
 import { starknetProvider } from "@/lib/starknet";
 import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk/starknet";
 import { STARKNET_COLLECTION_721_CONTRACT } from "@/lib/constants";
@@ -47,7 +47,7 @@ export function TransferCollectionOwnershipDialog({
   const [done, setDone] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [transferredTo, setTransferredTo] = useState<string>("");
-  const { executeAuto } = usePaymasterTransaction();
+  const { execute } = useWallet();
 
   const trimmed = newOwner.trim();
   const isValid = /^0x[0-9a-fA-F]{1,64}$/.test(trimmed);
@@ -67,7 +67,7 @@ export function TransferCollectionOwnershipDialog({
         cairo.uint256(BigInt(collectionId)),
         trimmed,
       ]);
-      const hash = await executeAuto([call]);
+      const hash = await execute([call]);
       setTxHash(hash);
       setTransferredTo(trimmed);
       setDone(true);

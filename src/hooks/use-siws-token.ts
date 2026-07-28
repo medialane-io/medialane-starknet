@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useAccount } from "@starknet-react/core";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/use-wallet";
+import { useSigner } from "@/hooks/use-signer";
 import {
   getStoredSiwsToken,
   requestSiwsToken,
-  type SiwsSigner,
 } from "@/lib/siws-client";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export function useSiwsToken() {
-  const { account } = useAccount();
+  const account = useSigner();
   const { address: activeAddress } = useWallet();
   const [token, setToken] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -34,7 +33,7 @@ export function useSiwsToken() {
 
     // Injected `account` hydrates async and can be momentarily undefined while
     // connected; surface that as a retryable message instead of a silent null.
-    const signer = account as SiwsSigner | null;
+    const signer = account;
     if (!signer) {
       const message = "Your wallet isn't ready to sign yet — try again in a moment.";
       setError(message);

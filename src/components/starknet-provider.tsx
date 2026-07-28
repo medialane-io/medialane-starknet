@@ -1,14 +1,9 @@
 "use client";
 import { createContext, useCallback, useContext, useMemo } from "react";
 import { mainnet } from "@starknet-react/chains";
-import {
-  StarknetConfig,
-  avnuPaymasterProvider,
-  useInjectedConnectors,
-  voyager,
-} from "@starknet-react/core";
+import { StarknetConfig, voyager } from "@starknet-react/core";
+import { walletConnectors } from "@/lib/wallet-connectors";
 import { RpcProvider } from "starknet";
-import { idResolvedBraavos, idResolvedReady } from "@/lib/starknet-connectors";
 import { failoverFetch, RPC_PRIMARY_URL } from "@/lib/starknet";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -57,16 +52,6 @@ export const useNetwork = () => {
 
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
   const chains = useMemo(() => [mainnet], []);
-  const recommendedConnectors = useMemo(
-    () => [idResolvedReady(), idResolvedBraavos()],
-    [],
-  );
-
-  const { connectors } = useInjectedConnectors({
-    recommended: recommendedConnectors,
-    includeRecommended: "always",
-    order: "alphabetical",
-  });
 
   // Mainnet-only, identified by chain ("starknet"), not tier. When multichain
   // ships, add real chains here — never testnets.
@@ -89,13 +74,6 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
       new RpcProvider({ nodeUrl: RPC_PRIMARY_URL, baseFetch: failoverFetch }),
     [],
   );
-  const paymasterProvider = useMemo(
-    () => avnuPaymasterProvider({
-      apiKey: process.env.NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY,
-    }),
-    [],
-  );
-
   return (
     <NetworkContext.Provider value={{
       currentNetwork,
@@ -104,8 +82,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
       <StarknetConfig
         chains={chains}
         provider={providerFactory}
-        paymasterProvider={paymasterProvider}
-        connectors={connectors}
+        connectors={walletConnectors}
         explorer={voyager}
         queryClient={queryClient}
         defaultChainId={mainnet.id}

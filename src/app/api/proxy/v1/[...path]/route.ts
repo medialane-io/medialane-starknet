@@ -161,11 +161,15 @@ async function handle(
 
   // Forward response headers except hop-by-hop. Keep content-type, cache-
   // control, etc. Strip set-cookie — the backend never sets one for us;
-  // anything that appears would be a bug we don't want to surface.
+  // anything that appears would be a bug we don't want to surface. Also
+  // strip content-encoding: fetch() transparently decompresses a gzip/br
+  // body but leaves the original header in place, so forwarding it here
+  // labels an already-decoded body as still-encoded — the browser then
+  // fails to gunzip it a second time (ERR_CONTENT_DECODING_FAILED).
   const outHeaders = new Headers();
   for (const [k, v] of res.headers.entries()) {
     const key = k.toLowerCase();
-    if (HOP_BY_HOP_HEADERS.has(key) || key === "set-cookie") continue;
+    if (HOP_BY_HOP_HEADERS.has(key) || key === "set-cookie" || key === "content-encoding") continue;
     outHeaders.set(k, v);
   }
 

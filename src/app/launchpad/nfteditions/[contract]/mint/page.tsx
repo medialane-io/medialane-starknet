@@ -41,7 +41,6 @@ import {
   MintProgressDialog,
   type MintStep,
 } from "@/components/marketplace/mint-progress-dialog";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
@@ -150,8 +149,7 @@ export default function MintNFTEditionsPage() {
   const { contract: rawContract } = useParams<{ contract: string }>();
   const collectionAddress = normalizeAddress("STARKNET", rawContract ?? "");
 
-  const { isConnected, address: walletAddress } = useWallet();
-  const { executeAuto } = usePaymasterTransaction();
+  const { isConnected, address: walletAddress, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
@@ -330,7 +328,7 @@ export default function MintNFTEditionsPage() {
       const [valueLow, valueHigh] = encodeU256(BigInt(values.value));
 
       // The contract assigns the edition id on-chain (sequential from 1).
-      const txHashResult = await executeAuto([{
+      const txHashResult = await execute([{
         contractAddress: collectionAddress,
         entrypoint: "mint_edition",
         calldata: [
