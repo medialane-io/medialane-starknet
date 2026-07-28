@@ -7,8 +7,10 @@ import { Toaster, toast } from "sonner";
 import Link from "next/link";
 import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
-import { NavCommandMenu, NavBrandButton, NavAccountSheet } from "@medialane/ui";
+import { NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
+import { useCreatorProfile } from "@/hooks/use-profiles";
+import { resolveTokenImage } from "@/lib/utils";
 
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
@@ -26,7 +28,14 @@ function Shell({ children }: { children: React.ReactNode }) {
   // NAV_COMMANDS itself stays static and wallet-unaware (cheaper to construct,
   // no re-render coupling to wallet state) — only this one small group is
   // computed here, where wallet state actually lives.
-  const { isConnected, disconnect } = useWallet();
+  const pathname = usePathname();
+  const suppressAmbient =
+    pathname.startsWith("/asset/") ||
+    pathname.startsWith("/collections/") ||
+    pathname.startsWith("/creator/");
+  const { isConnected, disconnect, address } = useWallet();
+  const { profile } = useCreatorProfile(address ?? undefined);
+  const themeImageUrl = suppressAmbient ? null : resolveTokenImage(profile?.avatarImage);
   const { open: openConnectDialog } = useConnectDialog();
   const commands = useMemo<NavCommandGroup[]>(
     () => [
@@ -45,6 +54,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
+      <ThemeAmbientBackground imageUrl={themeImageUrl} />
       <NavCommandMenu commands={commands} footerSlot={<NavThemeToggle />} />
       <NavAccountSheet>
         <AccountPanel />
