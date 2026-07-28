@@ -41,10 +41,32 @@ import {
  */
 const method = (name: string) => ({ name, entrypoint: name });
 
+/**
+ * An `approve` policy without `spender`/`amount` renders in Cartridge's
+ * authorization screen with a $0 spending limit (confirmed against Cartridge's
+ * own docs — those two fields are what drive the "Spending Limit" review UI;
+ * `transfer` has no such fields/limit). A $0 limit doesn't fail the tx
+ * outright, but it forces a manual re-approval on every real approve() (any
+ * real listing/offer price exceeds it) — defeating the point of a pre-
+ * authorized session. Listing/offer prices are user-chosen and unbounded, so
+ * a fixed numeric cap would eventually block a legitimate high-price listing
+ * too; "*" (unlimited allowance to the marketplace contract itself, the
+ * standard session-marketplace pattern) is the correct choice here, one
+ * `approve` entry per marketplace contract since either can be the spender.
+ */
+const approvalMethod = (spender: string) => ({ name: "approve", entrypoint: "approve", spender, amount: "*" });
+
 const paymentTokenPolicies = Object.fromEntries(
   getListableTokens().map((t) => [
     t.address,
-    { description: `${t.symbol} token`, methods: [method("approve"), method("transfer")] },
+    {
+      description: `${t.symbol} token`,
+      methods: [
+        approvalMethod(STARKNET_MARKETPLACE_721_CONTRACT),
+        approvalMethod(STARKNET_MARKETPLACE_1155_CONTRACT),
+        method("transfer"),
+      ],
+    },
   ]),
 );
 
