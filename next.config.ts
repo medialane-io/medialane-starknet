@@ -1,27 +1,6 @@
 import type { NextConfig } from "next";
 
-// StarkZap v3 barrel-exports every provider (swap, bridge, confidential, solana
-// connect, …); each pulls an OPTIONAL peer dep (declared optional in starkzap's
-// peerDependenciesMeta). We only use wallet / erc20 / tx / staking / swap, so
-// stub the providers we don't touch.
-// (@avnu/avnu-sdk + starknet are hard deps and stay; Ekubo routing is on-chain.)
-const STARKZAP_UNUSED_OPTIONAL_MODULES = [
-  "@fatsolutions/tongo-sdk",       // confidential transfers (Tongo)
-  "@solana/web3.js",               // Solana cross-chain connect
-  "@hyperlane-xyz/registry",       // Hyperlane bridge
-  "@hyperlane-xyz/sdk",
-  "@hyperlane-xyz/utils",
-  "react-native-get-random-values", // RN-only shim
-  "fast-text-encoding",             // RN-only shim
-];
-
 const nextConfig: NextConfig = {
-  webpack(config) {
-    for (const mod of STARKZAP_UNUSED_OPTIONAL_MODULES) {
-      config.resolve.alias[mod] = false;
-    }
-    return config;
-  },
   images: {
     remotePatterns: [
       {

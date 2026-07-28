@@ -64,44 +64,30 @@ NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY    # AVNU API key — all tx types sponsored 
 
 ## Wallet System
 
-The app supports two wallet connection strategies, unified by a single
-active-wallet slot (`WalletProvider` + `useWallet()`):
+Single wallet rail: **injected browser wallets only** — Argent (Ready) and
+Braavos, via `@starknet-react/core` connectors configured in
+`src/lib/starknet-connectors.ts`. Everything below assumes this one rail.
 
-1. **Argent (Ready) / Braavos** — injected browser wallets via `@starknet-react/core` connectors, configured in `src/lib/starknet-connectors.ts`.
-2. **Cartridge Controller** — session-key gaming wallet via StarkZap SDK (`OnboardStrategy.Cartridge`). Auto-gasless, policies scoped via `CARTRIDGE_POLICIES` in `src/contexts/starkzap-wallet-context.tsx`.
-   - **Static targets are exhaustively whitelisted** as of PRs #20 + #24 (2026-05-26): MIP registry, ERC-1155 factory, marketplace ×2, POP factory, Drop factory, NFTComments, three airdrop mint contracts. Whenever a new (target, method) is invoked on a static-address contract, **add it to `CARTRIDGE_POLICIES`** — Cartridge session-keys reject any call outside the list.
-   - **Per-instance contracts are a structural gap**: per-collection NFT contracts (transfers, approves, mint_item), per-pop event contracts (claim), per-drop contracts (manage actions) all have dynamic addresses the static list cannot cover. Cartridge users hit "additional approval needed" prompts mid-flow for these. Three follow-up paths possible: route through registry wrappers (e.g. MIP `transfer_token`), add a runtime UX nudge, or use Cartridge SDK wildcard support if available.
-   - **Audit methodology**: `grep -rEo 'entrypoint:\s*"[a-zA-Z_]+"' src/ | awk -F'"' '{print $2}' | sort -u` lists every called entrypoint. Diff against `CARTRIDGE_POLICIES`. Anything called on a static-address contract but not in the list is a silent-failure bug.
-   - **Cartridge needs its own RPC config — never the app's Lava pin** (`getCartridgeStarkZapSdk()` in `src/lib/starkzap.ts`, fixed 2026-07-02). `@cartridge/controller`'s chain-detector only recognizes RPC URLs whose *path* contains `starknet`/`mainnet` (its own hosted-RPC convention, `https://api.cartridge.gg/x/starknet/mainnet`) — our reliable Lava endpoint (`https://rpc.starknet.lava.build`, root path, no such segment) throws `Chain ... not supported` the instant `connectCartridge()` forwards it in. This broke Cartridge connect entirely for ~4 weeks (since the `ddb6484` Lava-pin fix) before being caught — the raw RPC URL leaked into a user-facing error banner and was shared on the public Starknet Telegram. Fixed with a **second, Cartridge-only StarkZap SDK instance** on StarkZap's `network: "mainnet"` preset (which resolves to Cartridge's hosted RPC); the main Lava-pinned singleton (`getStarkZapSdk()`) is untouched and still used for every other read/write. If StarkZap ever exposes a per-call rpcUrl override on `connectCartridge()`, this dual-instance workaround can collapse back to one.
+**Cartridge Controller, the StarkZap SDK, Privy (email/social login), and
+`starknetkit` were all tried and fully removed** (Privy + starknetkit
+2026-07-26; Cartridge + StarkZap 2026-07-27). None of them ever reached a
+reliable, working state, and each added real structural cost: StarkZap bundled
+its own internal starknet v9 stack and pulled in optional Solana/Hyperlane/Tongo
+peers; Cartridge needed a second, dedicated RPC instance plus a hand-maintained
+per-contract policy whitelist; Privy dragged in ~2GB of unrelated
+react-native/WalletConnect dependency weight for EVM login methods this app
+never used. Don't reintroduce any of them without a concrete plan that avoids
+the same failure mode.
 
-**Privy (email/social login) was removed 2026-07-26** — it never produced a
-reliable connect experience (the OAuth popup was silently blocked by browsers
-in a way that surfaced only as a 20s timeout with no earlier feedback) and its
-SDK dragged in ~2GB of unrelated dependency weight (react-native/hermes, a
-full WalletConnect/Reown/wagmi/x402 chain for EVM login methods this app never
-used). If social login is revisited, it needs a fundamentally different
-integration (e.g. a provider whose popup doesn't race an async bundle load)
-rather than restoring this one. `starknetkit` was also removed the same day —
-it had zero real call sites (superseded by the shared `<ConnectWallet />`
-picker below) and was itself dragging in a second, version-conflicted copy of
-`@cartridge/controller` plus an unrelated three.js/react-spring chain.
-
-**Architecture — one active-wallet slot (redesigned 2026-06-07; spec:
-`docs/superpowers/specs/2026-06-07-wallet-layer-redesign-design.md`).** A single
-`WalletProvider` (`src/contexts/wallet-context.tsx`) owns one `ActiveWallet | null`
-slot, written **ONLY by an explicit user `connect(type)`**. There is NO priority
-referee — one slot, last-explicit-choice-wins by construction, so a background
-session cannot outrank the wallet the user is actually using. (This replaced the
-old `useWalletSession`/`useUnifiedWallet` "StarkZap > injected" priority that
-silently let a stale StarkZap session hijack an actively-connected injected
-wallet — the 2026-06-07 hijack incident, historically caused by Privy's silent
-background reconnect, since removed along with Privy itself.)
+**Architecture — one active-wallet slot** (`src/contexts/wallet-context.tsx`).
+`WalletProvider` owns one `ActiveWallet | null` slot, written **only** by an
+explicit user `connect(connector)`. There is no priority referee to reason
+about — one slot, last-explicit-choice-wins by construction.
 
 **`useWallet()` is the single hook** (`src/hooks/use-wallet.ts`): reads the slot →
-`{ address, isConnected, isConnecting, walletType, error, connect, disconnect,
-execute }`. Use it everywhere — identity AND execution. `connect(type, connector?)`
-is the only thing that writes the slot. (The old `useUnifiedWallet()`/`useWalletSession()`
-compat shims were removed 2026-07-11 — every call site uses `useWallet()` directly.)
+`{ address, isConnected, isConnecting, walletType, connect, disconnect,
+execute }`. Use it everywhere — identity AND execution. `connect(connector)`
+is the only thing that writes the slot.
 
 **Identity is decoupled from the account object.** The slot exists whenever
 `injectedConnected && injectedAddress` — NEVER gated on starknet-react's `account`
@@ -111,14 +97,12 @@ identity to `account` made the asset page read "disconnected" for an
 actively-connected wallet (fixed `95aadcb`).
 
 **Persistence + reconnect.** One key `localStorage["ml_wallet"]`
-(`argent|braavos|cartridge`) records the user's last explicit choice; only
-that wallet restores on reload.
-- **Injected**: `WalletProvider` owns a **retried** reconnect (~6s of
-  `connector.ready()` polling, keyed on `ml_wallet`). starknet-react's built-in
-  `autoConnect` is a single one-shot on mount and loses the race against async
-  `window.starknet_*` extension injection on fresh loads — never relied on alone
-  (fixed `276a714`).
-- **Cartridge**: silent `sdk.onboard({ strategy: Cartridge })` resume.
+(`argent|braavos`) records the user's last explicit choice; only that wallet
+restores on reload. `WalletProvider` owns a **retried** reconnect (~6s of
+`connector.ready()` polling, keyed on `ml_wallet`) — starknet-react's built-in
+`autoConnect` is a single one-shot on mount and loses the race against async
+`window.starknet_*` extension injection on fresh loads — never relied on alone
+(fixed `276a714`).
 
 **Connector hardening** (`src/lib/starknet-connectors.ts`): on an empty
 `accountsChanged` the injected connector silently re-verifies (`wallet_getPermissions`
@@ -130,40 +114,27 @@ that as a hard disconnect dropped live sessions.
 ```
 ThemeProvider
   └─ StarknetProvider     ← src/components/starknet-provider.tsx
-       └─ StarkZapWalletProvider  ← src/contexts/starkzap-wallet-context.tsx (Cartridge onboarding + active WalletInterface)
-            └─ WalletProvider     ← src/contexts/wallet-context.tsx (the active-wallet slot)
+       └─ WalletProvider  ← src/contexts/wallet-context.tsx (the active-wallet slot)
 ```
-`WalletProvider` is innermost so its injected adapter can read starknet-react's
-`useAccount()` and its StarkZap adapter the StarkZap context.
 
 **Key files**:
 - `src/contexts/wallet-context.tsx` — `WalletProvider` (the slot) + `useWalletContext()`
 - `src/hooks/use-wallet.ts` — `useWallet()`, the single public hook
+- `src/hooks/use-signer.ts` — `useSigner()`, resolves the connected `AccountInterface` for call sites that need to sign/execute directly rather than through `useWallet().execute()`
 - `src/lib/wallet-types.ts` — `ActiveWallet`/`WalletType` + `ml_wallet` persistence helpers
-- `src/lib/wallet-adapters.ts` — `makeInjectedExecute` / `makeStarkzapExecute`
+- `src/lib/wallet-adapters.ts` — `makeInjectedExecute`
 - `src/lib/wait-for-receipt.ts` — shared on-chain confirmation + revert detection
-- `src/contexts/starkzap-wallet-context.tsx` — StarkZap SDK onboarding + `useStarkZapWallet()` (Cartridge)
-- `src/lib/starkzap.ts` — SDK singleton (`getStarkZapSdk()`), token presets, staking config
 
-**StarkZap stays.** It is the modern, valued Starknet SDK powering Cartridge,
-swaps, DeFi, and Creator Coins. Fix wallet bugs by **removing complexity** (referees,
-redundant hooks, auto-reconnect machinery), NOT by removing/replacing the SDK.
 Clerk + ChipiPay belong to **medialane-io**, not this dapp.
 
-**Compat note**: StarkZap bundles starknet v9 internally; the app uses v8 via
-starknet-react. They coexist — share primitives (addresses, tx hashes, typed-data
-signatures as `string`/`string[]`) only; never mix Account objects across stacks.
+### Connect dialog — `<ConnectWallet />` is the single entry point
 
-### Connect dialog — `<ConnectWallet />` is the single entry point (2026-05-27)
+Every page and component that prompts the user to connect renders the shared `<ConnectWallet />` from `src/components/ConnectWallet.tsx`. It shows the two browser-wallet options (Ready / Braavos) and handles the injected connect flow internally. Accepts an optional `children` override for custom trigger content (a full card, not just an icon+label button) — used by `SignedOutAssetActions`; the connecting-state branch preserves whatever shape was passed in instead of collapsing to a generic icon.
 
-Every page and component that prompts the user to connect renders the shared `<ConnectWallet />` from `src/components/ConnectWallet.tsx`. It contains the three-card picker (Ready / Braavos / Cartridge) and handles both StarkZap (Cartridge) and injected (Ready / Braavos) connectors internally. Accepts an optional `children` override for custom trigger content (a full card, not just an icon+label button) — used by `SignedOutAssetActions`; the connecting-state branch preserves whatever shape was passed in instead of collapsing to a generic icon.
-
-- **`starknetkit` is gone (removed 2026-07-26) — never reintroduce it.** It had zero real call sites (its `useStarknetkitConnectModal` was already fully replaced by this shared picker months earlier) but was still dragging in a version-conflicted `@cartridge/controller` plus an unrelated three.js/react-spring chain. If Cartridge ever needs its peer bumped, do it via an explicit `@cartridge/controller` dependency (see `package.json`), not by reintroducing starknetkit.
 - **Pattern for "connect or block" UI**: render `<ConnectWallet label="Connect wallet" />` in the not-connected branch. For inline guards mid-flow (form submits, mint handlers), use `toast.error("Connect your wallet first")` and return — the persistent `<ConnectWallet />` button is still on the page.
 - **Ready / Argent connector** (`src/lib/starknet-connectors.ts`): `idResolvedReady()` constructs an `IdResolvedInjectedConnector("argentX", …, ["ready"])` — the alias list lets it discover extensions that expose under either id. The connector's external `id` stays `"argentX"` so backend `WalletType` attribution doesn't drift across the rebrand.
-- **Missing-extension UX** (fixed 2026-07-02): both connectors are always configured regardless of which extensions are actually installed, so clicking one with nothing installed was a guaranteed `ConnectorNotFoundError`. `ConnectWallet.tsx` now checks `connector.available()` (synchronous) at render time and shows an "Install {name}" link instead of a doomed button.
-- **Connect failures must reopen the dialog — but only the instance that started the connect.** `handleCartridgeConnect` used to close the dialog immediately and let the error land only in session state — with the dialog already closed, the user never saw it (reported as "the button does nothing, zero feedback"). A `useEffect` on `sessionError` reopens the dialog whenever a connect attempt fails, gated on a local `initiatedHereRef` (fixed 2026-07-26): `sessionError` is global (one shared wallet context), but a page can mount several `<ConnectWallet />` instances at once (e.g. a header icon plus an asset-page card) — without the gate, ANY instance would pop its full picker open on an error started by a totally different one.
-- **`getFriendlyWalletError` (`src/lib/wallet-error.ts`) must never leak a raw endpoint.** `looksTechnical()` flags any message containing `http(s)://` regardless of length — added 2026-07-02 after a raw `Chain https://rpc.starknet.lava.build/ not supported` message reached a user and got shared on the public Starknet Telegram. The final fallback message was also rewritten from a dead-end "Something went wrong" to an actionable one ("try again... try a different wallet or refresh the page").
+- **Missing-extension UX**: both connectors are always configured regardless of which extensions are actually installed, so clicking one with nothing installed was a guaranteed `ConnectorNotFoundError`. `ConnectWallet.tsx` checks `connector.available()` (synchronous) at render time and shows an "Install {name}" link instead of a doomed button.
+- **`getFriendlyWalletError` (`src/lib/wallet-error.ts`) must never leak a raw endpoint.** `looksTechnical()` flags any message containing `http(s)://` regardless of length — a raw RPC URL once reached a user in an error banner and was shared on the public Starknet Telegram. The final fallback message is actionable, not a dead-end "Something went wrong" ("try again... try a different wallet or refresh the page").
 
 ### Onboarding — `/v1/users/register` via the BFF proxy (2026-05-27 incident note)
 
@@ -186,15 +157,11 @@ Every page and component that prompts the user to connect renders the shared `<C
 - Buying a listing / accepting an offer: **unsigned** — `fulfill_order(orderHash[, quantity])`, no `signMessage`; approve + (fee) executed atomically via the paymaster
 - Cancellations: signed `{ order_hash, offerer }` (no nonce) → `cancel_order`
 - Execution stays on dapp's AVNU paymaster (`executeAuto`) + creators-fund fee splice.
-- **Signer/executor resolution**: the StarkZap wallet is **gated on the active-wallet slot**
-  before any `szWallet ?? account` fallback — `const szWallet = walletType === "cartridge" ?
-  szWalletRaw : null;` (the one implementation lives in `use-venue-signer.ts`; also applied
-  directly in `use-tx`, `use-siws-token`, `use-launch-coin`, and the sponsorship dialogs/pages,
-  which don't go through the venue). A bare `szWallet ?? account` priority let a lingering
-  Cartridge session sign/execute for a different wallet than the one the user explicitly
-  connected (and in `use-launch-coin` even split signer vs owner across rails). A
-  momentarily-`undefined` injected `account` surfaces a retryable error instead of crashing.
-  **Any new hook that resolves a signer/executor must use this slot-gated pattern.**
+- **Signer/executor resolution**: every hook resolves the connected `AccountInterface` via
+  `useSigner()` (`src/hooks/use-signer.ts`) — the one place that logic lives, used directly
+  by `use-venue-signer.ts`, `use-tx`, `use-siws-token`, `use-launch-coin`, and the sponsorship
+  dialogs/pages. A momentarily-`undefined` injected `account` surfaces a retryable error
+  instead of crashing.
 
 **Checkout totals — always via `orderTotal()` (`src/lib/checkout.ts`).** `order.consideration.startAmount` is the price **per edition** for ERC-1155 (the listing form labels it "Price per edition"); `fulfill_order` charges `price × quantity`. `orderTotal(order, quantity)` is the single source of truth for the ERC-20 amount to approve — never divide by `offer.startAmount`. `checkoutCart` takes a typed `CheckoutItem[]`; both call sites (`purchase-dialog`, `counter-offers-table`) build items through `orderTotal`. A prior bug under-approved ERC-1155 multi-buys by dividing by the edition count → `ERC20: insufficient allowance`.
 
@@ -233,17 +200,11 @@ shows a price to a wallet that has to pre-fund it.
 ## Performance architecture (2026-07-11 pass)
 
 First-load JS was cut ~30–57% on every key route (homepage 671→480 kB, marketplace
-676→484 kB, asset 817→523 kB, /mint & /br/mint ~1 MB→~437 kB). The mechanisms below
+676→484 kB, asset 817→523 kB, /mint ~1 MB→~437 kB). The mechanisms below
 are load-bearing — don't regress them:
 
 - **Lazy-loaded heavy modules — never re-add these as static imports:**
   - `PriceHistoryChart` (recharts) is `next/dynamic` in `asset-provenance-tab.tsx`.
-  - **StarkZap loads only inside `connectCartridge()`** (`starkzap-wallet-context.tsx`,
-    via `await import("starkzap")` + `import("@/lib/starkzap")`) — that callback covers
-    both explicit connect AND the silent resume-on-reload. Keeping StarkZap out of the
-    always-loaded provider chain is worth ~190 kB on every page; type-only imports from
-    `"starkzap"` are fine anywhere. (`use-swap`/`use-token-balance` import it statically
-    but live in route-level chunks — also fine.)
 - **ISR-seeded entry pages.** `/` (`revalidate 60`) and `/marketplace` (`revalidate 30`)
   are async RSCs: `fetchFeaturedCollections(3)` / `fetchActiveOrders(50)` from
   `src/lib/api-server.ts` seed the existing SWR hooks (`useCollections`'s trailing
@@ -290,9 +251,8 @@ the browser this way).
 The proxy is unauthenticated (no Clerk here) but guarded by a same-origin check +
 method allowlist.
 
-**⚠️ The dapp has FOUR RpcProviders — when a read fails, find which one the
-failing call uses** (the first three are documented in full at the top of
-`src/lib/starknet.ts`):
+**The dapp has THREE RpcProviders — when a read fails, find which one the
+failing call uses** (documented in full at the top of `src/lib/starknet.ts`):
 1. `starknetProvider` singleton (`src/lib/starknet.ts`) — direct `Contract`
    calls + `waitForTransaction` in **non-hook** contexts (launchpad
    drop/pop/editions, transfer-ownership, `use-tx`, `use-paymaster-transaction`),
@@ -301,25 +261,16 @@ failing call uses** (the first three are documented in full at the top of
    `useProvider()`/`useContract()` call, i.e. the whole marketplace flow
    (`use-marketplace.ts`: `get_counter`, `royalty_info`, approvals).
 3. The SDK client's `getProvider` (`@medialane/sdk` ≥ 0.28.0) — SDK-routed ops.
-4. **StarkZap's internal provider** (`lib/starkzap.ts`) — all wallet ops
-   (Cartridge connect, deploy, balances, staking). StarkZap bundles its
-   own starknet v9 and its `SDKConfig` exposes **no `baseFetch`/provider hook**,
-   so it **cannot use `failoverFetch`** — it's pinned to a single `rpcUrl`.
 
-Providers #1–#3 share one failover policy (#1 + #2 import `failoverFetch` from
+All three share one failover policy (#1 + #2 import `failoverFetch` from
 `lib/starknet`; #3 is internal to the SDK). **Never construct a bare
 `new RpcProvider({ nodeUrl })` without `baseFetch`.** The patch that fixed
 listings (`ab0f7e0`) was wiring `failoverFetch` into #2 — patching only #1 left
 the marketplace flow broken.
 
-**#4 (StarkZap) cannot fail over** — so it must be pinned to the *reliable*
-endpoint, NOT the capped Alchemy primary. It's set to `DEFAULT_RPC_URL` (Lava,
-spec 0.8.1) in `lib/starkzap.ts`. Giving it `NEXT_PUBLIC_RPC_URL` (Alchemy) made
-its `starknet_chainId` chain-match check hit the intermittent `-32001` with
-nothing to fall back to → "Connection failed" on wallet connect (fixed
-`ddb6484`). All wallet-connect errors now route through `getFriendlyWalletError`
-(`lib/wallet-error.ts`) at the set sites (`starkzap-wallet-context.tsx`,
-`ConnectWallet.tsx`, `nav-account-panel.tsx`): users see "Network busy — try again", the raw
+All wallet-connect errors route through `getFriendlyWalletError`
+(`lib/wallet-error.ts`) at the set sites (`ConnectWallet.tsx`,
+`nav-account-panel.tsx`, `wallet-context.tsx`): users see "Network busy — try again", the raw
 RPC blob is `console.error`-only.
 
 **Injected connect has a hard timeout — a hung extension must never freeze
@@ -370,12 +321,6 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
 
 **Rule**: always use `executeAuto` in new UI flows. Only use the explicit variants for advanced/override scenarios.
 
-## StarkZap Feature Hooks
-
-- `useTokenBalance(tokenKey, address)` — ERC20 balance for STRK/ETH/USDC/USDT
-- `useAllTokenBalances(address)` — all four balances in parallel
-- `useStaking(validatorAddress)` — STRK delegation: stake, exitIntent, exitPool, claimRewards
-
 ## Data Flow
 
 1. **IPFS/Pinata**: file uploads are SIWS-gated and go **straight to Pinata via signed URLs** — `/api/pinata/signed-url` accepts `{ kind: "image" | "document" }` (default image 10 MB; document 20 MB, pdf/doc/docx/txt/md/rtf/odt). Vercel 413s request bodies over ~4.5 MB, so never proxy file bytes through a route. Client helpers: `uploadFileToIpfs(file, token, kind)` / `uploadJsonToIpfs` (`src/lib/ipfs-upload-client.ts`), `makeUploadDocument(getValidToken)` (`src/lib/upload-document.ts` — the `IPTypeFields.uploadDocument` callback), and `uploadFailureToast` (`src/lib/upload-error.ts` — rejection-aware error messaging; a declined SIWS signature must say so, never a generic "upload failed"). Failed uploads must clear the image preview. Metadata JSON goes through `/api/pinata/json` (small bodies — direct proxy is fine).
@@ -388,21 +333,18 @@ All four methods **await on-chain confirmation** via `waitForReceipt(hash)` befo
 
 - `src/app/` — App Router pages/layouts. Key routes: `/marketplace`, `/launchpad`, `/create`, `/asset`, `/collections`, `/creator`, `/portfolio`, `/provenance`, `/licensing`, `/airdrop`, `/mint`
   - `/airdrop` (added 2026-05-20) — Creator's Airdrop **info** page (rewards, tiers, distribution phases, rules); uses `GenesisMint`. `/mint` is the separate, generic current-mint-event page. Two distinct pages — same airdrop content for now, intended to diverge. Do not couple them.
-  - `/br/mint` (Portuguese airdrop landing, 2026-05-28 trim; Privy removed 2026-07-26) — paid-ads entry point. Hero only above the fold (no badge, short headline "Participe do Airdrop", trust strip above the form, `<ConnectWallet />` when not connected, `GenesisMint` when connected). All detail sections collapsed behind a single `<details>` "Saiba mais sobre a campanha". Match this shape on any new locale-specific landing — adding inline sections kills conversion. Google Ads conversion `gtag` fires on mount; do not remove. **Content-rule tension**: this page has a strict no-crypto-jargon rule (its whole point was hiding wallet complexity behind Privy's email/Google login); with Privy gone, sign-in necessarily surfaces `ConnectWallet`'s own picker (Browser Wallets / Cartridge) once opened. Visible page copy avoids wallet language as much as possible — that's a structural limit of the shared component, not something page copy can route around.
   - `/` — Homepage (`src/components/home/`): hero slider, activity ticker, trending collections, new-on-marketplace, `CreatorAirdropBanner`, and the Launchpad `AirdropSection` service cards. At parity with medialane.io as of 2026-05-22. Kept deliberately lean for load speed — community/activity feeds live on the discover page, not the homepage.
 - `src/components/` — All UI components. `src/components/ui/` contains shadcn/ui base components
-- `src/contexts/` — React contexts (StarkZap wallet context)
+- `src/contexts/` — React contexts (`wallet-context.tsx`, the active-wallet slot)
 - `src/hooks/` — React hooks for contract interaction, data fetching, and state
   - `src/hooks/contracts/` — Low-level contract hooks
   - `src/hooks/use-paymaster-transaction.ts` — core paymaster hook
   - `src/hooks/use-paymaster-minting.ts` — sponsored minting
   - `src/hooks/use-paymaster-marketplace.ts` — sponsored marketplace ops
   - `src/hooks/use-token-balance.ts` — ERC20 balance reads
-  - `src/hooks/use-staking.ts` — STRK delegation staking
 - `src/lib/` — Shared utilities, types, and constants
   - `src/lib/types.ts` — Core types: `NFT`, `Collection`, `Asset`, `DisplayAsset`, `UserProfile`, `IPType`
   - `src/lib/constants.ts` — Contract addresses, supported tokens, block numbers, AVNU config
-  - `src/lib/starkzap.ts` — StarkZap SDK singleton and token presets
 - `src/abis/` — Starknet contract ABI files
 - `src/services/` — Service layer: Pinata config, licensing service
 - `src/types/` — Shared TypeScript types (paymaster, etc.)
@@ -571,7 +513,7 @@ profile arrives.
 
 ---
 
-## Creator Coin pages (added 2026-06-04; Coin/Collection split 2026-06-14, SDK 0.38; design + Ekubo-swap pass 2026-06-26)
+## Creator Coin pages (added 2026-06-04; Coin/Collection split 2026-06-14, SDK 0.38)
 
 A Creator Coin (and any `external-erc20`) is a **fungible `Coin`** — its **own model**, not a
 `Collection` (the 2026-06-14 split). It has no per-token `/asset/...` page and no `Token`/`Order`
@@ -597,23 +539,23 @@ rows. Coins are fetched from **`/v1/coins`** via the SDK's **`getCoins()` / `get
   early-returns `<CoinPageClient coin={coin} />`. NFT collections take the normal path.
 - **`collections/[chain]/[contract]/coin-page-client.tsx`** — `CoinPageClient({ coin }: { coin: ApiCoin })`:
   identity over the image-blur backdrop (same `AssetAtmosphere` settings: `opacity-30`, no tint),
-  a brand-gradient-`Panel` live-price card with the price in `text-brand-orange`, supply/market-cap
-  stats, and an embedded **buy-swap** (`CoinSwapCard`). Stats render only when they resolve (no
-  empty `—` boxes). Deliberately NO benefit-tile copy, NO holders, NO `font-mono` (Inter only);
+  a brand-gradient-`Panel` live-price card with the price in `text-brand-orange`, and supply/market-cap
+  stats (render only when they resolve — no empty `—` boxes). No embedded buy/swap widget — see the
+  swap note below. Deliberately NO benefit-tile copy, NO holders, NO `font-mono` (Inter only);
   primary actions use `btn-border-animated` + a solid `bg-brand-*` fill (never a static gradient
   fill / gradient-on-text). Creator chip from `coin.creator`; image from `coin.image`.
 - **`hooks/use-coin-supply.ts`** — reads the ERC-20 `total_supply()` on-chain (same provider/SWR
-  pattern as `use-coin-balance`) so Supply + Market Cap resolve for every coin, including external
+  pattern as `use-coin-price`) so Supply + Market Cap resolve for every coin, including external
   ERC-20s the backend doesn't index. Caller hides the stat if the read returns nothing.
-- **Swap engine — Ekubo via StarkZap v3 (NO AVNU).** `hooks/use-swap.ts` routes swaps directly on
-  Ekubo through StarkZap's `EkuboSwapProvider` (`getQuote` → `prepareSwap` returns approve+swap
-  `Call[]` → executed via the unified wallet/paymaster, so EVERY wallet type works). `starkzap` is
-  on **3.0.0**; its barrel pulls optional provider peers (Solana/Tongo/Hyperlane/RN shims) which
-  `next.config.ts` stubs via `resolve.alias = false`. Pay-with
-  token presets live in `utils/swap-tokens.ts` (renamed from `avnu-swap.ts` — all AVNU REST code
-  deleted). The standalone `/swap` page is an experiment; it and the coin page share `use-swap`.
-  **The AVNU *Paymaster* (gas sponsorship) is unrelated and still in use** — do not confuse it with
-  the removed AVNU *swap aggregator*.
+- **Swap removed (2026-07-27).** The coin page used to embed a buy/sell widget and there was a
+  standalone `/swap` page, both routing trades directly on Ekubo through the StarkZap SDK
+  (`hooks/use-swap.ts`). StarkZap never reached a reliable state and was removed entirely along
+  with that widget and the `/swap` route. `hooks/use-swap.ts` and `app/swap/swap-content.tsx` are
+  kept on disk (excluded from `tsconfig.json`, so they don't block `tsc`/the build) purely as a
+  reference for a future non-StarkZap rework — neither is wired into any route today. Token
+  formatting helpers (`formatTokenAmount`/`parseTokenAmount`/`SWAP_TOKENS` in
+  `utils/swap-tokens.ts`) are still live, shared with `use-coin-supply.ts`. **The AVNU *Paymaster*
+  (gas sponsorship) is unrelated and still in use** — don't confuse it with the removed swap engine.
 - **`hooks/use-coin-price.ts`** — `useCoinPrice(coin)`: SWR over `getCreatorCoinPrice(coin,
   starknetProvider)` (30s, read-only). Ekubo price math lives in `@medialane/sdk` — never
   reimplement. Uses the failover-covered `starknetProvider` singleton (RPC path #1).
@@ -676,11 +618,7 @@ unless/until that changes. Footers should say **"Free to publish/mint — no pla
 fee"** (true: Medialane doesn't charge a cut) — never "no gas fees" / "gas is free" /
 "gasless" / "sponsored", which are currently false and were removed from ~28 files
 across both apps in this pass (`getFriendlyWalletError` in `src/lib/wallet-error.ts`
-also got hardened the same session — see its own header comment). Cartridge
-"gasless" claims are equally false: its StarkZap-routed sponsorship depends on the
-exact same `NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY` (`isStarkZapSponsorshipEnabled()` in
-`src/lib/starkzap.ts`), not a separate always-on mechanism — don't reintroduce those
-claims either.
+also got hardened the same session — see its own header comment).
 
 **Applied to:** all claims (`/launchpad/memecoin` + `ClaimCollectionPanel`),
 `/launchpad/single-editions{,/collection}`, `/launchpad/nfteditions/{create,[contract]/mint}`,
@@ -819,7 +757,7 @@ Spec: `medialane-core/docs/specs/2026-07-04-rewards-2.0-design.md`.
 - Token IDs are represented as `bigint` in contract calls and decoded as `u256` (low + high << 128)
 - All contract calls that modify state go through `executeAuto` (paymaster) or `account.execute()` — never call contracts directly in server code
 - New transaction flows should default to `executeAuto` from `usePaymasterTransaction` or the feature-specific paymaster hook
-- **Wallet**: `useWallet()` is the single hook for everything — `{ address, isConnected, isConnecting, walletType, error, connect, disconnect, execute }`.
+- **Wallet**: `useWallet()` is the single hook for everything — `{ address, isConnected, isConnecting, walletType, connect, disconnect, execute }`.
 - **Page layout**: top-level pages wrap content in `<PageContainer className="box-border max-w-full pt-20 …">` from `@medialane/ui` (full-width, content aligns with the logo) — do NOT use Tailwind's `container` (it caps width + centers → mismatched side gutters). `pt-20` clears the fixed logo/nav. Asset pages use `mx-auto w-full px-4 sm:px-6 lg:px-8` (full-width without PageContainer).
 - **No hover-only effects** on cards/grids (scale, lift-shadow, color-shift) — most users are on mobile where hover doesn't exist. Keep `active:` (touch) states; reserve `hover:` for non-essential desktop polish only.
 - **Token images go through `resolveTokenImage` (`src/lib/utils.ts`), not raw `ipfsToHttp`.** It returns a browser-loadable URL or `null` (so the UI shows its own fallback, never the `/placeholder.svg` sentinel), and is **idempotent** (already-resolved/proxied URLs pass through). The marketplace dialogs that take a `tokenImage` prop (`listing`/`transfer`/`offer`/`counter-offer`) **resolve it internally** — so callers pass the **raw** `token.metadata?.image` and never repeat `x ? ipfsToHttp(x) : null`. (Forgetting that incantation is what dropped the image in the portfolio/collection dialogs, 2026-06-27.)

@@ -20,7 +20,7 @@ Deploy and manage tokenized IP assets on-chain:
 - **IP Sponsorship** — sell a direct-settlement sponsorship license on an asset you own, no escrow
 
 ### Coins
-Discover creator coins and memecoins (`/coins`) and trade them on a built-in swap routed **directly on Ekubo** (no aggregator middleman) — quotes + execution via the StarkZap SDK, gas sponsored, non-custodial.
+Discover creator coins and memecoins (`/coins`) — live spot price read directly from each coin's Ekubo pool, non-custodial.
 
 ### NFT Marketplace
 The high-integrity exchange for all tokenized creator assets:
@@ -61,13 +61,11 @@ Gas fees are sponsored for all users via the AVNU Paymaster.
 | Blockchain | Starknet Mainnet |
 | RPC | Alchemy |
 | Wallet — Browser | Argent (Ready) / Braavos via `@starknet-react/core` |
-| Wallet — Gaming | Cartridge Controller (session keys, auto-gasless) |
-| Wallet SDK | StarkZap |
 | Gasless Transactions | AVNU Paymaster |
 | IP Tokenization | Mediolano Protocol (zero-fee) |
 | Marketplace Protocol | Medialane Protocol (SNIP-12 signed orders) |
 | Backend API | medialane-backend via `@medialane/sdk` |
-| Shared UI | `@medialane/ui` v0.4.0 |
+| Shared UI | `@medialane/ui` |
 | Styling | Tailwind CSS + shadcn/ui |
 | IPFS | Pinata |
 | Deployment | Vercel (autodeploy on push to main) |
@@ -76,14 +74,9 @@ Gas fees are sponsored for all users via the AVNU Paymaster.
 
 ## Wallet System
 
-Both strategies are unified under `useWallet()` — one hook, one interface:
-
-| Strategy | Best for | Gas |
-|---|---|---|
-| **Argent (Ready) / Braavos** | Existing Starknet users | Sponsored via AVNU |
-| **Cartridge Controller** | Gamers, power users | Auto-gasless (session keys) |
-
-No Clerk. No ChipiPay. Disconnect: `const { disconnect } = useWallet()`.
+Injected browser wallets (Argent/Ready, Braavos) via `@starknet-react/core`, unified under a
+single hook: `useWallet()` — `{ address, isConnected, isConnecting, walletType, connect,
+disconnect, execute }`. Gas is sponsored via the AVNU Paymaster.
 
 ---
 
@@ -237,8 +230,6 @@ npm run lint         # ESLint
 4. Cancellations: signed off-chain → `cancel_order`
 
 **AVNU Paymaster** — All transactions attempt sponsored execution first (`executeAuto`), falling back silently if AVNU rejects. Users never need ETH/STRK.
-
-**StarkZap SDK** — Abstracts Cartridge Controller (session keys). Transaction monitoring, ERC20 balances, and STRK staking all powered by StarkZap.
 
 ---
 

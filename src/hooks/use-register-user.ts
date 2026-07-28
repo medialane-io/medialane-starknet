@@ -7,7 +7,7 @@ import { getMedialaneClient } from "@/lib/medialane-client";
 // Identity.provider (lowercased, never gated — 07-identity §II). Send it
 // directly; no enum mapping. `null` is omitted and the backend records "unknown".
 type FrontendWalletType =
-  | "argent" | "braavos" | "injected" | "cartridge" | null;
+  | "argent" | "braavos" | "injected" | null;
 
 const SESSION_KEY_PREFIX = "ml_registered_";
 

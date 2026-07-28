@@ -30,7 +30,7 @@ export function SignedOutAssetActions({ chain, contract, tokenId }: SignedOutAss
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold leading-snug">Use your Starknet wallet</p>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            Connect Ready, Braavos, or Cartridge to trade non-custodially.
+            Connect your wallet to trade non-custodially.
           </p>
         </div>
       </ConnectWallet>

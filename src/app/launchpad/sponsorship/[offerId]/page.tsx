@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { useAccount } from "@starknet-react/core";
-import { type AccountInterface } from "starknet";
 import { Handshake, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +10,7 @@ import { ServiceHeader } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
+import { useSigner } from "@/hooks/use-signer";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { useToken } from "@/hooks/use-tokens";
 import { getMedialaneClient } from "@/lib/medialane-client";
@@ -25,11 +23,8 @@ export default function SponsorshipOfferPage() {
   const params = useParams();
   const offerId = typeof params.offerId === "string" ? params.offerId : null;
 
-  const { account } = useAccount();
-  const { wallet: szWalletRaw } = useCartridgeWallet();
-  const { walletType, address: activeAddress, isConnected } = useWallet();
-  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
-  const signer = (szWallet ?? account) as AccountInterface | undefined;
+  const signer = useSigner();
+  const { address: activeAddress, isConnected } = useWallet();
 
   const { offer, isLoading: offerLoading, mutate: mutateOffer } = useSponsorshipOffer(offerId);
   const { bids, isLoading: bidsLoading, mutate: mutateBids } = useSponsorshipBids(offerId);

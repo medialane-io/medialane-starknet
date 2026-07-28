@@ -1,9 +1,8 @@
 /**
  * Swap token presets + amount formatting helpers.
  *
- * Quote tokens a user can pay with on the coin swap. Routing/execution is
- * handled by StarkZap's Ekubo provider (see `use-swap.ts`) — there is no AVNU
- * aggregator and no REST layer here anymore; this file is pure token metadata.
+ * Token metadata + bigint amount formatting shared across coin-related
+ * balance/price reads. Pure utilities — no wallet or swap-engine dependency.
  */
 
 import { getTokenBySymbol } from "@medialane/sdk";

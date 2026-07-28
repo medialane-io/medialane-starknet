@@ -1,7 +1,6 @@
 "use client";
 
 import type { Call } from "starknet";
-import type { Connector } from "@starknet-react/core";
 import { useWalletContext } from "@/contexts/wallet-context";
 import type { WalletType } from "@/lib/wallet-types";
 
@@ -14,7 +13,7 @@ import type { WalletType } from "@/lib/wallet-types";
  * the provider exposes).
  */
 export function useWallet() {
-  const { active, isConnecting, error, connect, disconnect } = useWalletContext();
+  const { active, isConnecting, connect, disconnect } = useWalletContext();
 
   const execute = async (calls: Call[]): Promise<string> => {
     if (!active) throw new Error("Wallet not connected");
@@ -26,8 +25,7 @@ export function useWallet() {
     isConnected: active !== null,
     isConnecting,
     walletType: (active?.type ?? null) as WalletType | null,
-    error,
-    connect: (type: WalletType, connector?: Connector) => connect(type, connector),
+    connect,
     disconnect,
     execute,
   };

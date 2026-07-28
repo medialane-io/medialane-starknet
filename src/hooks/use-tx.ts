@@ -1,8 +1,7 @@
 "use client";
 /**
- * Transaction execution adapter for connected wallets. Injected wallets execute
- * directly through account.execute(); StarkZap Cartridge wallets use their
- * session wallet execution.
+ * Transaction execution adapter for connected (injected) wallets, executing
+ * directly through account.execute().
  *
  * Status progression:
  *   idle → submitting → confirming → confirmed (success path)
@@ -29,8 +28,6 @@
 import { useState, useCallback } from "react";
 import type { Call } from "starknet";
 import { useAccount } from "@starknet-react/core";
-import { useWallet } from "@/hooks/use-wallet";
-import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
 import { starknetProvider } from "@/lib/starknet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 
@@ -45,11 +42,6 @@ export type TxStatus =
 
 export function useTx() {
   const { account } = useAccount();
-  // Gate the StarkZap wallet on the active-wallet slot — a lingering
-  // Cartridge session must not execute for an injected user.
-  const { wallet: szWalletRaw } = useCartridgeWallet();
-  const { walletType } = useWallet();
-  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
 
   const [status, setStatus] = useState<TxStatus>("idle");
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -61,19 +53,12 @@ export function useTx() {
     setStatusMessage("Submitting transaction…");
     setError(null);
     try {
-      let hash: string;
-
-      // StarkZap (Cartridge) manages gas via session keys
-      if (szWallet) {
-        const tx = await szWallet.execute(calls);
-        hash = tx.hash;
-      } else if (!account) {
+      if (!account) {
         throw new Error("Wallet not connected");
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tx = await account.execute(calls as any);
-        hash = tx.transaction_hash;
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tx = await account.execute(calls as any);
+      const hash = tx.transaction_hash;
 
       // Submission succeeded — now wait for on-chain finality. Without this
       // step the hook used to return "confirmed" the moment the wallet
@@ -133,7 +118,7 @@ export function useTx() {
       setStatusMessage(msg);
       return null;
     }
-  }, [account, szWallet]);
+  }, [account]);
 
   const reset = useCallback(() => {
     setStatus("idle");

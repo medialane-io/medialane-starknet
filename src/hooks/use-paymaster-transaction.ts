@@ -68,8 +68,7 @@ export interface UsePaymasterTransactionResult {
 
 export function usePaymasterTransaction(): UsePaymasterTransactionResult {
   const { account, address } = useAccount();
-  // Active wallet slot — owns execution routing (injected vs StarkZap), so
-  // executeAuto no longer decides via an `if (szWallet)` branch.
+  // Active wallet slot owns execution routing for executeAuto below.
   const { active } = useWalletContext();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -119,8 +118,6 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
 
       try {
         const transactionHash = await executeGaslessCalls(
-          // starkzap uses starknet v9 Account internally; medialane uses v8.
-          // The Account object from starknet-react satisfies the same interface.
           account as any, // eslint-disable-line @typescript-eslint/no-explicit-any
           calls,
           { gasTokenAddress, maxGasTokenAmount }
@@ -188,9 +185,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
 
   const executeAuto = useCallback(
     async (calls: Call[]): Promise<string | null> => {
-      // Routing lives in the active-wallet slot — injected executes through the
-      // AVNU paymaster, StarkZap (Cartridge) through its own session keys.
-      // executeAuto just delegates; no more `if (szWallet)` priority branch.
+      // Routing lives in the active-wallet slot — executeAuto just delegates.
       if (!active) {
         setError("Wallet not connected");
         return null;

@@ -3,8 +3,7 @@
 import React, { createContext, useContext, useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
-import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
-import { makeInjectedExecute, makeStarkzapExecute } from "@/lib/wallet-adapters";
+import { makeInjectedExecute } from "@/lib/wallet-adapters";
 import { withTimeout } from "@/lib/wallet-error";
 import { getConnectorDisplayName } from "@/lib/starknet-connectors";
 import {
@@ -28,8 +27,7 @@ const INJECTED_RECONNECT_PROBE_TIMEOUT_MS = 3_000;
 interface WalletContextValue {
   active: ActiveWallet | null;
   isConnecting: boolean;
-  error: string | null;
-  connect: (type: WalletType, connector?: Connector) => Promise<void>;
+  connect: (connector: Connector) => Promise<void>;
   disconnect: () => void;
 }
 
@@ -49,17 +47,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { disconnect: injectedDisconnect } = useDisconnect();
   const injectedConnected = injectedConnectedRaw ?? false;
 
-  // StarkZap (Cartridge) — onboarding + the active WalletInterface.
-  const {
-    wallet: szWallet,
-    walletType: szType,
-    address: szAddress,
-    isConnecting: szConnecting,
-    error: szError,
-    connectCartridge,
-    disconnect: szDisconnect,
-  } = useCartridgeWallet();
-
   const injectedType: WalletType = useMemo(() => {
     const id = injectedConnector?.id?.toLowerCase();
     if (id === "argentx" || id === "argent") return "argent";
@@ -67,9 +54,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return "injected";
   }, [injectedConnector]);
 
-  // The slot. StarkZap is active ONLY because the user explicitly chose it (its
-  // session is set exclusively by connectCartridge + persisted ml_wallet);
-  // there is no background path that sets szWallet anymore.
+  // The slot. Injected (Argent/Braavos) only.
   //
   // IDENTITY (slot existence) depends only on connected + address — NEVER on the
   // starknet-react `account` object, which can be momentarily undefined while
@@ -78,9 +63,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   // for an actively-connected injected wallet. The account is resolved lazily at
   // execute() time instead.
   const active: ActiveWallet | null = useMemo(() => {
-    if (szWallet && szAddress && szType === "cartridge") {
-      return { type: szType, address: szAddress, execute: makeStarkzapExecute(szWallet) };
-    }
     if (injectedConnected && injectedAddress) {
       return {
         type: injectedType,
@@ -94,7 +76,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       };
     }
     return null;
-  }, [szWallet, szAddress, szType, injectedConnected, injectedAddress, injectedAccount, injectedType]);
+  }, [injectedConnected, injectedAddress, injectedAccount, injectedType]);
 
   // True while our manual injected-reconnect retry loop (below) is running. The
   // loop is bounded (~6s), so this can never stick on. Folding it into
@@ -104,7 +86,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [reconnecting, setReconnecting] = useState(false);
 
   const isConnecting =
-    szConnecting ||
     injectedStatus === "connecting" ||
     injectedStatus === "reconnecting" ||
     reconnecting;
@@ -121,15 +102,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   // permission is still granted, so this never prompts.
   const liveConnectedRef = useRef(injectedConnected);
   liveConnectedRef.current = injectedConnected;
-  const liveSzRef = useRef(Boolean(szWallet));
-  liveSzRef.current = Boolean(szWallet);
   const reconnectRan = useRef(false);
 
   useEffect(() => {
     if (reconnectRan.current) return;
     const persisted = readPersistedWallet();
     if (persisted !== "argent" && persisted !== "braavos") return;
-    if (liveConnectedRef.current || liveSzRef.current) return;
+    if (liveConnectedRef.current) return;
     reconnectRan.current = true;
     setReconnecting(true);
 
@@ -142,7 +121,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       await new Promise((r) => setTimeout(r, 500));
       // Up to ~6s of retries (15 × 400ms) to outlast slow extension injection.
       for (let i = 0; i < 15 && !cancelled; i++) {
-        if (liveConnectedRef.current || liveSzRef.current) { setReconnecting(false); return; }
+        if (liveConnectedRef.current) { setReconnecting(false); return; }
         const connector = connectors.find((c) => c.id === targetId);
         if (connector) {
           try {
@@ -180,13 +159,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [connectors]);
 
   const connect = useCallback(
-    async (type: WalletType, connector?: Connector) => {
-      if (type === "cartridge") {
-        await connectCartridge();
-        return;
-      }
-      // injected: explicit pick supersedes any StarkZap session.
-      if (!connector) throw new Error("Injected connect requires a connector");
+    async (connector: Connector) => {
       // Injected wallets talk over window.postMessage / a content script — if
       // the extension itself is stuck (crashed background worker, a wedged
       // connection), connectAsync can hang forever with no error and no
@@ -197,28 +170,21 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         INJECTED_CONNECT_TIMEOUT_MS,
         getConnectorDisplayName(connector.id, connector.name ?? "Your wallet"),
       );
-      // Retire any active/stale StarkZap session so it can't outrank or
-      // silently restore over the wallet the user just picked.
-      szDisconnect(); // also clears ml_wallet
       // Persist the injected choice as the restore target.
       const id = connector.id.toLowerCase();
       writePersistedWallet(id === "braavos" ? "braavos" : "argent");
     },
-    [connectCartridge, connectAsync, szDisconnect],
+    [connectAsync],
   );
 
   const disconnect = useCallback(() => {
-    if (active?.type === "cartridge") {
-      szDisconnect();
-    } else {
-      injectedDisconnect();
-    }
+    injectedDisconnect();
     clearPersistedWallet();
-  }, [active, szDisconnect, injectedDisconnect]);
+  }, [injectedDisconnect]);
 
   const value = useMemo<WalletContextValue>(
-    () => ({ active, isConnecting, error: szError, connect, disconnect }),
-    [active, isConnecting, szError, connect, disconnect],
+    () => ({ active, isConnecting, connect, disconnect }),
+    [active, isConnecting, connect, disconnect],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
@@ -230,7 +196,6 @@ export function useWalletContext(): WalletContextValue {
     return {
       active: null,
       isConnecting: false,
-      error: null,
       connect: async () => {},
       disconnect: () => {},
     };

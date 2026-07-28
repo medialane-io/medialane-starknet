@@ -162,7 +162,7 @@ export function MintContent() {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                    Use Ready, Braavos, or Cartridge — Cartridge sets up a wallet for you in seconds, no seed phrase required.
+                    Use your Starknet wallet.
                   </p>
                 </div>
               </div>

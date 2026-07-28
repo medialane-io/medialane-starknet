@@ -11,10 +11,6 @@ export const metadata: Metadata = {
     "Claim your participation record and join the Medialane Creator's Airdrop. Free for everyone — no approval, no fees. Eligible for every community fund distribution.",
   alternates: {
     canonical: "https://starknet.medialane.io/mint",
-    languages: {
-      "en-US": "https://starknet.medialane.io/mint",
-      "pt-BR": "https://starknet.medialane.io/br/mint",
-    },
   },
   openGraph: {
     title: "Creator's Airdrop — Medialane",

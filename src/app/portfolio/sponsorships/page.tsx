@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useAccount } from "@starknet-react/core";
-import { type AccountInterface } from "starknet";
 import { CheckCircle2, Handshake, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
+import { useSigner } from "@/hooks/use-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import {
   useSponsorshipProposals, useSponsorshipOffers, useSponsorshipBids, useSponsorshipLicenses,
@@ -18,17 +16,9 @@ import {
 import { assetHref } from "@/lib/routes";
 import { toast } from "sonner";
 
-function useSigner() {
-  const { account } = useAccount();
-  const { wallet: szWalletRaw } = useCartridgeWallet();
-  const { walletType, address } = useWallet();
-  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
-  return { signer: (szWallet ?? account) as AccountInterface | undefined, address };
-}
-
 function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
   const { bids, isLoading, mutate } = useSponsorshipBids(offer.offerId);
-  const { signer } = useSigner();
+  const signer = useSigner();
   const [activeSponsor, setActiveSponsor] = useState<string | null>(null);
 
   const acceptBid = async (sponsor: string) => {
@@ -66,7 +56,7 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
 
 function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) {
   const { proposals, isLoading, mutate } = useSponsorshipProposals({ owner: walletAddress, open: true });
-  const { signer } = useSigner();
+  const signer = useSigner();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const respond = async (proposalId: string, action: "acceptProposal" | "rejectProposal") => {
@@ -114,7 +104,7 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
 
 function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
   const { proposals, isLoading, mutate } = useSponsorshipProposals({ proposer: walletAddress, open: true });
-  const { signer } = useSigner();
+  const signer = useSigner();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const withdraw = async (proposalId: string) => {

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useAccount } from "@starknet-react/core";
 import { type AccountInterface } from "starknet";
 import { Handshake, Loader2, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, toDurationDays, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCartridgeWallet } from "@/contexts/cartridge-wallet-context";
+import { useSigner } from "@/hooks/use-signer";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
@@ -78,11 +77,8 @@ async function pinLicenseTerms(terms: SponsorshipTerms, siwsToken: string): Prom
 }
 
 export default function CreateSponsorshipPage() {
-  const { account } = useAccount();
-  const { wallet: szWalletRaw } = useCartridgeWallet();
-  const { walletType, address: activeAddress } = useWallet();
-  const szWallet = walletType === "cartridge" ? szWalletRaw : null;
-  const signer = (szWallet ?? account) as AccountInterface | undefined;
+  const signer = useSigner();
+  const { address: activeAddress } = useWallet();
   const { getValidToken } = useSiwsToken();
 
   const [mode, setMode] = useState<Mode>("propose");

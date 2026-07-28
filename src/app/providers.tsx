@@ -10,10 +10,10 @@ import { NotificationSpotlight } from "@/components/shared/notification-spotligh
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
 import { NavAccountPanel } from "@/components/nav-account-panel";
+import { HeaderWalletTrigger } from "@/components/nav-wallet-trigger";
 import { NavThemeToggle } from "@/components/nav-theme-toggle";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
-import { CartridgeWalletProvider } from "@/contexts/cartridge-wallet-context";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
 
@@ -23,6 +23,9 @@ function Shell({ children }: { children: React.ReactNode }) {
       <NavCommandMenu commands={NAV_COMMANDS} accountSlot={<NavAccountPanel />} footerSlot={<NavThemeToggle />} />
       <div className="fixed top-4 left-4 sm:left-6 lg:left-8 z-50">
         <NavBrandButton />
+      </div>
+      <div className="fixed top-4 right-4 sm:right-6 lg:right-8 z-50">
+        <HeaderWalletTrigger />
       </div>
       <main className="min-w-0 flex-1 bg-background overflow-x-hidden">{children}</main>
       <footer className="bg-background border-t border-border/60 px-6 py-8 mt-auto">
@@ -49,8 +52,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isStandalone =
     pathname === "/mint" ||
-    pathname === "/airdrop" ||
-    pathname.startsWith("/br/");
+    pathname === "/airdrop";
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
@@ -69,8 +71,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         }}
       >
         <StarknetProvider>
-          <CartridgeWalletProvider>
-            <WalletProvider>
+          <WalletProvider>
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
             {!isStandalone && <NotificationSpotlight />}
@@ -89,8 +90,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 },
               }}
             />
-            </WalletProvider>
-          </CartridgeWalletProvider>
+          </WalletProvider>
         </StarknetProvider>
       </SWRConfig>
     </ThemeProvider>

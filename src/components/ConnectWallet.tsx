@@ -35,7 +35,6 @@ import {
   Box,
   Rocket,
   ArrowRightLeft,
-  Gamepad2,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -45,7 +44,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/hooks/use-wallet";
-import type { WalletSessionType } from "@/lib/wallet-session";
+import type { WalletType } from "@/lib/wallet-types";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { getConnectorDisplayName } from "@/lib/starknet-connectors";
 
@@ -78,16 +77,8 @@ type WalletBadgeInfo = {
 };
 
 function getWalletBadge(
-  walletType: WalletSessionType | null
+  walletType: WalletType | null
 ): WalletBadgeInfo | null {
-  if (walletType === "cartridge") {
-    return {
-      label: "Cartridge",
-      icon: <Gamepad2 className="h-3 w-3" />,
-      className: "border-brand-purple/30 text-brand-purple bg-brand-purple/5",
-      hint: "Instant setup",
-    };
-  }
   // argent / braavos are injected browser wallets — same badge as a generic
   // injected connection. (Argent rebranded to "Ready"; "argent" here is the
   // technical wallet-type id, not a user-facing label — the label stays generic.)
@@ -114,9 +105,19 @@ interface ConnectWalletProps {
   className?: string;
   /** Overrides the default icon+label trigger content (not-connected state only). */
   children?: React.ReactNode;
+  /**
+   * Replaces the entire clickable trigger element, in BOTH the connected and
+   * not-connected states — for a caller that owns its own trigger visual
+   * across both states (e.g. a header component that already knows whether
+   * a wallet is connected). Unlike `children`, this is not nested inside the
+   * default `<Button>` — it receives the connect-dialog's `onClick` directly
+   * (not-connected) or is passed straight to `SheetTrigger asChild`
+   * (connected), so it renders as-is.
+   */
+  trigger?: React.ReactElement<{ onClick?: () => void }>;
 }
 
-export function ConnectWallet({ label, className, children }: ConnectWalletProps = {}) {
+export function ConnectWallet({ label, className, children, trigger }: ConnectWalletProps = {}) {
   const { connectors } = useConnect();
   const { isConnected: injectedConnected, chainId } = useAccount();
   const [open, setOpen] = useState(false);
@@ -128,7 +129,6 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
     isConnected,
     isConnecting: sessionConnecting,
     walletType: activeWalletType,
-    error: sessionError,
     connect,
     disconnect,
   } = useWallet();
@@ -137,45 +137,19 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
   // Unified state
   // ---------------------------------------------------------------------------
 
-  const hasStarkZap = activeWalletType === "cartridge";
-
   const isWrongNetwork =
     injectedConnected &&
-    !hasStarkZap &&
     chainId &&
     BigInt(chainId).toString() !== networkConfig.chainId;
 
   const badge = getWalletBadge(activeWalletType);
 
-  // See the sessionError-reopen effect below for why this exists.
-  const initiatedHereRef = useRef(false);
-
   // Auto-close connect dialog when wallet connects
   useEffect(() => {
     if (isConnected && address) {
       setConnectDialogOpen(false);
-      initiatedHereRef.current = false;
     }
   }, [isConnected, address]);
-
-  // Cartridge connect failures happen asynchronously (a remote SDK call)
-  // after the dialog has already closed — without this the error is only
-  // recorded in session state and never actually seen, which reads as "the
-  // button does nothing" (reported 2026-07-02). Reopen so the sessionError
-  // banner below is visible whenever a connect attempt fails.
-  //
-  // `sessionError` is global (one shared wallet context), but a page can
-  // mount several `<ConnectWallet>` instances at once — gate the reopen on
-  // `initiatedHereRef` so only the instance the user actually clicked (e.g.
-  // NOT this one, if the user instead used the nav menu's own picker) pops
-  // its dialog back open. Otherwise an unrelated connect attempt started
-  // elsewhere on the page hijacks the screen with the full wallet picker.
-  useEffect(() => {
-    if (sessionError && !isConnected && initiatedHereRef.current) {
-      initiatedHereRef.current = false;
-      setConnectDialogOpen(true);
-    }
-  }, [sessionError, isConnected]);
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -192,11 +166,8 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
     // here for the injected path.
     setInjectedConnectingId(connector.id);
     try {
-      // connect() writes the single active-wallet slot, persists ml_wallet, and
-      // retires any active/stale StarkZap session so it can't outrank or
-      // silently restore over the wallet the user just picked.
-      const type = connector.id.toLowerCase() === "braavos" ? "braavos" : "argent";
-      await connect(type, connector);
+      // connect() writes the single active-wallet slot and persists ml_wallet.
+      await connect(connector);
     } catch (err) {
       console.error("Failed to connect wallet", err);
       const friendly = getFriendlyWalletError(err);
@@ -208,17 +179,6 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
       setConnectDialogOpen(true);
     } finally {
       setInjectedConnectingId(null);
-    }
-  };
-
-  const handleCartridgeConnect = async () => {
-    initiatedHereRef.current = true;
-    setConnectDialogOpen(false);
-    try {
-      await connect("cartridge");
-    } catch {
-      // error surfaced via session state — the sessionError effect reopens
-      // the dialog so the banner is actually visible.
     }
   };
 
@@ -273,20 +233,22 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`relative rounded-full h-8 w-8 transition-all duration-300 hover:bg-foreground/10 dark:hover:bg-foreground/10
-              ${isWrongNetwork
-                ? "bg-red-500/10 text-red-500"
-                : "text-foreground"}`}
-          >
-            <Wallet className="h-4 w-4" />
-            <span
-              className={`absolute top-2 right-2 h-1.5 w-1.5 rounded-full border border-background
-                ${isWrongNetwork ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`}
-            />
-          </Button>
+          {trigger ?? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`relative rounded-full h-8 w-8 transition-all duration-300 hover:bg-foreground/10 dark:hover:bg-foreground/10
+                ${isWrongNetwork
+                  ? "bg-red-500/10 text-red-500"
+                  : "text-foreground"}`}
+            >
+              <Wallet className="h-4 w-4" />
+              <span
+                className={`absolute top-2 right-2 h-1.5 w-1.5 rounded-full border border-background
+                  ${isWrongNetwork ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`}
+              />
+            </Button>
+          )}
         </SheetTrigger>
         <SheetContent className="w-full sm:max-w-md p-0 flex flex-col bg-background/95 backdrop-blur-xl border-border">
           <SheetHeader className="p-6 border-b border-border/40">
@@ -432,24 +394,28 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size={label ? "default" : "icon"}
-        className={
-          className ??
-          (label
-            ? "h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            : "rounded-full h-9 w-9 bg-black/5 dark:bg-foreground/5 hover:bg-black/10 dark:hover:bg-foreground/10 border border-black/5 dark:border-foreground/5 transition-all text-foreground")
-        }
-        onClick={() => setConnectDialogOpen(true)}
-      >
-        {children ?? (
-          <>
-            <Wallet className="h-4 w-4" />
-            {label && <span>{label}</span>}
-          </>
-        )}
-      </Button>
+      {trigger ? (
+        React.cloneElement(trigger, { onClick: () => setConnectDialogOpen(true) })
+      ) : (
+        <Button
+          variant="ghost"
+          size={label ? "default" : "icon"}
+          className={
+            className ??
+            (label
+              ? "h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+              : "rounded-full h-9 w-9 bg-black/5 dark:bg-foreground/5 hover:bg-black/10 dark:hover:bg-foreground/10 border border-black/5 dark:border-foreground/5 transition-all text-foreground")
+          }
+          onClick={() => setConnectDialogOpen(true)}
+        >
+          {children ?? (
+            <>
+              <Wallet className="h-4 w-4" />
+              {label && <span>{label}</span>}
+            </>
+          )}
+        </Button>
+      )}
 
       <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
         <DialogContent className="sm:max-w-[400px]">
@@ -459,12 +425,6 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
               Choose how you want to connect to Medialane.
             </DialogDescription>
           </DialogHeader>
-
-          {sessionError && (
-            <p className="text-sm text-red-400 bg-red-900/20 border border-red-900/40 rounded p-2">
-              {sessionError}
-            </p>
-          )}
 
           <div className="grid gap-5 pt-1">
             {/* ── Browser Wallets ──────────────────────────────── */}
@@ -529,30 +489,6 @@ export function ConnectWallet({ label, className, children }: ConnectWalletProps
                   </p>
                 )}
               </div>
-            </section>
-
-            <div className="border-t border-border/50" />
-
-            {/* ── Cartridge ───────────────────────────────────── */}
-            <section>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Cartridge Controller
-              </p>
-              <p className="text-xs text-muted-foreground mb-2">
-                Gaming wallet · ready in seconds
-              </p>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3"
-                onClick={handleCartridgeConnect}
-                disabled={sessionConnecting}
-              >
-                <Gamepad2 className="h-4 w-4 shrink-0 text-brand-purple" />
-                <span>
-                  {sessionConnecting ? "Connecting…" : "Connect with Cartridge"}
-                </span>
-                {sessionConnecting && <Loader2 className="ml-auto h-3 w-3 animate-spin" />}
-              </Button>
             </section>
           </div>
         </DialogContent>

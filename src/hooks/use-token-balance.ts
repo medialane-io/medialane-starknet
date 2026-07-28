@@ -1,45 +1,35 @@
 "use client";
 
 /**
- * useTokenBalance — ERC20 token balance queries via StarkZap's Erc20 class.
+ * useTokenBalance — ERC20 token balance queries via direct on-chain reads.
  *
- * Fetches and formats a wallet's balance for STRK, ETH, USDC, or USDT.
- * Uses StarkZap's Erc20 helper which handles both snake_case and camelCase
- * entrypoint variants for maximum contract compatibility.
+ * Fetches and formats a wallet's balance for a token by symbol (address +
+ * decimals resolved from the SDK's SUPPORTED_TOKENS — single source, same as
+ * `swap-tokens.ts`). Same failover-covered read provider (RPC path #1) used by
+ * `useCoinSupply`.
  *
  * @example
  * ```tsx
  * const { formatted, isLoading, refresh } = useTokenBalance("STRK", address);
  * return <span>{isLoading ? "…" : formatted}</span>;
  * // "42.5 STRK"
- *
- * // Fetch multiple balances in parallel
- * const strk = useTokenBalance("STRK", address);
- * const eth  = useTokenBalance("ETH",  address);
  * ```
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Erc20 } from "starkzap";
-import type { Amount, WalletInterface } from "starkzap";
-import {
-  getStarkZapSdk,
-  STARKZAP_TOKENS,
-  fromAddress,
-  type StarkZapTokenKey,
-} from "@/lib/starkzap";
+import { getTokenBySymbol } from "@medialane/sdk";
+import { starknetProvider } from "@/lib/starknet";
+import { formatTokenAmount } from "@/utils/swap-tokens";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface TokenBalanceResult {
-  /** Raw Amount object from StarkZap — null until fetched */
-  amount: Amount | null;
-  /** Human-readable string, e.g. "42.5 STRK" (compressed to 4 dp) */
-  formatted: string | null;
   /** Raw bigint value in token base units (wei, fri, etc.) */
   raw: bigint | null;
+  /** Human-readable string, e.g. "42.5" (up to 6 significant decimals) */
+  formatted: string | null;
   isLoading: boolean;
   error: string | null;
   /** Re-fetch the balance on demand */
@@ -50,23 +40,39 @@ export interface TokenBalanceResult {
 // Hook
 // ---------------------------------------------------------------------------
 
+async function readBalance(tokenAddress: string, owner: string): Promise<bigint> {
+  // Cairo ERC-20s expose the balance getter under either name depending on the
+  // OpenZeppelin version (camelCase `balanceOf` or snake_case `balance_of`).
+  let res: string[];
+  try {
+    res = await starknetProvider.callContract({ contractAddress: tokenAddress, entrypoint: "balanceOf", calldata: [owner] });
+  } catch {
+    res = await starknetProvider.callContract({ contractAddress: tokenAddress, entrypoint: "balance_of", calldata: [owner] });
+  }
+  // ERC-20 returns a u256 as [low, high].
+  const low = BigInt(res[0] ?? "0");
+  const high = BigInt(res[1] ?? "0");
+  return low + (high << 128n);
+}
+
 /**
- * Fetch the ERC20 balance for a given token and wallet address.
+ * Fetch the ERC20 balance for a given token symbol and wallet address.
  *
- * @param tokenKey - One of "STRK" | "ETH" | "USDC" | "USDT"
+ * @param tokenSymbol - A symbol from the SDK's SUPPORTED_TOKENS (e.g. "STRK", "ETH", "USDC")
  * @param walletAddress - The Starknet wallet address to query, or undefined
  */
 export function useTokenBalance(
-  tokenKey: StarkZapTokenKey,
+  tokenSymbol: string,
   walletAddress: string | undefined
 ): TokenBalanceResult {
-  const [amount, setAmount] = useState<Amount | null>(null);
+  const [raw, setRaw] = useState<bigint | null>(null);
+  const [decimals, setDecimals] = useState<number>(18);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBalance = useCallback(async () => {
     if (!walletAddress) {
-      setAmount(null);
+      setRaw(null);
       return;
     }
 
@@ -74,81 +80,27 @@ export function useTokenBalance(
     setError(null);
 
     try {
-      const sdk = getStarkZapSdk();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const provider = sdk.getProvider() as any;
-
-      const token = STARKZAP_TOKENS[tokenKey];
-      const erc20 = new Erc20(token, provider);
-
-      // Erc20.balanceOf() only reads wallet.address at runtime,
-      // so a minimal stub satisfies the WalletInterface contract.
-      const walletStub = { address: fromAddress(walletAddress) } as unknown as WalletInterface;
-      const result = await erc20.balanceOf(walletStub);
-
-      setAmount(result);
+      const token = getTokenBySymbol(tokenSymbol);
+      if (!token) throw new Error(`Unknown token symbol: ${tokenSymbol}`);
+      setDecimals(token.decimals);
+      const result = await readBalance(token.address, walletAddress);
+      setRaw(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch balance");
     } finally {
       setIsLoading(false);
     }
-  }, [tokenKey, walletAddress]);
+  }, [tokenSymbol, walletAddress]);
 
   useEffect(() => {
     fetchBalance();
   }, [fetchBalance]);
 
   return {
-    amount,
-    formatted: amount?.toFormatted(true) ?? null,
-    raw: amount?.toBase() ?? null,
+    raw,
+    formatted: raw !== null ? formatTokenAmount(raw, decimals) : null,
     isLoading,
     error,
     refresh: fetchBalance,
   };
-}
-
-// ---------------------------------------------------------------------------
-// Multi-token convenience hook
-// ---------------------------------------------------------------------------
-
-export interface MultiTokenBalances {
-  STRK: TokenBalanceResult;
-  ETH: TokenBalanceResult;
-  USDC: TokenBalanceResult;
-  USDT: TokenBalanceResult;
-  /** Refresh all balances at once */
-  refreshAll: () => void;
-}
-
-/**
- * Fetch balances for all supported tokens in parallel.
- *
- * @example
- * ```tsx
- * const balances = useAllTokenBalances(address);
- * return (
- *   <>
- *     <p>STRK: {balances.STRK.formatted}</p>
- *     <p>ETH:  {balances.ETH.formatted}</p>
- *   </>
- * );
- * ```
- */
-export function useAllTokenBalances(
-  walletAddress: string | undefined
-): MultiTokenBalances {
-  const strk = useTokenBalance("STRK", walletAddress);
-  const eth = useTokenBalance("ETH", walletAddress);
-  const usdc = useTokenBalance("USDC", walletAddress);
-  const usdt = useTokenBalance("USDT", walletAddress);
-
-  const refreshAll = useCallback(() => {
-    strk.refresh();
-    eth.refresh();
-    usdc.refresh();
-    usdt.refresh();
-  }, [strk, eth, usdc, usdt]);
-
-  return { STRK: strk, ETH: eth, USDC: usdc, USDT: usdt, refreshAll };
 }

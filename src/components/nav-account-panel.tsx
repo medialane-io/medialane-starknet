@@ -4,7 +4,7 @@ import * as React from "react";
 import { useConnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { shortenAddress, useNavCommandMenu } from "@medialane/ui";
-import { Gamepad2, Loader2, LogOut, User, Wallet } from "lucide-react";
+import { Loader2, LogOut, User, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
@@ -13,7 +13,7 @@ import { getConnectorDisplayName } from "@/lib/starknet-connectors";
 
 export function NavAccountPanel() {
   const { connectors } = useConnect();
-  const { address, isConnected, disconnect, isConnecting, error, connect } = useWallet();
+  const { address, isConnected, disconnect, isConnecting, connect } = useWallet();
   const { networkConfig } = useNetwork();
   const { close } = useNavCommandMenu();
   const [connectingId, setConnectingId] = React.useState<string | null>(null);
@@ -35,8 +35,7 @@ export function NavAccountPanel() {
   const connectInjected = async (connector: Connector) => {
     setConnectingId(connector.id);
     try {
-      const type = connector.id.toLowerCase() === "braavos" ? "braavos" : "argent";
-      await connect(type, connector);
+      await connect(connector);
     } catch (err) {
       console.error("[nav-account-panel] connect error:", err);
       const friendly = getFriendlyWalletError(err);
@@ -47,17 +46,6 @@ export function NavAccountPanel() {
       }
     } finally {
       setConnectingId(null);
-    }
-  };
-
-  const connectCartridge = async () => {
-    // Cartridge opens its own full-screen overlay, so getting our menu out
-    // of the way immediately is correct.
-    close();
-    try {
-      await connect("cartridge");
-    } catch {
-      // The wallet context exposes the user-facing error state.
     }
   };
 
@@ -105,20 +93,13 @@ export function NavAccountPanel() {
       onClick: () => braavos && void connectInjected(braavos),
       isLoading: connectingId === "braavos",
     },
-    {
-      key: "cartridge",
-      label: "Cartridge",
-      icon: <Gamepad2 className="h-5 w-5" />,
-      onClick: () => void connectCartridge(),
-      isLoading: false,
-    },
   ];
 
   const anyBusy = isConnecting || connectingId !== null;
 
   return (
     <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {cards.map((card) => (
           <button
             key={card.key}
@@ -136,12 +117,6 @@ export function NavAccountPanel() {
           </button>
         ))}
       </div>
-
-      {error && (
-        <p className="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-xs text-destructive">
-          {error}
-        </p>
-      )}
     </div>
   );
 }
