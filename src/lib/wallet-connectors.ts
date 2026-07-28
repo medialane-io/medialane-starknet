@@ -54,7 +54,12 @@ const method = (name: string) => ({ name, entrypoint: name });
  * standard session-marketplace pattern) is the correct choice here, one
  * `approve` entry per marketplace contract since either can be the spender.
  */
-const approvalMethod = (spender: string) => ({ name: "approve", entrypoint: "approve", spender, amount: "*" });
+const approvalMethod = (spender: string) => ({
+  name: "approve",
+  entrypoint: "approve",
+  spender,
+  amount: "0xffffffffffffffffffffffffffffffff",
+});
 
 const paymentTokenPolicies = Object.fromEntries(
   getListableTokens().map((t) => [
