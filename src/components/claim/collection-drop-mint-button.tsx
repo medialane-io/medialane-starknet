@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/use-wallet";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
 import { getListableTokens } from "@medialane/sdk";
@@ -38,13 +37,13 @@ export function CollectionDropMintButton({
   collectionAddress,
   conditions,
 }: CollectionDropMintButtonProps) {
-  const { isConnected, address: walletAddress } = useWallet();
+  const { isConnected, address: walletAddress, execute } = useWallet();
   const { mintStatus, isLoading, mutate } = useDropMintStatus(
     collectionAddress,
     walletAddress ?? null
   );
-  const { executeAuto, isLoading: isProcessing } = usePaymasterTransaction();
   const [result, setResult] = useState<TxResult | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const price = getPriceBigInt(conditions);
   const isPaid = price > 0n;
@@ -65,6 +64,7 @@ export function CollectionDropMintButton({
       return;
     }
 
+    setIsProcessing(true);
     try {
       const calls: Array<{ contractAddress: string; entrypoint: string; calldata: string[] }> = [];
 
@@ -99,7 +99,7 @@ export function CollectionDropMintButton({
         }
       }
 
-      const hash = await executeAuto(calls);
+      const hash = await execute(calls);
       setResult({
         status: "success",
         title: "Minted!",
@@ -118,6 +118,8 @@ export function CollectionDropMintButton({
         description: friendly.message,
         onRetry: () => { setResult(null); void handleMint(); },
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 

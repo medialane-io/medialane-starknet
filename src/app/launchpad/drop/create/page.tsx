@@ -19,7 +19,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
 import { makeUploadDocument } from "@/lib/upload-document";
@@ -45,8 +44,7 @@ function suggestSymbol(name: string): string {
 }
 
 export default function CreateDropPage() {
-  const { isConnected, address: walletAddress } = useWallet();
-  const { executeAuto, isLoading: isProcessing } = usePaymasterTransaction();
+  const { isConnected, address: walletAddress, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
 
   const [items, setItems] = useState<DraftItem[]>([]);
@@ -186,8 +184,7 @@ export default function CreateDropPage() {
       const factory = new Contract({ abi: DropFactoryABI as unknown as Abi, address: STARKNET_DROP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
       const call = factory.populate("create_drop", [values.name, values.symbol, baseUri, maxSupply, conditions]);
 
-      const txHash = await executeAuto([{ contractAddress: STARKNET_DROP_FACTORY_CONTRACT, entrypoint: "create_drop", calldata: call.calldata as string[] }]);
-      if (!txHash) throw new Error("Transaction failed — no hash returned");
+      const txHash = await execute([{ contractAddress: STARKNET_DROP_FACTORY_CONTRACT, entrypoint: "create_drop", calldata: call.calldata as string[] }]);
 
       // Optional whitelist: set on the new drop address (from the receipt), same wallet session.
       const whitelist = values.whitelistEnabled ? parseAddresses(values.allowlistAddresses) : [];
@@ -195,7 +192,7 @@ export default function CreateDropPage() {
         const dropAddress = await addressFromReceipt(txHash);
         if (dropAddress) {
           try {
-            await executeAuto([
+            await execute([
               { contractAddress: dropAddress, entrypoint: "set_allowlist_enabled", calldata: ["1"] },
               { contractAddress: dropAddress, entrypoint: "batch_add_to_allowlist", calldata: batchAllowlistCalldata(whitelist) },
             ]);
@@ -211,7 +208,7 @@ export default function CreateDropPage() {
     }
   };
 
-  const isSubmitting = building || isProcessing;
+  const isSubmitting = building;
 
   // ── Success ───────────────────────────────────────────────────────────────
   if (done) {

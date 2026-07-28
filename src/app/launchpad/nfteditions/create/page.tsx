@@ -27,7 +27,6 @@ import {
   type CollectionStep,
 } from "@/components/marketplace/collection-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
@@ -67,8 +66,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CreateNFTEditionsCollectionPage() {
-  const { isConnected, address: walletAddress } = useWallet();
-  const { executeAuto } = usePaymasterTransaction();
+  const { isConnected, address: walletAddress, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
@@ -196,7 +194,7 @@ export default function CreateNFTEditionsCollectionPage() {
       // Build calldata manually using byteArray.byteArrayFromString().
       // v2 factory signature: deploy_collection(name, symbol, base_uri)
       setDialogTxStatus("submitting");
-      const txHash = await executeAuto([{
+      const txHash = await execute([{
         contractAddress: FACTORY,
         entrypoint: "deploy_collection",
         calldata: [

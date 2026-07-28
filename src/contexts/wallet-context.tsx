@@ -1,18 +1,25 @@
 "use client";
 
-import React, { createContext, useContext, useMemo, useCallback, useEffect, useRef, useState } from "react";
+import React, { createContext, useContext, useMemo, useCallback } from "react";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
-import { makeInjectedExecute } from "@/lib/wallet-adapters";
+import type { AccountInterface, Call } from "starknet";
+import { waitForReceipt } from "@/lib/wait-for-receipt";
 import { assertCorrectNetwork } from "@/lib/wallet-error";
 import { useNetwork } from "@/components/starknet-provider";
-import {
-  clearPersistedWallet,
-  writePersistedWallet,
-  readPersistedWallet,
-  type ActiveWallet,
-  type WalletType,
-} from "@/lib/wallet-types";
+import type { ActiveWallet, WalletType } from "@/lib/wallet-types";
+
+/** Injected (Argent/Braavos): execute via account.execute, then confirm on-chain. */
+function makeInjectedExecute(account: AccountInterface) {
+  return async (calls: Call[]): Promise<string> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await account.execute(calls as any);
+    const hash: string = response.transaction_hash;
+    const result = await waitForReceipt(hash);
+    if (!result.ok) throw new Error(result.reason);
+    return hash;
+  };
+}
 
 interface WalletContextValue {
   active: ActiveWallet | null;
@@ -24,8 +31,10 @@ interface WalletContextValue {
 const WalletContext = createContext<WalletContextValue | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  // Injected (Argent/Braavos) via starknet-react. autoConnect (set in
-  // StarknetProvider) restores the last injected connector on reload.
+  // Injected wallets (Argent/Braavos/MetaMask/Keplr/Fordefi/Xverse) via
+  // starknet-react. autoConnect (set in StarknetProvider) persists and
+  // restores the last-used connector itself (its own "lastUsedConnector"
+  // localStorage key) — no app-level persistence needed here.
   const {
     account: injectedAccount,
     address: injectedAddress,
@@ -34,7 +43,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     status: injectedStatus,
     chainId,
   } = useAccount();
-  const { connectAsync, connectors } = useConnect();
+  const { connectAsync } = useConnect();
   const { disconnect: injectedDisconnect } = useDisconnect();
   const { networkConfig } = useNetwork();
   const injectedConnected = injectedConnectedRaw ?? false;
@@ -46,7 +55,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return "injected";
   }, [injectedConnector]);
 
-  // The slot. Injected (Argent/Braavos) only.
+  // The slot. Injected wallets only.
   //
   // IDENTITY (slot existence) depends only on connected + address — NEVER on the
   // starknet-react `account` object, which can be momentarily undefined while
@@ -71,88 +80,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return null;
   }, [injectedConnected, injectedAddress, injectedAccount, injectedType, chainId, networkConfig.chainId]);
 
-  // True while our manual injected-reconnect retry loop (below) is running. The
-  // loop is bounded (~6s), so this can never stick on. Folding it into
-  // isConnecting lets <ConnectGate> show a skeleton (not the connect panel) for
-  // a returning user whose extension hasn't finished re-injecting yet —
-  // starknet-react's own injectedStatus reads "disconnected" during this window.
-  const [reconnecting, setReconnecting] = useState(false);
-
-  const isConnecting =
-    injectedStatus === "connecting" ||
-    injectedStatus === "reconnecting" ||
-    reconnecting;
-
-  // ── Robust injected reconnect ──────────────────────────────────────────────
-  // starknet-react's `autoConnect` makes a SINGLE one-shot attempt on mount.
-  // Browser wallet extensions inject `window.starknet_*` asynchronously, so on a
-  // fresh/slow page load the extension often isn't ready when that one shot
-  // fires — autoConnect silently gives up and never retries, leaving an
-  // actually-authorized wallet showing "disconnected" (reported as the dapp
-  // dropping the wallet on navigation). We retry the reconnect ourselves, keyed
-  // on the persisted choice (ml_wallet), until the connector reports ready.
-  // `ready()` only returns true when the extension is present AND the `accounts`
-  // permission is still granted, so this never prompts.
-  const liveConnectedRef = useRef(injectedConnected);
-  liveConnectedRef.current = injectedConnected;
-  const reconnectRan = useRef(false);
-
-  useEffect(() => {
-    if (reconnectRan.current) return;
-    const persisted = readPersistedWallet();
-    if (persisted !== "argent" && persisted !== "braavos") return;
-    if (liveConnectedRef.current) return;
-    reconnectRan.current = true;
-    setReconnecting(true);
-
-    let cancelled = false;
-    const targetId = persisted === "braavos" ? "braavos" : "argentX";
-
-    (async () => {
-      // Let starknet-react's own one-shot autoConnect try first (warm loads
-      // where the extension is already injected) so we don't double-connect.
-      await new Promise((r) => setTimeout(r, 500));
-      // Up to ~6s of retries (15 × 400ms) to outlast slow extension injection.
-      for (let i = 0; i < 15 && !cancelled; i++) {
-        if (liveConnectedRef.current) { setReconnecting(false); return; }
-        const connector = connectors.find((c) => c.id === targetId);
-        if (connector) {
-          try {
-            const isReady = await connector.ready();
-            if (isReady) {
-              await connectAsync({ connector });
-              setReconnecting(false);
-              return;
-            }
-          } catch {
-            // extension not ready / transient — retry on the next tick
-          }
-        }
-        await new Promise((r) => setTimeout(r, 400));
-      }
-      setReconnecting(false);
-    })();
-
-    return () => {
-      cancelled = true;
-      setReconnecting(false);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectors]);
+  const isConnecting = injectedStatus === "connecting" || injectedStatus === "reconnecting";
 
   const connect = useCallback(
     async (connector: Connector) => {
       await connectAsync({ connector });
-      // Persist the injected choice as the restore target.
-      const id = connector.id.toLowerCase();
-      writePersistedWallet(id === "braavos" ? "braavos" : "argent");
     },
     [connectAsync],
   );
 
   const disconnect = useCallback(() => {
     injectedDisconnect();
-    clearPersistedWallet();
   }, [injectedDisconnect]);
 
   const value = useMemo<WalletContextValue>(

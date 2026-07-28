@@ -36,7 +36,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard, ClaimRail } from "@medialane/ui";
 import { MintProgressDialog, type MintStep } from "@/components/marketplace/mint-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useCollection } from "@/hooks/use-collections";
@@ -103,9 +102,8 @@ type FormValues = z.infer<typeof schema>;
 export default function CreateMembershipPage({ params }: { params: Promise<{ contract: string }> }) {
   const { contract: rawContract } = use(params);
   const contract = normalizeAddress("STARKNET", rawContract);
-  const { address, isConnected } = useWallet();
+  const { address, isConnected, execute } = useWallet();
   const { collection, isLoading } = useCollection(contract);
-  const { executeAuto } = usePaymasterTransaction();
   const { getValidToken } = useSiwsToken();
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
@@ -232,7 +230,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
       ]);
       const mintCall = col.populate("mint", [address, cairo.uint256(tierId), cairo.uint256(values.maxSupply)]);
 
-      const txHash = await executeAuto([createCall, mintCall]);
+      const txHash = await execute([createCall, mintCall]);
       if (!txHash) throw new Error("Failed to create membership");
 
       setDialogTxStatus("confirmed");

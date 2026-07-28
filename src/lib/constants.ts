@@ -86,10 +86,6 @@ export const ALLOWED_IP_TYPES = [
   "Photography", "Patents", "Posts", "Publications", "RWA",
 ] as const;
 
-export const AVNU_PAYMASTER_CONFIG = {
-  apiKey: process.env.NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY,
-};
-
 export const DURATION_OPTIONS = [
   { label: "1 Day", seconds: 86400 },
   { label: "7 Days", seconds: 604800 },

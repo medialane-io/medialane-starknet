@@ -5,7 +5,6 @@ import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { usePaymasterTransaction } from "@/hooks/use-paymaster-transaction";
 import { serializeByteArray } from "@/lib/cairo-calldata";
 import { GENESIS_NFT_IMAGE_URL } from "@/lib/constants";
 
@@ -81,8 +80,7 @@ export function GenesisMint({
   storageKey,
   locale = "en",
 }: GenesisMintProps) {
-  const { address, isConnected } = useWallet();
-  const { executeAuto, isLoading } = usePaymasterTransaction();
+  const { address, isConnected, execute } = useWallet();
   const copy = COPY[locale];
 
   const [phase, setPhase] = useState<MintPhase>("idle");
@@ -124,7 +122,7 @@ export function GenesisMint({
           ? nftUri
           : `ipfs://${nftUri}`;
       const calldata = [address, ...serializeByteArray(tokenUri)];
-      const hash = await executeAuto([
+      const hash = await execute([
         { contractAddress: contract, entrypoint: "mint_item", calldata },
       ]);
       if (!hash) throw new Error("Transaction not confirmed");
@@ -135,7 +133,7 @@ export function GenesisMint({
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
       setPhase("error");
     }
-  }, [contract, address, nftUri, executeAuto, lsKey]);
+  }, [contract, address, nftUri, execute, lsKey]);
 
   const card = "rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-5 space-y-4 shadow-lg shadow-black/5";
 
@@ -194,9 +192,9 @@ export function GenesisMint({
               ? () => { setPhase("ready"); setError(null); }
               : handleMint
           }
-          disabled={phase === "minting" || isLoading}
+          disabled={phase === "minting"}
         >
-          {(phase === "minting" || isLoading) && (
+          {phase === "minting" && (
             <Loader2 className="h-4 w-4 animate-spin" />
           )}
           {phase === "error"

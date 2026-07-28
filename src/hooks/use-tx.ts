@@ -27,10 +27,9 @@
  */
 import { useState, useCallback } from "react";
 import type { Call } from "starknet";
-import { useAccount } from "@starknet-react/core";
 import { starknetProvider } from "@/lib/starknet";
-import { useNetwork } from "@/components/starknet-provider";
-import { assertCorrectNetwork, getFriendlyWalletError } from "@/lib/wallet-error";
+import { useSigner } from "@/hooks/use-signer";
+import { getFriendlyWalletError } from "@/lib/wallet-error";
 
 export type TxStatus =
   | "idle"
@@ -42,8 +41,7 @@ export type TxStatus =
   | "error";
 
 export function useTx() {
-  const { account, chainId } = useAccount();
-  const { networkConfig } = useNetwork();
+  const account = useSigner();
 
   const [status, setStatus] = useState<TxStatus>("idle");
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -58,9 +56,7 @@ export function useTx() {
       if (!account) {
         throw new Error("Wallet not connected");
       }
-      assertCorrectNetwork(chainId, networkConfig.chainId);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tx = await account.execute(calls as any);
+      const tx = await account.execute(calls);
       const hash = tx.transaction_hash;
 
       // Submission succeeded — now wait for on-chain finality. Without this
@@ -75,17 +71,8 @@ export function useTx() {
         const receipt = await starknetProvider.waitForTransaction(hash, {
           retryInterval: 3000,
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const r = receipt as any;
-        const executionStatus: string | undefined =
-          r?.execution_status ?? r?.status;
-        const isReverted =
-          executionStatus === "REVERTED" ||
-          executionStatus === "REJECTED" ||
-          Boolean(r?.revert_reason);
-        if (isReverted) {
-          const reason: string =
-            r?.revert_reason ?? `Transaction reverted (${executionStatus ?? "unknown"})`;
+        if (receipt.isReverted()) {
+          const reason: string = receipt.value.revert_reason ?? "Transaction reverted";
           setStatus("reverted");
           setError(reason);
           setStatusMessage(reason);
@@ -121,7 +108,7 @@ export function useTx() {
       setStatusMessage(msg);
       return null;
     }
-  }, [account, chainId, networkConfig.chainId]);
+  }, [account]);
 
   const reset = useCallback(() => {
     setStatus("idle");

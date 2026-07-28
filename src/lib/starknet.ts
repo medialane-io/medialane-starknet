@@ -9,7 +9,7 @@ import { RPC_MAIN_URL, RPC_FALLBACK_URL, RPC_PROXY_PATH } from "./constants";
  *
  *  1. `starknetProvider` (below) — direct `Contract` calls + `waitForTransaction`
  *     in NON-hook contexts: launchpad pages (drop/pop/nfteditions), transfer-
- *     ownership, `use-tx`, `use-paymaster-transaction`, `use-coin-price`.
+ *     ownership, `use-tx`, `use-coin-price`.
  *  2. starknet-react's provider (`components/starknet-provider.tsx`) — every
  *     `useProvider()` / `useContract()` call (the whole marketplace flow).
  *  3. the SDK client's `getProvider` (`@medialane/sdk`) — SDK-routed ops.

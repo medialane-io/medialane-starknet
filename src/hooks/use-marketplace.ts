@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useContract, useProvider } from "@starknet-react/core";
-import { Abi, num } from "starknet";
+import { Abi, num, type Call } from "starknet";
 import { useSWRConfig } from "swr";
 import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk/starknet";
 import { toast } from "sonner";
@@ -166,7 +166,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             const result = await fn();
             markMarketplaceDebug(`${op}: done`);
             return result;
-        } catch (err: any) {
+        } catch (err) {
             markMarketplaceDebug(`${op}: threw`);
             console.error("[marketplace] error:", getMarketplaceDebugText({ error: err }));
             const friendly = getFriendlyWalletError(err);
@@ -331,7 +331,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             // Fulfilment is unsigned in 0.26.0 — the caller IS the fulfiller, so no
             // per-item SNIP-12 signature (and no nonce) is needed. fulfill_order takes
             // the order hash (+ quantity for ERC-1155).
-            const fulfillCalls: any[] = items.map((item) =>
+            const fulfillCalls: Call[] = items.map((item) =>
                 item.isERC1155
                     ? medialane1155Contract!.populate("fulfill_order", [item.orderHash, item.quantity ?? "1"])
                     : medialaneContract.populate("fulfill_order", [item.orderHash])
@@ -410,7 +410,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 : contract.populate("fulfill_order", [orderHash]);
 
             const { cairo } = await import("starknet");
-            let approveCall: any;
+            let approveCall: Call;
             if (is1155) {
                 approveCall = {
                     contractAddress: nftContractAddress,
