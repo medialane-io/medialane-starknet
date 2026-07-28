@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, Copy, ExternalLink, LogOut, User, Wallet } from "lucide-react";
+import Image from "next/image";
+import { AlertCircle, Copy, ExternalLink, LogOut, Wallet } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAccount } from "@starknet-react/core";
@@ -8,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
-import type { WalletType } from "@/lib/wallet-types";
+import { useTokenBalance } from "@/hooks/use-token-balance";
+import { getConnectorIconSrc } from "@/lib/wallet-connectors";
 import { isWrongNetwork as computeIsWrongNetwork } from "@/lib/wallet-error";
 import { useNavAccountSheet } from "@medialane/ui";
 
@@ -16,24 +18,24 @@ function truncate(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
-/** The specific connected wallet's name — never the generic "Browser Wallet" category. */
-function walletName(type: WalletType | null): string {
-  if (type === "argent") return "Ready";
-  if (type === "braavos") return "Braavos";
-  return "Browser Wallet";
-}
-
 /**
  * The account/wallet panel content — identity, the specific connected
- * wallet, network, and disconnect. No app navigation here by design (no
- * Portfolio/Creator-tools links) — this is an account & wallet surface, not
- * another menu. Rendered once, globally, inside `<NavAccountSheet>`.
+ * wallet, network, balance, and disconnect. No app navigation here by design
+ * (no Portfolio/Creator-tools links) — the command menu already covers that,
+ * and duplicating it here would be redundant at best, an incomplete second
+ * nav surface at worst. Rendered once, globally, inside `<NavAccountSheet>`.
  */
 export function AccountPanel() {
-  const { chainId } = useAccount();
+  const { chainId, connector } = useAccount();
   const { networkConfig } = useNetwork();
-  const { address, walletType, disconnect } = useWallet();
+  const { address, disconnect } = useWallet();
   const { close } = useNavAccountSheet();
+  // The connector's own display name (e.g. "Ready Wallet (formerly Argent)",
+  // "Braavos", "Cartridge Controller") — same source connect-dialog.tsx uses,
+  // so this never drifts out of sync with what a wallet actually calls itself.
+  const walletName = connector?.name ?? "Browser Wallet";
+  const walletIconSrc = getConnectorIconSrc(connector?.icon);
+  const { formatted: strkBalance, isLoading: balanceLoading } = useTokenBalance("STRK", address ?? undefined);
 
   if (!address) return null;
 
@@ -52,8 +54,12 @@ export function AccountPanel() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-muted">
-          <User className="h-5 w-5 text-muted-foreground" />
+        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/50 bg-muted">
+          {walletIconSrc ? (
+            <Image src={walletIconSrc} alt="" fill className="object-cover" unoptimized />
+          ) : (
+            <Wallet className="h-5 w-5 text-muted-foreground" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -64,13 +70,18 @@ export function AccountPanel() {
           </div>
           <div className="mt-1.5 flex items-center gap-1.5">
             <Badge variant="outline" className="flex items-center gap-1 border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 text-[10px] font-normal text-emerald-400">
-              <Wallet className="h-3 w-3" />
-              {walletName(walletType)}
+              {walletIconSrc ? (
+                <Image src={walletIconSrc} alt="" width={12} height={12} className="rounded-sm" unoptimized />
+              ) : (
+                <Wallet className="h-3 w-3" />
+              )}
+              {walletName}
             </Badge>
             <Badge
               variant="outline"
-              className={`px-2 py-0.5 text-[10px] font-normal ${isWrongNetwork ? "border-red-500/30 bg-red-500/5 text-red-400" : "border-emerald-500/20 bg-emerald-500/5 text-emerald-400"}`}
+              className={`flex items-center gap-1 px-2 py-0.5 text-[10px] font-normal ${isWrongNetwork ? "border-red-500/30 bg-red-500/5 text-red-400" : "border-emerald-500/20 bg-emerald-500/5 text-emerald-400"}`}
             >
+              <Image src="/Starknet-icon.svg" alt="" width={12} height={12} />
               {networkConfig.name}
             </Badge>
           </div>
@@ -83,6 +94,13 @@ export function AccountPanel() {
         >
           <ExternalLink className="h-4 w-4" />
         </Link>
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/30 px-3.5 py-2.5">
+        <span className="text-xs text-muted-foreground">Balance</span>
+        <span className="text-sm font-semibold tabular-nums">
+          {balanceLoading ? "…" : strkBalance ? `${strkBalance} STRK` : "0 STRK"}
+        </span>
       </div>
 
       {isWrongNetwork && (
