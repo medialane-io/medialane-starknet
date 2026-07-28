@@ -16,15 +16,7 @@ import { Wallet, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/use-wallet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
-import { WALLET_INSTALL_URLS } from "@/lib/wallet-connectors";
-
-type ConnectorIconObj = { dark?: string; light?: string };
-
-function getConnectorIconSrc(icon: ConnectorIconObj | string | undefined): string | undefined {
-  if (!icon) return undefined;
-  if (typeof icon === "string") return icon;
-  return icon.dark ?? icon.light;
-}
+import { WALLET_INSTALL_URLS, getConnectorIconSrc } from "@/lib/wallet-connectors";
 
 // ---------------------------------------------------------------------------
 // Global open/close — same singleton-event pattern as @medialane/ui's
@@ -107,7 +99,7 @@ export function ConnectDialog() {
               {connectors.length > 0 ? (
                 connectors.map((connector) => {
                   const iconSrc = getConnectorIconSrc(
-                    connector.icon as ConnectorIconObj | string | undefined
+                    connector.icon
                   );
                   const displayName = connector.name;
                   const installed = connector.available();

@@ -111,3 +111,12 @@ export const walletConnectors: Connector[] = SUPPORTED_WALLETS.map((w) => w.conn
 export const WALLET_INSTALL_URLS: Record<string, string> = Object.fromEntries(
   SUPPORTED_WALLETS.filter((w) => w.installUrl).map((w) => [w.connector.id, w.installUrl!]),
 );
+
+type ConnectorIconObj = { dark?: string; light?: string };
+
+/** A connector's icon can be a single data-URI or a {dark, light} pair — pick one src either way. */
+export function getConnectorIconSrc(icon: ConnectorIconObj | string | undefined): string | undefined {
+  if (!icon) return undefined;
+  if (typeof icon === "string") return icon;
+  return icon.dark ?? icon.light;
+}
