@@ -1,26 +1,55 @@
 "use client";
 
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { Toaster, toast } from "sonner";
 import Link from "next/link";
-import { NavCommandMenu, NavBrandButton } from "@medialane/ui";
+import { LogIn, LogOut } from "lucide-react";
+import type { NavCommandGroup } from "@medialane/ui";
+import { NavCommandMenu, NavBrandButton, NavAccountSheet } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
 
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
-import { NavAccountPanel } from "@/components/nav-account-panel";
 import { HeaderWalletTrigger } from "@/components/nav-wallet-trigger";
+import { AccountPanel } from "@/components/account-panel";
+import { ConnectDialog, useConnectDialog } from "@/components/connect-dialog";
 import { NavThemeToggle } from "@/components/nav-theme-toggle";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
+import { useWallet } from "@/hooks/use-wallet";
 
 function Shell({ children }: { children: React.ReactNode }) {
+  // NAV_COMMANDS itself stays static and wallet-unaware (cheaper to construct,
+  // no re-render coupling to wallet state) — only this one small group is
+  // computed here, where wallet state actually lives.
+  const { isConnected, disconnect } = useWallet();
+  const { open: openConnectDialog } = useConnectDialog();
+  const commands = useMemo<NavCommandGroup[]>(
+    () => [
+      ...NAV_COMMANDS,
+      {
+        heading: "Account",
+        items: [
+          isConnected
+            ? { id: "logout", label: "Log out", icon: LogOut, action: disconnect, keywords: ["disconnect", "sign out", "logout"] }
+            : { id: "login", label: "Log in", icon: LogIn, action: openConnectDialog, keywords: ["connect", "sign in", "wallet", "login"] },
+        ],
+      },
+    ],
+    [isConnected, disconnect, openConnectDialog]
+  );
+
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
-      <NavCommandMenu commands={NAV_COMMANDS} accountSlot={<NavAccountPanel />} footerSlot={<NavThemeToggle />} />
+      <NavCommandMenu commands={commands} footerSlot={<NavThemeToggle />} />
+      <NavAccountSheet>
+        <AccountPanel />
+      </NavAccountSheet>
+      <ConnectDialog />
       <div className="fixed top-4 left-4 sm:left-6 lg:left-8 z-50">
         <NavBrandButton />
       </div>
