@@ -164,8 +164,17 @@ export function getFriendlyWalletError(error: unknown): FriendlyWalletError {
   // generic check below looks for, so it needs its own match. Cartridge's own
   // modal already surfaces an "Add funds" CTA for this case; this mirrors
   // that here so the same message shows wherever the raw error surfaces.
+  //
+  // `JsControllerError` is only in `.stack`, never in `.message` — a real
+  // thrown `Error` here has `message: "Validation failure"` and
+  // `name: "Error"`, and `collectErrorText` returns just `error.message` for
+  // `Error` instances (never `.stack`, which is usually multi-line/noisy).
+  // The original check required both substrings in the same `raw` text and
+  // so never actually matched a live throw (caught testing this against a
+  // real Cartridge session) — check `.stack` separately instead.
   const lower = raw.toLowerCase();
-  if (lower.includes("jscontrollererror") && lower.includes("validation failure")) {
+  const stack = error instanceof Error && typeof error.stack === "string" ? error.stack.toLowerCase() : "";
+  if (lower.includes("validation failure") && (lower.includes("jscontrollererror") || stack.includes("jscontrollererror"))) {
     return {
       title: "Not enough gas",
       message: "Your wallet doesn't have enough STRK (or ETH) to pay for this transaction's gas fee.",
