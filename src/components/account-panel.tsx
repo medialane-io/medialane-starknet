@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
 import type { WalletType } from "@/lib/wallet-types";
+import { isWrongNetwork as computeIsWrongNetwork } from "@/lib/wallet-error";
 import { useNavAccountSheet } from "@medialane/ui";
 
 function truncate(addr: string): string {
@@ -36,7 +37,7 @@ export function AccountPanel() {
 
   if (!address) return null;
 
-  const isWrongNetwork = !!chainId && BigInt(chainId).toString() !== networkConfig.chainId;
+  const isWrongNetwork = computeIsWrongNetwork(chainId, networkConfig.chainId);
 
   const copyAddress = () => {
     navigator.clipboard.writeText(address);

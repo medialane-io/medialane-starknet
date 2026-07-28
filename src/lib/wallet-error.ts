@@ -33,6 +33,51 @@ export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): 
   });
 }
 
+/**
+ * Thrown by `assertCorrectNetwork` — a dedicated sentinel so
+ * `getFriendlyWalletError` maps it to an explicit, actionable message
+ * instead of whatever the wallet/RPC produces once it tries (and fails) to
+ * build a transaction against a network it isn't actually on.
+ */
+export class WrongNetworkError extends Error {
+  constructor() {
+    super("Your wallet is connected to the wrong network.");
+    this.name = "WrongNetworkError";
+  }
+}
+
+/**
+ * Every write path (marketplace, launchpad, paymaster) reads `chainId` from
+ * starknet-react's `useAccount()`, which reflects whatever network the
+ * wallet EXTENSION itself is currently set to — independent of what the
+ * dapp displays. Nothing before this guard existed ever verified the two
+ * match; `isWrongNetwork` was computed and shown as a banner in two
+ * components but never actually blocked a submit. A wallet sitting on a
+ * different network (e.g. Sepolia while this dapp is mainnet-only) would
+ * still reach the wallet's own tx builder, which resolves nonce/state
+ * against ITS network — surfacing as a confusing, unrelated-looking error
+ * (e.g. a nonce mismatch) with no indication the actual problem is the
+ * network. Call this at the top of every `execute()`, before the wallet
+ * ever sees the calls.
+ */
+/** The one comparison both the enforcement guard and any "wrong network"
+ *  banner should use — never re-derive this inline. */
+export function isWrongNetwork(
+  chainId: bigint | string | undefined,
+  expectedChainId: string,
+): boolean {
+  return chainId != null && BigInt(chainId).toString() !== expectedChainId;
+}
+
+export function assertCorrectNetwork(
+  chainId: bigint | string | undefined,
+  expectedChainId: string,
+): void {
+  if (isWrongNetwork(chainId, expectedChainId)) {
+    throw new WrongNetworkError();
+  }
+}
+
 function collectErrorText(error: unknown): string {
   if (!error) return "";
   if (typeof error === "string") return error;
@@ -123,6 +168,15 @@ export function getFriendlyWalletError(error: unknown): FriendlyWalletError {
       title: "Wallet not responding",
       message: "Your wallet extension isn't responding. Nothing was submitted.",
       description: "Try reopening your wallet extension, reloading the page, or connecting a different wallet.",
+      isUserRejection: false,
+    };
+  }
+
+  if (error instanceof WrongNetworkError) {
+    return {
+      title: "Wrong network",
+      message: "Your wallet is connected to the wrong network. Nothing was submitted.",
+      description: "Switch your wallet to Starknet Mainnet, then try again.",
       isUserRejection: false,
     };
   }

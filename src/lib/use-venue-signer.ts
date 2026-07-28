@@ -3,8 +3,9 @@ import { useAccount, useProvider } from "@starknet-react/core";
 import type { Call, TypedData } from "starknet";
 import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
+import { useNetwork } from "@/components/starknet-provider";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
-import { withTimeout } from "@/lib/wallet-error";
+import { assertCorrectNetwork, withTimeout } from "@/lib/wallet-error";
 
 // Bounded so a stuck flow fails visibly instead of hanging `isProcessing`
 // forever — long enough to cover a real PIN/passkey prompt.
@@ -23,25 +24,28 @@ const EXECUTE_TIMEOUT_MS = 45_000;
  * read the receipt (for the OrderCreated order id) afterwards.
  */
 export function useVenueSigner(): StarknetVenueSigner | null {
-  const { account } = useAccount();
+  const { account, chainId } = useAccount();
   const { address } = useWallet();
   const { provider } = useProvider();
+  const { networkConfig } = useNetwork();
 
   const signTypedData = useCallback(
     async (data: TypedData): Promise<string[]> => {
       if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
+      assertCorrectNetwork(chainId, networkConfig.chainId);
       markMarketplaceDebug("signTypedData: awaiting wallet signature");
       const sig = await account.signMessage(data);
       markMarketplaceDebug("signTypedData: signature received");
       // starknet account returns [] or {r,s}
       return Array.isArray(sig) ? sig.map(String) : [String(sig.r), String(sig.s)];
     },
-    [account],
+    [account, chainId, networkConfig.chainId],
   );
 
   const execute = useCallback(
     async (calls: Call[]): Promise<{ txHash: string }> => {
       if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
+      assertCorrectNetwork(chainId, networkConfig.chainId);
       markMarketplaceDebug("execute: awaiting wallet submit", { callCount: calls.length });
       const tx = await withTimeout(account.execute(calls), EXECUTE_TIMEOUT_MS, "Wallet");
       const txHash = tx.transaction_hash;
@@ -53,7 +57,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       }
       return { txHash };
     },
-    [account, provider],
+    [account, chainId, networkConfig.chainId, provider],
   );
 
   if (!address) return null;

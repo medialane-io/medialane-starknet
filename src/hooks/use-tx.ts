@@ -29,7 +29,8 @@ import { useState, useCallback } from "react";
 import type { Call } from "starknet";
 import { useAccount } from "@starknet-react/core";
 import { starknetProvider } from "@/lib/starknet";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { useNetwork } from "@/components/starknet-provider";
+import { assertCorrectNetwork, getFriendlyWalletError } from "@/lib/wallet-error";
 
 export type TxStatus =
   | "idle"
@@ -41,7 +42,8 @@ export type TxStatus =
   | "error";
 
 export function useTx() {
-  const { account } = useAccount();
+  const { account, chainId } = useAccount();
+  const { networkConfig } = useNetwork();
 
   const [status, setStatus] = useState<TxStatus>("idle");
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export function useTx() {
       if (!account) {
         throw new Error("Wallet not connected");
       }
+      assertCorrectNetwork(chainId, networkConfig.chainId);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tx = await account.execute(calls as any);
       const hash = tx.transaction_hash;
@@ -118,7 +121,7 @@ export function useTx() {
       setStatusMessage(msg);
       return null;
     }
-  }, [account]);
+  }, [account, chainId, networkConfig.chainId]);
 
   const reset = useCallback(() => {
     setStatus("idle");

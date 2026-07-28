@@ -22,6 +22,7 @@ import { useState, useCallback } from "react";
 import { useAccount } from "@starknet-react/core";
 import type { Call } from "starknet";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { useNetwork } from "@/components/starknet-provider";
 import {
   checkGaslessCompatibility,
   executeGaslessCalls,
@@ -30,7 +31,7 @@ import {
 } from "@/lib/paymaster-adapter";
 import type { GasTokenPrice } from "@/types/paymaster";
 import { waitForReceipt } from "@/lib/wait-for-receipt";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { assertCorrectNetwork, getFriendlyWalletError } from "@/lib/wallet-error";
 
 export interface UsePaymasterTransactionResult {
   // ----- Execution -----
@@ -67,9 +68,10 @@ export interface UsePaymasterTransactionResult {
 }
 
 export function usePaymasterTransaction(): UsePaymasterTransactionResult {
-  const { account, address } = useAccount();
+  const { account, address, chainId } = useAccount();
   // Active wallet slot owns execution routing for executeAuto below.
   const { active } = useWalletContext();
+  const { networkConfig } = useNetwork();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +119,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
       setError(null);
 
       try {
+        assertCorrectNetwork(chainId, networkConfig.chainId);
         const transactionHash = await executeGaslessCalls(
           account as any, // eslint-disable-line @typescript-eslint/no-explicit-any
           calls,
@@ -137,7 +140,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         setIsLoading(false);
       }
     },
-    [account, address]
+    [account, address, chainId, networkConfig.chainId]
   );
 
   // ---------------------------------------------------------------------------
@@ -159,6 +162,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
       setError(null);
 
       try {
+        assertCorrectNetwork(chainId, networkConfig.chainId);
         // avnuPaymasterProvider in StarknetConfig wraps account.execute automatically
         const response = await account.execute(calls as any); // eslint-disable-line @typescript-eslint/no-explicit-any
         const hash: string = response.transaction_hash;
@@ -176,7 +180,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         setIsLoading(false);
       }
     },
-    [account, address, isSponsorAvailable]
+    [account, address, isSponsorAvailable, chainId, networkConfig.chainId]
   );
 
   // ---------------------------------------------------------------------------
@@ -224,6 +228,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
       setError(null);
 
       try {
+        assertCorrectNetwork(chainId, networkConfig.chainId);
         const response = await account.execute(calls as any); // eslint-disable-line @typescript-eslint/no-explicit-any
         const hash: string = response.transaction_hash;
         const result = await waitForReceipt(hash);
@@ -240,7 +245,7 @@ export function usePaymasterTransaction(): UsePaymasterTransactionResult {
         setIsLoading(false);
       }
     },
-    [account]
+    [account, chainId, networkConfig.chainId]
   );
 
   return {

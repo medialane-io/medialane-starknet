@@ -4,8 +4,9 @@ import React, { createContext, useContext, useMemo, useCallback, useEffect, useR
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { makeInjectedExecute } from "@/lib/wallet-adapters";
-import { withTimeout } from "@/lib/wallet-error";
+import { assertCorrectNetwork, withTimeout } from "@/lib/wallet-error";
 import { getConnectorDisplayName } from "@/lib/starknet-connectors";
+import { useNetwork } from "@/components/starknet-provider";
 import {
   clearPersistedWallet,
   writePersistedWallet,
@@ -42,9 +43,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     isConnected: injectedConnectedRaw,
     connector: injectedConnector,
     status: injectedStatus,
+    chainId,
   } = useAccount();
   const { connectAsync, connectors } = useConnect();
   const { disconnect: injectedDisconnect } = useDisconnect();
+  const { networkConfig } = useNetwork();
   const injectedConnected = injectedConnectedRaw ?? false;
 
   const injectedType: WalletType = useMemo(() => {
@@ -71,12 +74,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           if (!injectedAccount) {
             throw new Error("Wallet not ready yet — please try again in a moment");
           }
+          assertCorrectNetwork(chainId, networkConfig.chainId);
           return makeInjectedExecute(injectedAccount)(calls);
         },
       };
     }
     return null;
-  }, [injectedConnected, injectedAddress, injectedAccount, injectedType]);
+  }, [injectedConnected, injectedAddress, injectedAccount, injectedType, chainId, networkConfig.chainId]);
 
   // True while our manual injected-reconnect retry loop (below) is running. The
   // loop is bounded (~6s), so this can never stick on. Folding it into

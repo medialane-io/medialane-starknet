@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Wallet, Loader2 } from "lucide-react";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
+import { isWrongNetwork as computeIsWrongNetwork } from "@/lib/wallet-error";
 import { useNavAccountSheet } from "@medialane/ui";
 import { useConnectDialog } from "@/components/connect-dialog";
 
@@ -43,10 +44,7 @@ export function ConnectWallet({ label, className, children, trigger }: ConnectWa
   const { open: openAccountSheet } = useNavAccountSheet();
   const { open: openConnectDialog } = useConnectDialog();
 
-  const isWrongNetwork =
-    injectedConnected &&
-    chainId &&
-    BigInt(chainId).toString() !== networkConfig.chainId;
+  const isWrongNetwork = injectedConnected && computeIsWrongNetwork(chainId, networkConfig.chainId);
 
   // ---------------------------------------------------------------------------
   // Loading state

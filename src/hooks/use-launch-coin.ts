@@ -13,9 +13,10 @@ import {
   type CreatorCoinReceiptLike,
 } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
+import { useNetwork } from "@/components/starknet-provider";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { starknetProvider } from "@/lib/starknet";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { assertCorrectNetwork, getFriendlyWalletError } from "@/lib/wallet-error";
 
 export interface LaunchCoinInput {
   name: string;
@@ -28,8 +29,9 @@ export interface LaunchCoinInput {
 export type LaunchStatus = "idle" | "deploying" | "launching" | "indexing" | "done" | "error";
 
 export function useLaunchCoin() {
-  const { account } = useAccount();
+  const { account, chainId } = useAccount();
   const { address: activeAddress } = useWallet();
+  const { networkConfig } = useNetwork();
   const [status, setStatus] = useState<LaunchStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +53,7 @@ export function useLaunchCoin() {
       const salt = "0x" + Date.now().toString(16);
 
       try {
+        assertCorrectNetwork(chainId, networkConfig.chainId);
         // Tx1 — deploy the coin (full supply to the Factory).
         setStatus("deploying");
         const created = await client.services.creatorCoin.createCreatorCoin(signer, {
@@ -94,7 +97,7 @@ export function useLaunchCoin() {
         throw new Error(friendly.message);
       }
     },
-    [account, activeAddress]
+    [account, activeAddress, chainId, networkConfig.chainId]
   );
 
   return { launch, status, error };
