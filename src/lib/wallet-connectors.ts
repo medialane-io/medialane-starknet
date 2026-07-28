@@ -4,7 +4,7 @@ import { MetaMask } from "starknetkit/metamask";
 import { Keplr } from "starknetkit/keplr";
 import { Fordefi } from "starknetkit/fordefi";
 import { Xverse } from "starknetkit/xverse";
-import { ControllerConnector } from "starknetkit/controller";
+import { ControllerConnector } from "@cartridge/connector";
 import { constants, TypedDataRevision } from "starknet";
 import type { Connector } from "@starknet-react/core";
 import {

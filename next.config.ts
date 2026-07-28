@@ -1,6 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @cartridge/controller (Cartridge Controller wallet) ships its signing/
+  // session engine as a WASM module (@cartridge/controller-wasm), imported
+  // directly rather than lazy-loaded — webpack 5 doesn't parse `.wasm`
+  // imports without this experiment enabled.
+  webpack: (config) => {
+    config.experiments = { ...config.experiments, asyncWebAssembly: true };
+    return config;
+  },
+  // The wallet connector list is client-only, but Next still traces its
+  // import chain into the server/RSC compilation while prerendering pages —
+  // and the server compiler doesn't emit the `.wasm` asset at the path the
+  // wasm-loader glue expects, failing prerender with ENOENT. Keep these
+  // packages external to the server bundle (required via Node at runtime
+  // instead) so only the client bundle ever needs the wasm experiment.
+  serverExternalPackages: ["@cartridge/connector", "@cartridge/controller", "@cartridge/controller-wasm"],
   images: {
     remotePatterns: [
       {
