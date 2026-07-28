@@ -158,8 +158,23 @@ export function getFriendlyWalletError(error: unknown): FriendlyWalletError {
     };
   }
 
-  // Not enough balance / allowance to settle the transaction.
+  // Cartridge Controller's own account WASM throws this bare, generic message
+  // when its __validate__ simulation can't cover the tx's estimated max fee —
+  // it carries none of the "insufficient"/"balance"/"funds" wording the
+  // generic check below looks for, so it needs its own match. Cartridge's own
+  // modal already surfaces an "Add funds" CTA for this case; this mirrors
+  // that here so the same message shows wherever the raw error surfaces.
   const lower = raw.toLowerCase();
+  if (lower.includes("jscontrollererror") && lower.includes("validation failure")) {
+    return {
+      title: "Not enough gas",
+      message: "Your wallet doesn't have enough STRK (or ETH) to pay for this transaction's gas fee.",
+      description: "Add funds to your wallet, then try again.",
+      isUserRejection: false,
+    };
+  }
+
+  // Not enough balance / allowance to settle the transaction.
   if (lower.includes("insufficient") && (lower.includes("balance") || lower.includes("allowance") || lower.includes("funds"))) {
     return {
       title: "Insufficient balance",

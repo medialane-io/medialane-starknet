@@ -5,6 +5,7 @@ import { Keplr } from "starknetkit/keplr";
 import { Fordefi } from "starknetkit/fordefi";
 import { Xverse } from "starknetkit/xverse";
 import { ControllerConnector } from "starknetkit/controller";
+import { constants, TypedDataRevision } from "starknet";
 import type { Connector } from "@starknet-react/core";
 import {
   STARKNET_MARKETPLACE_721_CONTRACT,
@@ -47,8 +48,91 @@ const paymentTokenPolicies = Object.fromEntries(
   ]),
 );
 
+/**
+ * SNIP-12 message policies — pre-authorizes the exact typed-data shapes
+ * `register_order`/`cancel_order` sign (mirrors
+ * `@medialane/sdk`'s `starknet/marketplace/signing.ts` byte-for-byte; that
+ * file is the source of truth, this is a declarative copy for Cartridge's
+ * session policy, not a second implementation). Without this, Cartridge has
+ * no pre-authorized "messages" list (only `contracts` was configured), so
+ * every `signMessage` call misses the silent session-sign path and falls
+ * back to a manual popup — listing/offer signing that never resolved for
+ * Cartridge users traced back to this gap.
+ */
+const STARKNET_DOMAIN_TYPE = [
+  { name: "name", type: "shortstring" },
+  { name: "version", type: "shortstring" },
+  { name: "chainId", type: "shortstring" },
+  { name: "revision", type: "shortstring" },
+];
+const OFFER_ITEM_TYPE = [
+  { name: "item_type", type: "shortstring" },
+  { name: "token", type: "ContractAddress" },
+  { name: "identifier_or_criteria", type: "felt" },
+  { name: "amount", type: "felt" },
+];
+const CONSIDERATION_ITEM_TYPE = [
+  { name: "item_type", type: "shortstring" },
+  { name: "token", type: "ContractAddress" },
+  { name: "identifier_or_criteria", type: "felt" },
+  { name: "amount", type: "felt" },
+  { name: "recipient", type: "ContractAddress" },
+];
+const ORDER_PARAMETERS_TYPE = [
+  { name: "offerer", type: "ContractAddress" },
+  { name: "marketplace", type: "ContractAddress" },
+  { name: "offer", type: "OfferItem" },
+  { name: "consideration", type: "ConsiderationItem" },
+  { name: "royalty_max_bps", type: "felt" },
+  { name: "start_time", type: "felt" },
+  { name: "end_time", type: "felt" },
+  { name: "salt", type: "felt" },
+  { name: "counter", type: "felt" },
+];
+const ORDER_CANCELLATION_TYPE = [
+  { name: "order_hash", type: "felt" },
+  { name: "offerer", type: "ContractAddress" },
+];
+
+const snip12Domain = (version: "5" | "4") => ({
+  name: "Medialane",
+  version,
+  chainId: constants.StarknetChainId.SN_MAIN,
+  revision: TypedDataRevision.ACTIVE,
+});
+
+const orderMessagePolicy = (name: string, description: string, version: "5" | "4") => ({
+  name,
+  description,
+  domain: snip12Domain(version),
+  primaryType: "OrderParameters",
+  types: {
+    StarknetDomain: STARKNET_DOMAIN_TYPE,
+    OrderParameters: ORDER_PARAMETERS_TYPE,
+    OfferItem: OFFER_ITEM_TYPE,
+    ConsiderationItem: CONSIDERATION_ITEM_TYPE,
+  },
+});
+
+const cancellationMessagePolicy = (name: string, description: string, version: "5" | "4") => ({
+  name,
+  description,
+  domain: snip12Domain(version),
+  primaryType: "OrderCancellation",
+  types: {
+    StarknetDomain: STARKNET_DOMAIN_TYPE,
+    OrderCancellation: ORDER_CANCELLATION_TYPE,
+  },
+});
+
 const cartridgeController = new ControllerConnector({
   policies: {
+    messages: [
+      orderMessagePolicy("List / offer (721)", "Sign a marketplace listing or offer", "5"),
+      orderMessagePolicy("List / offer (1155)", "Sign a marketplace listing or offer", "4"),
+      cancellationMessagePolicy("Cancel order (721)", "Sign a marketplace order cancellation", "5"),
+      cancellationMessagePolicy("Cancel order (1155)", "Sign a marketplace order cancellation", "4"),
+    ],
     contracts: {
       [STARKNET_MARKETPLACE_721_CONTRACT]: {
         description: "Marketplace (721)",
