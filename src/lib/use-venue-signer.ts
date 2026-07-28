@@ -5,11 +5,7 @@ import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useNetwork } from "@/components/starknet-provider";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
-import { assertCorrectNetwork, withTimeout } from "@/lib/wallet-error";
-
-// Bounded so a stuck flow fails visibly instead of hanging `isProcessing`
-// forever — long enough to cover a real PIN/passkey prompt.
-const EXECUTE_TIMEOUT_MS = 45_000;
+import { assertCorrectNetwork } from "@/lib/wallet-error";
 
 /**
  * The app's single implementation of the SDK's chain-neutral `VenueSigner`
@@ -47,7 +43,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
       assertCorrectNetwork(chainId, networkConfig.chainId);
       markMarketplaceDebug("execute: awaiting wallet submit", { callCount: calls.length });
-      const tx = await withTimeout(account.execute(calls), EXECUTE_TIMEOUT_MS, "Wallet");
+      const tx = await account.execute(calls);
       const txHash = tx.transaction_hash;
       markMarketplaceDebug("execute: wallet submitted, awaiting confirmation", { txHash });
       const receipt: any = await provider.waitForTransaction(txHash);

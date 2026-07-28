@@ -4,8 +4,7 @@ import React, { createContext, useContext, useMemo, useCallback, useEffect, useR
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import { makeInjectedExecute } from "@/lib/wallet-adapters";
-import { assertCorrectNetwork, withTimeout } from "@/lib/wallet-error";
-import { getConnectorDisplayName } from "@/lib/starknet-connectors";
+import { assertCorrectNetwork } from "@/lib/wallet-error";
 import { useNetwork } from "@/components/starknet-provider";
 import {
   clearPersistedWallet,
@@ -14,16 +13,6 @@ import {
   type ActiveWallet,
   type WalletType,
 } from "@/lib/wallet-types";
-
-/** How long an explicit injected connect can hang before we give up and
- *  surface "wallet not responding" instead of leaving the UI stuck. Long
- *  enough to cover a PIN/passkey prompt the user is actively answering. */
-const INJECTED_CONNECT_TIMEOUT_MS = 20_000;
-/** Shorter bound for the silent background reconnect-on-load probe — this
- *  path is invisible to the user, so a hang here should fail fast and let
- *  the loop's own retry cadence take over rather than eating the whole
- *  ~6s budget on one stuck call. */
-const INJECTED_RECONNECT_PROBE_TIMEOUT_MS = 3_000;
 
 interface WalletContextValue {
   active: ActiveWallet | null;
@@ -129,20 +118,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const connector = connectors.find((c) => c.id === targetId);
         if (connector) {
           try {
-            // Same hang risk as the explicit connect path below, but this
-            // probe is silent (no user-facing error) — fail fast per call so
-            // a single stuck extension can't eat the whole retry budget.
-            const isReady = await withTimeout(
-              connector.ready(),
-              INJECTED_RECONNECT_PROBE_TIMEOUT_MS,
-              targetId,
-            );
+            const isReady = await connector.ready();
             if (isReady) {
-              await withTimeout(
-                connectAsync({ connector }),
-                INJECTED_RECONNECT_PROBE_TIMEOUT_MS,
-                targetId,
-              );
+              await connectAsync({ connector });
               setReconnecting(false);
               return;
             }
@@ -164,16 +142,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const connect = useCallback(
     async (connector: Connector) => {
-      // Injected wallets talk over window.postMessage / a content script — if
-      // the extension itself is stuck (crashed background worker, a wedged
-      // connection), connectAsync can hang forever with no error and no
-      // rejection, leaving isConnecting stuck true indefinitely (reported:
-      // Ready hanging mid-connect broke wallet UI state app-wide). Bound it.
-      await withTimeout(
-        connectAsync({ connector }),
-        INJECTED_CONNECT_TIMEOUT_MS,
-        getConnectorDisplayName(connector.id, connector.name ?? "Your wallet"),
-      );
+      await connectAsync({ connector });
       // Persist the injected choice as the restore target.
       const id = connector.id.toLowerCase();
       writePersistedWallet(id === "braavos" ? "braavos" : "argent");
