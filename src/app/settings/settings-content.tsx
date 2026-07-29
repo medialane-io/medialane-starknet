@@ -8,7 +8,10 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useCreatorProfile } from "@/hooks/use-profiles";
 import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
 import { useTokensByOwner } from "@/hooks/use-tokens";
-import { AssetPicker, ServiceFormShell, type OwnedAsset } from "@medialane/ui";
+import { useUserOrders } from "@/hooks/use-orders";
+import { useCollectionsByOwner } from "@/hooks/use-collections";
+import { useRewards } from "@/hooks/use-rewards";
+import { AssetPicker, ServiceFormShell, LevelBadge, type OwnedAsset } from "@medialane/ui";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@/components/ui/button";
@@ -18,8 +21,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { AtSign, CheckCircle2, Clock, XCircle, Loader2, LogOut, Settings as SettingsIcon } from "lucide-react";
+import {
+  AtSign, CheckCircle2, Clock, XCircle, Loader2, LogOut, Settings as SettingsIcon,
+  Globe, Twitter, ArrowUpRight, Gem, Tag, LayoutGrid, Trophy,
+} from "lucide-react";
 import { cn, resolveTokenImage } from "@/lib/utils";
+import { addressPalette } from "@/lib/creator-utils";
 
 type CheckState = "idle" | "checking" | "available" | "taken";
 
@@ -33,6 +40,8 @@ type ProfileForm = {
   discordUrl: string;
   telegramUrl: string;
 };
+
+const CARD_FRAME_GRADIENT = "linear-gradient(135deg, #3b7bff, #8a5cf6 38%, #f6608f 70%, #fb8b46)";
 
 function UsernameClaimInput({
   value, onChange, onCheck, onSubmit, checkState, checkReason, loading, disabled,
@@ -93,69 +102,235 @@ function UsernameClaimInput({
   );
 }
 
-/** Sticky right-rail preview of how the profile reads publicly, plus the persistent Save action. */
+/**
+ * The creator profile as a Medialane collectible card — same brand-spectrum
+ * frame + foil material + sheen as `MedialaneCollectionCard` (the live
+ * preview on every mint form), adapted for identity instead of artwork: a
+ * cover-art band (banner, address-palette tint — matches the real
+ * `/creator/[address]` hero) with the avatar breaking out of it, then name,
+ * @username, bio, and link icons below a divider. Vertical, self-contained,
+ * pure presentation — Save lives with the form, not here.
+ */
 function ProfileLivePreview({
-  form, approvedUsername, saving, canSave, onSave,
+  form, approvedUsername, walletAddress, usernameVerified,
 }: {
   form: ProfileForm;
   approvedUsername?: string | null;
-  saving: boolean;
-  canSave: boolean;
-  onSave: () => void;
+  walletAddress?: string | null;
+  /** Whether we've actually checked username status (a stored SIWS token exists) — vs. simply not knowing yet. */
+  usernameVerified: boolean;
 }) {
   const avatarUrl = resolveTokenImage(form.avatarImage);
+  const bannerUrl = resolveTokenImage(form.bannerImage);
+  const { h1, h2 } = addressPalette(walletAddress ?? "0x0");
+  const displayName = form.displayName || "Your name";
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-5">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Public preview</p>
-        <p className="mt-0.5 text-xs text-muted-foreground/70">How your profile appears to others</p>
-      </div>
+    <div style={{ perspective: "1000px" }}>
+      <div
+        className="rounded-[24px] p-[1.5px] shadow-[0_16px_40px_-16px_rgba(91,76,230,0.45)]"
+        style={{ background: CARD_FRAME_GRADIENT }}
+      >
+        <div className="ml-card-material relative rounded-[22.5px] overflow-hidden text-[#0a0e1f] dark:text-white ring-1 ring-inset ring-black/[0.06] dark:ring-white/[0.06]">
+          <p className="relative px-5 pt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0a0e1f]/45 dark:text-white/45">
+            Public preview
+          </p>
 
-      <div className="flex items-center gap-3">
-        {avatarUrl ? (
-          <Image src={avatarUrl} alt="" width={56} height={56} unoptimized className="h-14 w-14 rounded-full object-cover border border-border/60 shrink-0" />
-        ) : (
-          <div className="h-14 w-14 rounded-full bg-gradient-to-br from-brand-blue via-brand-purple to-brand-rose flex items-center justify-center shrink-0">
-            <span className="text-lg font-semibold text-white">{(form.displayName || "?").slice(0, 1).toUpperCase()}</span>
+          {/* Cover band — inset like the trading card's artwork, address-tinted like the real hero */}
+          <div className="px-2.5 pt-2.5">
+            <div className="relative h-24 w-full overflow-hidden rounded-[16px] ring-1 ring-black/10 dark:ring-white/10">
+              {bannerUrl && (
+                <Image
+                  src={bannerUrl} alt="" fill unoptimized aria-hidden
+                  className="object-cover scale-150"
+                  style={{ opacity: 0.6, filter: "blur(24px) saturate(1.8) brightness(0.55)" }}
+                />
+              )}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `
+                    radial-gradient(ellipse 90% 90% at 20% 70%, hsl(${h1}, 68%, 42% / ${bannerUrl ? 0.32 : 0.5}) 0%, transparent 65%),
+                    radial-gradient(ellipse 70% 70% at 85% 20%, hsl(${h2}, 68%, 38% / ${bannerUrl ? 0.2 : 0.38}) 0%, transparent 60%)
+                  `,
+                }}
+              />
+            </div>
           </div>
-        )}
-        <div className="min-w-0">
-          <p className="truncate font-semibold text-foreground">{form.displayName || "Your name"}</p>
-          {approvedUsername ? (
-            <p className="text-xs text-primary tabular-nums">@{approvedUsername}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground/60">No username yet</p>
-          )}
+
+          {/* Holographic sheen — same as the mint preview card */}
+          <div
+            aria-hidden
+            className="ml-card-sheen pointer-events-none absolute inset-0 opacity-40"
+          />
+
+          <div className="relative px-5 pb-5 pt-0 -mt-8 space-y-3">
+            {avatarUrl ? (
+              <Image src={avatarUrl} alt="" width={64} height={64} unoptimized className="h-16 w-16 rounded-full object-cover ring-4 ring-[#f8f9fc] dark:ring-[#0a0e1f] shrink-0" />
+            ) : (
+              <div
+                className="h-16 w-16 rounded-full ring-4 ring-[#f8f9fc] dark:ring-[#0a0e1f] flex items-center justify-center shrink-0"
+                style={{ background: `linear-gradient(145deg, hsl(${h1}, 72%, 60%), hsl(${h2}, 72%, 50%))` }}
+              >
+                <span className="text-xl font-bold text-white">{displayName.slice(0, 1).toUpperCase()}</span>
+              </div>
+            )}
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="pill-badge text-[10px]">Creator</span>
+                {approvedUsername ? (
+                  <span className="text-[11px] tabular-nums text-[#0a0e1f]/55 dark:text-white/55">@{approvedUsername}</span>
+                ) : usernameVerified ? (
+                  <span className="text-[11px] text-[#0a0e1f]/40 dark:text-white/40">No username yet</span>
+                ) : (
+                  <span className="text-[11px] text-[#0a0e1f]/40 dark:text-white/40">Checking…</span>
+                )}
+              </div>
+              <p className="mt-1 truncate text-[18px] font-bold leading-snug">{displayName}</p>
+            </div>
+
+            {form.bio && (
+              <p className="text-xs text-[#0a0e1f]/60 dark:text-white/60 leading-relaxed line-clamp-2">{form.bio}</p>
+            )}
+
+            {(form.websiteUrl || form.twitterUrl) && (
+              <div className="flex items-center gap-2">
+                {form.websiteUrl && (
+                  <span className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-[#0a0e1f]/60 dark:text-white/60">
+                    <Globe className="h-3.5 w-3.5" />
+                  </span>
+                )}
+                {form.twitterUrl && (
+                  <span className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-[#0a0e1f]/60 dark:text-white/60">
+                    <Twitter className="h-3.5 w-3.5" />
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
+
+            <div className="flex items-center gap-2">
+              <span aria-hidden className="h-3.5 w-3.5 rounded-full shrink-0" style={{ background: CARD_FRAME_GRADIENT }} />
+              <span className="text-[9px] font-bold tracking-[0.18em] text-[#0a0e1f]/50 dark:text-white/50">MEDIALANE</span>
+              {approvedUsername && (
+                <Link
+                  href={`/creator/${approvedUsername}`}
+                  className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-[#0a0e1f]/70 dark:text-white/70 hover:underline"
+                >
+                  View profile
+                  <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {form.bio && (
-        <p className="text-sm text-muted-foreground line-clamp-3">{form.bio}</p>
-      )}
-
-      <div className="pt-4 border-t border-border/60">
-        <Button onClick={onSave} disabled={!canSave || saving} className="w-full">
-          {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save changes"}
-        </Button>
+function SnapshotStat({ icon: Icon, value, label }: { icon: React.ElementType; value: number; label: string }) {
+  return (
+    <div className="flex-1 min-w-0 text-center">
+      <div className="flex items-center justify-center gap-1 text-muted-foreground/70">
+        <Icon className="h-3 w-3" />
       </div>
+      <p className="mt-1 text-lg font-bold tabular-nums text-foreground">{value}</p>
+      <p className="text-[10.5px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+/** Portfolio at a glance — same three counts the portfolio pages track, so this stays a quick pulse-check rather than a second portfolio surface. */
+function PortfolioSnapshot({ assets, listings, collections }: { assets: number; listings: number; collections: number }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Portfolio</p>
+        <p className="mt-0.5 text-xs text-muted-foreground/70">What you own on Medialane</p>
+      </div>
+      <div className="flex items-center border-t border-border/60 pt-4">
+        <SnapshotStat icon={Gem} value={assets} label="Assets" />
+        <SnapshotStat icon={Tag} value={listings} label="Listed" />
+        <SnapshotStat icon={LayoutGrid} value={collections} label="Collections" />
+      </div>
+      <Link
+        href="/portfolio"
+        className="flex items-center justify-center gap-1 text-xs font-medium text-primary hover:underline"
+      >
+        View portfolio
+        <ArrowUpRight className="h-3 w-3" />
+      </Link>
+    </div>
+  );
+}
+
+/** Rewards at a glance — mirrors the same level/XP data the portfolio header and /rewards page read from `useRewards`. */
+function RewardsSnapshot({ address }: { address?: string | null }) {
+  const { data: rewards } = useRewards(address);
+  if (!rewards) return null;
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Rewards</p>
+          <p className="mt-0.5 text-xs text-muted-foreground/70">Your creator journey</p>
+        </div>
+        <Trophy className="h-4 w-4 text-muted-foreground/50" />
+      </div>
+      <div className="border-t border-border/60 pt-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <LevelBadge level={rewards.currentLevel} name={rewards.currentLevelName} badgeColor={rewards.badgeColor} />
+          <span className="text-xs tabular-nums text-muted-foreground">{rewards.totalXp.toLocaleString()} XP</span>
+        </div>
+        <div className="h-2 rounded-full bg-muted-foreground/15 overflow-hidden">
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${rewards.progressPct}%`, background: CARD_FRAME_GRADIENT }}
+          />
+        </div>
+        {rewards.nextLevel && (
+          <p className="text-[10.5px] text-muted-foreground">
+            {rewards.nextLevel.xpRequired - rewards.totalXp} XP to Lv.{rewards.nextLevel.level} {rewards.nextLevel.name}
+          </p>
+        )}
+      </div>
+      <Link
+        href="/rewards"
+        className="flex items-center justify-center gap-1 text-xs font-medium text-primary hover:underline"
+      >
+        View rewards
+        <ArrowUpRight className="h-3 w-3" />
+      </Link>
     </div>
   );
 }
 
 export default function SettingsContent() {
   const { address: walletAddress, disconnect } = useWallet();
-  const { getValidToken } = useSiwsToken();
+  const { getValidToken, token: siwsToken, isSigningIn } = useSiwsToken();
   const router = useRouter();
   const { profile, isLoading: profileLoading, mutate } = useCreatorProfile(walletAddress ?? undefined);
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
+  // useMyUsernameClaim only reads an already-stored SIWS token — it never
+  // requests one, so without a prior sign-in this session it silently never
+  // fetches and `approvedUsername` stays null even when a username exists.
+  // Track whether we've actually checked, so the UI can say "checking" /
+  // "verify" instead of falsely asserting "no username yet".
+  const usernameVerified = !!siwsToken;
   const { tokens: ownedTokens, isLoading: assetsLoading } = useTokensByOwner(walletAddress ?? null, 1, 100);
+  const { orders } = useUserOrders(walletAddress ?? null);
+  const { collections } = useCollectionsByOwner(walletAddress ?? null);
   const ownedAssets: OwnedAsset[] = ownedTokens.map((t) => ({
     contractAddress: t.contractAddress,
     tokenId: t.tokenId,
     name: t.metadata?.name ?? `Token #${t.tokenId}`,
     image: resolveTokenImage(t.metadata?.image),
   }));
+  const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType !== "ERC20");
   const [saving, setSaving] = useState(false);
   const [claimInput, setClaimInput] = useState("");
   const [claiming, setClaiming] = useState(false);
@@ -224,7 +399,9 @@ export default function SettingsContent() {
     }
     setSaving(true);
     try {
-      const result = await getMedialaneClient().api.updateCreatorProfile(walletAddress, form, "") as any;
+      const token = await getValidToken();
+      if (!token) throw new Error("Wallet sign-in required to save changes");
+      const result = await getMedialaneClient().api.updateCreatorProfile(walletAddress, form, token) as any;
       if (!result?.walletAddress) {
         throw new Error(result?.error ?? "Save failed — please try again");
       }
@@ -289,13 +466,20 @@ export default function SettingsContent() {
     <ServiceFormShell
       {...headerProps}
       aside={
-        <ProfileLivePreview
-          form={form}
-          approvedUsername={approvedUsername}
-          saving={saving}
-          canSave={!!walletAddress && !profileLoading}
-          onSave={handleSave}
-        />
+        <div className="space-y-4">
+          <ProfileLivePreview
+            form={form}
+            approvedUsername={approvedUsername}
+            walletAddress={walletAddress}
+            usernameVerified={usernameVerified}
+          />
+          <PortfolioSnapshot
+            assets={ownedAssets.length}
+            listings={activeListings.length}
+            collections={collections.length}
+          />
+          <RewardsSnapshot address={walletAddress} />
+        </div>
       }
     >
       <div className="space-y-8">
@@ -312,6 +496,28 @@ export default function SettingsContent() {
           </div>
 
           <div className="border-t border-border pt-4 space-y-3">
+            {/* Unverified — we haven't checked yet (no SIWS signature this session); never assert "no username" without actually checking */}
+            {!usernameVerified && !approvedUsername && (
+              <div className="rounded-xl border border-border bg-muted/20 p-4 flex items-start gap-3">
+                <AtSign className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">Verify your username status</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Sign a message with your wallet to check whether you already have a username.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-3"
+                    disabled={isSigningIn}
+                    onClick={() => { void getValidToken().catch(() => {}); }}
+                  >
+                    {isSigningIn ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Signing…</> : "Verify with wallet"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Approved */}
             {approvedUsername && (
               <div className={cn(
@@ -379,7 +585,7 @@ export default function SettingsContent() {
             )}
 
             {/* No claim yet */}
-            {!approvedUsername && !claim && (
+            {usernameVerified && !approvedUsername && !claim && (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
                   Get a shareable URL like{" "}
@@ -465,6 +671,13 @@ export default function SettingsContent() {
             {field("discordUrl", "Discord", "https://discord.gg/…")}
             {field("telegramUrl", "Telegram", "https://t.me/…")}
           </div>
+        </div>
+
+        {/* Save — pinned to the form, not the preview rail */}
+        <div className="sticky bottom-4 z-10 rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md p-4 shadow-lg">
+          <Button onClick={handleSave} disabled={saving || !walletAddress || profileLoading} className="w-full sm:w-auto">
+            {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save changes"}
+          </Button>
         </div>
 
         {/* Account */}

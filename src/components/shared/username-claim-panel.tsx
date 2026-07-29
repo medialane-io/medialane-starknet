@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { AtSign, CheckCircle, Clock, XCircle, ArrowRight } from "lucide-react";
+import { AtSign, CheckCircle, Clock, XCircle, ArrowRight, Loader2 } from "lucide-react";
 
 type CheckState = "idle" | "checking" | "available" | "taken";
 
@@ -66,8 +66,13 @@ function UsernameInput({ value, onChange, onCheck, onSubmit, checkState, checkRe
 export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
   const shell = bare ? "space-y-3 max-w-lg" : "bento-cell p-5 space-y-3";
   const { address: walletAddress } = useWallet();
-  const { getValidToken } = useSiwsToken();
+  const { getValidToken, token: siwsToken, isSigningIn } = useSiwsToken();
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
+  // useMyUsernameClaim only reads an already-stored SIWS token — without a
+  // prior sign-in this session it never fetches, so approvedUsername/claim
+  // stay null even when a username already exists. Never fall through to
+  // "claim a new username" without actually having checked first.
+  const usernameVerified = !!siwsToken;
   const [claimInput, setClaimInput] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [checkState, setCheckState] = useState<CheckState>("idle");
@@ -132,6 +137,31 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
             </Link>
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  // Haven't verified yet (no SIWS signature this session) — check before assuming no username
+  if (!usernameVerified) {
+    return (
+      <div className={shell}>
+        {!bare && (
+          <div className="flex items-center gap-2">
+            <AtSign className="h-4 w-4 text-primary" />
+            <p className="font-semibold">Creator Username</p>
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground">
+          Sign a message with your wallet to check whether you already have a username.
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isSigningIn || !walletAddress}
+          onClick={() => { void getValidToken().catch(() => {}); }}
+        >
+          {isSigningIn ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Signing…</> : "Verify with wallet"}
+        </Button>
       </div>
     );
   }
