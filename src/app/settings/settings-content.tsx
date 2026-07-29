@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCreatorProfile } from "@/hooks/use-profiles";
 import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
@@ -22,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
-  AtSign, CheckCircle2, Clock, XCircle, Loader2, LogOut, Settings as SettingsIcon,
+  AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon,
   Globe, Twitter, ArrowUpRight, Gem, Tag, LayoutGrid, Trophy,
 } from "lucide-react";
 import { cn, resolveTokenImage } from "@/lib/utils";
@@ -40,8 +39,6 @@ type ProfileForm = {
   discordUrl: string;
   telegramUrl: string;
 };
-
-const CARD_FRAME_GRADIENT = "linear-gradient(135deg, #3b7bff, #8a5cf6 38%, #f6608f 70%, #fb8b46)";
 
 function UsernameClaimInput({
   value, onChange, onCheck, onSubmit, checkState, checkReason, loading, disabled,
@@ -103,13 +100,12 @@ function UsernameClaimInput({
 }
 
 /**
- * The creator profile as a Medialane collectible card — same brand-spectrum
- * frame + foil material + sheen as `MedialaneCollectionCard` (the live
- * preview on every mint form), adapted for identity instead of artwork: a
- * cover-art band (banner, address-palette tint — matches the real
- * `/creator/[address]` hero) with the avatar breaking out of it, then name,
- * @username, bio, and link icons below a divider. Vertical, self-contained,
- * pure presentation — Save lives with the form, not here.
+ * The creator profile as a Medialane collectible card — same foil material
+ * as `MedialaneCollectionCard` (the live preview on every mint form), without
+ * its decorative gradient frame/sheen. A square cover image (banner, no
+ * color wash — shown as-is) with the level badge overlaid bottom-right, then
+ * name, @username, bio, and link icons. Vertical, self-contained, pure
+ * presentation — Save lives with the form, not here.
  */
 function ProfileLivePreview({
   form, approvedUsername, walletAddress, usernameVerified,
@@ -122,110 +118,83 @@ function ProfileLivePreview({
 }) {
   const avatarUrl = resolveTokenImage(form.avatarImage);
   const bannerUrl = resolveTokenImage(form.bannerImage);
-  const { h1, h2 } = addressPalette(walletAddress ?? "0x0");
+  const { h1 } = addressPalette(walletAddress ?? "0x0");
   const displayName = form.displayName || "Your name";
+  const { data: rewards } = useRewards(walletAddress);
 
   return (
-    <div style={{ perspective: "1000px" }}>
-      <div
-        className="rounded-[24px] p-[1.5px] shadow-[0_16px_40px_-16px_rgba(91,76,230,0.45)]"
-        style={{ background: CARD_FRAME_GRADIENT }}
-      >
-        <div className="ml-card-material relative rounded-[22.5px] overflow-hidden text-[#0a0e1f] dark:text-white ring-1 ring-inset ring-black/[0.06] dark:ring-white/[0.06]">
-          <p className="relative px-5 pt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0a0e1f]/45 dark:text-white/45">
-            Public preview
-          </p>
-
-          {/* Cover band — inset like the trading card's artwork, address-tinted like the real hero */}
-          <div className="px-2.5 pt-2.5">
-            <div className="relative h-24 w-full overflow-hidden rounded-[16px] ring-1 ring-black/10 dark:ring-white/10">
-              {bannerUrl && (
-                <Image
-                  src={bannerUrl} alt="" fill unoptimized aria-hidden
-                  className="object-cover scale-150"
-                  style={{ opacity: 0.6, filter: "blur(24px) saturate(1.8) brightness(0.55)" }}
-                />
-              )}
+    <div className="rounded-[24px] border border-border/60 bg-card overflow-hidden">
+      {/* Cover — square, shown as-is, no tint/blur/gradient */}
+      <div className="px-2.5 pt-2.5">
+        <div className="relative aspect-square w-full overflow-hidden rounded-[16px] bg-muted ring-1 ring-black/10 dark:ring-white/10">
+          {bannerUrl ? (
+            <Image src={bannerUrl} alt="" fill unoptimized className="object-cover" />
+          ) : (
+            !avatarUrl && (
               <div
-                className="absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(ellipse 90% 90% at 20% 70%, hsl(${h1}, 68%, 42% / ${bannerUrl ? 0.32 : 0.5}) 0%, transparent 65%),
-                    radial-gradient(ellipse 70% 70% at 85% 20%, hsl(${h2}, 68%, 38% / ${bannerUrl ? 0.2 : 0.38}) 0%, transparent 60%)
-                  `,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Holographic sheen — same as the mint preview card */}
-          <div
-            aria-hidden
-            className="ml-card-sheen pointer-events-none absolute inset-0 opacity-40"
-          />
-
-          <div className="relative px-5 pb-5 pt-0 -mt-8 space-y-3">
-            {avatarUrl ? (
-              <Image src={avatarUrl} alt="" width={64} height={64} unoptimized className="h-16 w-16 rounded-full object-cover ring-4 ring-[#f8f9fc] dark:ring-[#0a0e1f] shrink-0" />
-            ) : (
-              <div
-                className="h-16 w-16 rounded-full ring-4 ring-[#f8f9fc] dark:ring-[#0a0e1f] flex items-center justify-center shrink-0"
-                style={{ background: `linear-gradient(145deg, hsl(${h1}, 72%, 60%), hsl(${h2}, 72%, 50%))` }}
+                className="h-full w-full flex items-center justify-center text-3xl font-bold text-white"
+                style={{ backgroundColor: `hsl(${h1}, 55%, 42%)` }}
               >
-                <span className="text-xl font-bold text-white">{displayName.slice(0, 1).toUpperCase()}</span>
+                {displayName.slice(0, 1).toUpperCase()}
               </div>
-            )}
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="pill-badge text-[10px]">Creator</span>
-                {approvedUsername ? (
-                  <span className="text-[11px] tabular-nums text-[#0a0e1f]/55 dark:text-white/55">@{approvedUsername}</span>
-                ) : usernameVerified ? (
-                  <span className="text-[11px] text-[#0a0e1f]/40 dark:text-white/40">No username yet</span>
-                ) : (
-                  <span className="text-[11px] text-[#0a0e1f]/40 dark:text-white/40">Checking…</span>
-                )}
-              </div>
-              <p className="mt-1 truncate text-[18px] font-bold leading-snug">{displayName}</p>
+            )
+          )}
+          {rewards && rewards.totalXp > 0 && (
+            <div className="absolute bottom-2 right-2">
+              <LevelBadge level={rewards.currentLevel} name={rewards.currentLevelName} badgeColor={rewards.badgeColor} size="sm" />
             </div>
+          )}
+        </div>
+      </div>
 
-            {form.bio && (
-              <p className="text-xs text-[#0a0e1f]/60 dark:text-white/60 leading-relaxed line-clamp-2">{form.bio}</p>
-            )}
-
-            {(form.websiteUrl || form.twitterUrl) && (
-              <div className="flex items-center gap-2">
-                {form.websiteUrl && (
-                  <span className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-[#0a0e1f]/60 dark:text-white/60">
-                    <Globe className="h-3.5 w-3.5" />
-                  </span>
-                )}
-                {form.twitterUrl && (
-                  <span className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-[#0a0e1f]/60 dark:text-white/60">
-                    <Twitter className="h-3.5 w-3.5" />
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
-
-            <div className="flex items-center gap-2">
-              <span aria-hidden className="h-3.5 w-3.5 rounded-full shrink-0" style={{ background: CARD_FRAME_GRADIENT }} />
-              <span className="text-[9px] font-bold tracking-[0.18em] text-[#0a0e1f]/50 dark:text-white/50">MEDIALANE</span>
-              {approvedUsername && (
-                <Link
-                  href={`/creator/${approvedUsername}`}
-                  className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-[#0a0e1f]/70 dark:text-white/70 hover:underline"
-                >
-                  View profile
-                  <ArrowUpRight className="h-3 w-3" />
-                </Link>
+      <div className="px-5 pb-5 pt-3 space-y-3">
+        <div className="flex items-center gap-3">
+          {avatarUrl && (
+            <Image src={avatarUrl} alt="" width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover shrink-0" />
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="pill-badge text-[10px]">Creator</span>
+              {approvedUsername ? (
+                <span className="text-[11px] tabular-nums text-muted-foreground">@{approvedUsername}</span>
+              ) : usernameVerified ? (
+                <span className="text-[11px] text-muted-foreground/60">No username yet</span>
+              ) : (
+                <span className="text-[11px] text-muted-foreground/60">Checking…</span>
               )}
             </div>
+            <p className="truncate text-[18px] font-bold leading-snug text-foreground">{displayName}</p>
           </div>
         </div>
+
+        {form.bio && (
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{form.bio}</p>
+        )}
+
+        {(form.websiteUrl || form.twitterUrl) && (
+          <div className="flex items-center gap-2">
+            {form.websiteUrl && (
+              <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                <Globe className="h-3.5 w-3.5" />
+              </span>
+            )}
+            {form.twitterUrl && (
+              <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                <Twitter className="h-3.5 w-3.5" />
+              </span>
+            )}
+          </div>
+        )}
+
+        {approvedUsername && (
+          <Link
+            href={`/creator/${approvedUsername}`}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+          >
+            View profile
+            <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -289,7 +258,7 @@ function RewardsSnapshot({ address }: { address?: string | null }) {
         <div className="h-2 rounded-full bg-muted-foreground/15 overflow-hidden">
           <div
             className="h-full rounded-full"
-            style={{ width: `${rewards.progressPct}%`, background: CARD_FRAME_GRADIENT }}
+            style={{ width: `${rewards.progressPct}%`, backgroundColor: rewards.badgeColor }}
           />
         </div>
         {rewards.nextLevel && (
@@ -310,9 +279,8 @@ function RewardsSnapshot({ address }: { address?: string | null }) {
 }
 
 export default function SettingsContent() {
-  const { address: walletAddress, disconnect } = useWallet();
+  const { address: walletAddress } = useWallet();
   const { getValidToken, token: siwsToken, isSigningIn } = useSiwsToken();
-  const router = useRouter();
   const { profile, isLoading: profileLoading, mutate } = useCreatorProfile(walletAddress ?? undefined);
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
   // useMyUsernameClaim only reads an already-stored SIWS token — it never
@@ -677,22 +645,6 @@ export default function SettingsContent() {
         <div className="pt-4 border-t border-border">
           <Button onClick={handleSave} disabled={saving || !walletAddress || profileLoading} className="w-full sm:w-auto">
             {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save changes"}
-          </Button>
-        </div>
-
-        {/* Account */}
-        <div className="space-y-4 pt-4 border-t border-border">
-          <div>
-            <h3 className="text-sm font-semibold">Account</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Manage your wallet connection</p>
-          </div>
-          <Button
-            variant="outline"
-            className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-            onClick={() => { disconnect(); router.push("/"); }}
-          >
-            <LogOut className="h-4 w-4" />
-            Disconnect wallet
           </Button>
         </div>
       </div>
