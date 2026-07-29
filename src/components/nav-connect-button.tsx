@@ -28,7 +28,8 @@ export function NavConnectButton() {
             close();
             openConnectDialog();
           }}
-          className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-blue via-brand-purple to-brand-rose px-2.5 py-1 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
+          className="ml-gbtn relative flex items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1 text-[11px] font-semibold text-foreground transition-opacity hover:opacity-90 active:scale-[0.98]"
+          style={{ "--ml-grad": "conic-gradient(from 0deg, #3b7bff, #8a5cf6, #f6608f, #3b7bff)" } as React.CSSProperties}
         >
           <LogIn className="h-3 w-3" />
           Connect
