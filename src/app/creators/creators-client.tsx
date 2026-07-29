@@ -17,7 +17,6 @@ import type { ApiCreatorProfile } from "@medialane/sdk";
 
 function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
   const avatarUrl = creator.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
-  const bannerUrl = creator.bannerImage ? ipfsToHttp(creator.bannerImage) : null;
   const displayName = creator.displayName || `@${creator.username}`;
 
   // Deterministic gradient from username characters
@@ -25,13 +24,13 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
   const hue2 = (hue + 60) % 360;
   const fallbackGradient = `linear-gradient(135deg, hsl(${hue},55%,35%), hsl(${hue2},50%,22%))`;
 
-  // Fetch collection images only when creator has no uploaded banner or avatar
-  const needsFallback = !avatarUrl && !bannerUrl;
-  const { collections } = useCollectionsByOwner(needsFallback ? creator.walletAddress : null);
+  // Fetch collection images only when creator has no uploaded avatar
+  const { collections } = useCollectionsByOwner(!avatarUrl ? creator.walletAddress : null);
   const fallbackImage = collections[0]?.image ? ipfsToHttp(collections[0].image) : null;
 
-  const resolvedBanner = bannerUrl ?? fallbackImage;
-  const resolvedAvatar = avatarUrl ?? fallbackImage;
+  // The avatar fills the card — same image, both as the full-bleed background
+  // and the small avatar chip.
+  const resolvedImage = avatarUrl ?? fallbackImage;
 
   return (
     <Link
@@ -39,9 +38,9 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
       className="block relative aspect-[3/4] overflow-hidden rounded-2xl active:scale-[0.98] transition-transform duration-150 select-none"
     >
       {/* Full-bleed background */}
-      {resolvedBanner ? (
+      {resolvedImage ? (
         <Image
-          src={resolvedBanner}
+          src={resolvedImage}
           alt=""
           aria-hidden
           fill
@@ -77,10 +76,10 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
         {/* Avatar */}
         <div
           className="h-11 w-11 rounded-full ring-2 ring-white/20 overflow-hidden flex items-center justify-center shrink-0"
-          style={!resolvedAvatar ? { background: fallbackGradient } : {}}
+          style={!resolvedImage ? { background: fallbackGradient } : {}}
         >
-          {resolvedAvatar ? (
-            <Image src={resolvedAvatar} alt={displayName} width={44} height={44} className="h-full w-full object-cover" unoptimized />
+          {resolvedImage ? (
+            <Image src={resolvedImage} alt={displayName} width={44} height={44} className="h-full w-full object-cover" unoptimized />
           ) : (
             <span className="text-base font-black text-white select-none">
               {displayName.charAt(0).toUpperCase()}

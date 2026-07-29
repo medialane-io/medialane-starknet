@@ -66,7 +66,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721");
 
   const { h1, h2, h3 } = addressPalette(walletAddress ?? "0x0");
-  const bannerUrl = creator?.bannerImage ? ipfsToHttp(creator.bannerImage) : null;
   const avatarUrl = creator?.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
 
   // ── Loading ──────────────────────────────────────────────────────────────────
@@ -115,10 +114,10 @@ export default function CreatorUsernamePageClient({ username }: Props) {
     <div className="pb-20 min-h-screen">
       {/* ── Hero banner ───────────────────────────────────────────────────────── */}
       <div className="relative h-56 sm:h-80 overflow-hidden">
-        {bannerUrl && (
+        {avatarUrl && (
           <div className="absolute inset-0">
             <NextImage
-              src={bannerUrl} alt="" fill
+              src={avatarUrl} alt="" fill
               className="object-cover scale-150"
               style={{ opacity: 0.6, filter: "blur(48px) saturate(1.8) brightness(0.55)" }}
               unoptimized aria-hidden
@@ -130,9 +129,9 @@ export default function CreatorUsernamePageClient({ username }: Props) {
           className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse 90% 90% at 15% 60%, hsl(${h1}, 68%, 42% / ${bannerUrl ? 0.28 : 0.52}) 0%, transparent 65%),
-              radial-gradient(ellipse 65% 65% at 85% 25%, hsl(${h2}, 68%, 38% / ${bannerUrl ? 0.18 : 0.42}) 0%, transparent 60%),
-              radial-gradient(ellipse 45% 45% at 55% 85%, hsl(${h3}, 68%, 38% / ${bannerUrl ? 0.12 : 0.30}) 0%, transparent 55%)
+              radial-gradient(ellipse 90% 90% at 15% 60%, hsl(${h1}, 68%, 42% / ${avatarUrl ? 0.28 : 0.52}) 0%, transparent 65%),
+              radial-gradient(ellipse 65% 65% at 85% 25%, hsl(${h2}, 68%, 38% / ${avatarUrl ? 0.18 : 0.42}) 0%, transparent 60%),
+              radial-gradient(ellipse 45% 45% at 55% 85%, hsl(${h3}, 68%, 38% / ${avatarUrl ? 0.12 : 0.30}) 0%, transparent 55%)
             `,
           }}
         />

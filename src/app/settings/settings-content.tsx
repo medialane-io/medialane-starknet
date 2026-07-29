@@ -33,7 +33,6 @@ type ProfileForm = {
   displayName: string;
   bio: string;
   avatarImage: string;
-  bannerImage: string;
   websiteUrl: string;
   twitterUrl: string;
   discordUrl: string;
@@ -108,36 +107,31 @@ function UsernameClaimInput({
  * presentation — Save lives with the form, not here.
  */
 function ProfileLivePreview({
-  form, approvedUsername, walletAddress, usernameVerified,
+  form, approvedUsername, walletAddress,
 }: {
   form: ProfileForm;
   approvedUsername?: string | null;
   walletAddress?: string | null;
-  /** Whether we've actually checked username status (a stored SIWS token exists) — vs. simply not knowing yet. */
-  usernameVerified: boolean;
 }) {
   const avatarUrl = resolveTokenImage(form.avatarImage);
-  const bannerUrl = resolveTokenImage(form.bannerImage);
   const { h1 } = addressPalette(walletAddress ?? "0x0");
   const displayName = form.displayName || "Your name";
   const { data: rewards } = useRewards(walletAddress);
 
   return (
     <div className="rounded-[24px] border border-border/60 bg-card overflow-hidden">
-      {/* Cover — square, shown as-is, no tint/blur/gradient */}
+      {/* Cover — square, shown as-is, no tint/blur/gradient. The chosen avatar fills it. */}
       <div className="px-2.5 pt-2.5">
         <div className="relative aspect-square w-full overflow-hidden rounded-[16px] bg-muted ring-1 ring-black/10 dark:ring-white/10">
-          {bannerUrl ? (
-            <Image src={bannerUrl} alt="" fill unoptimized className="object-cover" />
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="" fill unoptimized className="object-cover" />
           ) : (
-            !avatarUrl && (
-              <div
-                className="h-full w-full flex items-center justify-center text-3xl font-bold text-white"
-                style={{ backgroundColor: `hsl(${h1}, 55%, 42%)` }}
-              >
-                {displayName.slice(0, 1).toUpperCase()}
-              </div>
-            )
+            <div
+              className="h-full w-full flex items-center justify-center text-3xl font-bold text-white"
+              style={{ backgroundColor: `hsl(${h1}, 55%, 42%)` }}
+            >
+              {displayName.slice(0, 1).toUpperCase()}
+            </div>
           )}
           {rewards && rewards.totalXp > 0 && (
             <div className="absolute bottom-2 right-2">
@@ -148,22 +142,13 @@ function ProfileLivePreview({
       </div>
 
       <div className="px-5 pb-5 pt-3 space-y-3">
-        <div className="flex items-center gap-3">
-          {avatarUrl && (
-            <Image src={avatarUrl} alt="" width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover shrink-0" />
-          )}
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="pill-badge text-[10px]">Creator</span>
-              {approvedUsername ? (
-                <span className="text-[11px] tabular-nums text-muted-foreground">@{approvedUsername}</span>
-              ) : usernameVerified ? (
-                <span className="text-[11px] text-muted-foreground/60">No username yet</span>
-              ) : (
-                <span className="text-[11px] text-muted-foreground/60">Checking…</span>
-              )}
-            </div>
-            <p className="truncate text-[18px] font-bold leading-snug text-foreground">{displayName}</p>
+        <div className="min-w-0">
+          <p className="truncate text-[18px] font-bold leading-snug text-foreground">{displayName}</p>
+          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+            <span className="pill-badge text-[10px]">Creator</span>
+            {approvedUsername && (
+              <span className="text-[11px] tabular-nums text-muted-foreground">@{approvedUsername}</span>
+            )}
           </div>
         </div>
 
@@ -305,7 +290,7 @@ export default function SettingsContent() {
   const [checkState, setCheckState] = useState<CheckState>("idle");
   const [checkReason, setCheckReason] = useState<string | undefined>();
   const [form, setForm] = useState<ProfileForm>({
-    displayName: "", bio: "", avatarImage: "", bannerImage: "",
+    displayName: "", bio: "", avatarImage: "",
     websiteUrl: "", twitterUrl: "", discordUrl: "", telegramUrl: "",
   });
 
@@ -314,7 +299,6 @@ export default function SettingsContent() {
       displayName: profile.displayName ?? "",
       bio: profile.bio ?? "",
       avatarImage: profile.avatarImage ?? "",
-      bannerImage: profile.bannerImage ?? "",
       websiteUrl: profile.websiteUrl ?? "",
       twitterUrl: profile.twitterUrl ?? "",
       discordUrl: profile.discordUrl ?? "",
@@ -439,7 +423,6 @@ export default function SettingsContent() {
             form={form}
             approvedUsername={approvedUsername}
             walletAddress={walletAddress}
-            usernameVerified={usernameVerified}
           />
           <PortfolioSnapshot
             assets={ownedAssets.length}
@@ -623,7 +606,6 @@ export default function SettingsContent() {
                 Mint a new NFT to use as your theme
               </Link>
             </div>
-            {field("bannerImage", "Banner image", "ipfs://Qm…", "IPFS or HTTPS URL, displayed at the top of your profile page")}
           </div>
         </div>
 
