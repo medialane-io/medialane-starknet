@@ -40,7 +40,6 @@ const NAV_SECTIONS: PortfolioNavSection[] = [
     ],
   },
   { label: "Activity", href: "/portfolio/activity" },
-  { label: "Settings", href: "/portfolio/settings" },
 ];
 
 export default function PortfolioLayout({ children }: { children: React.ReactNode }) {

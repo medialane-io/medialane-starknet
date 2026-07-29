@@ -64,20 +64,78 @@ NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY    # AVNU API key — all tx types sponsored 
 
 ## Wallet System
 
-Single wallet rail: **injected browser wallets only** — Argent (Ready) and
-Braavos, via `@starknet-react/core` connectors configured in
-`src/lib/starknet-connectors.ts`. Everything below assumes this one rail.
+Multiple wallet connectors, all resolved through one `@starknet-react/core`
+`account`/`connector` — Argent (Ready), Braavos, **Cartridge Controller**,
+MetaMask, Keplr, Fordefi, and Xverse. The full connector list (one array,
+`walletConnectors`) lives in `src/lib/wallet-connectors.ts` — Argent/Braavos
+are native `@starknet-react/core` connectors; MetaMask/Keplr/Fordefi/Xverse
+come from `starknetkit`; **Cartridge uses the official `@cartridge/connector`
+package directly, not starknetkit's bundled copy** (switched 2026-07-28 —
+starknetkit's own `starknetkit/controller` reimplements the Cartridge
+integration itself, pinned to `@cartridge/controller@0.10.7`, several minor
+versions behind the actively-maintained standalone package; that staleness
+was the direct cause of a session `execute()` call hanging with no error and
+no popup after a signed order registration). Everything below (the
+active-wallet slot, persistence, identity decoupling) applies uniformly to
+every connector in this list — `wallet-context.tsx`'s `useAccount()` doesn't
+distinguish Cartridge from Argent/Braavos/etc., they're all "injected" as far
+as starknet-react is concerned.
 
-**Cartridge Controller, the StarkZap SDK, Privy (email/social login), and
-`starknetkit` were all tried and fully removed** (Privy + starknetkit
-2026-07-26; Cartridge + StarkZap 2026-07-27). None of them ever reached a
-reliable, working state, and each added real structural cost: StarkZap bundled
-its own internal starknet v9 stack and pulled in optional Solana/Hyperlane/Tongo
-peers; Cartridge needed a second, dedicated RPC instance plus a hand-maintained
-per-contract policy whitelist; Privy dragged in ~2GB of unrelated
-react-native/WalletConnect dependency weight for EVM login methods this app
-never used. Don't reintroduce any of them without a concrete plan that avoids
-the same failure mode.
+**Cartridge Controller session policies** (`src/lib/wallet-connectors.ts`,
+`cartridgeController` — actually `ControllerConnector` from
+`@cartridge/connector`, despite the variable name predating the swap):
+
+- **`contracts`** — pre-approved, popup-free method calls (`register_order`/
+  `fulfill_order`/`cancel_order` on both marketplace contracts, `approve`/
+  `transfer` on every listable payment token, `deploy_collection`/
+  `create_collection`/`create_drop`/`add_comment` on the relevant factories).
+  Per-creator collection contracts (POP/Drop/Ticket/Club/mint instances) can
+  never be listed here — new address every deploy — so listing/accepting a
+  single offer still prompts normally even with Cartridge connected (the NFT
+  `approve`/`set_approval_for_all` targets that contract).
+- **`messages`** — pre-approved SNIP-12 typed-data shapes for `signMessage`,
+  a **separate** list from `contracts`. `register_order`/`cancel_order` both
+  sign an off-chain typed-data struct before executing (the offerer must
+  prove consent to terms a third party may later fulfill — `fulfill_order`
+  needs no signature since the caller IS the consenting party). Without a
+  matching `messages` entry, `signMessage` misses Cartridge's silent
+  session-sign path entirely and falls back to a manual popup that, on the
+  version this app now uses, works — but on starknetkit's older bundled
+  version, that popup never surfaced at all (the hang above). The four
+  entries mirror `@medialane/sdk`'s `starknet/marketplace/signing.ts`
+  byte-for-byte (`OrderParameters`/`OrderCancellation`, both marketplace
+  domains) — that SDK file is the source of truth; this is a declarative
+  copy, not a second implementation.
+- **`approve` policy entries need `spender` + `amount`, not just a bare
+  method name.** Omitting them renders with a **$0 spending limit** in
+  Cartridge's authorization screen (confirmed against Cartridge's own docs)
+  — not a hard failure, but it forces manual re-approval on every real
+  approve() since any real price exceeds $0, defeating the point of a
+  pre-authorized session. **`amount: "*"` (the "unlimited" shorthand
+  Cartridge's docs describe) crashes the pinned
+  `@cartridge/controller-wasm@0.10.1`'s policy parser outright** (`Uncaught
+  Error: data did not match any variant of untagged enum Policy` — a
+  docs/wasm-build version gap, not something fixable from this app's side).
+  Use the explicit max-uint128 hex value instead:
+  `amount: "0xffffffffffffffffffffffffffffffff"`. One `approve` entry per
+  marketplace contract (either can be the spender).
+
+**Cartridge requires two `next.config.ts` additions** (`@cartridge/controller`
+ships its signing/session engine as a WASM module, imported directly rather
+than lazy-loaded):
+- `webpack: (config) => { config.experiments = { ...config.experiments,
+  asyncWebAssembly: true }; return config; }` — webpack 5 doesn't parse
+  `.wasm` imports without this.
+- `serverExternalPackages: ["@cartridge/connector", "@cartridge/controller",
+  "@cartridge/controller-wasm"]` — the wallet connector list is client-only,
+  but Next still traces its import chain into the server/RSC compilation
+  while prerendering pages, and the server compiler doesn't emit the `.wasm`
+  asset at the path the loader expects, failing prerender with ENOENT.
+
+None of the above needs re-litigating from scratch if it breaks again —
+verify against a live Cartridge session (console `[marketplace-debug]`
+breadcrumbs, `src/lib/marketplace-debug.ts`) before changing policy shapes;
+the wasm's actual accepted schema doesn't always match Cartridge's own docs.
 
 **Architecture — one active-wallet slot** (`src/contexts/wallet-context.tsx`).
 `WalletProvider` owns one `ActiveWallet | null` slot, written **only** by an

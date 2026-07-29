@@ -56,6 +56,7 @@ export const NAV_COMMANDS: NavCommandGroup[] = [
       { id: "claim", label: "Genesis Claim", icon: Gift, href: "/claim", keywords: ["airdrop", "claim", "free", "drop", "genesis"] },
       { id: "notifications", label: "Notifications", icon: Bell, href: "/notifications", keywords: ["alerts", "updates", "offers"] },
       { id: "search", label: "Search", icon: Search, href: "/search", keywords: ["find", "lookup", "query"] },
+      { id: "settings", label: "Account Settings", icon: Settings, href: "/settings", keywords: ["profile", "username", "preferences", "account"] },
     ],
   },
   {
@@ -93,7 +94,6 @@ export const NAV_COMMANDS: NavCommandGroup[] = [
       { id: "portfolio-licensing", label: "Licensing", icon: Repeat2, href: "/portfolio/licensing", keywords: ["license", "licensing", "remix", "requests"] },
       { id: "portfolio-collections", label: "My Collections", icon: LayoutGrid, href: "/portfolio/collections", keywords: ["deployed", "created", "my contracts", "claim", "import"] },
       { id: "portfolio-activity", label: "My Activity", icon: Activity, href: "/portfolio/activity", keywords: ["history", "transactions", "events"] },
-      { id: "portfolio-settings", label: "Account Settings", icon: Settings, href: "/portfolio/settings", keywords: ["profile", "username", "preferences"] },
     ],
   },
   {

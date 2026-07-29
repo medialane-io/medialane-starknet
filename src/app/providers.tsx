@@ -18,6 +18,7 @@ import { HeaderWalletTrigger } from "@/components/nav-wallet-trigger";
 import { AccountPanel } from "@/components/account-panel";
 import { ConnectDialog, useConnectDialog } from "@/components/connect-dialog";
 import { NavThemeToggle } from "@/components/nav-theme-toggle";
+import { NavConnectButton } from "@/components/nav-connect-button";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
 import { WalletProvider } from "@/contexts/wallet-context";
@@ -55,7 +56,12 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
       <ThemeAmbientBackground imageUrl={themeImageUrl} />
-      <NavCommandMenu commands={commands} footerSlot={<NavThemeToggle />} />
+      <NavCommandMenu
+        commands={commands}
+        footerSlot={<NavThemeToggle />}
+        showKeyboardHints={false}
+        brandSlot={<NavConnectButton />}
+      />
       <NavAccountSheet>
         <AccountPanel />
       </NavAccountSheet>

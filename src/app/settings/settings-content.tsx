@@ -81,7 +81,7 @@ function UsernameClaimInput({
   );
 }
 
-export default function ProfileSettingsPage() {
+export default function SettingsContent() {
   const { address: walletAddress, disconnect } = useWallet();
   const { getValidToken } = useSiwsToken();
   const router = useRouter();
