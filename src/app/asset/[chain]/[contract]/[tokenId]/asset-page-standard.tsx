@@ -12,7 +12,7 @@ import { FloatingCommentsButton } from "@/components/asset/floating-comments-but
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import { ipfsToHttp } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { ApiActivity, ApiOrder } from "@medialane/sdk";
+import type { ApiActivity, ApiOrder, Chain } from "@medialane/sdk";
 import { getService } from "@medialane/sdk";
 import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
 import { useComments } from "@/hooks/use-comments";
@@ -20,7 +20,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow, isLivingRenderCollection } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
@@ -160,6 +160,7 @@ export function AssetPageStandard() {
 
   const name = token.metadata?.name || `Token #${token.tokenId}`;
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
+  const live = isLivingRenderCollection(token.chain as Chain, token.contractAddress);
   const description = token.metadata?.description;
   const balances = token.balances ?? [];
   const ownerAddress = !isERC1155 ? (balances[0]?.owner ?? token.owner ?? null) : null;
@@ -179,6 +180,8 @@ export function AssetPageStandard() {
               imgError={imgError}
               onImageError={() => setImgError(true)}
               onZoom={() => setLightboxOpen(true)}
+              animationUrl={token.metadata?.animationUrl}
+              live={live}
               fallback={(
                 <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/10 to-brand-purple/10">
                   <span className="text-5xl tabular-nums text-muted-foreground">#{tokenId}</span>
