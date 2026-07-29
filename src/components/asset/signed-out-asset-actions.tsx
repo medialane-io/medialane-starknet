@@ -24,7 +24,7 @@ export function SignedOutAssetActions({ chain, contract, tokenId }: SignedOutAss
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
       <ConnectWallet className="group flex h-full w-full items-start gap-3 whitespace-normal rounded-2xl border border-transparent bg-gradient-to-br from-brand-blue/15 via-brand-purple/10 to-transparent p-4 text-left transition-colors hover:border-brand-purple/30">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-blue to-brand-purple text-white">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-blue/20 to-brand-purple/10 text-white">
           <Wallet className="h-[18px] w-[18px]" />
         </div>
         <div className="min-w-0 flex-1">

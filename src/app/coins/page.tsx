@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: canonical("/coins"),
-  ...buildSocialMetadata({ title, description, imageAlt: "Medialane Coins" }),
+  ...buildSocialMetadata({ title, description, imageAlt: "Coins" }),
 };
 
 export default function CoinsPage() {
