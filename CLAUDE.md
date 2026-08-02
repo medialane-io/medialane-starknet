@@ -609,13 +609,14 @@ rows. Coins are fetched from **`/v1/coins`** via the SDK's **`getCoins()` / `get
   ERC-20s the backend doesn't index. Caller hides the stat if the read returns nothing.
 - **Swap removed (2026-07-27).** The coin page used to embed a buy/sell widget and there was a
   standalone `/swap` page, both routing trades directly on Ekubo through the StarkZap SDK
-  (`hooks/use-swap.ts`). StarkZap never reached a reliable state and was removed entirely along
-  with that widget and the `/swap` route. `hooks/use-swap.ts` and `app/swap/swap-content.tsx` are
-  kept on disk (excluded from `tsconfig.json`, so they don't block `tsc`/the build) purely as a
-  reference for a future non-StarkZap rework — neither is wired into any route today. Token
-  formatting helpers (`formatTokenAmount`/`parseTokenAmount`/`SWAP_TOKENS` in
-  `utils/swap-tokens.ts`) are still live, shared with `use-coin-supply.ts`. **The AVNU *Paymaster*
-  (gas sponsorship) is unrelated and still in use** — don't confuse it with the removed swap engine.
+  (`hooks/use-swap.ts`). Both were removed along with the `/swap` route; the specific cause was
+  never diagnosed (not a confirmed StarkZap reliability finding — don't cite it as one).
+  `hooks/use-swap.ts` and `app/swap/swap-content.tsx` are kept on disk (excluded from
+  `tsconfig.json`, so they don't block `tsc`/the build) purely as a reference for a future rework —
+  neither is wired into any route today. Token formatting helpers
+  (`formatTokenAmount`/`parseTokenAmount`/`SWAP_TOKENS` in `utils/swap-tokens.ts`) are still live,
+  shared with `use-coin-supply.ts`. **The AVNU *Paymaster* (gas sponsorship) is unrelated and still
+  in use** — don't confuse it with the removed swap engine.
 - **`hooks/use-coin-price.ts`** — `useCoinPrice(coin)`: SWR over `getCreatorCoinPrice(coin,
   starknetProvider)` (30s, read-only). Ekubo price math lives in `@medialane/sdk` — never
   reimplement. Uses the failover-covered `starknetProvider` singleton (RPC path #1).
