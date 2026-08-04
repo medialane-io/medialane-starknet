@@ -271,21 +271,26 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error("Connect your wallet first");
             return undefined;
         }
-        const is1155 = tokenStandard === "ERC1155";
+        const token = getTokenBySymbol(currencySymbol);
+        if (!token) {
+            toast.error(`Unsupported currency: ${currencySymbol}`);
+            return undefined;
+        }
         return withProcessing("makeOffer", async () => {
-            const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
             const now = Math.floor(Date.now() / 1000);
-            const { txHash: hash } = await venue.registerOrder(signer, {
-                asset: { chain: "STARKNET", contract: assetContractAddress, tokenId },
-                side: "bid",
-                paymentToken: currencySymbol,
-                // Per-unit bid price; the venue approves per-unit × quantity for 1155.
-                amount: toWei(price, currencySymbol),
-                quantity: is1155 ? "1" : "1",
-                royaltyMaxBps,
-                startTime: 0,
+            const intentRes = await client.api.createOfferIntent({
+                offerer: signer.address,
+                nftContract: assetContractAddress,
+                tokenId,
+                currency: token.address,
+                price,
                 endTime: now + durationSeconds,
-                salt: generateSalt(),
+                tokenStandard,
+            });
+            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required offer intent");
+            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
+                id: intentRes.data.id,
+                typedData: intentRes.data.typedData as TypedData,
             });
             setTxHash(hash);
             refreshMarketplaceCaches();
@@ -293,7 +298,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             rewardToast("make_offer");
             return hash;
         }, opts);
-    }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[], opts?: WriteOpts) => {
         if (!signer) {
