@@ -4,7 +4,7 @@ import { mainnet } from "@starknet-react/chains";
 import { StarknetConfig, voyager } from "@starknet-react/core";
 import { walletConnectors } from "@/lib/wallet-connectors";
 import { RpcProvider } from "starknet";
-import { failoverFetch, RPC_PRIMARY_URL } from "@/lib/starknet";
+import { failoverFetch, RPC_PRIMARY_URL, RPC_BLOCK_IDENTIFIER } from "@/lib/starknet";
 import { QueryClient } from "@tanstack/react-query";
 
 /**
@@ -71,7 +71,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
   // + shared failover — never read the raw keyed env here (see lib/starknet.ts).
   const providerFactory = useCallback(
     (_chain: unknown) =>
-      new RpcProvider({ nodeUrl: RPC_PRIMARY_URL, baseFetch: failoverFetch }),
+      new RpcProvider({ nodeUrl: RPC_PRIMARY_URL, baseFetch: failoverFetch, blockIdentifier: RPC_BLOCK_IDENTIFIER }),
     [],
   );
   return (

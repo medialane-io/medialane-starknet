@@ -41,8 +41,17 @@ export const RPC_PRIMARY_URL = RPC_URLS[0];
  *  (`starknet-provider.tsx`) and the singleton below use one implementation. */
 export const failoverFetch = createFailoverFetch(RPC_URLS);
 
+// blockIdentifier "latest" — some RPC endpoints reject the "pending" block tag
+// ("-32602: Invalid block id"). starknet.js defaults reads (e.g. the Account's
+// cairo-version detection via getClassHashAt) to "pending"; force "latest" on
+// every RpcProvider built from RPC_PRIMARY_URL (this one and the
+// starknet-react provider in starknet-provider.tsx, which must stay in lock-step
+// per the note above).
+export const RPC_BLOCK_IDENTIFIER = "latest" as const;
+
 /** Shared RpcProvider singleton — import this instead of creating new instances. */
 export const starknetProvider = new RpcProvider({
   nodeUrl: RPC_PRIMARY_URL,
   baseFetch: failoverFetch,
+  blockIdentifier: RPC_BLOCK_IDENTIFIER,
 });
