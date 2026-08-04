@@ -1,25 +1,17 @@
 import { useState, useCallback } from "react";
-import { useContract, useProvider } from "@starknet-react/core";
-import { Abi, num, type Call, type TypedData } from "starknet";
+import type { Call, TypedData } from "starknet";
 import { useSWRConfig } from "swr";
-import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk/starknet";
 import { getTokenBySymbol } from "@medialane/sdk";
 import { toast } from "sonner";
 import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
-import { getStarknetVenue } from "@/lib/starknet-venue";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { signAndExecuteIntent, executePrebuiltIntent } from "@/lib/intent-tx";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
-import {
-    SUPPORTED_TOKENS,
-    STARKNET_MARKETPLACE_721_CONTRACT,
-    STARKNET_MARKETPLACE_1155_CONTRACT,
-    INDEXER_REVALIDATION_DELAY_MS,
-} from "@/lib/constants";
+import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 
 /**
  * Per-call options for marketplace write ops. `silent` suppresses the success
@@ -67,50 +59,23 @@ interface UseMarketplaceReturn {
     resetState: () => void;
 }
 
-// Module-level helpers
-const getDecimals = (currencySymbol: string) =>
-    SUPPORTED_TOKENS.find((t) => t.symbol === currencySymbol)?.decimals ?? 18;
-
-const toWei = (price: string, currencySymbol: string): string =>
-    BigInt(Math.floor(parseFloat(price) * Math.pow(10, getDecimals(currencySymbol)))).toString();
-
-// Full-felt (248-bit) random salt — the SOLE order-hash uniqueness source in the
-// 0.26.0 schema (nonce removed). Mirrors @medialane/sdk generateSalt.
-const generateSalt = (): string => {
-    const bytes = new Uint8Array(31);
-    crypto.getRandomValues(bytes);
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-    return num.toHex(BigInt("0x" + hex));
-};
-
 /**
- * Marketplace write hook. The signed order-construction (list / offer / cancel)
- * runs through the chain-neutral `StarknetVenue` adapter — the app no longer
- * hand-rolls SNIP-12 signing or `register_order` calldata. Fulfilment stays here
- * as app-level composition: `checkoutCart` is a multi-item atomic sweep and
- * `acceptOffer` is a seller-side fulfil (NFT approval, not payment) — neither of
- * which the single-order `VenueAdapter` models — but both execute through the
- * shared `useVenueSigner` port, so wallet selection + confirmation are unified.
+ * Marketplace write hook. Every write (list / offer / cancel / fulfil /
+ * checkout) builds its order/calldata server-side via the metered
+ * `/v1/intents/*` API (medialane-backend) and only signs/executes locally —
+ * see src/lib/intent-tx.ts. `checkoutCart` is a multi-item atomic sweep and
+ * `acceptOffer` is a seller-side fulfil, both composed from per-order
+ * FULFILL_ORDER intents; both execute through the shared `useVenueSigner`
+ * port, so wallet selection + confirmation are unified.
  */
 export function useMarketplace(): UseMarketplaceReturn {
-    const venue = getStarknetVenue();
     const signer = useVenueSigner();
-    const { provider } = useProvider();
     const client = useMedialaneClient();
     const { mutate } = useSWRConfig();
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    const { contract: medialaneContract } = useContract({
-        address: STARKNET_MARKETPLACE_721_CONTRACT as `0x${string}`,
-        abi: IPMarketplaceABI as unknown as Abi,
-    });
-    const { contract: medialane1155Contract } = useContract({
-        address: STARKNET_MARKETPLACE_1155_CONTRACT as `0x${string}`,
-        abi: IPMarketplace1155ABI as unknown as Abi,
-    });
 
     const resetState = useCallback(() => {
         setTxHash(null);
@@ -187,28 +152,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             setIsProcessing(false);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // Signed EIP-2981 royalty cap (bps) for an order. Reads the NFT's live 2981
-    // rate via royalty_info(tokenId, 10000) — the returned amount equals the bps
-    // at salePrice 10000. Non-2981 NFTs / failures yield 0 (never over-pay). The
-    // venue accepts this as the royalty_max_bps override (skipping its own read).
-    const resolveRoyaltyMaxBps = useCallback(async (
-        nft: string,
-        tokenId: string
-    ): Promise<number> => {
-        try {
-            const { cairo } = await import("starknet");
-            const id = cairo.uint256(tokenId);
-            const res = await provider.callContract({
-                contractAddress: nft,
-                entrypoint: "royalty_info",
-                calldata: [id.low.toString(), id.high.toString(), "10000", "0"],
-            });
-            return Number(BigInt(res[1] ?? "0"));
-        } catch {
-            return 0;
-        }
-    }, [provider]);
 
     const createListing = useCallback(async (
         assetContractAddress: string,
