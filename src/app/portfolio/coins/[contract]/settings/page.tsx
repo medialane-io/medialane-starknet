@@ -2,6 +2,7 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { normalizeAddress } from "@medialane/sdk";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useCoin, updateCoinProfile } from "@/hooks/use-coins";
@@ -37,7 +38,7 @@ export default function CoinSettingsPage({ params }: Props) {
 
   const isCreator =
     walletAddress && coin?.creator &&
-    walletAddress.toLowerCase() === coin.creator.toLowerCase();
+    normalizeAddress("STARKNET", walletAddress) === normalizeAddress("STARKNET", coin.creator);
 
   if (!isLoading && coin && !isCreator) {
     return (

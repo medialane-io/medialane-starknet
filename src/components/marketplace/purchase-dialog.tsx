@@ -27,6 +27,7 @@ import {
   MarketplaceErrorState,
   MarketplaceTxLink,
 } from "@/components/marketplace/marketplace-dialog-primitives";
+import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 
 interface PurchaseDialogProps {
@@ -210,7 +211,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   const isOwnOrder =
     isConnected &&
     !!address &&
-    order.offerer.toLowerCase() === address.toLowerCase();
+    normalizeAddress("STARKNET", order.offerer) === normalizeAddress("STARKNET", address);
   const [step, setStep] = useState<Step>("details");
   const [quantity, setQuantity] = useState(1);
   const [successTxHash, setSuccessTxHash] = useState<string | null>(null);

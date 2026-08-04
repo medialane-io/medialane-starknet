@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/use-wallet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
-import { getListableTokens } from "@medialane/sdk";
+import { getListableTokens, normalizeAddress } from "@medialane/sdk";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
@@ -50,7 +50,7 @@ export function CollectionDropMintButton({
 
   const paymentToken = isPaid && conditions
     ? getListableTokens().find(
-        (t) => t.address.toLowerCase() === conditions.paymentToken.toLowerCase()
+        (t) => normalizeAddress("STARKNET", t.address) === normalizeAddress("STARKNET", conditions.paymentToken)
       ) ?? null
     : null;
 

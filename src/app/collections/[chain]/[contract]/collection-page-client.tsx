@@ -35,7 +35,7 @@ import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { useWallet } from "@/hooks/use-wallet";
 import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
-import { getService } from "@medialane/sdk";
+import { getService, normalizeAddress } from "@medialane/sdk";
 import type { ApiToken, ApiOrder, CollectionTokensSort } from "@medialane/sdk";
 import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
 
@@ -454,7 +454,7 @@ export default function CollectionPageClient() {
 
             {/* Right — flat utility cluster (no panel/chrome) */}
             <div className="flex flex-col gap-2.5 shrink-0 lg:items-end">
-              {walletAddress && collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
+              {walletAddress && collection.owner && normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
                 <div className="flex items-center gap-2">
                   {getService(collection.service)?.id === "ip-tickets" && (
                     <TicketOwnerActions
@@ -600,8 +600,8 @@ export default function CollectionPageClient() {
       </div>
 
       {/* Owner setup checklist — after the items, before the footer */}
-      {!colLoading && collection && walletAddress &&
-        collection.owner?.toLowerCase() === walletAddress.toLowerCase() && (
+      {!colLoading && collection && walletAddress && collection.owner &&
+        normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
         <>
           <OwnerSetupPanel
             contract={contract}

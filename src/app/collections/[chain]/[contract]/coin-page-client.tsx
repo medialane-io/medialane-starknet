@@ -12,7 +12,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ExternalLink, Settings } from "lucide-react";
-import { getService } from "@medialane/sdk";
+import { getService, normalizeAddress } from "@medialane/sdk";
 import type { ApiCoin } from "@medialane/sdk";
 import { useCoinPrice } from "@/hooks/use-coin-price";
 import { useCoinSupply } from "@/hooks/use-coin-supply";
@@ -57,7 +57,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
 
   const { address } = useWallet();
   const isCreator =
-    !!address && !!coin.creator && address.toLowerCase() === coin.creator.toLowerCase();
+    !!address && !!coin.creator && normalizeAddress("STARKNET", address) === normalizeAddress("STARKNET", coin.creator);
 
   return (
     <div className="relative z-0 min-h-screen">

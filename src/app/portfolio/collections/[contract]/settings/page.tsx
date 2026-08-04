@@ -17,6 +17,7 @@ import {
   Lock, Gem, CheckCircle2,
   Video, Music, Radio, FileText, Link2,
 } from "lucide-react";
+import { normalizeAddress } from "@medialane/sdk";
 import type { ApiCollectionProfile } from "@medialane/sdk";
 
 const CONTENT_TYPES = [
@@ -199,7 +200,7 @@ export default function CollectionSettingsPage({ params }: Props) {
   }, [profile]);
 
   const isOwner = walletAddress && collection?.owner &&
-    walletAddress.toLowerCase() === collection.owner.toLowerCase();
+    normalizeAddress("STARKNET", walletAddress) === normalizeAddress("STARKNET", collection.owner);
 
   if (!collectionLoading && collection && !isOwner) {
     return (

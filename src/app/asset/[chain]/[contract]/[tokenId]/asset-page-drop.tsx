@@ -31,13 +31,13 @@ import { HelpIcon } from "@/components/ui/help-icon";
 import { SignedOutAssetActions } from "@/components/asset/signed-out-asset-actions";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
-import { getListableTokens } from "@medialane/sdk";
+import { getListableTokens, normalizeAddress } from "@medialane/sdk";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { CollectionDropMintButton } from "@/components/claim/collection-drop-mint-button";
 
 function getTokenByAddress(address: string) {
-  return getListableTokens().find((t) => t.address.toLowerCase() === address.toLowerCase()) ?? null;
+  return getListableTokens().find((t) => normalizeAddress("STARKNET", t.address) === normalizeAddress("STARKNET", address)) ?? null;
 }
 
 function DropStatusBadge({ status }: { status: ReturnType<typeof getDropStatus> }) {
