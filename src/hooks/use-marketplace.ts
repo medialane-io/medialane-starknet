@@ -375,13 +375,22 @@ export function useMarketplace(): UseMarketplaceReturn {
         }, opts);
     }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
 
-    const cancelOrder = useCallback(async (orderHash: string, _tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
+    const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
         if (!signer) {
             toast.error("Connect your wallet first");
             return undefined;
         }
         return withProcessing("cancelOrder", async () => {
-            const { txHash: hash } = await venue.cancelOrder(signer, orderHash);
+            const intentRes = await client.api.createCancelIntent({
+                offerer: signer.address,
+                orderHash,
+                tokenStandard,
+            });
+            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required cancel intent");
+            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
+                id: intentRes.data.id,
+                typedData: intentRes.data.typedData as TypedData,
+            });
             setTxHash(hash);
             refreshMarketplaceCaches();
             if (!opts?.silent) {
@@ -392,7 +401,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             }
             return hash;
         }, opts);
-    }, [signer, venue, withProcessing, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     /**
      * Asset owner accepts an incoming bid. Fulfilment is unsigned (the owner is
