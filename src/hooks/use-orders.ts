@@ -2,9 +2,8 @@
 
 import useSWR from "swr";
 import { useMedialaneClient } from "./use-medialane-client";
-import type { ApiOrdersQuery, ApiOrder, ApiResponse } from "@medialane/sdk";
+import { normalizeAddress, type ApiOrdersQuery, type ApiOrder, type ApiResponse } from "@medialane/sdk";
 import { queryKeys } from "@/lib/query-keys";
-import { normalizeAddress } from "@/lib/utils";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
 const ACTIVE_ORDER_REFRESH_INTERVAL = 60_000;
@@ -59,7 +58,7 @@ export function useTokenListings(contract: string | null, tokenId: string | null
 
 export function useUserOrders(address: string | null) {
   const client = useMedialaneClient();
-  const normalized = address ? normalizeAddress(address) : null;
+  const normalized = address ? normalizeAddress("STARKNET", address) : null;
 
   const { data, error, isLoading, mutate } = useSWR(
     normalized ? queryKeys.userOrders(normalized) : null,
@@ -83,7 +82,7 @@ export function useCounterOffers({
   sellerAddress?: string | null;
 }) {
   const client = useMedialaneClient();
-  const normalized = sellerAddress ? normalizeAddress(sellerAddress) : null;
+  const normalized = sellerAddress ? normalizeAddress("STARKNET", sellerAddress) : null;
   const key =
     originalOrderHash
       ? queryKeys.counterOffersByOrder(originalOrderHash)
@@ -115,7 +114,7 @@ export function useCounterOffers({
 
 /** Fetch active ERC20 offers received by the given address (offers on tokens they hold). */
 export function useReceivedOffers(address: string | null) {
-  const normalized = address ? normalizeAddress(address) : null;
+  const normalized = address ? normalizeAddress("STARKNET", address) : null;
 
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiOrder[]>>(
     normalized ? ["received-offers", normalized] : null,

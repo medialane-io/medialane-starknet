@@ -13,7 +13,8 @@ import { CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ipfsToHttp, normalizeAddress } from "@/lib/utils";
+import { ipfsToHttp } from "@/lib/utils";
+import { normalizeAddress } from "@medialane/sdk";
 import {
   Activity, LayoutList, ShoppingBag, BarChart2,
   Globe, Twitter, ExternalLink, Share2,
@@ -56,7 +57,7 @@ interface Props { username: string }
 export default function CreatorUsernamePageClient({ username }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("collections");
   const { creator, isLoading, error } = useCreatorByUsername(username);
-  const walletAddress = creator?.walletAddress ? normalizeAddress(creator.walletAddress) : null;
+  const walletAddress = creator?.walletAddress ? normalizeAddress("STARKNET", creator.walletAddress) : null;
 
   // Lazy data fetching — only fire when the tab is active
   const { orders,      isLoading: ordersLoading      } = useUserOrders(activeTab === "listings"    ? walletAddress : null);

@@ -3,7 +3,7 @@
 import { Award, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { EXPLORER_URL } from "@/lib/constants";
-import { normalizeAddress } from "@/lib/utils";
+import { normalizeAddress } from "@medialane/sdk";
 
 interface CreationRecordProps {
   originalCreator: string;
@@ -16,7 +16,7 @@ interface CreationRecordProps {
  * never changes regardless of subsequent ownership transfers.
  */
 export function CreationRecord({ originalCreator, registeredAt }: CreationRecordProps) {
-  const creator = normalizeAddress(originalCreator);
+  const creator = normalizeAddress("STARKNET", originalCreator);
   const date = new Date(registeredAt * 1000);
   const formatted = date.toLocaleDateString(undefined, {
     year: "numeric",

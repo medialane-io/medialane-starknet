@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { formatDistanceToNow } from "date-fns";
+import { normalizeAddress } from "@medialane/sdk";
 import { SUPPORTED_TOKENS } from "./constants";
 import { FEATURED_COLLECTIONS } from "./featured-collections";
 
@@ -13,17 +14,11 @@ export function shortenAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
 }
 
-export function normalizeAddress(address: string): string {
-  if (!address) return address;
-  const hex = address.startsWith("0x") ? address.slice(2) : address;
-  return "0x" + hex.padStart(64, "0").toLowerCase();
-}
-
 export function getCurrency(tokenAddress: string) {
   if (!tokenAddress) return { symbol: "TOKEN", decimals: 18 };
-  const norm = normalizeAddress(tokenAddress).toLowerCase();
+  const norm = normalizeAddress("STARKNET", tokenAddress).toLowerCase();
   for (const token of SUPPORTED_TOKENS) {
-    if (normalizeAddress(token.address).toLowerCase() === norm) {
+    if (normalizeAddress("STARKNET", token.address).toLowerCase() === norm) {
       return { symbol: token.symbol, decimals: token.decimals };
     }
   }
@@ -145,9 +140,9 @@ export function toHexString(value: bigint | string | number): string {
 /** Returns true if the given collection address/id is in the featured list. */
 export function isCollectionFeatured(addressOrId: string): boolean {
   if (!addressOrId) return false;
-  const norm = normalizeAddress(addressOrId).toLowerCase();
+  const norm = normalizeAddress("STARKNET", addressOrId).toLowerCase();
   return FEATURED_COLLECTIONS.some(
-    (c) => normalizeAddress(c.contractAddress).toLowerCase() === norm
+    (c) => normalizeAddress("STARKNET", c.contractAddress).toLowerCase() === norm
   );
 }
 

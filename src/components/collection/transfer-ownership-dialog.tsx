@@ -19,7 +19,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { starknetProvider } from "@/lib/starknet";
 import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk/starknet";
 import { STARKNET_COLLECTION_721_CONTRACT } from "@/lib/constants";
-import { normalizeAddress } from "@/lib/utils";
+import { normalizeAddress } from "@medialane/sdk";
 import { toast } from "sonner";
 import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-dialog-primitives";
 import { EXPLORER_URL } from "@/lib/constants";
@@ -52,7 +52,7 @@ export function TransferCollectionOwnershipDialog({
   const trimmed = newOwner.trim();
   const isValid = /^0x[0-9a-fA-F]{1,64}$/.test(trimmed);
   const wouldNoop =
-    isValid && normalizeAddress(trimmed) === normalizeAddress(currentOwner);
+    isValid && normalizeAddress("STARKNET", trimmed) === normalizeAddress("STARKNET", currentOwner);
 
   const handleTransfer = async () => {
     if (!isValid || wouldNoop) return;
