@@ -32,7 +32,6 @@ import { SignedOutAssetActions } from "@/components/asset/signed-out-asset-actio
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 import { useFullTokenData } from "@/hooks/use-full-token-data";
-import { SponsorProposeDialog } from "@/components/sponsorship/sponsor-propose-dialog";
 import { SponsorSolicitDialog } from "@/components/sponsorship/sponsor-solicit-dialog";
 
 export function AssetPageStandard() {
@@ -53,7 +52,6 @@ export function AssetPageStandard() {
   const [reportOpen, setReportOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [sponsorProposeOpen, setSponsorProposeOpen] = useState(false);
   const [sponsorSolicitOpen, setSponsorSolicitOpen] = useState(false);
 
   const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
@@ -237,8 +235,6 @@ export function AssetPageStandard() {
               onOpenRemix={handleAutoRemix}
               showDealOption={remixPolicy.showDealOption}
               onProposeDeal={goToDeal}
-              showSponsorOption={!isOwner}
-              onOpenSponsorProposal={() => setSponsorProposeOpen(true)}
               showSponsorSolicitOption={isOwner}
               onOpenSponsorSolicit={() => setSponsorSolicitOpen(true)}
             />
@@ -346,13 +342,6 @@ export function AssetPageStandard() {
         dialogs={dialogs}
       />
 
-      <SponsorProposeDialog
-        open={sponsorProposeOpen}
-        onOpenChange={setSponsorProposeOpen}
-        nftContract={contract}
-        tokenId={tokenId}
-        tokenName={name}
-      />
       <SponsorSolicitDialog
         open={sponsorSolicitOpen}
         onOpenChange={setSponsorSolicitOpen}

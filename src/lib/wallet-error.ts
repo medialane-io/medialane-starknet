@@ -75,6 +75,23 @@ function collectErrorText(error: unknown): string {
   return String(error);
 }
 
+/**
+ * Braavos surfaces a bare "Execute failed" for several unrelated causes it
+ * doesn't distinguish: the user declining the confirmation popup, AND a
+ * failure inside the wallet's own pre-flight `estimateFee` call (confirmed
+ * 2026-08-04 — an "Invalid block id" RPC hiccup on Braavos's own connected
+ * node produced this exact same bare message, with no user action involved
+ * and a retry succeeding immediately after with no code change). There's no
+ * cleaner code to split these by, so the copy in `getFriendlyWalletError`
+ * must cover all of them honestly rather than assert "you closed or
+ * declined it" for a case that wasn't. Genuine on-chain reverts never reach
+ * here as a bare "execute failed": they carry a revert reason and are
+ * thrown from `waitForTransaction`, not `account.execute`.
+ */
+export function isBareExecuteFailure(error: unknown): boolean {
+  return collectErrorText(error).trim().toLowerCase() === "execute failed";
+}
+
 export function isUserRejectedRequest(error: unknown): boolean {
   const text = collectErrorText(error).toLowerCase();
   return (
@@ -87,11 +104,7 @@ export function isUserRejectedRequest(error: unknown): boolean {
     text.includes("rejected by user") ||
     text.includes("cancelled") ||
     text.includes("canceled") ||
-    // Braavos surfaces a bare "Execute failed" when the user declines the
-    // confirmation popup — there's no cleaner rejection code. Genuine on-chain
-    // reverts never reach here as a bare "execute failed": they carry a revert
-    // reason and are thrown from waitForTransaction, not account.execute.
-    text.trim() === "execute failed"
+    isBareExecuteFailure(error)
   );
 }
 
@@ -118,6 +131,20 @@ function looksTechnical(text: string): boolean {
 }
 
 export function getFriendlyWalletError(error: unknown): FriendlyWalletError {
+  // Checked first, ahead of the generic rejection-phrase branch below: a bare
+  // "Execute failed" (see isBareExecuteFailure) covers more causes than an
+  // explicit decline, including a transient wallet-side RPC hiccup with zero
+  // user action — so this copy names all three real possibilities instead
+  // of asserting "you closed or declined it" for a case that wasn't.
+  if (isBareExecuteFailure(error)) {
+    return {
+      title: "Request not completed",
+      message: "Request not completed. Nothing was submitted.",
+      description: "Your wallet didn't complete this request. This usually means you closed or declined it, your wallet needs extra verification (like 2FA) before it can sign, or your wallet hit a temporary network hiccup. Nothing was submitted — try again in a moment.",
+      isUserRejection: true,
+    };
+  }
+
   if (isUserRejectedRequest(error)) {
     // The wallet-API "USER_REFUSED_OP" code (and equivalents across wallets)
     // covers more than an explicit user click-cancel — some wallets (e.g.
