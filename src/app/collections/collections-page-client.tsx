@@ -95,7 +95,7 @@ export default function CollectionsPageClient() {
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-primary">
           <Layers className="h-5 w-5" />
-          <span className="text-sm font-semibold uppercase tracking-wider">Programmable IP</span>
+          <span className="text-sm font-semibold">Programmable IP</span>
         </div>
         <h1 className="text-3xl font-bold">Onchain Collections</h1>
         <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -202,7 +202,7 @@ export default function CollectionsPageClient() {
 
             {/* Source */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Source</p>
+              <p className="text-[10px] font-semibold text-muted-foreground">Source</p>
               <div className="flex flex-wrap gap-1.5">
                 {SERVICE_TABS.map(({ label, value }) => (
                   <button
@@ -225,7 +225,7 @@ export default function CollectionsPageClient() {
 
             {/* Sort */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Sort</p>
+              <p className="text-[10px] font-semibold text-muted-foreground">Sort</p>
               <div className="flex flex-wrap gap-1.5">
                 {SORT_OPTIONS.map((opt) => (
                   <button
@@ -246,7 +246,7 @@ export default function CollectionsPageClient() {
 
             {/* Show */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Show</p>
+              <p className="text-[10px] font-semibold text-muted-foreground">Show</p>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => setFeatured((v) => !v)}
