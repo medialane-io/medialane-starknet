@@ -231,7 +231,7 @@ export function SwapContent() {
         <div className="space-y-1 mb-2">
           <div className="flex items-center gap-2 text-primary">
             <ArrowRightLeft className="h-4 w-4" />
-            <span className="text-xs font-semibold uppercase tracking-wider">Swap</span>
+            <span className="text-xs font-semibold">Swap</span>
           </div>
           <h1 className="text-2xl font-bold">Exchange tokens</h1>
           <p className="text-sm text-muted-foreground flex items-center gap-1.5">

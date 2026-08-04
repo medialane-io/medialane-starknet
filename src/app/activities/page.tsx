@@ -20,7 +20,7 @@ export default function ActivitiesPage() {
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-primary">
           <Activity className="h-5 w-5" />
-          <span className="text-sm font-semibold uppercase tracking-wider">Medialane</span>
+          <span className="text-sm font-semibold">Medialane</span>
         </div>
         <h1 className="text-3xl font-bold">Onchain Activity</h1>
         <p className="text-muted-foreground">Mint, markets, events, and more.</p>

@@ -392,7 +392,7 @@ export default function CreateRemixPage() {
           </Link>
           <div className="flex items-center gap-2 text-primary">
             <GitBranch className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wider">Create Remix</span>
+            <span className="text-sm font-semibold">Create Remix</span>
           </div>
           <h1 className="text-3xl font-bold">Mint a Remix</h1>
           <p className="text-muted-foreground max-w-xl">
@@ -630,7 +630,7 @@ export default function CreateRemixPage() {
                 {/* Original license info */}
                 {(attr("License") || attr("Commercial Use") || attr("Derivatives")) && (
                   <div className="rounded-lg bg-muted/40 p-3 space-y-1.5 text-xs">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Original License</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground">Original License</p>
                     {attr("License") && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">License</span>

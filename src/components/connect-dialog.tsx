@@ -92,7 +92,7 @@ export function ConnectDialog() {
 
         <div className="grid gap-5 pt-1">
           <section>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">
               Browser Wallets
             </p>
             <div className="grid gap-2">
