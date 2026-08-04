@@ -34,14 +34,13 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
 import { toast } from "sonner";
-import { Contract, hash } from "starknet";
-import { normalizeAddress, STARKNET_IP_TICKETS_FACTORY_CONTRACT } from "@medialane/sdk";
-import { IPTicketCollectionFactoryABI } from "@medialane/sdk/starknet";
+import { hash, type Call } from "starknet";
+import { normalizeAddress } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
-const FACTORY = STARKNET_IP_TICKETS_FACTORY_CONTRACT as string;
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
@@ -73,6 +72,7 @@ export default function CreateTicketCollectionPage() {
   const { address, isConnected, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
   const { mutate } = useMyTicketCollections(address ?? null);
+  const client = useMedialaneClient();
   const router = useRouter();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
@@ -147,8 +147,7 @@ export default function CreateTicketCollectionPage() {
   };
 
   async function onSubmit(values: FormValues) {
-    if (!isConnected) { toast.error("Connect your wallet first"); return; }
-    if (!FACTORY) { toast.error("IP Tickets not yet available on this chain"); return; }
+    if (!isConnected || !address) { toast.error("Connect your wallet first"); return; }
     if (imagePreview && !imageUri && !imageUploading) {
       toast.error("Image upload failed", { description: "Please re-upload your collection image." });
       return;
@@ -184,12 +183,20 @@ export default function CreateTicketCollectionPage() {
         baseUri = pinData.uri;
       }
 
-      const factory = new Contract({ abi: IPTicketCollectionFactoryABI as any, address: FACTORY, providerOrAccount: starknetProvider });
-      const call = factory.populate("deploy_collection", [values.name, values.symbol, baseUri]);
+      const intentRes = await client.api.createCollectionIntent({
+        owner: address,
+        name: values.name,
+        symbol: values.symbol,
+        baseUri,
+        service: "ip-tickets",
+      });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
 
       setDialogTxStatus("submitting");
-      const txH = await execute([call]);
+      const txH = await execute(intentRes.data.calls as Call[]);
       if (!txH) throw new Error("Transaction failed");
+      // CREATE_COLLECTION intents aren't in the backend's confirmable set —
+      // nothing to confirm here; the backend's own factory poll indexes the deploy.
       setDialogTxStatus("confirming");
 
       const addr = await readDeployedAddress(txH);
