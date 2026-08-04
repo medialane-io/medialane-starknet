@@ -33,17 +33,13 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { toast } from "sonner";
-import {
-  STARKNET_COLLECTION_1155_CONTRACT,
-  normalizeAddress,
-} from "@medialane/sdk";
-import { hash } from "starknet";
+import { normalizeAddress } from "@medialane/sdk";
+import { hash, type Call } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
-import { serializeByteArray } from "@/lib/cairo-calldata";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
 
-const FACTORY = STARKNET_COLLECTION_1155_CONTRACT as `0x${string}`;
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 
 const schema = z.object({
@@ -68,6 +64,7 @@ type FormValues = z.infer<typeof schema>;
 export default function CreateNFTEditionsCollectionPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
+  const client = useMedialaneClient();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
@@ -190,22 +187,27 @@ export default function CreateNFTEditionsCollectionPage() {
         collectionMetaUri = d.uri;
       }
 
-      // 2. Execute deploy_collection on the factory.
-      // Build calldata manually using byteArray.byteArrayFromString().
-      // v2 factory signature: deploy_collection(name, symbol, base_uri)
+      // 2. Create the collection through the metered intents API — the backend
+      // deploys via the mip-erc1155 factory server-side and returns
+      // fully-populated calls (no client-side calldata construction).
       setDialogTxStatus("submitting");
-      const txHash = await execute([{
-        contractAddress: FACTORY,
-        entrypoint: "deploy_collection",
-        calldata: [
-          ...serializeByteArray(values.name),
-          ...serializeByteArray(values.symbol),
-          ...serializeByteArray(collectionMetaUri ?? ""),
-        ],
-      }]);
+      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const intentRes = await client.api.createCollectionIntent({
+        owner: walletAddress,
+        name: values.name,
+        symbol: values.symbol,
+        baseUri: collectionMetaUri ?? "",
+        service: "mip-erc1155",
+      });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
+      const txHash = await execute(intentRes.data.calls as Call[]);
 
       if (!txHash) throw new Error("Transaction failed — no hash returned");
       setDialogTxStatus("confirming");
+      // CREATE_COLLECTION intents aren't in the backend's confirmable set
+      // (medialane-backend/src/api/routes/intents/lifecycle.ts's
+      // MARKETPLACE_INTENT_TYPES/RECEIPT_HYDRATED_INTENT_TYPES) — nothing to
+      // confirm here; the backend's own factory poll indexes the deploy.
 
       // 3. Extract deployed collection address from CollectionDeployed event in the receipt.
       // Best-effort: if event parsing fails the tx still succeeded — the collection will
