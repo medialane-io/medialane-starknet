@@ -11,7 +11,7 @@ import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
 import { getStarknetVenue } from "@/lib/starknet-venue";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { signAndExecuteIntent } from "@/lib/intent-tx";
+import { signAndExecuteIntent, executePrebuiltIntent } from "@/lib/intent-tx";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
 import {
@@ -305,75 +305,50 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error("Connect your wallet first");
             return undefined;
         }
-        if (!medialaneContract || items.length === 0) {
-            const msg = "Contract not available, or cart empty";
+        if (items.length === 0) {
+            const msg = "Cart empty";
             setError(msg);
             toast.error(msg);
             return undefined;
         }
 
         return withProcessing("checkoutCart", async () => {
-            // Group required ERC20 approvals by token address, split by standard
-            const tokenTotals721 = new Map<string, bigint>();
-            const tokenTotals1155 = new Map<string, bigint>();
+            const checkoutRes = await client.api.createCheckoutIntent({
+                fulfiller: signer.address,
+                orderHashes: items.map((i) => i.orderHash),
+            });
+            const failed = checkoutRes.data.filter((r) => r.error);
+            if (failed.length > 0) {
+                throw new Error(`${failed.length} item(s) could not be prepared: ${failed.map((f) => f.error).join("; ")}`);
+            }
+            const fulfillCalls = checkoutRes.data.flatMap((r) => (r.calls as Call[]) ?? []);
+
+            // Platform fee (creators fund) — one transfer per token, summed. Stays
+            // app-side: 02-protocol-app-split.md §II, fee is added to the quote
+            // before signing, never computed by the backend.
+            const tokenTotals = new Map<string, bigint>();
             items.forEach((item) => {
-                const token = item.considerationToken;
                 const amt = BigInt(item.considerationAmount);
-                if (item.isERC1155) {
-                    tokenTotals1155.set(token, (tokenTotals1155.get(token) || 0n) + amt);
-                } else {
-                    tokenTotals721.set(token, (tokenTotals721.get(token) || 0n) + amt);
-                }
+                tokenTotals.set(item.considerationToken, (tokenTotals.get(item.considerationToken) || 0n) + amt);
             });
-
-            const { cairo } = await import("starknet");
-            const approveCalls721 = Array.from(tokenTotals721.entries()).map(([token, totalWei]) => {
-                const amountUint256 = cairo.uint256(totalWei.toString());
-                return {
-                    contractAddress: token,
-                    entrypoint: "approve",
-                    calldata: [medialaneContract.address, amountUint256.low.toString(), amountUint256.high.toString()],
-                };
-            });
-            const approveCalls1155 = Array.from(tokenTotals1155.entries()).map(([token, totalWei]) => {
-                const amountUint256 = cairo.uint256(totalWei.toString());
-                return {
-                    contractAddress: token,
-                    entrypoint: "approve",
-                    calldata: [medialane1155Contract!.address, amountUint256.low.toString(), amountUint256.high.toString()],
-                };
-            });
-
-            // Fulfilment is unsigned in 0.26.0 — the caller IS the fulfiller, so no
-            // per-item SNIP-12 signature (and no nonce) is needed. fulfill_order takes
-            // the order hash (+ quantity for ERC-1155).
-            const fulfillCalls: Call[] = items.map((item) =>
-                item.isERC1155
-                    ? medialane1155Contract!.populate("fulfill_order", [item.orderHash, item.quantity ?? "1"])
-                    : medialaneContract.populate("fulfill_order", [item.orderHash])
-            );
+            const feeCalls = Array.from(tokenTotals.entries())
+                .map(([token, grossAmount]) => buildFeeCall({ surface: "marketplace", token, grossAmount }, dappFeeConfig))
+                .filter((c): c is NonNullable<typeof c> => c !== null);
 
             toast.info("Executing Purchase", { description: "Approve the final transaction to sweep the cart." });
 
-            // Platform fee (creators fund) — one transfer per token, summed.
-            const feeCalls = [...tokenTotals721.entries(), ...tokenTotals1155.entries()]
-                .map(([token, totalWei]) =>
-                    buildFeeCall(
-                        { surface: "marketplace", token, grossAmount: totalWei },
-                        dappFeeConfig
-                    )
-                )
-                .filter((c): c is NonNullable<typeof c> => c !== null);
-
-            // Single atomic multicall: all approvals + all fulfillments + fee transfers
-            const { txHash: hash } = await signer.execute([...approveCalls721, ...approveCalls1155, ...fulfillCalls, ...feeCalls]);
+            const { txHash: hash } = await signer.execute([...fulfillCalls, ...feeCalls]);
+            // Best-effort per-item confirm — a failure here doesn't affect the tx.
+            await Promise.all(
+                checkoutRes.data.map((r) => (r.id ? client.api.confirmIntent(r.id, hash).catch(() => {}) : Promise.resolve()))
+            );
             setTxHash(hash);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             rewardToast("buy_asset");
             return hash;
         }, opts);
-    }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
         if (!signer) {
@@ -411,8 +386,8 @@ export function useMarketplace(): UseMarketplaceReturn {
      */
     const acceptOffer = useCallback(async (
         orderHash: string,
-        nftContractAddress: string,
-        tokenId: string,
+        _nftContractAddress: string,
+        _tokenId: string,
         tokenStandard?: string,
         opts?: WriteOpts
     ) => {
@@ -420,44 +395,23 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error("Connect your wallet first");
             return undefined;
         }
-        const is1155 = tokenStandard === "ERC1155";
-        const contract = is1155 ? medialane1155Contract : medialaneContract;
-        if (!contract) {
-            const msg = "Contract not available";
-            setError(msg);
-            toast.error(msg);
-            return undefined;
-        }
-
         return withProcessing("acceptOffer", async () => {
-            const fulfillCall = is1155
-                ? contract.populate("fulfill_order", [orderHash, "1"])
-                : contract.populate("fulfill_order", [orderHash]);
-
-            const { cairo } = await import("starknet");
-            let approveCall: Call;
-            if (is1155) {
-                approveCall = {
-                    contractAddress: nftContractAddress,
-                    entrypoint: "set_approval_for_all",
-                    calldata: [contract.address, "1"],
-                };
-            } else {
-                const tokenIdUint256 = cairo.uint256(tokenId);
-                approveCall = {
-                    contractAddress: nftContractAddress,
-                    entrypoint: "approve",
-                    calldata: [contract.address, tokenIdUint256.low.toString(), tokenIdUint256.high.toString()],
-                };
-            }
-
-            const { txHash: hash } = await signer.execute([approveCall, fulfillCall]);
+            const intentRes = await client.api.createFulfillIntent({
+                fulfiller: signer.address,
+                orderHash,
+                tokenStandard,
+            });
+            if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
+            const { txHash: hash } = await executePrebuiltIntent(signer, client, {
+                id: intentRes.data.id,
+                calls: intentRes.data.calls as Call[],
+            });
             setTxHash(hash);
             refreshMarketplaceCaches();
             rewardToast("offer_accepted_seller");
             return hash;
         }, opts);
-    }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     return {
         createListing,
