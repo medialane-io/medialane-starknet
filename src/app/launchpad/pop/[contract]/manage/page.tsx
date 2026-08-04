@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
+import { normalizeAddress } from "@medialane/sdk";
 import {
   ArrowLeft, Users, Award, Loader2, CheckCircle2, AlertCircle, Trash2,
 } from "lucide-react";
@@ -127,7 +128,7 @@ export default function PopManagePage({
   const isOwner =
     address &&
     collection?.owner &&
-    address.toLowerCase() === collection.owner.toLowerCase();
+    normalizeAddress("STARKNET", address) === normalizeAddress("STARKNET", collection.owner);
 
   const runTx = async (
     calls: Array<{ contractAddress: string; entrypoint: string; calldata: string[] }>,

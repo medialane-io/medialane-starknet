@@ -1,22 +1,17 @@
 import { useState, useCallback } from "react";
-import { useContract, useProvider } from "@starknet-react/core";
-import { Abi, num, type Call } from "starknet";
+import type { Call, TypedData } from "starknet";
 import { useSWRConfig } from "swr";
-import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk/starknet";
+import { getTokenBySymbol } from "@medialane/sdk";
 import { toast } from "sonner";
 import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
-import { getStarknetVenue } from "@/lib/starknet-venue";
 import { useVenueSigner } from "@/lib/use-venue-signer";
+import { signAndExecuteIntent, executePrebuiltIntent } from "@/lib/intent-tx";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
-import {
-    SUPPORTED_TOKENS,
-    STARKNET_MARKETPLACE_721_CONTRACT,
-    STARKNET_MARKETPLACE_1155_CONTRACT,
-    INDEXER_REVALIDATION_DELAY_MS,
-} from "@/lib/constants";
+import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 
 /**
  * Per-call options for marketplace write ops. `silent` suppresses the success
@@ -64,49 +59,23 @@ interface UseMarketplaceReturn {
     resetState: () => void;
 }
 
-// Module-level helpers
-const getDecimals = (currencySymbol: string) =>
-    SUPPORTED_TOKENS.find((t) => t.symbol === currencySymbol)?.decimals ?? 18;
-
-const toWei = (price: string, currencySymbol: string): string =>
-    BigInt(Math.floor(parseFloat(price) * Math.pow(10, getDecimals(currencySymbol)))).toString();
-
-// Full-felt (248-bit) random salt — the SOLE order-hash uniqueness source in the
-// 0.26.0 schema (nonce removed). Mirrors @medialane/sdk generateSalt.
-const generateSalt = (): string => {
-    const bytes = new Uint8Array(31);
-    crypto.getRandomValues(bytes);
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-    return num.toHex(BigInt("0x" + hex));
-};
-
 /**
- * Marketplace write hook. The signed order-construction (list / offer / cancel)
- * runs through the chain-neutral `StarknetVenue` adapter — the app no longer
- * hand-rolls SNIP-12 signing or `register_order` calldata. Fulfilment stays here
- * as app-level composition: `checkoutCart` is a multi-item atomic sweep and
- * `acceptOffer` is a seller-side fulfil (NFT approval, not payment) — neither of
- * which the single-order `VenueAdapter` models — but both execute through the
- * shared `useVenueSigner` port, so wallet selection + confirmation are unified.
+ * Marketplace write hook. Every write (list / offer / cancel / fulfil /
+ * checkout) builds its order/calldata server-side via the metered
+ * `/v1/intents/*` API (medialane-backend) and only signs/executes locally —
+ * see src/lib/intent-tx.ts. `checkoutCart` is a multi-item atomic sweep and
+ * `acceptOffer` is a seller-side fulfil, both composed from per-order
+ * FULFILL_ORDER intents; both execute through the shared `useVenueSigner`
+ * port, so wallet selection + confirmation are unified.
  */
 export function useMarketplace(): UseMarketplaceReturn {
-    const venue = getStarknetVenue();
     const signer = useVenueSigner();
-    const { provider } = useProvider();
+    const client = useMedialaneClient();
     const { mutate } = useSWRConfig();
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    const { contract: medialaneContract } = useContract({
-        address: STARKNET_MARKETPLACE_721_CONTRACT as `0x${string}`,
-        abi: IPMarketplaceABI as unknown as Abi,
-    });
-    const { contract: medialane1155Contract } = useContract({
-        address: STARKNET_MARKETPLACE_1155_CONTRACT as `0x${string}`,
-        abi: IPMarketplace1155ABI as unknown as Abi,
-    });
 
     const resetState = useCallback(() => {
         setTxHash(null);
@@ -184,28 +153,6 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Signed EIP-2981 royalty cap (bps) for an order. Reads the NFT's live 2981
-    // rate via royalty_info(tokenId, 10000) — the returned amount equals the bps
-    // at salePrice 10000. Non-2981 NFTs / failures yield 0 (never over-pay). The
-    // venue accepts this as the royalty_max_bps override (skipping its own read).
-    const resolveRoyaltyMaxBps = useCallback(async (
-        nft: string,
-        tokenId: string
-    ): Promise<number> => {
-        try {
-            const { cairo } = await import("starknet");
-            const id = cairo.uint256(tokenId);
-            const res = await provider.callContract({
-                contractAddress: nft,
-                entrypoint: "royalty_info",
-                calldata: [id.low.toString(), id.high.toString(), "10000", "0"],
-            });
-            return Number(BigInt(res[1] ?? "0"));
-        } catch {
-            return 0;
-        }
-    }, [provider]);
-
     const createListing = useCallback(async (
         assetContractAddress: string,
         tokenId: string,
@@ -221,19 +168,26 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         const is1155 = tokenStandard === "ERC1155";
+        const token = getTokenBySymbol(currencySymbol);
+        if (!token) {
+            toast.error(`Unsupported currency: ${currencySymbol}`);
+            return undefined;
+        }
         return withProcessing("createListing", async () => {
-            const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
             const now = Math.floor(Date.now() / 1000);
-            const { txHash: hash } = await venue.registerOrder(signer, {
-                asset: { chain: "STARKNET", contract: assetContractAddress, tokenId },
-                side: "listing",
-                paymentToken: currencySymbol,
-                amount: toWei(price, currencySymbol), // per-unit raw base units
-                quantity: is1155 ? (amount ?? "1") : "1",
-                royaltyMaxBps,
-                startTime: 0,
+            const intentRes = await client.api.createListingIntent({
+                offerer: signer.address,
+                nftContract: assetContractAddress,
+                tokenId,
+                currency: token.address,
+                price, // human-readable — the backend converts via the token's decimals
                 endTime: now + durationSeconds,
-                salt: generateSalt(),
+                amount: is1155 ? (amount ?? "1") : undefined,
+            });
+            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required listing intent");
+            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
+                id: intentRes.data.id,
+                typedData: intentRes.data.typedData as TypedData,
             });
             setTxHash(hash);
             refreshMarketplaceCaches();
@@ -245,7 +199,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             rewardToast("list_asset");
             return hash;
         }, opts);
-    }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     const makeOffer = useCallback(async (
         assetContractAddress: string,
@@ -260,21 +214,26 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error("Connect your wallet first");
             return undefined;
         }
-        const is1155 = tokenStandard === "ERC1155";
+        const token = getTokenBySymbol(currencySymbol);
+        if (!token) {
+            toast.error(`Unsupported currency: ${currencySymbol}`);
+            return undefined;
+        }
         return withProcessing("makeOffer", async () => {
-            const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
             const now = Math.floor(Date.now() / 1000);
-            const { txHash: hash } = await venue.registerOrder(signer, {
-                asset: { chain: "STARKNET", contract: assetContractAddress, tokenId },
-                side: "bid",
-                paymentToken: currencySymbol,
-                // Per-unit bid price; the venue approves per-unit × quantity for 1155.
-                amount: toWei(price, currencySymbol),
-                quantity: is1155 ? "1" : "1",
-                royaltyMaxBps,
-                startTime: 0,
+            const intentRes = await client.api.createOfferIntent({
+                offerer: signer.address,
+                nftContract: assetContractAddress,
+                tokenId,
+                currency: token.address,
+                price,
                 endTime: now + durationSeconds,
-                salt: generateSalt(),
+                tokenStandard,
+            });
+            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required offer intent");
+            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
+                id: intentRes.data.id,
+                typedData: intentRes.data.typedData as TypedData,
             });
             setTxHash(hash);
             refreshMarketplaceCaches();
@@ -282,90 +241,74 @@ export function useMarketplace(): UseMarketplaceReturn {
             rewardToast("make_offer");
             return hash;
         }, opts);
-    }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[], opts?: WriteOpts) => {
         if (!signer) {
             toast.error("Connect your wallet first");
             return undefined;
         }
-        if (!medialaneContract || items.length === 0) {
-            const msg = "Contract not available, or cart empty";
+        if (items.length === 0) {
+            const msg = "Cart empty";
             setError(msg);
             toast.error(msg);
             return undefined;
         }
 
         return withProcessing("checkoutCart", async () => {
-            // Group required ERC20 approvals by token address, split by standard
-            const tokenTotals721 = new Map<string, bigint>();
-            const tokenTotals1155 = new Map<string, bigint>();
+            const checkoutRes = await client.api.createCheckoutIntent({
+                fulfiller: signer.address,
+                orderHashes: items.map((i) => i.orderHash),
+            });
+            const failed = checkoutRes.data.filter((r) => r.error);
+            if (failed.length > 0) {
+                throw new Error(`${failed.length} item(s) could not be prepared: ${failed.map((f) => f.error).join("; ")}`);
+            }
+            const fulfillCalls = checkoutRes.data.flatMap((r) => (r.calls as Call[]) ?? []);
+
+            // Platform fee (creators fund) — one transfer per token, summed. Stays
+            // app-side: 02-protocol-app-split.md §II, fee is added to the quote
+            // before signing, never computed by the backend.
+            const tokenTotals = new Map<string, bigint>();
             items.forEach((item) => {
-                const token = item.considerationToken;
                 const amt = BigInt(item.considerationAmount);
-                if (item.isERC1155) {
-                    tokenTotals1155.set(token, (tokenTotals1155.get(token) || 0n) + amt);
-                } else {
-                    tokenTotals721.set(token, (tokenTotals721.get(token) || 0n) + amt);
-                }
+                tokenTotals.set(item.considerationToken, (tokenTotals.get(item.considerationToken) || 0n) + amt);
             });
-
-            const { cairo } = await import("starknet");
-            const approveCalls721 = Array.from(tokenTotals721.entries()).map(([token, totalWei]) => {
-                const amountUint256 = cairo.uint256(totalWei.toString());
-                return {
-                    contractAddress: token,
-                    entrypoint: "approve",
-                    calldata: [medialaneContract.address, amountUint256.low.toString(), amountUint256.high.toString()],
-                };
-            });
-            const approveCalls1155 = Array.from(tokenTotals1155.entries()).map(([token, totalWei]) => {
-                const amountUint256 = cairo.uint256(totalWei.toString());
-                return {
-                    contractAddress: token,
-                    entrypoint: "approve",
-                    calldata: [medialane1155Contract!.address, amountUint256.low.toString(), amountUint256.high.toString()],
-                };
-            });
-
-            // Fulfilment is unsigned in 0.26.0 — the caller IS the fulfiller, so no
-            // per-item SNIP-12 signature (and no nonce) is needed. fulfill_order takes
-            // the order hash (+ quantity for ERC-1155).
-            const fulfillCalls: Call[] = items.map((item) =>
-                item.isERC1155
-                    ? medialane1155Contract!.populate("fulfill_order", [item.orderHash, item.quantity ?? "1"])
-                    : medialaneContract.populate("fulfill_order", [item.orderHash])
-            );
+            const feeCalls = Array.from(tokenTotals.entries())
+                .map(([token, grossAmount]) => buildFeeCall({ surface: "marketplace", token, grossAmount }, dappFeeConfig))
+                .filter((c): c is NonNullable<typeof c> => c !== null);
 
             toast.info("Executing Purchase", { description: "Approve the final transaction to sweep the cart." });
 
-            // Platform fee (creators fund) — one transfer per token, summed.
-            const feeCalls = [...tokenTotals721.entries(), ...tokenTotals1155.entries()]
-                .map(([token, totalWei]) =>
-                    buildFeeCall(
-                        { surface: "marketplace", token, grossAmount: totalWei },
-                        dappFeeConfig
-                    )
-                )
-                .filter((c): c is NonNullable<typeof c> => c !== null);
-
-            // Single atomic multicall: all approvals + all fulfillments + fee transfers
-            const { txHash: hash } = await signer.execute([...approveCalls721, ...approveCalls1155, ...fulfillCalls, ...feeCalls]);
+            const { txHash: hash } = await signer.execute([...fulfillCalls, ...feeCalls]);
+            // Best-effort per-item confirm — a failure here doesn't affect the tx.
+            await Promise.all(
+                checkoutRes.data.map((r) => (r.id ? client.api.confirmIntent(r.id, hash).catch(() => {}) : Promise.resolve()))
+            );
             setTxHash(hash);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             rewardToast("buy_asset");
             return hash;
         }, opts);
-    }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
-    const cancelOrder = useCallback(async (orderHash: string, _tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
+    const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
         if (!signer) {
             toast.error("Connect your wallet first");
             return undefined;
         }
         return withProcessing("cancelOrder", async () => {
-            const { txHash: hash } = await venue.cancelOrder(signer, orderHash);
+            const intentRes = await client.api.createCancelIntent({
+                offerer: signer.address,
+                orderHash,
+                tokenStandard,
+            });
+            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required cancel intent");
+            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
+                id: intentRes.data.id,
+                typedData: intentRes.data.typedData as TypedData,
+            });
             setTxHash(hash);
             refreshMarketplaceCaches();
             if (!opts?.silent) {
@@ -376,7 +319,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             }
             return hash;
         }, opts);
-    }, [signer, venue, withProcessing, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     /**
      * Asset owner accepts an incoming bid. Fulfilment is unsigned (the owner is
@@ -386,8 +329,8 @@ export function useMarketplace(): UseMarketplaceReturn {
      */
     const acceptOffer = useCallback(async (
         orderHash: string,
-        nftContractAddress: string,
-        tokenId: string,
+        _nftContractAddress: string,
+        _tokenId: string,
         tokenStandard?: string,
         opts?: WriteOpts
     ) => {
@@ -395,44 +338,23 @@ export function useMarketplace(): UseMarketplaceReturn {
             toast.error("Connect your wallet first");
             return undefined;
         }
-        const is1155 = tokenStandard === "ERC1155";
-        const contract = is1155 ? medialane1155Contract : medialaneContract;
-        if (!contract) {
-            const msg = "Contract not available";
-            setError(msg);
-            toast.error(msg);
-            return undefined;
-        }
-
         return withProcessing("acceptOffer", async () => {
-            const fulfillCall = is1155
-                ? contract.populate("fulfill_order", [orderHash, "1"])
-                : contract.populate("fulfill_order", [orderHash]);
-
-            const { cairo } = await import("starknet");
-            let approveCall: Call;
-            if (is1155) {
-                approveCall = {
-                    contractAddress: nftContractAddress,
-                    entrypoint: "set_approval_for_all",
-                    calldata: [contract.address, "1"],
-                };
-            } else {
-                const tokenIdUint256 = cairo.uint256(tokenId);
-                approveCall = {
-                    contractAddress: nftContractAddress,
-                    entrypoint: "approve",
-                    calldata: [contract.address, tokenIdUint256.low.toString(), tokenIdUint256.high.toString()],
-                };
-            }
-
-            const { txHash: hash } = await signer.execute([approveCall, fulfillCall]);
+            const intentRes = await client.api.createFulfillIntent({
+                fulfiller: signer.address,
+                orderHash,
+                tokenStandard,
+            });
+            if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
+            const { txHash: hash } = await executePrebuiltIntent(signer, client, {
+                id: intentRes.data.id,
+                calls: intentRes.data.calls as Call[],
+            });
             setTxHash(hash);
             refreshMarketplaceCaches();
             rewardToast("offer_accepted_seller");
             return hash;
         }, opts);
-    }, [signer, medialaneContract, medialane1155Contract, withProcessing, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     return {
         createListing,

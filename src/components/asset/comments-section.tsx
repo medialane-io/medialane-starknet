@@ -5,6 +5,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { CallData } from "starknet";
+import { normalizeAddress } from "@medialane/sdk";
 import { encodeTokenId } from "@/hooks/use-transfer";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
@@ -76,7 +77,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
   const isProcessing = postStep === "processing";
 
   const isOwn = (author: string) =>
-    !!walletAddress && author.toLowerCase() === walletAddress.toLowerCase();
+    !!walletAddress && normalizeAddress("STARKNET", author) === normalizeAddress("STARKNET", walletAddress);
 
   const isNearBottom = () => {
     const el = messagesRef.current;

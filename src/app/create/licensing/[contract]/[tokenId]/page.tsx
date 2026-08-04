@@ -9,7 +9,7 @@ import { useCollection } from "@/hooks/use-collections";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { submitRemixOffer } from "@/hooks/use-remix-offers";
-import { getListableTokens, getTokenBySymbol, getService } from "@medialane/sdk";
+import { getListableTokens, getTokenBySymbol, getService, normalizeAddress } from "@medialane/sdk";
 import { LICENSE_TYPES } from "@/types/ip";
 import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
 import { assetHref } from "@/lib/routes";
@@ -35,11 +35,11 @@ export default function CreateLicensingPage() {
   const { token, isLoading: tokenLoading } = useToken(contract, tokenId);
   const { collection: parentCollection } = useCollection(contract);
 
-  const walletAddressLower = walletAddress?.toLowerCase() ?? null;
+  const walletAddressNormalized = walletAddress ? normalizeAddress("STARKNET", walletAddress) : null;
   const viewerIsOwner = !!(
-    token && walletAddressLower &&
-    (token.owner?.toLowerCase() === walletAddressLower ||
-     token.balances?.some((b) => b.owner.toLowerCase() === walletAddressLower))
+    token && walletAddressNormalized &&
+    (token.owner && normalizeAddress("STARKNET", token.owner) === walletAddressNormalized ||
+     token.balances?.some((b) => normalizeAddress("STARKNET", b.owner) === walletAddressNormalized))
   );
   const originalName = token?.metadata?.name ?? `Token #${tokenId}`;
   const originalImage = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;

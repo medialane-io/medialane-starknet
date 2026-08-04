@@ -49,13 +49,14 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
-import { hash } from "starknet";
+import { hash, type Call } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
-import { serializeByteArray, encodeU256 } from "@/lib/cairo-calldata";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { confirmIntentBestEffort } from "@/lib/intent-tx";
 import {
   IP_TYPES,
   LICENSE_TYPES,
@@ -151,6 +152,7 @@ export default function MintNFTEditionsPage() {
 
   const { isConnected, address: walletAddress, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
+  const client = useMedialaneClient();
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
@@ -325,19 +327,26 @@ export default function MintNFTEditionsPage() {
       setMintStep("processing");
       setTxStatus("submitting");
 
-      const [valueLow, valueHigh] = encodeU256(BigInt(values.value));
+      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const intentRes = await client.api.createMintIntent({
+        owner: walletAddress,
+        recipient: values.recipient,
+        collectionContract: collectionAddress,
+        tokenUri,
+        value: values.value,
+        // royaltyBps has no effect on mip-erc1155 mints (set via per-collection
+        // controls, not per mint) — the backend rejects a nonzero value here,
+        // and this form has no royalty field for editions mint.
+        royaltyBps: 0,
+      });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt mint intent");
 
       // The contract assigns the edition id on-chain (sequential from 1).
-      const txHashResult = await execute([{
-        contractAddress: collectionAddress,
-        entrypoint: "mint_edition",
-        calldata: [
-          values.recipient,
-          valueLow, valueHigh,
-          ...serializeByteArray(tokenUri),
-        ],
-      }]);
+      const txHashResult = await execute(intentRes.data.calls as Call[]);
       if (!txHashResult) throw new Error("Mint transaction failed");
+      // MINT intents accept confirmation (RECEIPT_HYDRATED_INTENT_TYPES) — report
+      // the tx so the backend can hydrate receipt-derived state if it needs to.
+      await confirmIntentBestEffort(client, intentRes.data.id, txHashResult);
 
       // Read the assigned id from the IPMinted event for the success/asset link.
       setMintedTokenId(await readAssignedEditionId(txHashResult, collectionAddress));

@@ -17,9 +17,8 @@ import {
   Users, Loader2, ImagePlus, X, ShieldCheck, ChevronDown, AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Contract, CairoOption, CairoOptionVariant, cairo } from "starknet";
+import type { Call } from "starknet";
 import { normalizeAddress } from "@medialane/sdk";
-import { IPClubCollectionABI } from "@medialane/sdk/starknet";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +43,7 @@ import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
-import { starknetProvider } from "@/lib/starknet";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -105,6 +104,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
   const { address, isConnected, execute } = useWallet();
   const { collection, isLoading } = useCollection(contract);
   const { getValidToken } = useSiwsToken();
+  const client = useMedialaneClient();
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
@@ -135,7 +135,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
     if (!form.getValues("external_url")) form.setValue("external_url", suggested);
   }, [contract, form]);
 
-  const isOwner = !!address && !!collection?.owner && address.toLowerCase() === collection.owner.toLowerCase();
+  const isOwner = !!address && !!collection?.owner && normalizeAddress("STARKNET", address) === normalizeAddress("STARKNET", collection.owner);
 
   const handleImageSelect = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
@@ -213,24 +213,37 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
       const endTime = dateToUnixTimestamp(values.endDate);
       const royaltyBps = Math.round(values.royalty * 100);
 
-      const col = new Contract({ abi: IPClubCollectionABI as any, address: contract, providerOrAccount: starknetProvider });
+      if (!address) throw new Error("Wallet not ready. Please reconnect and try again.");
 
-      // Ids are sequential and only the owner can ever call create_membership,
-      // so the id can be predicted ahead of the tx and both calls bundled into
-      // one multicall — one wallet signature for what is one "create" action.
+      // Ids are sequential and only the owner can ever call create_membership, so
+      // the id can still be predicted ahead of time and both intents' calls
+      // bundled into one multicall — one wallet signature for one "create" action.
       const tierId = await predictNextMembershipId(contract);
       setMintedTierId(String(tierId));
 
-      const createCall = col.populate("create_membership", [
-        cairo.uint256(values.maxSupply),
-        startTime != null ? new CairoOption(CairoOptionVariant.Some, startTime) : new CairoOption(CairoOptionVariant.None),
-        endTime != null ? new CairoOption(CairoOptionVariant.Some, endTime) : new CairoOption(CairoOptionVariant.None),
+      const tierRes = await client.api.createTierIntent({
+        owner: address,
+        collection: contract,
+        service: "ip-club",
+        maxSupply: values.maxSupply,
+        startTime,
+        endTime,
         royaltyBps,
         metadataUri,
-      ]);
-      const mintCall = col.populate("mint", [address, cairo.uint256(tierId), cairo.uint256(values.maxSupply)]);
+      });
+      const mintRes = await client.api.createMintIntent({
+        owner: address,
+        recipient: address,
+        collectionContract: contract,
+        tokenId: String(tierId),
+        amount: values.maxSupply,
+      });
+      if (tierRes.data.requiresSignature || mintRes.data.requiresSignature) {
+        throw new Error("Expected prebuilt create-tier and mint intents");
+      }
 
-      const txHash = await execute([createCall, mintCall]);
+      const allCalls = [...(tierRes.data.calls as Call[]), ...(mintRes.data.calls as Call[])];
+      const txHash = await execute(allCalls);
       if (!txHash) throw new Error("Failed to create membership");
 
       setDialogTxStatus("confirmed");

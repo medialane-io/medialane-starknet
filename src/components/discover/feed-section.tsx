@@ -5,6 +5,7 @@ import { DiscoverActivityStrip } from "@medialane/ui";
 import { useOrders } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
+import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 
 /** The "Activity" recent-listings carousel. The old "Community" carousel that
@@ -23,7 +24,7 @@ export function FeedSection() {
         marketplaceHref="/marketplace"
         onBuyOrder={setBuyOrder}
         isOwnOrder={(order) =>
-          !!address && !!order.offerer && order.offerer.toLowerCase() === address.toLowerCase()
+          !!address && !!order.offerer && normalizeAddress("STARKNET", order.offerer) === normalizeAddress("STARKNET", address)
         }
       />
 

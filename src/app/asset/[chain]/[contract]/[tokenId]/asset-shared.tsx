@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Image from "next/image";
+import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder, ApiToken } from "@medialane/sdk";
 import { checkIsOwner } from "@/lib/utils";
 import { LICENSE_TRAIT_TYPES } from "@/types/ip";
@@ -71,7 +72,7 @@ export function useAssetMarketState(
 
     const isOwner = checkIsOwner(token, walletAddress);
     const myListing = isOwner && walletAddress
-      ? activeListings.find((l) => l.offerer.toLowerCase() === walletAddress.toLowerCase()) ?? null
+      ? activeListings.find((l) => normalizeAddress("STARKNET", l.offerer) === normalizeAddress("STARKNET", walletAddress)) ?? null
       : null;
 
     const attributes: AssetAttribute[] = Array.isArray(token?.metadata?.attributes)

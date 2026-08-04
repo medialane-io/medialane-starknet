@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/collapsible";
 import { registerRemix } from "@/hooks/use-remix-offers";
 import { useSiwsToken } from "@/hooks/use-siws-token";
-import { getListableTokens, getService } from "@medialane/sdk";
+import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@/types/ip";
 import { ipfsToHttp } from "@/lib/utils";
 import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
@@ -60,12 +60,12 @@ export default function CreateRemixPage() {
     (c) => getService(c.service)?.id === "mip-erc721" && c.collectionId != null
   );
 
-  const walletAddressLower = walletAddress?.toLowerCase() ?? null;
+  const walletAddressNormalized = walletAddress ? normalizeAddress("STARKNET", walletAddress) : null;
   const isOwner = !!(
-    token && walletAddressLower &&
+    token && walletAddressNormalized &&
     (
-      token.owner?.toLowerCase() === walletAddressLower ||
-      token.balances?.some((balance) => balance.owner.toLowerCase() === walletAddressLower)
+      (token.owner && normalizeAddress("STARKNET", token.owner) === walletAddressNormalized) ||
+      token.balances?.some((balance) => normalizeAddress("STARKNET", balance.owner) === walletAddressNormalized)
     )
   );
 
@@ -115,7 +115,7 @@ export default function CreateRemixPage() {
   useEffect(() => {
     if (eligibleCollections.length > 0 && !collectionId) {
       const match = eligibleCollections.find(
-        (c) => c.contractAddress.toLowerCase() === contract.toLowerCase()
+        (c) => normalizeAddress("STARKNET", c.contractAddress) === normalizeAddress("STARKNET", contract)
       );
       setCollectionId(match?.collectionId ?? eligibleCollections[0]?.collectionId ?? "");
     }
@@ -275,7 +275,7 @@ export default function CreateRemixPage() {
         try {
           const res = await client.api.getTokensByOwner(walletAddress, 1, 5);
           const newest = res.data?.find(
-            (t) => t.contractAddress.toLowerCase() === selectedCollection.contractAddress.toLowerCase()
+            (t) => normalizeAddress("STARKNET", t.contractAddress) === normalizeAddress("STARKNET", selectedCollection.contractAddress)
           );
           if (newest) { remixTokenId = newest.tokenId; break; }
         } catch { /* ignore */ }

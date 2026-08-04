@@ -23,6 +23,7 @@ import { FloatingCommentsButton } from "@/components/asset/floating-comments-but
 import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { normalizeAddress } from "@medialane/sdk";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock } from "@medialane/ui";
@@ -183,7 +184,7 @@ export function AssetPageTicket() {
   const holders = token.balances ?? [];
   const myQuantity = walletAddress
     ? parseInt(
-        holders.find((b) => b.owner?.toLowerCase() === walletAddress.toLowerCase())?.amount ?? "0",
+        holders.find((b) => b.owner && normalizeAddress("STARKNET", b.owner) === normalizeAddress("STARKNET", walletAddress))?.amount ?? "0",
         10
       )
     : 0;
