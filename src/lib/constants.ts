@@ -1,3 +1,5 @@
+import { readOptionalAddressEnv } from "./env";
+
 // Protocol contract addresses — the SDK's chain-named constants (single source).
 // No NEXT_PUBLIC_ overrides, no *_MAINNET, no duplicate comments name.
 export {
@@ -50,6 +52,20 @@ export const MEDIALANE_API_KEY = isServer
   ? (process.env.MEDIALANE_API_KEY || "")
   : "";
 
+// Regression guard: if a future refactor accidentally renames the env var to
+// `NEXT_PUBLIC_MEDIALANE_API_KEY` (the exact bug the BFF proxy replaced — see
+// the 2026-06-23 key leak above), or otherwise causes a non-empty key to
+// materialize in the browser bundle, fail loudly at module init rather than
+// silently leaking. The check runs only in the browser — server-side the key
+// is supposed to be set.
+if (!isServer && MEDIALANE_API_KEY) {
+  throw new Error(
+    "MEDIALANE_API_KEY is non-empty in the browser bundle — the server-only " +
+    "secret may be leaking. Check that no env var with a NEXT_PUBLIC_ prefix " +
+    "carries the tenant API key, and that the isServer branch above is intact."
+  );
+}
+
 export const PINATA_GATEWAY =
   process.env.NEXT_PUBLIC_PINATA_GATEWAY ||
   "https://gateway.pinata.cloud";
@@ -58,10 +74,13 @@ export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://voyager.online";
 
 export const MINT_CONTRACT =
-  (process.env.NEXT_PUBLIC_MINT_CONTRACT as `0x${string}`) || ("" as `0x${string}`);
+  readOptionalAddressEnv(process.env.NEXT_PUBLIC_MINT_CONTRACT, "NEXT_PUBLIC_MINT_CONTRACT");
 
 export const LAUNCH_MINT_CONTRACT =
-  (process.env.NEXT_PUBLIC_LAUNCH_MINT_CONTRACT as `0x${string}`) || ("" as `0x${string}`);
+  readOptionalAddressEnv(
+    process.env.NEXT_PUBLIC_LAUNCH_MINT_CONTRACT,
+    "NEXT_PUBLIC_LAUNCH_MINT_CONTRACT"
+  );
 
 export const GENESIS_NFT_URI =
   process.env.NEXT_PUBLIC_GENESIS_NFT_URI || "";
@@ -70,7 +89,7 @@ export const GENESIS_NFT_IMAGE_URL =
   process.env.NEXT_PUBLIC_GENESIS_NFT_IMAGE_URL || "";
 
 export const BR_MINT_CONTRACT =
-  (process.env.NEXT_PUBLIC_BR_MINT_CONTRACT as `0x${string}`) || ("" as `0x${string}`);
+  readOptionalAddressEnv(process.env.NEXT_PUBLIC_BR_MINT_CONTRACT, "NEXT_PUBLIC_BR_MINT_CONTRACT");
 
 export const BR_NFT_URI =
   process.env.NEXT_PUBLIC_BR_NFT_URI || "";
