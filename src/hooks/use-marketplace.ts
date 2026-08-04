@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
 import { useContract, useProvider } from "@starknet-react/core";
-import { Abi, num, type Call } from "starknet";
+import { Abi, num, type Call, type TypedData } from "starknet";
 import { useSWRConfig } from "swr";
 import { IPMarketplaceABI, Medialane1155ABI as IPMarketplace1155ABI } from "@medialane/sdk/starknet";
+import { getTokenBySymbol } from "@medialane/sdk";
 import { toast } from "sonner";
 import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
@@ -10,6 +11,8 @@ import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
 import { getStarknetVenue } from "@/lib/starknet-venue";
 import { useVenueSigner } from "@/lib/use-venue-signer";
+import { signAndExecuteIntent } from "@/lib/intent-tx";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
 import {
     SUPPORTED_TOKENS,
@@ -93,6 +96,7 @@ export function useMarketplace(): UseMarketplaceReturn {
     const venue = getStarknetVenue();
     const signer = useVenueSigner();
     const { provider } = useProvider();
+    const client = useMedialaneClient();
     const { mutate } = useSWRConfig();
 
     const [isProcessing, setIsProcessing] = useState(false);
@@ -221,19 +225,26 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         const is1155 = tokenStandard === "ERC1155";
+        const token = getTokenBySymbol(currencySymbol);
+        if (!token) {
+            toast.error(`Unsupported currency: ${currencySymbol}`);
+            return undefined;
+        }
         return withProcessing("createListing", async () => {
-            const royaltyMaxBps = await resolveRoyaltyMaxBps(assetContractAddress, tokenId);
             const now = Math.floor(Date.now() / 1000);
-            const { txHash: hash } = await venue.registerOrder(signer, {
-                asset: { chain: "STARKNET", contract: assetContractAddress, tokenId },
-                side: "listing",
-                paymentToken: currencySymbol,
-                amount: toWei(price, currencySymbol), // per-unit raw base units
-                quantity: is1155 ? (amount ?? "1") : "1",
-                royaltyMaxBps,
-                startTime: 0,
+            const intentRes = await client.api.createListingIntent({
+                offerer: signer.address,
+                nftContract: assetContractAddress,
+                tokenId,
+                currency: token.address,
+                price, // human-readable — the backend converts via the token's decimals
                 endTime: now + durationSeconds,
-                salt: generateSalt(),
+                amount: is1155 ? (amount ?? "1") : undefined,
+            });
+            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required listing intent");
+            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
+                id: intentRes.data.id,
+                typedData: intentRes.data.typedData as TypedData,
             });
             setTxHash(hash);
             refreshMarketplaceCaches();
@@ -245,7 +256,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             rewardToast("list_asset");
             return hash;
         }, opts);
-    }, [signer, venue, withProcessing, resolveRoyaltyMaxBps, refreshMarketplaceCaches]);
+    }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     const makeOffer = useCallback(async (
         assetContractAddress: string,
