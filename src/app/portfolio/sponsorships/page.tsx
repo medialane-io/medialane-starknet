@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type { Call } from "starknet";
 import { CheckCircle2, Handshake, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSigner } from "@/hooks/use-signer";
-import { getMedialaneClient } from "@/lib/medialane-client";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { executePrebuiltIntent } from "@/lib/intent-tx";
+import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import {
   useSponsorshipProposals, useSponsorshipOffers, useSponsorshipBids, useSponsorshipLicenses,
   type SponsorshipOffer,
@@ -18,15 +21,20 @@ import { toast } from "sonner";
 
 function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
   const { bids, isLoading, mutate } = useSponsorshipBids(offer.offerId);
-  const signer = useSigner();
+  const { address: walletAddress } = useWallet();
+  const signer = useVenueSigner();
+  const client = useMedialaneClient();
   const [activeSponsor, setActiveSponsor] = useState<string | null>(null);
 
-  const acceptBid = async (sponsor: string) => {
-    if (!signer) { toast.error("Connect a wallet first"); return; }
+  const acceptBid = async (sponsor: string, amount: string) => {
+    if (!signer || !walletAddress) { toast.error("Connect a wallet first"); return; }
     setActiveSponsor(sponsor);
     try {
-      const client = getMedialaneClient();
-      await client.services.sponsorship.acceptBid(signer, { offerId: offer.offerId, sponsor });
+      const intentRes = await client.api.acceptSponsorshipBidIntent({ author: walletAddress, offerId: offer.offerId, sponsor });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
+      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig);
+      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
+      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to accept bid");
@@ -45,7 +53,7 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
       {bids.map((bid) => (
         <div key={bid.id} className="flex items-center justify-between gap-2 text-xs">
           <AddressDisplay address={bid.sponsor} chars={4} showCopy={false} className="text-muted-foreground" />
-          <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white h-7 px-2.5" disabled={activeSponsor !== null} onClick={() => acceptBid(bid.sponsor)}>
+          <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white h-7 px-2.5" disabled={activeSponsor !== null} onClick={() => acceptBid(bid.sponsor, bid.amount)}>
             {activeSponsor === bid.sponsor ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
           </Button>
         </div>
@@ -56,15 +64,23 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
 
 function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) {
   const { proposals, isLoading, mutate } = useSponsorshipProposals({ owner: walletAddress, open: true });
-  const signer = useSigner();
+  const signer = useVenueSigner();
+  const client = useMedialaneClient();
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const respond = async (proposalId: string, action: "acceptProposal" | "rejectProposal") => {
+  const respond = async (proposalId: string, decision: "accept" | "reject", paymentToken: string, amount: string) => {
     if (!signer) { toast.error("Connect a wallet first"); return; }
     setActiveId(proposalId);
     try {
-      const client = getMedialaneClient();
-      await client.services.sponsorship[action](signer, { proposalId });
+      const intentRes = decision === "accept"
+        ? await client.api.acceptSponsorshipProposalIntent({ owner: walletAddress, proposalId })
+        : await client.api.rejectSponsorshipProposalIntent({ owner: walletAddress, proposalId });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
+      const feeCall = decision === "accept"
+        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig)
+        : null;
+      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
+      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to respond to proposal");
@@ -89,10 +105,10 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
             </p>
           </div>
           <div className="flex gap-1.5 shrink-0">
-            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "rejectProposal")}>
+            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "reject", p.paymentToken, p.amount)}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
             </Button>
-            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "acceptProposal")}>
+            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "accept", p.paymentToken, p.amount)}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
             </Button>
           </div>
@@ -104,15 +120,17 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
 
 function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
   const { proposals, isLoading, mutate } = useSponsorshipProposals({ proposer: walletAddress, open: true });
-  const signer = useSigner();
+  const signer = useVenueSigner();
+  const client = useMedialaneClient();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const withdraw = async (proposalId: string) => {
     if (!signer) { toast.error("Connect a wallet first"); return; }
     setActiveId(proposalId);
     try {
-      const client = getMedialaneClient();
-      await client.services.sponsorship.withdrawProposal(signer, { proposalId });
+      const intentRes = await client.api.withdrawSponsorshipProposalIntent({ proposer: walletAddress, proposalId });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal-withdraw intent");
+      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls: intentRes.data.calls as Call[] });
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to withdraw proposal");

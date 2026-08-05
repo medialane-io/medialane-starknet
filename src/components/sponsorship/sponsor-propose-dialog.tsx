@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import type { Call } from "starknet";
 import { Handshake, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, toDurationDays, type SponsorshipTerms } from "@medialane/ui";
-import { useSigner } from "@/hooks/use-signer";
+import { useWallet } from "@/hooks/use-wallet";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { executePrebuiltIntent } from "@/lib/intent-tx";
 import { useSiwsToken } from "@/hooks/use-siws-token";
-import { getMedialaneClient } from "@/lib/medialane-client";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
@@ -28,7 +31,9 @@ interface SponsorProposeDialogProps {
 export function SponsorProposeDialog({
   open, onOpenChange, nftContract, tokenId, tokenName, onSuccess,
 }: SponsorProposeDialogProps) {
-  const signer = useSigner();
+  const { address } = useWallet();
+  const signer = useVenueSigner();
+  const client = useMedialaneClient();
   const { getValidToken } = useSiwsToken();
 
   const [terms, setTerms] = useState<SponsorshipTerms>({ ...EMPTY_SPONSORSHIP_TERMS, paymentTokenSymbol: "USDC" });
@@ -36,7 +41,7 @@ export function SponsorProposeDialog({
   const [done, setDone] = useState(false);
 
   const onSubmit = async () => {
-    if (!signer) { toast.error("Connect a wallet first"); return; }
+    if (!signer || !address) { toast.error("Connect a wallet first"); return; }
     if (!terms.amount || Number(terms.amount) <= 0) { toast.error("Add an amount before continuing"); return; }
     const token = getTokenBySymbol(terms.paymentTokenSymbol);
     if (!token) { toast.error("Pick a currency"); return; }
@@ -50,18 +55,23 @@ export function SponsorProposeDialog({
       const licenseTermsUri = await uploadJsonToIpfs(toLicenseMetadata(terms), siwsToken);
 
       const amount = BigInt(Math.round(Number(terms.amount) * 10 ** token.decimals));
-      const royaltyBps = BigInt(Math.round(Number(terms.royaltyPercent || "0") * 100));
-      const client = getMedialaneClient();
+      const royaltyBps = Math.round(Number(terms.royaltyPercent || "0") * 100);
 
-      await client.services.sponsorship.proposeSponsorship(signer, {
+      const intentRes = await client.api.createSponsorshipProposalIntent({
+        proposer: address,
         nftContract,
-        tokenId: BigInt(tokenId),
-        amount,
+        tokenId,
+        amount: amount.toString(),
         duration: durationDays * 86400,
         paymentToken: token.address,
         licenseTermsUri,
         transferable: terms.transferable,
         royaltyBps,
+      });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal intent");
+      await executePrebuiltIntent(signer, client, {
+        id: intentRes.data.id,
+        calls: intentRes.data.calls as Call[],
       });
 
       setDone(true);
