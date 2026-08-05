@@ -1,33 +1,16 @@
 "use client";
 
 /**
- * useCoinSupply — total supply of an arbitrary ERC-20 coin, read on-chain.
+ * useCoinSupply — total supply of a coin, from the indexed backend.
  *
- * The backend only indexes supply for natively-tracked coins; external ERC-20s
- * (claimed memecoins) come through with `totalSupply: null`. Reading the ERC-20
- * `total_supply()` straight from the chain — same failover-covered read provider
- * + SWR pattern as `useCoinBalance` / `useCoinPrice` — gives a real supply for
- * every coin, day one, with no backend dependency. Returns null when the call
- * fails (caller hides the stat rather than showing an empty box).
+ * Creator coins are fixed-supply (immutable after deploy) and Coin.totalSupply
+ * is populated at index time (see medialane-backend's readTotalSupply). External
+ * ERC-20s not yet claimed/added may still come through with totalSupply: null —
+ * the caller hides the stat in that case, same as before.
  */
 
 import useSWR from "swr";
-import { starknetProvider } from "@/lib/starknet";
-
-async function readTotalSupply(coinAddress: string): Promise<bigint> {
-  // Cairo ERC-20s expose the getter under either name depending on the
-  // OpenZeppelin version (snake_case `total_supply` or camelCase `totalSupply`).
-  let res: string[];
-  try {
-    res = await starknetProvider.callContract({ contractAddress: coinAddress, entrypoint: "total_supply", calldata: [] });
-  } catch {
-    res = await starknetProvider.callContract({ contractAddress: coinAddress, entrypoint: "totalSupply", calldata: [] });
-  }
-  // ERC-20 returns a u256 as [low, high].
-  const low = BigInt(res[0] ?? "0");
-  const high = BigInt(res[1] ?? "0");
-  return low + (high << 128n);
-}
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 export interface UseCoinSupplyReturn {
   /** Raw total supply in base units, or null until loaded / unavailable. */
@@ -38,9 +21,12 @@ export interface UseCoinSupplyReturn {
 }
 
 export function useCoinSupply(coinAddress?: string | null, decimals = 18): UseCoinSupplyReturn {
-  const { data, isLoading } = useSWR<bigint>(
+  const { data, isLoading } = useSWR<bigint | null>(
     coinAddress ? `coin-supply-${coinAddress}` : null,
-    () => readTotalSupply(coinAddress as string),
+    async () => {
+      const res = await getMedialaneClient().api.getCoin(coinAddress as string);
+      return res.data.totalSupply ? BigInt(res.data.totalSupply) : null;
+    },
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
   const raw = data ?? null;
