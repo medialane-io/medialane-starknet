@@ -10,8 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
-import { Contract } from "starknet";
-import { starknetProvider } from "@/lib/starknet";
+import type { Call } from "starknet";
 import {
   Award, Mic2, Code2, Wrench, Zap, Users, BookOpen, Star,
   Loader2, ImagePlus, X, CheckCircle2,
@@ -29,7 +28,8 @@ import { CreatePopAside } from "@/components/claim/create-pop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
-import { POPFactoryABI, STARKNET_POP_FACTORY_CONTRACT, type PopEventType } from "@/lib/launchpad-contracts";
+import { type PopEventType } from "@/lib/launchpad-contracts";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { cn } from "@/lib/utils";
 
 const EVENT_TYPES: {
@@ -60,6 +60,7 @@ export default function CreatePOPPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
   const [isTxLoading, setIsTxLoading] = useState(false);
   const { getValidToken } = useSiwsToken();
+  const client = useMedialaneClient();
 
   const [eventType, setEventType] = useState<PopEventType>("Conference");
   const [isPublic, setIsPublic] = useState(false);
@@ -112,11 +113,6 @@ export default function CreatePOPPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!STARKNET_POP_FACTORY_CONTRACT) {
-      toast.error("POP Factory contract not configured");
-      return;
-    }
-
     setIsTxLoading(true);
     try {
       const metadata: Record<string, unknown> = {
@@ -141,20 +137,21 @@ export default function CreatePOPPage() {
         new Date(`${values.claimEndDate}T${values.claimEndTime}:00`).getTime() / 1000
       );
 
-      const factory = new Contract({ abi: POPFactoryABI as any, address: STARKNET_POP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
-      const call = factory.populate("create_collection", [
-        values.name,
-        values.symbol,
+      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
+      // Metered through the intents API — the backend deploys via the POP
+      // factory server-side and returns fully-populated calls (no client-side
+      // calldata construction).
+      const intentRes = await client.api.createCollectionIntent({
+        owner: walletAddress,
+        name: values.name,
+        symbol: values.symbol,
         baseUri,
+        service: "pop-protocol",
         claimEndTimestamp,
-        { [eventType]: {} },
-      ]);
-
-      await execute([{
-        contractAddress: STARKNET_POP_FACTORY_CONTRACT,
-        entrypoint: "create_collection",
-        calldata: call.calldata as string[],
-      }]);
+        eventType,
+      });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
+      await execute(intentRes.data.calls as Call[]);
 
       setDone(true);
       rewardToast("launch_launchpad");

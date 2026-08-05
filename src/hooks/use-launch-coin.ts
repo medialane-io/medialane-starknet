@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import type { Call } from "starknet";
 import { getTokenBySymbol, normalizeAddress } from "@medialane/sdk";
 import {
-  VALIDATED_EKUBO_PARAMS,
   parseCreatorCoinCreated,
   coinToRaw as toRaw,
   teamCoinsRaw,
@@ -47,33 +47,38 @@ export function useLaunchCoin() {
       const buybackRaw = buybackQuoteRaw(teamRaw, quote.decimals);
       const ownerAddr = normalizeAddress("STARKNET", owner);
       const client = getMedialaneClient();
-      const salt = "0x" + Date.now().toString(16);
 
       try {
-        // Tx1 — deploy the coin (full supply to the Factory).
+        // Tx1 — deploy the coin (full supply to the Factory). Metered through
+        // the intents API — no client-side calldata construction.
         setStatus("deploying");
-        const created = await client.services.creatorCoin.createCreatorCoin(signer, {
+        const createIntent = await client.api.createCoinIntent({
           owner: ownerAddr,
           name: input.name,
           symbol: input.symbol,
-          initialSupply: supplyRaw,
-          salt,
+          initialSupply: supplyRaw.toString(),
         });
-        const receipt = await starknetProvider.waitForTransaction(created.txHash);
+        if (createIntent.data.requiresSignature) throw new Error("Expected a prebuilt create-coin intent");
+        const createRes = await signer.execute(createIntent.data.calls as Call[]);
+        const receipt = await starknetProvider.waitForTransaction(createRes.transaction_hash);
         const coinAddress = parseCreatorCoinCreated(receipt as unknown as CreatorCoinReceiptLike);
 
         // Tx2 — launch on Ekubo at the fixed validated price; buyback pre-funded
-        // in the same multicall. Anti-snipe off (delay 0) in v1.
+        // in the same multicall. Anti-snipe off (delay 0) in v1. Metered through
+        // the intents API — the backend defaults the Ekubo pool params to the
+        // same validated constant the SDK builder used to apply client-side.
         setStatus("launching");
-        await client.services.creatorCoin.launchOnEkubo(signer, {
+        const launchIntent = await client.api.launchCoinIntent({
+          owner: ownerAddr,
           creatorCoin: coinAddress,
           quoteToken: quote.address,
           initialHolders: input.teamPct > 0 ? [ownerAddr] : [],
-          initialHoldersAmounts: input.teamPct > 0 ? [teamRaw] : [],
+          initialHoldersAmounts: input.teamPct > 0 ? [teamRaw.toString()] : [],
           transferRestrictionDelay: 0,
-          ekubo: VALIDATED_EKUBO_PARAMS,
-          quoteFundAmount: buybackRaw,
+          quoteFundAmount: buybackRaw.toString(),
         });
+        if (launchIntent.data.requiresSignature) throw new Error("Expected a prebuilt launch-coin intent");
+        await signer.execute(launchIntent.data.calls as Call[]);
 
         // Index instantly (50s factory poll is the backstop).
         setStatus("indexing");

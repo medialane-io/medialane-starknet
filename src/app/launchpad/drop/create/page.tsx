@@ -5,7 +5,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Contract, hash, type Abi } from "starknet";
+import { hash, type Call } from "starknet";
 import { normalizeAddress } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 import { Package, CheckCircle2 } from "lucide-react";
@@ -13,13 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { getListableTokens } from "@medialane/sdk";
-import { DropFactoryABI, STARKNET_DROP_FACTORY_CONTRACT } from "@/lib/launchpad-contracts";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
 import { makeUploadDocument } from "@/lib/upload-document";
 import { buildDropSet } from "@/lib/drop-build-set";
@@ -46,6 +46,7 @@ function suggestSymbol(name: string): string {
 export default function CreateDropPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
   const { getValidToken } = useSiwsToken();
+  const client = useMedialaneClient();
 
   const [items, setItems] = useState<DraftItem[]>([]);
   // Read only at submit time — keep in a ref so each keystroke in IPTypeFields
@@ -174,17 +175,28 @@ export default function CreateDropPage() {
       const toWei = (a: string) => BigInt(Math.round(parseFloat(a || "0") * 1e18));
       const maxPerWallet = BigInt(parseInt(values.maxPerWallet ?? "1", 10));
       const conditions = {
-        start_time: toTs(values.startDate, values.startTime),
-        end_time: toTs(values.endDate, values.endTime),
-        price: priceFree ? 0n : toWei(values.priceAmount ?? "0"),
-        payment_token: priceFree ? "0x0" : selectedToken.address,
-        max_quantity_per_wallet: maxPerWallet,
+        startTime: toTs(values.startDate, values.startTime),
+        endTime: toTs(values.endDate, values.endTime),
+        price: (priceFree ? 0n : toWei(values.priceAmount ?? "0")).toString(),
+        paymentToken: priceFree ? "0x0" : selectedToken.address,
+        maxQuantityPerWallet: maxPerWallet.toString(),
       };
 
-      const factory = new Contract({ abi: DropFactoryABI as unknown as Abi, address: STARKNET_DROP_FACTORY_CONTRACT, providerOrAccount: starknetProvider });
-      const call = factory.populate("create_drop", [values.name, values.symbol, baseUri, maxSupply, conditions]);
-
-      const txHash = await execute([{ contractAddress: STARKNET_DROP_FACTORY_CONTRACT, entrypoint: "create_drop", calldata: call.calldata as string[] }]);
+      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
+      // Metered through the intents API — the backend deploys via the Drop
+      // factory server-side and returns fully-populated calls (no client-side
+      // calldata construction).
+      const intentRes = await client.api.createCollectionIntent({
+        owner: walletAddress,
+        name: values.name,
+        symbol: values.symbol,
+        baseUri,
+        service: "drop-collection",
+        maxSupply: maxSupply.toString(),
+        conditions,
+      });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
+      const txHash = await execute(intentRes.data.calls as Call[]);
 
       // Optional whitelist: set on the new drop address (from the receipt), same wallet session.
       const whitelist = values.whitelistEnabled ? parseAddresses(values.allowlistAddresses) : [];
