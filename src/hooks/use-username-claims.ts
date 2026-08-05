@@ -5,7 +5,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { type ApiCreatorProfile } from "@medialane/sdk";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
 export interface UsernameClaim {
   id: string;
@@ -28,9 +27,9 @@ export function useMyUsernameClaim() {
   const { data, error, isLoading, mutate } = useSWR(
     isConnected && address && token ? `username-claim-me-${address}` : null,
     async () => {
-      const headers: Record<string, string> = { "x-api-key": MEDIALANE_API_KEY };
+      const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${MEDIALANE_BACKEND_URL}/v1/username-claims/me`, { headers });
+      const res = await fetch("/api/proxy/v1/username-claims/me", { headers });
       if (!res.ok) throw new Error("Failed to fetch username claim");
       return res.json() as Promise<{ username: string | null; claim: UsernameClaim | null }>;
     },
@@ -44,9 +43,7 @@ export function useMyUsernameClaim() {
 export async function checkUsernameAvailability(
   username: string
 ): Promise<{ available: boolean; reason?: string }> {
-  const res = await fetch(`${MEDIALANE_BACKEND_URL}/v1/username-claims/check/${encodeURIComponent(username)}`, {
-    headers: { "x-api-key": MEDIALANE_API_KEY },
-  });
+  const res = await fetch(`/api/proxy/v1/username-claims/check/${encodeURIComponent(username)}`);
   return res.json();
 }
 
@@ -56,12 +53,9 @@ export async function submitUsernameClaim(
   siwsToken: string | null,
   notifyEmail?: string
 ): Promise<{ claim?: UsernameClaim; error?: string }> {
-  const headers: Record<string, string> = {
-    "x-api-key": MEDIALANE_API_KEY,
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (siwsToken) headers["Authorization"] = `Bearer ${siwsToken}`;
-  const res = await fetch(`${MEDIALANE_BACKEND_URL}/v1/username-claims`, {
+  const res = await fetch("/api/proxy/v1/username-claims", {
     method: "POST",
     headers,
     body: JSON.stringify({ username, ...(notifyEmail ? { notifyEmail } : {}) }),
