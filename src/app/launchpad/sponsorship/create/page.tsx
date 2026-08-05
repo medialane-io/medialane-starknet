@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { type AccountInterface } from "starknet";
+import type { Call } from "starknet";
+import type { StarknetVenueSigner, MedialaneClient } from "@medialane/sdk/starknet";
 import { Handshake, Loader2, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -10,11 +11,13 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_TERMS, toLicenseMetadata, toDurationDays, type OwnedAsset, type SponsorshipTerms } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSigner } from "@/hooks/use-signer";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { executePrebuiltIntent } from "@/lib/intent-tx";
+import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
-import { getMedialaneClient } from "@/lib/medialane-client";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
@@ -30,16 +33,31 @@ const TOKEN_SYMBOLS = LISTABLE_TOKENS.map((t) => t.symbol);
 type Mode = "offer" | "propose";
 
 /** Pending proposals on a specific owned asset, with accept/reject actions. */
-function PendingProposalsPanel({ nftContract, signer }: { nftContract: string; signer: AccountInterface | undefined }) {
+function PendingProposalsPanel({
+  nftContract, signer, client, owner,
+}: {
+  nftContract: string;
+  signer: StarknetVenueSigner | null;
+  client: MedialaneClient;
+  owner: string | null;
+}) {
   const { proposals, isLoading, mutate } = usePendingProposalsForAsset(nftContract);
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const respond = async (proposalId: string, action: "acceptProposal" | "rejectProposal") => {
-    if (!signer) { toast.error("Connect a wallet first"); return; }
+  const respond = async (proposalId: string, decision: "accept" | "reject", paymentToken: string, amount: string) => {
+    if (!signer || !owner) { toast.error("Connect a wallet first"); return; }
     setActiveId(proposalId);
     try {
-      const client = getMedialaneClient();
-      await client.services.sponsorship[action](signer, { proposalId });
+      const intentRes = decision === "accept"
+        ? await client.api.acceptSponsorshipProposalIntent({ owner, proposalId })
+        : await client.api.rejectSponsorshipProposalIntent({ owner, proposalId });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
+      // Direct signer — bundle the platform fee atomically into the accept tx.
+      const feeCall = decision === "accept"
+        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig)
+        : null;
+      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
+      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to respond to proposal");
@@ -57,10 +75,10 @@ function PendingProposalsPanel({ nftContract, signer }: { nftContract: string; s
         <div key={p.id} className="flex items-center justify-between gap-2 text-xs">
           <span className="truncate text-muted-foreground">{shortenAddress(p.proposer)} — {p.amount}</span>
           <div className="flex gap-1.5 shrink-0">
-            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "rejectProposal")}>
+            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "reject", p.paymentToken, p.amount)}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
             </Button>
-            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "acceptProposal")}>
+            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "accept", p.paymentToken, p.amount)}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
             </Button>
           </div>
@@ -77,7 +95,8 @@ async function pinLicenseTerms(terms: SponsorshipTerms, siwsToken: string): Prom
 }
 
 export default function CreateSponsorshipPage() {
-  const signer = useSigner();
+  const signer = useVenueSigner();
+  const client = useMedialaneClient();
   const { address: activeAddress } = useWallet();
   const { getValidToken } = useSiwsToken();
 
@@ -132,33 +151,25 @@ export default function CreateSponsorshipPage() {
       const licenseTermsUri = await pinLicenseTerms(terms, siwsToken);
 
       const amount = BigInt(Math.round(Number(terms.amount) * 10 ** token.decimals));
-      const royaltyBps = BigInt(Math.round(Number(terms.royaltyPercent || "0") * 100));
-      const client = getMedialaneClient();
+      const royaltyBps = Math.round(Number(terms.royaltyPercent || "0") * 100);
 
-      if (mode === "offer") {
-        await client.services.sponsorship.createOffer(signer, {
-          nftContract,
-          tokenId: BigInt(tokenId),
-          minAmount: amount,
-          duration: durationDays * 86400,
-          paymentToken: token.address,
-          licenseTermsUri,
-          transferable: terms.transferable,
-          royaltyBps,
-        });
-        rewardToast("create_sponsorship_offer");
-      } else {
-        await client.services.sponsorship.proposeSponsorship(signer, {
-          nftContract,
-          tokenId: BigInt(tokenId),
-          amount,
-          duration: durationDays * 86400,
-          paymentToken: token.address,
-          licenseTermsUri,
-          transferable: terms.transferable,
-          royaltyBps,
-        });
-      }
+      const intentRes = mode === "offer"
+        ? await client.api.createSponsorshipOfferIntent({
+            author: activeAddress, nftContract, tokenId, minAmount: amount.toString(),
+            duration: durationDays * 86400, paymentToken: token.address, licenseTermsUri,
+            transferable: terms.transferable, royaltyBps,
+          })
+        : await client.api.createSponsorshipProposalIntent({
+            proposer: activeAddress, nftContract, tokenId, amount: amount.toString(),
+            duration: durationDays * 86400, paymentToken: token.address, licenseTermsUri,
+            transferable: terms.transferable, royaltyBps,
+          });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship intent");
+      await executePrebuiltIntent(signer, client, {
+        id: intentRes.data.id,
+        calls: intentRes.data.calls as Call[],
+      });
+      if (mode === "offer") rewardToast("create_sponsorship_offer");
 
       setDone(true);
     } catch (err) {
@@ -207,7 +218,7 @@ export default function CreateSponsorshipPage() {
                   emptyStateHref="/launchpad/single-editions"
                   emptyStateLabel="Create one"
                 />
-                {selectedAsset ? <PendingProposalsPanel nftContract={selectedAsset.contractAddress} signer={signer} /> : null}
+                {selectedAsset ? <PendingProposalsPanel nftContract={selectedAsset.contractAddress} signer={signer} client={client} owner={activeAddress} /> : null}
               </div>
             ) : (
               <div className="space-y-2">

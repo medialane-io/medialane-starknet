@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import type { Call } from "starknet";
 import { Handshake, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +11,12 @@ import { ServiceHeader } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSigner } from "@/hooks/use-signer";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { executePrebuiltIntent } from "@/lib/intent-tx";
+import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { useToken } from "@/hooks/use-tokens";
-import { getMedialaneClient } from "@/lib/medialane-client";
 import { rewardToast } from "@/lib/reward-toast";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
@@ -23,7 +26,8 @@ export default function SponsorshipOfferPage() {
   const params = useParams();
   const offerId = typeof params.offerId === "string" ? params.offerId : null;
 
-  const signer = useSigner();
+  const signer = useVenueSigner();
+  const client = useMedialaneClient();
   const { address: activeAddress, isConnected } = useWallet();
 
   const { offer, isLoading: offerLoading, mutate: mutateOffer } = useSponsorshipOffer(offerId);
@@ -39,17 +43,22 @@ export default function SponsorshipOfferPage() {
   const durationDays = offer ? Math.round(offer.duration / 86400) : 0;
 
   const onPlaceBid = async () => {
-    if (!signer || !offer) { toast.error("Connect a wallet first"); return; }
+    if (!signer || !activeAddress || !offer) { toast.error("Connect a wallet first"); return; }
     if (!bidAmount || Number(bidAmount) <= 0) { toast.error("Enter a bid amount"); return; }
     if (!paymentToken) { toast.error("Unsupported payment token"); return; }
     setIsPlacingBid(true);
     try {
-      const client = getMedialaneClient();
-      await client.services.sponsorship.placeBid(signer, {
+      const amount = BigInt(Math.round(Number(bidAmount) * 10 ** paymentToken.decimals));
+      const intentRes = await client.api.placeSponsorshipBidIntent({
+        sponsor: activeAddress,
         offerId: offer.offerId,
-        amount: BigInt(Math.round(Number(bidAmount) * 10 ** paymentToken.decimals)),
+        amount: amount.toString(),
         paymentToken: offer.paymentToken,
-        sponsorshipAddress: offer.contractAddress,
+      });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid intent");
+      await executePrebuiltIntent(signer, client, {
+        id: intentRes.data.id,
+        calls: intentRes.data.calls as Call[],
       });
       toast.success("Bid placed");
       rewardToast("place_sponsorship_bid");
@@ -62,16 +71,21 @@ export default function SponsorshipOfferPage() {
     }
   };
 
-  const onAcceptBid = async (sponsor: string) => {
-    if (!signer || !offer) { toast.error("Connect a wallet first"); return; }
+  const onAcceptBid = async (sponsor: string, amount: string) => {
+    if (!signer || !activeAddress || !offer) { toast.error("Connect a wallet first"); return; }
     setAcceptingSponsor(sponsor);
     try {
-      const client = getMedialaneClient();
-      await client.services.sponsorship.acceptBid(signer, {
+      const intentRes = await client.api.acceptSponsorshipBidIntent({
+        author: activeAddress,
         offerId: offer.offerId,
         sponsor,
-        sponsorshipAddress: offer.contractAddress,
       });
+      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
+      // Direct signer — bundle the platform fee atomically into the same tx,
+      // same pattern as use-marketplace.ts's checkout multicall.
+      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig);
+      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
+      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
       toast.success("Bid accepted — license minted to the sponsor");
       await Promise.all([mutateOffer(), mutateBids()]);
     } catch (err) {
@@ -162,7 +176,7 @@ export default function SponsorshipOfferPage() {
                         size="sm"
                         className="bg-brand-rose hover:brightness-110 text-white"
                         disabled={acceptingSponsor !== null}
-                        onClick={() => onAcceptBid(bid.sponsor)}
+                        onClick={() => onAcceptBid(bid.sponsor, bid.amount)}
                       >
                         {acceptingSponsor === bid.sponsor ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Accept"}
                       </Button>
