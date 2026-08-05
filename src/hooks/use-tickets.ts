@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { useMedialaneClient } from "./use-medialane-client";
 import { starknetProvider } from "@/lib/starknet";
-import { Contract, cairo } from "starknet";
+import { Contract } from "starknet";
 import { IPTicketCollectionABI } from "@medialane/sdk/starknet";
 
 // ── useMyTicketCollections ────────────────────────────────────────────────────
@@ -35,30 +35,16 @@ export interface TicketOnchain {
   royaltyBps: number;
 }
 
-function parseOption(v: any): number | null {
-  if (v == null) return null;
-  // starknet.js parses Option<u64> as CairoOption ({ Some }, unwrap()) or undefined for None.
-  if (typeof v === "object" && typeof v.unwrap === "function") {
-    const inner = v.unwrap();
-    return inner != null ? Number(inner) : null;
-  }
-  if (typeof v === "bigint" || typeof v === "number") return Number(v);
-  return null;
-}
-
 async function readTicket(contract: string, tokenId: string): Promise<TicketOnchain> {
-  const col = new Contract({
-    abi: IPTicketCollectionABI as any,
-    address: contract,
-    providerOrAccount: starknetProvider,
-  });
-  const t: any = await col.call("get_ticket", [cairo.uint256(tokenId)]);
+  const res = await fetch(`/api/proxy/v1/tickets/${contract}/${tokenId}`);
+  if (!res.ok) throw new Error("Failed to fetch ticket");
+  const json = await res.json();
   return {
-    maxSupply: BigInt(t.max_supply),
-    minted: BigInt(t.minted),
-    startTime: parseOption(t.start_time),
-    endTime: parseOption(t.end_time),
-    royaltyBps: Number(t.royalty_bps),
+    maxSupply: BigInt(json.data.maxSupply),
+    minted: BigInt(json.data.minted),
+    startTime: json.data.startTime,
+    endTime: json.data.endTime,
+    royaltyBps: json.data.royaltyBps,
   };
 }
 
@@ -81,7 +67,10 @@ async function readTicketCount(contract: string): Promise<number> {
 }
 
 async function readTicketList(contract: string): Promise<TicketListItem[]> {
-  const count = await readTicketCount(contract);
+  const countRes = await fetch(`/api/proxy/v1/tickets/${contract}/count`);
+  if (!countRes.ok) throw new Error("Failed to fetch ticket count");
+  const { data } = await countRes.json();
+  const count = data.count as number;
   const tickets: TicketListItem[] = [];
   for (let id = 1; id <= count; id++) {
     tickets.push({ id: String(id), ...(await readTicket(contract, String(id))) });
