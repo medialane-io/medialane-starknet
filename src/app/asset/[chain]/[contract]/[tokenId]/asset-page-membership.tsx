@@ -21,13 +21,12 @@ import { useMembershipOnchain, useIsMemberOf, type MembershipOnchain } from "@/h
 import { ipfsToHttp, resolveTokenImage, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
-import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, HiddenContentBanner } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";

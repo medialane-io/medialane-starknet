@@ -11,7 +11,7 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
+import { CollectionCard, CollectionCardSkeleton, HiddenContentBanner } from "@medialane/ui";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { ReportDialog } from "@/components/report-dialog";
 import { ShareButton } from "@/components/shared/share-button";
-import { HiddenContentBanner } from "@/components/hidden-content-banner";
 import { cn } from "@/lib/utils";
 import { ActivityRow } from "@/components/creator/activity-row";
 
