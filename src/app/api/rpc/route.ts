@@ -11,7 +11,7 @@ import { RPC_MAIN_URL, RPC_FALLBACK_URL } from "@/lib/constants";
  * failure (e.g. Alchemy's intermittent 503 / -32001) it rotates to the keyless
  * public FALLBACK (lava). Both come from `constants.ts` (single source).
  *
- * The dapp has no Clerk session to gate on (unlike io). Abuse protection:
+ * The dapp has no user session to gate on. Abuse protection:
  *  - same-origin guard: reject browser requests whose Origin is a different host
  *    (the realistic cross-origin abuse vector). Requests without an Origin
  *    (non-CORS / SSR) are allowed; the method allowlist + main cap + fallback
