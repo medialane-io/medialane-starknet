@@ -100,8 +100,8 @@ export default function CreateRemixPage() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Self-mint flow — mints directly with the connected wallet (no PIN dialog;
-  // dapp uses injected wallets, not ChipiPay). The previous setPinOpen gate was
-  // orphaned (no PinDialog rendered) so the owner mint never fired.
+  // dapp uses injected wallets, not a custodial provider). The previous
+  // setPinOpen gate was orphaned (no PinDialog rendered) so the owner mint never fired.
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
