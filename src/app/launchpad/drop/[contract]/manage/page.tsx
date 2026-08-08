@@ -2,7 +2,6 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import useSWR from "swr";
 import { normalizeAddress } from "@medialane/sdk";
 import {
   ArrowLeft, Users, ShieldCheck, ShieldOff, DollarSign,
@@ -14,26 +13,8 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWallet } from "@/hooks/use-wallet";
 import { useDropInfo, useOnChainDropState } from "@/hooks/use-drops";
-import { starknetProvider } from "@/lib/starknet";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-// ── On-chain reads ────────────────────────────────────────────────────────────
-
-function useAllowlistEnabled(contract: string) {
-  return useSWR<boolean>(
-    `allowlist-enabled-${contract}`,
-    async () => {
-      const res = await starknetProvider.callContract({
-        contractAddress: contract,
-        entrypoint: "is_allowlist_enabled",
-        calldata: [],
-      });
-      return res[0] !== "0x0";
-    },
-    { revalidateOnFocus: false, shouldRetryOnError: false }
-  );
-}
 
 // ── Address parsing ───────────────────────────────────────────────────────────
 
@@ -211,12 +192,8 @@ export default function DropManagePage({
   const { contract } = use(params);
   const { isConnected, address: walletAddress, execute: walletExecute } = useWallet();
   const { dropInfo, isLoading: dropLoading } = useDropInfo(contract);
-  const { state: dropState } = useOnChainDropState(contract);
-  const {
-    data: allowlistEnabled,
-    isLoading: allowlistLoading,
-    mutate: mutateAllowlist,
-  } = useAllowlistEnabled(contract);
+  const { state: dropState, isLoading: dropStateLoading, mutate: mutateDropState } = useOnChainDropState(contract);
+  const allowlistEnabled = dropState?.allowlistEnabled;
   const [isProcessing, setIsProcessing] = useState(false);
 
   const isOwner =
@@ -224,7 +201,7 @@ export default function DropManagePage({
     dropInfo?.owner &&
     normalizeAddress("STARKNET", walletAddress) === normalizeAddress("STARKNET", dropInfo.owner);
 
-  const isLoading = dropLoading || allowlistLoading;
+  const isLoading = dropLoading || dropStateLoading;
 
   const execute = async (
     calls: Array<{ contractAddress: string; entrypoint: string; calldata: string[] }>,
@@ -234,7 +211,7 @@ export default function DropManagePage({
     try {
       await walletExecute(calls);
       toast.success(successMsg);
-      mutateAllowlist();
+      mutateDropState();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Transaction failed");
     } finally {
