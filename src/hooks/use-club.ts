@@ -23,9 +23,12 @@ export function useMyClubCollections(ownerAddress: string | null) {
 }
 
 // ── useMembershipOnchain ──────────────────────────────────────────────────────
-// Per-tier on-chain record via get_membership(token_id) — supply, minted count,
-// validity window, royalty. Failover-covered read provider + SWR, same pattern
-// as use-tickets. Returns null while loading or if the tier doesn't exist.
+// Per-tier membership record (supply, minted count, validity window, royalty),
+// served by the backend's metered GET /v1/club/:contract/:tokenId pass-through
+// (medialane-backend/src/api/routes/club-onchain.ts) — the backend does the
+// same get_membership(token_id) read server-side, credited, instead of the
+// browser reading the chain directly and evading the credit gate. Same
+// pattern as use-tickets.ts's readTicket.
 
 export interface MembershipOnchain {
   maxSupply: bigint;
@@ -35,38 +38,24 @@ export interface MembershipOnchain {
   royaltyBps: number;
 }
 
-function parseOption(v: any): number | null {
-  if (v == null) return null;
-  // starknet.js parses Option<u64> as CairoOption ({ Some }, unwrap()) or undefined for None.
-  if (typeof v === "object" && typeof v.unwrap === "function") {
-    const inner = v.unwrap();
-    return inner != null ? Number(inner) : null;
-  }
-  if (typeof v === "bigint" || typeof v === "number") return Number(v);
-  return null;
-}
-
 async function readMembership(contract: string, tokenId: string): Promise<MembershipOnchain> {
-  const col = new Contract({
-    abi: IPClubCollectionABI as any,
-    address: contract,
-    providerOrAccount: starknetProvider,
-  });
-  const m: any = await col.call("get_membership", [cairo.uint256(tokenId)]);
+  const res = await fetch(`/api/proxy/v1/club/${contract}/${tokenId}`);
+  if (!res.ok) throw new Error("Failed to fetch membership");
+  const json = await res.json();
   return {
-    maxSupply: BigInt(m.max_supply),
-    minted: BigInt(m.minted),
-    startTime: parseOption(m.start_time),
-    endTime: parseOption(m.end_time),
-    royaltyBps: Number(m.royalty_bps),
+    maxSupply: BigInt(json.data.maxSupply),
+    minted: BigInt(json.data.minted),
+    startTime: json.data.startTime,
+    endTime: json.data.endTime,
+    royaltyBps: json.data.royaltyBps,
   };
 }
 
 // ── useMembershipList ─────────────────────────────────────────────────────────
-// All membership tiers in a club, straight from the chain. Tier ids are
-// sequential from 1 and there is no count getter, so we probe get_membership
-// until the first miss (capped). This includes tiers that have never been
-// minted — which the indexer can't know about yet.
+// All membership tiers in a club. Tier ids are sequential from 1 and there is
+// no count getter, so we probe the backend read above until the first miss
+// (capped). This includes tiers that have never been minted — which the
+// indexer can't know about yet.
 
 export interface MembershipListItem extends MembershipOnchain {
   id: string;
@@ -94,15 +83,39 @@ async function readMembershipList(contract: string): Promise<MembershipListItem[
 // create_membership + mint into ONE multicall — one wallet signature instead of
 // two separate transactions for what is, from the creator's point of view, a
 // single "create a membership" action.
+//
+// This is the one on-chain-direct read left in this file, deliberately: it
+// runs immediately before submitting create_membership+mint in the same
+// multicall and needs the freshest possible on-chain count for that to be
+// correct — same class as a nonce or fee-estimate read, not a discovery read
+// the credited backend could serve instead (same precedent as
+// predictNextTicketId's readTicketCount below).
+async function countMembershipsOnchain(contract: string): Promise<number> {
+  const col = new Contract({
+    abi: IPClubCollectionABI as any,
+    address: contract,
+    providerOrAccount: starknetProvider,
+  });
+  let count = 0;
+  for (let id = 1; id <= MEMBERSHIP_PROBE_CAP; id++) {
+    try {
+      await col.call("get_membership", [cairo.uint256(id)]);
+      count += 1;
+    } catch {
+      break; // sequential ids — first miss is the end
+    }
+  }
+  return count;
+}
 
 export async function predictNextMembershipId(contract: string): Promise<number> {
-  const memberships = await readMembershipList(contract);
-  if (memberships.length >= MEMBERSHIP_PROBE_CAP) {
+  const count = await countMembershipsOnchain(contract);
+  if (count >= MEMBERSHIP_PROBE_CAP) {
     // The probe capped out, so the next id can't be known reliably — minting
     // against a guessed id could land supply in an existing tier.
     throw new Error("This club has reached the maximum number of membership tiers supported by the app.");
   }
-  return memberships.length + 1;
+  return count + 1;
 }
 
 export function useMembershipList(contract: string | null) {
@@ -140,12 +153,10 @@ export function useIsMemberOf(
   const { data, error, isLoading } = useSWR<boolean>(
     key,
     async () => {
-      const col = new Contract({
-        abi: IPClubCollectionABI as any,
-        address: contract!,
-        providerOrAccount: starknetProvider,
-      });
-      return Boolean(await col.call("is_member_of", [cairo.uint256(tokenId!), wallet!]));
+      const res = await fetch(`/api/proxy/v1/club/${contract}/${tokenId}/member/${wallet}`);
+      if (!res.ok) throw new Error("Failed to fetch membership status");
+      const json = await res.json();
+      return Boolean(json.data.isMember);
     },
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );

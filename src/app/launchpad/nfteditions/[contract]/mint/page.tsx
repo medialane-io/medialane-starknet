@@ -222,18 +222,22 @@ export default function MintNFTEditionsPage() {
     }
   }, [autoExternalUrl, collectionAddress, form]);
 
-  // Verify the connected wallet is the collection owner before showing the form
+  // Verify the connected wallet is the collection owner before showing the
+  // form. Reads the indexed Collection.owner via the credited backend
+  // (GET /v1/collections/:contract) instead of a raw on-chain call — the
+  // backend already indexes this field, so a second live RPC read was a
+  // pure duplicate that also bypassed the credit gate. A failed read now
+  // denies rather than silently granting access (the previous raw-RPC
+  // version fell back to "ok" on any error, including a transient one).
   useEffect(() => {
     if (!walletAddress || !collectionAddress) return;
-    starknetProvider.callContract({
-      contractAddress: collectionAddress,
-      entrypoint: "owner",
-      calldata: [],
-    }).then((result) => {
-      const onChainOwner = normalizeAddress("STARKNET", result[0]);
-      setOwnerCheck(onChainOwner === normalizeAddress("STARKNET", walletAddress) ? "ok" : "denied");
-    }).catch(() => setOwnerCheck("ok"));
-  }, [walletAddress, collectionAddress]);
+    client.api.getCollection(collectionAddress)
+      .then(({ data }) => {
+        const onChainOwner = data.owner ? normalizeAddress("STARKNET", data.owner) : null;
+        setOwnerCheck(onChainOwner === normalizeAddress("STARKNET", walletAddress) ? "ok" : "denied");
+      })
+      .catch(() => setOwnerCheck("denied"));
+  }, [client, walletAddress, collectionAddress]);
 
   const handleLicenseChange = (value: string) => {
     form.setValue("licenseType", value);
