@@ -35,6 +35,15 @@
  * When adding a new mutating endpoint to the dapp (outside /v1/intents/*),
  * add the (method, regex) pair below. Match against the path AFTER the
  * `/v1/` prefix.
+ *
+ * `hasTraversalSegment` below is a second, independent guard: this allowlist
+ * matches the raw joined path string, but a `..` segment decoded from
+ * `%2e%2e%2f` collapses at `fetch()` time and can resolve outside `/v1/`
+ * entirely, bypassing every pattern here (including the allow-all GET rule).
+ * Fixed 2026-08-09, reproduced + verified live; see `medialane-core/docs/audits/
+ * 2026-08-09-medialane-starknet-bff-proxy-traversal-audit.md`. The
+ * `/api/creators/[address]/hidden` route had the identical bug via a plain
+ * (non-catch-all) dynamic segment — same audit, same fix date.
  */
 const ALLOWED_ROUTES: Record<string, RegExp[]> = {
   // ── Reads (all GET /v1/* allowed) ──────────────────────────────────────
@@ -49,7 +58,6 @@ const ALLOWED_ROUTES: Record<string, RegExp[]> = {
     /^collection-slug-claims$/,                            // collection settings slug claim
     /^drop\/conditions$/,                                  // launchpad drop/create
     /^remix-offers(\/(auto|self\/confirm|[^/]+\/(confirm|reject|extend)))?$/,  // remix offer lifecycle
-    /^reports$/,                                           // /v1/reports
     /^users\/register$/,                                   // useRegisterUser
     /^username-claims$/,                                   // /v1/username-claims
   ],
@@ -66,4 +74,24 @@ export function isPathAllowed(method: string, path: string): boolean {
   const patterns = ALLOWED_ROUTES[method.toUpperCase()];
   if (!patterns) return false;
   return patterns.some((re) => re.test(path));
+}
+
+/**
+ * Rejects `.`/`..` path segments before the caller builds an outbound URL.
+ * `isPathAllowed` matches the raw joined path string, but `..` segments (as
+ * decoded from `%2e%2e%2f`) are collapsed by `fetch()`'s URL parser at
+ * request time — so a traversal segment can pass an allow-all rule (e.g. the
+ * `GET: [/.+/]` pattern above) as a literal string, then resolve outside
+ * `/v1/` once fetched, reaching arbitrary backend paths with the privileged
+ * proxy API key attached.
+ *
+ * Takes the *joined* path string, not the raw catch-all segment array:
+ * Next.js decodes `%2f` within a single route segment into a literal `/`
+ * without re-splitting it into separate array elements, so an encoded
+ * traversal like `%2e%2e%2fadmin` arrives as one segment (`"../admin"`)
+ * rather than two (`[".."," admin"]`). Re-splitting the joined string on
+ * `/` catches both cases.
+ */
+export function hasTraversalSegment(joinedPath: string): boolean {
+  return joinedPath.split("/").some((piece) => piece === "." || piece === "..");
 }

@@ -11,17 +11,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { PinataSDK } from "pinata";
 import { getSiwsWallet } from "@/lib/siws-server";
-
-function getPinata() {
-  const jwt = process.env.PINATA_JWT;
-  if (!jwt) throw new Error("PINATA_JWT environment variable is not set");
-  return new PinataSDK({
-    pinataJwt: jwt,
-    pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud",
-  });
-}
+import { getPinataClient } from "@/lib/pinata";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -50,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const pinata = getPinata();
+    const pinata = getPinataClient();
     const upload = await pinata.upload.public.file(file);
     const imageUri = `ipfs://${upload.cid}`;
     return NextResponse.json({ imageUri, cid: upload.cid });

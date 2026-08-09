@@ -13,13 +13,8 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { PinataSDK } from "pinata";
 import { getSiwsWallet } from "@/lib/siws-server";
-
-const pinata = new PinataSDK({
-  pinataJwt: process.env.PINATA_JWT!,
-  pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud",
-});
+import { getPinataClient } from "@/lib/pinata";
 
 const MIME_TYPES: Record<"image" | "document", string[]> = {
   image: ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"],
@@ -51,6 +46,7 @@ export async function POST(req: NextRequest) {
   const kind: "image" | "document" = body.kind === "document" ? "document" : "image";
 
   try {
+    const pinata = getPinataClient();
     const url = await pinata.upload.public.createSignedURL({
       expires: 120, // 2 minutes — enough for slow connections
       maxFileSize: MAX_BYTES[kind],

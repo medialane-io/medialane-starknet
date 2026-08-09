@@ -15,7 +15,7 @@
  * routes (`/v1/users/me`, `/v1/creators/:wallet/profile`, …).
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { isPathAllowed } from "./allowlist";
+import { hasTraversalSegment, isPathAllowed } from "./allowlist";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ?? "http://localhost:3001";
@@ -73,6 +73,10 @@ async function handle(
 
   const { path } = await ctx.params;
   const joinedPath = path.join("/");
+
+  if (hasTraversalSegment(joinedPath)) {
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  }
 
   if (!isPathAllowed(req.method, joinedPath)) {
     // Log enough to debug a legitimate route that needs adding to the

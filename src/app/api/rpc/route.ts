@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isTransientRpcError } from "@medialane/sdk";
 import { RPC_MAIN_URL, RPC_FALLBACK_URL, MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 /**
  * Server-side Starknet RPC proxy.
@@ -97,23 +98,8 @@ function rpcError(code: number, message: string, status = 200, id: number | null
 // (a request with no Origin header is allowed), so a script can still use this
 // as an open RPC relay and drain the keyed upstream's quota. Cap per-IP volume
 // — generous enough for legit heavy use (a single tx fires ~20-40 calls incl.
-// receipt polling), tight enough to bound abuse. Per-process (Vercel lambdas
-// don't share memory); acceptable for cost-drain protection, not correctness.
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 600;
-const ipCounts = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = ipCounts.get(ip);
-  if (!entry || now >= entry.resetAt) {
-    ipCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-  entry.count += 1;
-  return true;
-}
+// receipt polling), tight enough to bound abuse.
+const checkRateLimit = createRateLimiter(60_000, 600);
 
 function extractMethod(body: unknown): string {
   if (Array.isArray(body)) return "batch";

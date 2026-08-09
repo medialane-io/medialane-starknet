@@ -9,17 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { PinataSDK } from "pinata";
 import { getSiwsWallet } from "@/lib/siws-server";
-
-function getPinata() {
-  const jwt = process.env.PINATA_JWT;
-  if (!jwt) throw new Error("PINATA_JWT environment variable is not set");
-  return new PinataSDK({
-    pinataJwt: jwt,
-    pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud",
-  });
-}
+import { getPinataClient } from "@/lib/pinata";
 
 export async function POST(req: NextRequest) {
   if (!getSiwsWallet(req.headers.get("authorization"))) {
@@ -32,7 +23,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const pinata = getPinata();
+    const pinata = getPinataClient();
     const blob = new Blob([JSON.stringify(body)], { type: "application/json" });
     const file = new File([blob], "metadata.json", { type: "application/json" });
     const upload = await pinata.upload.public.file(file);

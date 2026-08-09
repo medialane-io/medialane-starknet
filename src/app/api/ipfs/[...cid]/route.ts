@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 const PINATA_JWT = process.env.PINATA_JWT;
 // Dedicated gateway takes precedence; falls back to Pinata public gateway.
@@ -6,25 +7,11 @@ const PINATA_JWT = process.env.PINATA_JWT;
 const GATEWAY =
   process.env.PINATA_DEDICATED_GATEWAY ||
   "https://gateway.pinata.cloud";
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 120;
 const MAX_RESPONSE_BYTES = 25 * 1024 * 1024;
 // Reasonable ceiling for a proxied thumbnail request.
 const MAX_WIDTH = 2000;
 
-const ipCounts = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = ipCounts.get(ip);
-  if (!entry || now >= entry.resetAt) {
-    ipCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-  entry.count += 1;
-  return true;
-}
+const checkRateLimit = createRateLimiter(60_000, 120);
 
 /**
  * GET /api/ipfs/[...cid]

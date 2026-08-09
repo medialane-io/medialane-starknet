@@ -26,14 +26,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { PinataSDK } from "pinata";
 import { getSiwsWallet } from "@/lib/siws-server";
+import { getPinataClient } from "@/lib/pinata";
 import { APP_URL } from "@/lib/seo";
-
-const pinata = new PinataSDK({
-  pinataJwt: process.env.PINATA_JWT!,
-  pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud",
-});
 
 const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -66,6 +61,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const pinata = getPinataClient();
     const formData = await req.formData();
 
     // ── Core fields ───────────────────────────────────────────────────────────

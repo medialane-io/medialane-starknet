@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { isPathAllowed } from "./allowlist";
+import { hasTraversalSegment, isPathAllowed } from "./allowlist";
 
 // Every /v1/intents/<type> creation route the dapp calls (medialane-backend
 // src/api/routes/intents/_shared.ts) must be reachable through the proxy —
@@ -43,4 +43,32 @@ test("POST /v1/intents/<type> with extra path segments is rejected", () => {
 
 test("unrelated POST routes are still rejected", () => {
   expect(isPathAllowed("POST", "admin/accounts/1/credits/grant")).toBe(false);
+});
+
+test("POST /v1/reports is NOT allowed through the generic proxy", () => {
+  // Reports go exclusively through the dedicated /api/reports route, which
+  // computes the canonical targetKey server-side before calling the backend
+  // directly. The proxy never had a caller for this path — keep it out.
+  expect(isPathAllowed("POST", "reports")).toBe(false);
+});
+
+// The allow-all GET rule (`/.+/`) matches a joined path containing `..` as a
+// plain string, but `fetch()`'s URL parser collapses `..` at request time —
+// so a decoded traversal segment would otherwise pass isPathAllowed and then
+// resolve outside /v1/ once fetched. hasTraversalSegment is the guard against
+// that, checked on the joined path before it's used to build the target URL.
+test("hasTraversalSegment rejects '..' and '.' segments", () => {
+  // "../admin/secret" is exactly what Next.js produces for the decoded
+  // request path `%2e%2e%2fadmin%2fsecret`: %2f decodes to a literal "/"
+  // within a single catch-all segment without re-splitting the segment
+  // array, so this traversal must be caught in the *joined* string, not
+  // by checking each raw array element for an exact "..".
+  expect(hasTraversalSegment("../admin/secret")).toBe(true);
+  expect(hasTraversalSegment("admin/../secret")).toBe(true);
+  expect(hasTraversalSegment(".")).toBe(true);
+});
+
+test("hasTraversalSegment allows normal segments, including dots within a segment", () => {
+  expect(hasTraversalSegment("intents/listing")).toBe(false);
+  expect(hasTraversalSegment("coins/0x123..abc")).toBe(false);
 });
