@@ -27,7 +27,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSiwsWallet } from "@/lib/siws-server";
-import { getPinataClient } from "@/lib/pinata";
+import { uploadFileToBackend, uploadJsonToBackend } from "@/lib/backend-metadata";
 import { APP_URL } from "@/lib/seo";
 
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const pinata = getPinataClient();
     const formData = await req.formData();
 
     // ── Core fields ───────────────────────────────────────────────────────────
@@ -105,8 +104,8 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           );
         }
-        const imageUpload = await pinata.upload.public.file(imageFile);
-        imageUri = `ipfs://${imageUpload.cid}`;
+        const imageUpload = await uploadFileToBackend(imageFile);
+        imageUri = imageUpload.uri;
       }
     }
 
@@ -172,10 +171,10 @@ export async function POST(req: NextRequest) {
       attributes,
     };
 
-    const metadataUpload = await pinata.upload.public.json(metadata);
+    const metadataUpload = await uploadJsonToBackend(metadata);
 
     return NextResponse.json({
-      uri: `ipfs://${metadataUpload.cid}`,
+      uri: metadataUpload.uri,
       imageUri,
       cid: metadataUpload.cid,
     });

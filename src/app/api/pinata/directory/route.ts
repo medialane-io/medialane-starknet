@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSiwsWallet } from "@/lib/siws-server";
 import { buildAssetMetadata, type BuildAssetMetadataInput } from "@/lib/asset-metadata";
+import { uploadDirectoryToBackend } from "@/lib/backend-metadata";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -8,11 +9,12 @@ export const maxDuration = 60;
 // One item's authoring fields. `creator` + `registrationDate` are injected server-side.
 type DropItemFields = Omit<BuildAssetMetadataInput, "creator" | "registrationDate">;
 
-// Pins per-token metadata + a collection.json card file as a single IPFS directory.
-// VERIFIED shape (2026-06-15): files must share a folder path (drop/<id>) with
-// wrapWithDirectory:false; Pinata returns the folder CID so children resolve at
-// <cid>/<tokenId> and <cid>/collection.json. token_uri(N) = ipfs://<cid>/N → unique,
-// fully-licensed asset, identical standard to any other Medialane IP asset.
+// Pins per-token metadata + a collection.json card file as a single IPFS directory,
+// via medialane-backend's metered Pinata path (POST /v1/metadata/upload-directory):
+// items[0] → file "1", items[1] → file "2", … so callers set base_uri =
+// ipfs://<folderCID>/ → token_uri(N) = ipfs://<folderCID>/N. Each item is encoded
+// with buildAssetMetadata — byte-identical to a normal IP asset (OpenSea + Berne
+// license attributes), so every drop token is a first-class asset.
 export async function POST(req: NextRequest) {
   const wallet = getSiwsWallet(req.headers.get("authorization"));
   if (!wallet) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -38,40 +40,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "collection.image must be an ipfs:// URI" }, { status: 400 });
   }
 
-  const jwt = process.env.PINATA_JWT;
-  if (!jwt) return NextResponse.json({ error: "Pinata not configured" }, { status: 500 });
-
   // Creator = the authenticated SIWS wallet — never trusted from the client.
   const creator = wallet;
   const registrationDate = new Date().toISOString().split("T")[0];
 
-  const form = new FormData();
-  items.forEach((fields, i) => {
-    const tokenId = i + 1; // contract mints sequentially from token id 1
-    const metadata = buildAssetMetadata({ ...fields, creator, registrationDate });
-    const blob = new Blob([JSON.stringify(metadata)], { type: "application/json" });
-    form.append("file", blob, `drop/${tokenId}`);
+  const files: { name: string; content: unknown }[] = items.map((fields, i) => ({
+    name: String(i + 1), // contract mints sequentially from token id 1
+    content: buildAssetMetadata({ ...fields, creator, registrationDate }),
+  }));
+
+  files.push({
+    name: "collection.json",
+    content: {
+      name: body?.collection?.name ?? "",
+      description: body?.collection?.description ?? "",
+      image: body?.collection?.image ?? null,
+    },
   });
 
-  const collection = {
-    name: body?.collection?.name ?? "",
-    description: body?.collection?.description ?? "",
-    image: body?.collection?.image ?? null,
-  };
-  form.append("file", new Blob([JSON.stringify(collection)], { type: "application/json" }), "drop/collection.json");
-
-  form.append("pinataOptions", JSON.stringify({ wrapWithDirectory: false }));
-  form.append("pinataMetadata", JSON.stringify({ name: `drop-metadata-${Date.now()}` }));
-
-  const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${jwt}` },
-    body: form,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    return NextResponse.json({ error: `Pinata error: ${text}` }, { status: 502 });
+  try {
+    const { cid, baseUri } = await uploadDirectoryToBackend(files);
+    return NextResponse.json({ cid, baseUri });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Directory pin failed";
+    console.error("[/api/pinata/directory]", err);
+    return NextResponse.json({ error: message }, { status: 502 });
   }
-  const json = (await res.json()) as { IpfsHash: string };
-  return NextResponse.json({ cid: json.IpfsHash, baseUri: `ipfs://${json.IpfsHash}/` });
 }

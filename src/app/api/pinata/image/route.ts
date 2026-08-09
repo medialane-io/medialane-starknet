@@ -1,7 +1,7 @@
 /**
  * POST /api/pinata/image
  *
- * Uploads a single image file to Pinata/IPFS.
+ * Uploads a single image file to IPFS via medialane-backend's metered Pinata path.
  * Requires a valid SIWS wallet session.
  *
  * Accepts multipart/form-data:
@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSiwsWallet } from "@/lib/siws-server";
-import { getPinataClient } from "@/lib/pinata";
+import { uploadFileToBackend } from "@/lib/backend-metadata";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -41,10 +41,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const pinata = getPinataClient();
-    const upload = await pinata.upload.public.file(file);
-    const imageUri = `ipfs://${upload.cid}`;
-    return NextResponse.json({ imageUri, cid: upload.cid });
+    const { uri, cid } = await uploadFileToBackend(file);
+    return NextResponse.json({ imageUri: uri, cid });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Upload failed";
     console.error("[pinata/image] upload failed:", message, err);
