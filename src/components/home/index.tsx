@@ -4,9 +4,8 @@ import { HeroSlider } from "./hero-slider";
 import { ActivityTicker } from "@/components/shared/activity-ticker";
 import { TrendingCollections } from "./trending-collections";
 import { NewOnMarketplace } from "./new-on-marketplace";
-import { CreatorAirdropBanner } from "./creator-airdrop";
+import { CreatorsFund } from "./creators-fund";
 import { AirdropSection } from "./airdrop-section";
-import { CommunityRewards } from "./community-rewards";
 import { PageContainer } from "@medialane/ui";
 import type { ApiCollection } from "@medialane/sdk";
 
@@ -25,8 +24,7 @@ export function HomePage({ initialFeatured }: { initialFeatured?: ApiCollection[
       <PageContainer className="box-border max-w-full pt-0 pb-0 space-y-20 mt-16">
         <TrendingCollections />
         <NewOnMarketplace />
-        <CreatorAirdropBanner />
-        <CommunityRewards />
+        <CreatorsFund />
         <AirdropSection />
       </PageContainer>
     </div>
