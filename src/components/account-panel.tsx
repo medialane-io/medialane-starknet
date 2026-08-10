@@ -13,6 +13,7 @@ import { useTokenBalance } from "@/hooks/use-token-balance";
 import { getConnectorIconSrc } from "@/lib/wallet-connectors";
 import { isWrongNetwork as computeIsWrongNetwork } from "@/lib/wallet-error";
 import { useNavAccountSheet } from "@medialane/ui";
+import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
 
 function truncate(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -85,6 +86,7 @@ export function AccountPanel() {
               {networkConfig.name}
             </Badge>
           </div>
+          <CreatorScoreInline address={address} size="sm" className="mt-2" />
         </div>
         <Link
           href={`${networkConfig.explorerUrl}/address/${address}`}
