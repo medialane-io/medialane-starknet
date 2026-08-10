@@ -31,7 +31,7 @@ export function TicketsContent() {
               title="IP Tickets"
               subtitle="Create a tickets collection, then mint tickets from its collection page."
               headerAccessory={
-                <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
+                <Button asChild size="sm" className="bg-brand-blue hover:brightness-110 text-white gap-1.5">
                   <Link href="/launchpad/tickets/create">
                     <Plus className="h-3.5 w-3.5" />
                     Create collection
@@ -71,7 +71,7 @@ export function TicketsContent() {
                   Create your first tickets collection.
                 </p>
               </div>
-              <Button asChild size="sm" className="bg-brand-blue hover:bg-brand-electric text-white gap-1.5">
+              <Button asChild size="sm" className="bg-brand-blue hover:brightness-110 text-white gap-1.5">
                 <Link href="/launchpad/tickets/create">
                   <Plus className="h-3.5 w-3.5" />
                   Create collection
