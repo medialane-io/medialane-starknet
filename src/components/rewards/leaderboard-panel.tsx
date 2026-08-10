@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { normalizeAddress } from "@medialane/sdk";
+import { LeaderboardTable } from "@medialane/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { useLeaderboard } from "@/hooks/use-rewards";
@@ -25,6 +26,10 @@ export function LeaderboardPanel({
 }: LeaderboardPanelProps) {
   const { data, isLoading } = useLeaderboard(1, limit);
   const rows = data?.data ?? [];
+  // LeaderboardTable does a plain string-equality highlight check; entry
+  // addresses come back pre-normalized from the API, so normalize myAddress
+  // the same way rather than teaching the shared component about chains.
+  const highlightAddress = myAddress ? normalizeAddress("STARKNET", myAddress) : null;
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -48,42 +53,15 @@ export function LeaderboardPanel({
           Nobody&apos;s earned points yet — be the first.
         </p>
       ) : (
-        <div className="space-y-1">
-          {rows.map((entry) => {
-            const isMe = !!myAddress && normalizeAddress("STARKNET", myAddress) === normalizeAddress("STARKNET", entry.address);
-            return (
-              <Link
-                key={entry.address}
-                href={`/creator/${entry.address}`}
-                className={cn(
-                  "group relative flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/40",
-                  isMe && "bg-muted/30"
-                )}
-              >
-                {/* Rose→orange left accent */}
-                <div className="absolute left-0 inset-y-2 w-[2px] rounded-full bg-gradient-to-b from-brand-rose to-brand-orange opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                <AddressDisplay
-                  address={entry.address}
-                  chars={4}
-                  showCopy={false}
-                  className={cn(
-                    "text-xs font-medium transition-colors group-hover:text-foreground",
-                    isMe ? "text-foreground" : "text-muted-foreground"
-                  )}
-                />
-
-                <span className={cn(
-                  "shrink-0 text-sm font-black tabular-nums",
-                  isMe ? "text-foreground" : "text-foreground/80"
-                )}>
-                  {entry.totalXp.toLocaleString()}
-                  <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">XP</span>
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+        <LeaderboardTable
+          entries={rows}
+          highlightAddress={highlightAddress}
+          renderAddress={(address) => (
+            <Link href={`/creator/${address}`} className="hover:text-foreground transition-colors">
+              <AddressDisplay address={address} chars={4} showCopy={false} className="text-xs font-medium" />
+            </Link>
+          )}
+        />
       )}
 
       {viewAllHref && rows.length > 0 && (
