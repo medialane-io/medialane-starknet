@@ -23,6 +23,7 @@ import { OwnerSetupPanel } from "@/components/collection/owner-setup-panel";
 import { TransferCollectionOwnershipDialog } from "@/components/collection/transfer-ownership-dialog";
 import { ShareButton } from "@/components/shared/share-button";
 import { CollectionFilters } from "@/components/collection/collection-filters";
+import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
@@ -540,6 +541,9 @@ export default function CollectionPageClient() {
               <TabsTrigger value="offers" className="flex-1 sm:flex-none">
                 Offers{!ordersLoading && activeBids.length > 0 && ` (${activeBids.length})`}
               </TabsTrigger>
+              <TabsTrigger value="activity" className="flex-1 sm:flex-none">
+                Activity
+              </TabsTrigger>
               {profile?.hasGatedContent && (
                 <TabsTrigger value="exclusive" className="flex-1 sm:flex-none gap-1.5">
                   <Lock className="h-3.5 w-3.5" />
@@ -585,6 +589,10 @@ export default function CollectionPageClient() {
                 {activeBids.map((o) => <ListingCard key={o.orderHash} order={o} />)}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-4">
+            <CollectionActivityTab contract={contract} />
           </TabsContent>
 
           {profile?.hasGatedContent && (
