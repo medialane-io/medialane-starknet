@@ -37,7 +37,7 @@ import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { useWallet } from "@/hooks/use-wallet";
-import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
+import { CreatorChip } from "@/components/collection/creator-chip";
 import { getService, normalizeAddress } from "@medialane/sdk";
 import type { ApiToken, ApiOrder, CollectionTokensSort } from "@medialane/sdk";
 import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
@@ -412,21 +412,8 @@ export default function CollectionPageClient() {
                 </div>
               )}
 
-              {/* By owner — address route (/creator/[slug] is username-only) */}
-              {collection.owner && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>by</span>
-                  <Link href={`/account/${collection.owner}`} className="hover:underline underline-offset-2">
-                    <AddressDisplay
-                      address={collection.owner}
-                      chars={6}
-                      showCopy={false}
-                      className="font-medium text-foreground"
-                    />
-                  </Link>
-                  <CreatorScoreInline address={collection.owner} size="sm" />
-                </div>
-              )}
+              {/* Creator smart chip — address route (/creator/[slug] is username-only) */}
+              {collection.owner && <CreatorChip address={collection.owner} />}
 
               {collection.description && (
                 <>
