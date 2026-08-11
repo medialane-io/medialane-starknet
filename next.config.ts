@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @medialane/ui's single barrel entry point pulls all ~65 components (and
+  // their heaviest deps — framer-motion, Radix primitives, the full
+  // lucide-react set) into any route importing even one small component.
+  // Next's compiler rewrites barrel imports to per-file deep imports at
+  // build time when the package is listed here. See medialane-io's
+  // next.config.ts for the io measurement this was validated against.
+  experimental: {
+    optimizePackageImports: ["@medialane/ui"],
+  },
   // @cartridge/controller (Cartridge Controller wallet) ships its signing/
   // session engine as a WASM module (@cartridge/controller-wasm), imported
   // directly rather than lazy-loaded — webpack 5 doesn't parse `.wasm`
