@@ -349,6 +349,25 @@ export default function CollectionPageClient() {
 
           {/* Bottom overlay: title + stat chips — backdrop blur only, no borders, no scrim */}
           <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 z-10">
+            {/* Type + symbol eyebrow — white/blur so it holds up over arbitrary artwork */}
+            {(collection?.symbol || collection?.standard) && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {collection?.standard === "ERC1155" ? (
+                  <span className="text-[11px] font-semibold text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
+                    Multi-edition NFT
+                  </span>
+                ) : collection?.standard === "ERC721" ? (
+                  <span className="text-[11px] font-semibold text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
+                    Single NFT
+                  </span>
+                ) : null}
+                {collection?.symbol && (
+                  <span className="tabular-nums text-[11px] text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
+                    {collection.symbol}
+                  </span>
+                )}
+              </div>
+            )}
             <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight"
               style={{ textShadow: "0 1px 12px rgba(0,0,0,0.4)" }}>
               {collection?.name ?? "Unnamed Collection"}
@@ -390,31 +409,8 @@ export default function CollectionPageClient() {
       {!colLoading && collection && (
         <div className="px-4 sm:px-6 pt-5 pb-2">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
-            {/* Left — identity & description */}
+            {/* Left — description, creator, service action (badges moved into the hero eyebrow) */}
             <div className="space-y-3 min-w-0 lg:max-w-2xl">
-              {/* Type + symbol badges (moved down out of the hero) */}
-              {(collection.symbol || collection.standard) && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  {collection.standard === "ERC1155" ? (
-                    <span className="text-[11px] font-semibold bg-brand-purple/15 text-brand-purple dark:text-brand-purple rounded-full px-2.5 py-0.5">
-                      Multi-edition NFT
-                    </span>
-                  ) : collection.standard === "ERC721" ? (
-                    <span className="text-[11px] font-semibold bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
-                      Single NFT
-                    </span>
-                  ) : null}
-                  {collection.symbol && (
-                    <span className="tabular-nums text-[11px] bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
-                      {collection.symbol}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Creator smart chip — address route (/creator/[slug] is username-only) */}
-              {collection.owner && <CreatorChip address={collection.owner} />}
-
               {collection.description && (
                 <>
                   <p
@@ -437,6 +433,9 @@ export default function CollectionPageClient() {
                 </>
               )}
 
+              {/* Creator smart chip — address route (/creator/[slug] is username-only) */}
+              {collection.owner && <CreatorChip address={collection.owner} />}
+
               {/* Service action slot (POP claim, etc.) */}
               <CollectionServiceAction
                 service={collection.service}
@@ -445,7 +444,7 @@ export default function CollectionPageClient() {
             </div>
 
             {/* Right — flat utility cluster (no panel/chrome) */}
-            <div className="flex flex-col gap-2.5 shrink-0 lg:items-end">
+            <div className="flex flex-col gap-3 shrink-0 w-full lg:w-auto lg:items-end">
               {walletAddress && collection.owner && normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
                 <div className="flex items-center gap-2">
                   {getService(collection.service)?.id === "ip-tickets" && (
