@@ -24,7 +24,7 @@ export function OpenInIoCallout({ chain, contract, tokenId }: OpenInIoCalloutPro
       rel="noopener noreferrer"
       className="group flex h-full items-start gap-3 rounded-2xl border border-transparent bg-gradient-to-br from-brand-rose/15 via-brand-orange/10 to-transparent p-4 transition-colors hover:border-brand-orange/30"
     >
-      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-rose to-brand-orange text-white">
+      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-rose/20 to-brand-orange/10 text-brand-rose">
         <Mail className="h-[18px] w-[18px]" />
       </div>
       <div className="min-w-0 flex-1">
