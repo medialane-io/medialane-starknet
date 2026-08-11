@@ -26,6 +26,7 @@ import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
 import { OrderSortControl, sortOrders, type OrderSort } from "@/components/collection/order-sort-control";
 import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
+import { CollectionTraitsTab } from "@/components/collection/collection-traits-tab";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
@@ -548,6 +549,9 @@ export default function CollectionPageClient() {
               <TabsTrigger value="activity" className="flex-1 sm:flex-none">
                 Activity
               </TabsTrigger>
+              {collection?.standard && (collection.totalSupply ?? 0) > 1 && (
+                <TabsTrigger value="traits" className="flex-1 sm:flex-none">Traits</TabsTrigger>
+              )}
               {profile?.hasGatedContent && (
                 <TabsTrigger value="exclusive" className="flex-1 sm:flex-none gap-1.5">
                   <Lock className="h-3.5 w-3.5" />
@@ -612,6 +616,12 @@ export default function CollectionPageClient() {
           <TabsContent value="activity" className="mt-4">
             <CollectionActivityTab contract={contract} />
           </TabsContent>
+
+          {collection?.standard && (collection.totalSupply ?? 0) > 1 && (
+            <TabsContent value="traits" className="mt-4">
+              <CollectionTraitsTab contract={contract} />
+            </TabsContent>
+          )}
 
           {profile?.hasGatedContent && (
             <TabsContent value="exclusive" className="mt-4">
