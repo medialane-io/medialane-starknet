@@ -25,6 +25,7 @@ import { ShareButton } from "@/components/shared/share-button";
 import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
 import { OrderSortControl, sortOrders, type OrderSort } from "@/components/collection/order-sort-control";
+import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
@@ -583,6 +584,15 @@ export default function CollectionPageClient() {
           </TabsContent>
 
           <TabsContent value="offers" className="mt-4">
+            <div className="flex justify-between items-center mb-3">
+              <div />
+              <div className="flex items-center gap-2">
+                {!ordersLoading && activeBids.length > 0 && (
+                  <OrderSortControl value={offersSort} onChange={setOffersSort} />
+                )}
+                <MakeOfferPicker contract={contract} />
+              </div>
+            </div>
             {ordersLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
@@ -590,16 +600,11 @@ export default function CollectionPageClient() {
             ) : activeBids.length === 0 ? (
               <EmptyState
                 title="No active offers"
-                body="Offers on items in this collection will appear here when placed."
+                body="Make the first offer, or check back when collectors start bidding."
               />
             ) : (
-              <div className="space-y-3">
-                <div className="flex justify-end">
-                  <OrderSortControl value={offersSort} onChange={setOffersSort} />
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                  {sortOrders(activeBids, offersSort).map((o) => <ListingCard key={o.orderHash} order={o} />)}
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                {sortOrders(activeBids, offersSort).map((o) => <ListingCard key={o.orderHash} order={o} />)}
               </div>
             )}
           </TabsContent>
