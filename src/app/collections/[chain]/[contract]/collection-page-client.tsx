@@ -24,6 +24,7 @@ import { TransferCollectionOwnershipDialog } from "@/components/collection/trans
 import { ShareButton } from "@/components/shared/share-button";
 import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
+import { OrderSortControl, sortOrders, type OrderSort } from "@/components/collection/order-sort-control";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
@@ -259,6 +260,8 @@ export default function CollectionPageClient() {
   const descRef = useRef<HTMLParagraphElement>(null);
 
   const [activeTab, setActiveTab] = useState("items");
+  const [listingsSort, setListingsSort] = useState<OrderSort>("recent");
+  const [offersSort, setOffersSort] = useState<OrderSort>("recent");
   const [buyOrder, setBuyOrder] = useState<ApiOrder | null>(null);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const handleBuy = (o: ApiOrder) => { setBuyOrder(o); setPurchaseOpen(true); };
@@ -568,8 +571,13 @@ export default function CollectionPageClient() {
                 body="When items in this collection are listed for sale, they'll appear here."
               />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {activeListings.map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
+              <div className="space-y-3">
+                <div className="flex justify-end">
+                  <OrderSortControl value={listingsSort} onChange={setListingsSort} />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                  {sortOrders(activeListings, listingsSort).map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
+                </div>
               </div>
             )}
           </TabsContent>
@@ -582,11 +590,16 @@ export default function CollectionPageClient() {
             ) : activeBids.length === 0 ? (
               <EmptyState
                 title="No active offers"
-                body="Collection-wide offers will appear here when placed."
+                body="Offers on items in this collection will appear here when placed."
               />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {activeBids.map((o) => <ListingCard key={o.orderHash} order={o} />)}
+              <div className="space-y-3">
+                <div className="flex justify-end">
+                  <OrderSortControl value={offersSort} onChange={setOffersSort} />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                  {sortOrders(activeBids, offersSort).map((o) => <ListingCard key={o.orderHash} order={o} />)}
+                </div>
               </div>
             )}
           </TabsContent>
