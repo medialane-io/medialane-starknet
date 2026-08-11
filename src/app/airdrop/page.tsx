@@ -110,8 +110,8 @@ export default function AirdropPage() {
                 },
                 {
                   icon: Coins,
-                  color: "text-brand-price",
-                  bg: "bg-brand-price/10",
+                  color: "text-brand-maeve",
+                  bg: "bg-brand-maeve/10",
                   title: "Creator fund distributions",
                   desc: "Each time the Creator's Fund reaches $1,000, it is distributed to participants by Score Board points. The more you contribute, the larger your share.",
                 },
