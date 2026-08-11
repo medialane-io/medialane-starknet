@@ -23,6 +23,10 @@ import { OwnerSetupPanel } from "@/components/collection/owner-setup-panel";
 import { TransferCollectionOwnershipDialog } from "@/components/collection/transfer-ownership-dialog";
 import { ShareButton } from "@/components/shared/share-button";
 import { CollectionFilters } from "@/components/collection/collection-filters";
+import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
+import { OrderSortControl, sortOrders, type OrderSort } from "@/components/collection/order-sort-control";
+import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
+import { CollectionTraitsTab } from "@/components/collection/collection-traits-tab";
 import Image from "next/image";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
@@ -33,7 +37,7 @@ import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { useWallet } from "@/hooks/use-wallet";
-import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
+import { CreatorChip } from "@/components/collection/creator-chip";
 import { getService, normalizeAddress } from "@medialane/sdk";
 import type { ApiToken, ApiOrder, CollectionTokensSort } from "@medialane/sdk";
 import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
@@ -258,6 +262,8 @@ export default function CollectionPageClient() {
   const descRef = useRef<HTMLParagraphElement>(null);
 
   const [activeTab, setActiveTab] = useState("items");
+  const [listingsSort, setListingsSort] = useState<OrderSort>("recent");
+  const [offersSort, setOffersSort] = useState<OrderSort>("recent");
   const [buyOrder, setBuyOrder] = useState<ApiOrder | null>(null);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const handleBuy = (o: ApiOrder) => { setBuyOrder(o); setPurchaseOpen(true); };
@@ -343,6 +349,25 @@ export default function CollectionPageClient() {
 
           {/* Bottom overlay: title + stat chips — backdrop blur only, no borders, no scrim */}
           <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 z-10">
+            {/* Type + symbol eyebrow — white/blur so it holds up over arbitrary artwork */}
+            {(collection?.symbol || collection?.standard) && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {collection?.standard === "ERC1155" ? (
+                  <span className="text-[11px] font-semibold text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
+                    Multi-edition NFT
+                  </span>
+                ) : collection?.standard === "ERC721" ? (
+                  <span className="text-[11px] font-semibold text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
+                    Single NFT
+                  </span>
+                ) : null}
+                {collection?.symbol && (
+                  <span className="tabular-nums text-[11px] text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
+                    {collection.symbol}
+                  </span>
+                )}
+              </div>
+            )}
             <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight"
               style={{ textShadow: "0 1px 12px rgba(0,0,0,0.4)" }}>
               {collection?.name ?? "Unnamed Collection"}
@@ -384,44 +409,8 @@ export default function CollectionPageClient() {
       {!colLoading && collection && (
         <div className="px-4 sm:px-6 pt-5 pb-2">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
-            {/* Left — identity & description */}
+            {/* Left — description, creator, service action (badges moved into the hero eyebrow) */}
             <div className="space-y-3 min-w-0 lg:max-w-2xl">
-              {/* Type + symbol badges (moved down out of the hero) */}
-              {(collection.symbol || collection.standard) && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  {collection.standard === "ERC1155" ? (
-                    <span className="text-[11px] font-semibold bg-brand-purple/15 text-brand-purple dark:text-brand-purple rounded-full px-2.5 py-0.5">
-                      Multi-edition NFT
-                    </span>
-                  ) : collection.standard === "ERC721" ? (
-                    <span className="text-[11px] font-semibold bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
-                      Single NFT
-                    </span>
-                  ) : null}
-                  {collection.symbol && (
-                    <span className="tabular-nums text-[11px] bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">
-                      {collection.symbol}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* By owner — address route (/creator/[slug] is username-only) */}
-              {collection.owner && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>by</span>
-                  <Link href={`/account/${collection.owner}`} className="hover:underline underline-offset-2">
-                    <AddressDisplay
-                      address={collection.owner}
-                      chars={6}
-                      showCopy={false}
-                      className="font-medium text-foreground"
-                    />
-                  </Link>
-                  <CreatorScoreInline address={collection.owner} size="sm" />
-                </div>
-              )}
-
               {collection.description && (
                 <>
                   <p
@@ -444,6 +433,9 @@ export default function CollectionPageClient() {
                 </>
               )}
 
+              {/* Creator smart chip — address route (/creator/[slug] is username-only) */}
+              {collection.owner && <CreatorChip address={collection.owner} />}
+
               {/* Service action slot (POP claim, etc.) */}
               <CollectionServiceAction
                 service={collection.service}
@@ -452,7 +444,7 @@ export default function CollectionPageClient() {
             </div>
 
             {/* Right — flat utility cluster (no panel/chrome) */}
-            <div className="flex flex-col gap-2.5 shrink-0 lg:items-end">
+            <div className="flex flex-col gap-3 shrink-0 w-full lg:w-auto lg:items-end">
               {walletAddress && collection.owner && normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
                 <div className="flex items-center gap-2">
                   {getService(collection.service)?.id === "ip-tickets" && (
@@ -540,6 +532,12 @@ export default function CollectionPageClient() {
               <TabsTrigger value="offers" className="flex-1 sm:flex-none">
                 Offers{!ordersLoading && activeBids.length > 0 && ` (${activeBids.length})`}
               </TabsTrigger>
+              <TabsTrigger value="activity" className="flex-1 sm:flex-none">
+                Activity
+              </TabsTrigger>
+              {collection?.standard && (collection.totalSupply ?? 0) > 1 && (
+                <TabsTrigger value="traits" className="flex-1 sm:flex-none">Traits</TabsTrigger>
+              )}
               {profile?.hasGatedContent && (
                 <TabsTrigger value="exclusive" className="flex-1 sm:flex-none gap-1.5">
                   <Lock className="h-3.5 w-3.5" />
@@ -564,13 +562,27 @@ export default function CollectionPageClient() {
                 body="When items in this collection are listed for sale, they'll appear here."
               />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {activeListings.map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
+              <div className="space-y-3">
+                <div className="flex justify-end">
+                  <OrderSortControl value={listingsSort} onChange={setListingsSort} />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                  {sortOrders(activeListings, listingsSort).map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
+                </div>
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="offers" className="mt-4">
+            <div className="flex justify-between items-center mb-3">
+              <div />
+              <div className="flex items-center gap-2">
+                {!ordersLoading && activeBids.length > 0 && (
+                  <OrderSortControl value={offersSort} onChange={setOffersSort} />
+                )}
+                <MakeOfferPicker contract={contract} />
+              </div>
+            </div>
             {ordersLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
@@ -578,14 +590,24 @@ export default function CollectionPageClient() {
             ) : activeBids.length === 0 ? (
               <EmptyState
                 title="No active offers"
-                body="Collection-wide offers will appear here when placed."
+                body="Make the first offer, or check back when collectors start bidding."
               />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {activeBids.map((o) => <ListingCard key={o.orderHash} order={o} />)}
+                {sortOrders(activeBids, offersSort).map((o) => <ListingCard key={o.orderHash} order={o} />)}
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="activity" className="mt-4">
+            <CollectionActivityTab contract={contract} />
+          </TabsContent>
+
+          {collection?.standard && (collection.totalSupply ?? 0) > 1 && (
+            <TabsContent value="traits" className="mt-4">
+              <CollectionTraitsTab contract={contract} />
+            </TabsContent>
+          )}
 
           {profile?.hasGatedContent && (
             <TabsContent value="exclusive" className="mt-4">
