@@ -261,7 +261,9 @@ export default function CollectionPageClient() {
   const [descOverflows, setDescOverflows] = useState(false);
   const descRef = useRef<HTMLParagraphElement>(null);
 
-  const [activeTab, setActiveTab] = useState("items");
+  const [activeTab, setActiveTab] = useState("assets");
+  const [marketSubTab, setMarketSubTab] = useState<"listings" | "offers">("listings");
+  const [provenanceSubTab, setProvenanceSubTab] = useState<"activity" | "traits">("activity");
   const [listingsSort, setListingsSort] = useState<OrderSort>("recent");
   const [offersSort, setOffersSort] = useState<OrderSort>("recent");
   const [buyOrder, setBuyOrder] = useState<ApiOrder | null>(null);
@@ -433,9 +435,6 @@ export default function CollectionPageClient() {
                 </>
               )}
 
-              {/* Creator smart chip — address route (/creator/[slug] is username-only) */}
-              {collection.owner && <CreatorChip address={collection.owner} />}
-
               {/* Service action slot (POP claim, etc.) */}
               <CollectionServiceAction
                 service={collection.service}
@@ -478,8 +477,10 @@ export default function CollectionPageClient() {
                 </div>
               )}
 
+              {/* Creator smart chip — address route (/creator/[slug] is username-only) */}
+              {collection.owner && <CreatorChip address={collection.owner} />}
+
               <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-widest text-muted-foreground/50">Contract</span>
                 <AddressDisplay
                   address={collection.contractAddress ?? ""}
                   chars={6}
@@ -523,21 +524,15 @@ export default function CollectionPageClient() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="sticky top-0 z-10 pt-3 pb-1">
             <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="items" className="flex-1 sm:flex-none">
-                Items{collection?.totalSupply ? ` (${collection.totalSupply.toLocaleString()})` : ""}
+              <TabsTrigger value="assets" className="flex-1 sm:flex-none">
+                Assets{collection?.totalSupply ? ` (${collection.totalSupply.toLocaleString()})` : ""}
               </TabsTrigger>
-              <TabsTrigger value="listings" className="flex-1 sm:flex-none">
-                Listings{!ordersLoading && activeListings.length > 0 && ` (${activeListings.length})`}
+              <TabsTrigger value="market" className="flex-1 sm:flex-none">
+                Market{!ordersLoading && (activeListings.length + activeBids.length) > 0 && ` (${activeListings.length + activeBids.length})`}
               </TabsTrigger>
-              <TabsTrigger value="offers" className="flex-1 sm:flex-none">
-                Offers{!ordersLoading && activeBids.length > 0 && ` (${activeBids.length})`}
+              <TabsTrigger value="provenance" className="flex-1 sm:flex-none">
+                Provenance
               </TabsTrigger>
-              <TabsTrigger value="activity" className="flex-1 sm:flex-none">
-                Activity
-              </TabsTrigger>
-              {collection?.standard && (collection.totalSupply ?? 0) > 1 && (
-                <TabsTrigger value="traits" className="flex-1 sm:flex-none">Traits</TabsTrigger>
-              )}
               {profile?.hasGatedContent && (
                 <TabsTrigger value="exclusive" className="flex-1 sm:flex-none gap-1.5">
                   <Lock className="h-3.5 w-3.5" />
@@ -547,73 +542,97 @@ export default function CollectionPageClient() {
             </TabsList>
           </div>
 
-          <TabsContent value="items" className="mt-4">
+          <TabsContent value="assets" className="mt-4">
             <CollectionItems contract={contract} activeListings={activeListings} />
           </TabsContent>
 
-          <TabsContent value="listings" className="mt-4">
-            {ordersLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
-              </div>
-            ) : activeListings.length === 0 ? (
-              <EmptyState
-                title="No active listings"
-                body="When items in this collection are listed for sale, they'll appear here."
-              />
-            ) : (
-              <div className="space-y-3">
-                <div className="flex justify-end">
-                  <OrderSortControl value={listingsSort} onChange={setListingsSort} />
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                  {sortOrders(activeListings, listingsSort).map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
-                </div>
-              </div>
-            )}
-          </TabsContent>
+          <TabsContent value="market" className="mt-4">
+            <Tabs value={marketSubTab} onValueChange={(v) => setMarketSubTab(v as "listings" | "offers")}>
+              <TabsList className="h-9">
+                <TabsTrigger value="listings" className="text-xs px-3 py-1">
+                  Listings{!ordersLoading && activeListings.length > 0 && ` (${activeListings.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="offers" className="text-xs px-3 py-1">
+                  Offers{!ordersLoading && activeBids.length > 0 && ` (${activeBids.length})`}
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="offers" className="mt-4">
-            <div className="flex justify-between items-center mb-3">
-              <div />
-              <div className="flex items-center gap-2">
-                {!ordersLoading && activeBids.length > 0 && (
-                  <OrderSortControl value={offersSort} onChange={setOffersSort} />
+              <TabsContent value="listings" className="mt-4">
+                {ordersLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                    {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
+                  </div>
+                ) : activeListings.length === 0 ? (
+                  <EmptyState
+                    title="No active listings"
+                    body="When items in this collection are listed for sale, they'll appear here."
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex justify-end">
+                      <OrderSortControl value={listingsSort} onChange={setListingsSort} />
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                      {sortOrders(activeListings, listingsSort).map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
+                    </div>
+                  </div>
                 )}
-                <MakeOfferPicker contract={contract} />
-              </div>
-            </div>
-            {ordersLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
-              </div>
-            ) : activeBids.length === 0 ? (
-              <EmptyState
-                title="No active offers"
-                body="Make the first offer, or check back when collectors start bidding."
-              />
+              </TabsContent>
+
+              <TabsContent value="offers" className="mt-4">
+                <div className="flex justify-between items-center mb-3">
+                  <div />
+                  <div className="flex items-center gap-2">
+                    {!ordersLoading && activeBids.length > 0 && (
+                      <OrderSortControl value={offersSort} onChange={setOffersSort} />
+                    )}
+                    <MakeOfferPicker contract={contract} />
+                  </div>
+                </div>
+                {ordersLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                    {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
+                  </div>
+                ) : activeBids.length === 0 ? (
+                  <EmptyState
+                    title="No active offers"
+                    body="Make the first offer, or check back when collectors start bidding."
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                    {sortOrders(activeBids, offersSort).map((o) => <ListingCard key={o.orderHash} order={o} />)}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="provenance" className="mt-4">
+            {collection?.standard && (collection.totalSupply ?? 0) > 1 ? (
+              <Tabs value={provenanceSubTab} onValueChange={(v) => setProvenanceSubTab(v as "activity" | "traits")}>
+                <TabsList className="h-9">
+                  <TabsTrigger value="activity" className="text-xs px-3 py-1">Activity</TabsTrigger>
+                  <TabsTrigger value="traits" className="text-xs px-3 py-1">Traits</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="activity" className="mt-4">
+                  <CollectionActivityTab contract={contract} />
+                </TabsContent>
+
+                <TabsContent value="traits" className="mt-4">
+                  <CollectionTraitsTab contract={contract} />
+                </TabsContent>
+              </Tabs>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {sortOrders(activeBids, offersSort).map((o) => <ListingCard key={o.orderHash} order={o} />)}
-              </div>
+              <CollectionActivityTab contract={contract} />
             )}
           </TabsContent>
-
-          <TabsContent value="activity" className="mt-4">
-            <CollectionActivityTab contract={contract} />
-          </TabsContent>
-
-          {collection?.standard && (collection.totalSupply ?? 0) > 1 && (
-            <TabsContent value="traits" className="mt-4">
-              <CollectionTraitsTab contract={contract} />
-            </TabsContent>
-          )}
 
           {profile?.hasGatedContent && (
             <TabsContent value="exclusive" className="mt-4">
               <GatedContentPanel
                 state={gatedState}
-                onBrowseListings={() => setActiveTab("listings")}
+                onBrowseListings={() => { setMarketSubTab("listings"); setActiveTab("market"); }}
               />
             </TabsContent>
           )}
