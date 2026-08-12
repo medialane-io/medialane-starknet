@@ -59,14 +59,39 @@ apps already hit through their respective BFF proxies.
 - **Port `usdValueFor()`** into the dapp's shared format util (wherever
   `formatDisplayPrice`/similar already lives) — pure function, no new
   dependencies.
-- **Wire `usdValue` through** at the 8 call sites already consuming the
-  shared price components: `asset-page-standard.tsx`, `asset-page-
-  membership.tsx`, `asset-page-edition.tsx`, `asset-page-ticket.tsx`,
-  `collection-page-client.tsx`, `components/marketplace/listing-card.tsx`
-  (the dapp's own thin wrapper, mirroring io's), `components/home/new-on-
-  marketplace.tsx`, `app/portfolio/page.tsx`. Same pattern at every site:
-  `useUsdPrices()` once, `usdValueFor(price.formatted, price.currency,
-  usdPrices)` per rendered price, pass as the `usdValue` prop.
+- **Correction from initial investigation**: the dapp's collection page
+  does not use `@medialane/ui`'s `AssetCard` (unlike io's) — it uses
+  `TokenCard` (via a local wrapper, `src/components/shared/token-card.tsx`,
+  mirroring io's own `TokenCard` wrapper). `TokenCard` has never received
+  the fiat-pill redesign — it still shows a bare crypto-only price chip
+  (`token-card.tsx` in `@medialane/ui`, two render sites: the artwork-
+  overlay chip and a second inline price display). `TokenCard` is shared
+  with io too (used on io's search page, creator pages, and portfolio
+  assets grid — surfaces never touched this session). Confirmed scope:
+  redesign `TokenCard` in `@medialane/ui` with the same dual-price/coin-chip
+  treatment as `AssetCard` (new `usdValue` field, host-computed, same
+  stablecoin-collapse rule), and wire `usdValue` through at every call site
+  in **both** apps, not just the dapp's collection page.
+- **Wire `usdValue` through** at every call site consuming the shared price
+  components, across both apps:
+  - **medialane-starknet**: `asset-page-standard.tsx`, `asset-page-
+    membership.tsx`, `asset-page-edition.tsx`, `asset-page-ticket.tsx`
+    (all four via `AssetMarketplacePanel`), `collection-page-client.tsx`
+    (via the local `TokenCard` wrapper), `components/marketplace/listing-
+    card.tsx` (the dapp's own thin `ListingCard` wrapper, self-computes
+    `usdValue` internally so callers like `home/new-on-marketplace.tsx`
+    need no changes). `app/portfolio/page.tsx`'s `AssetCard` usage shows no
+    price at all (owned tickets/memberships) — confirmed not in scope.
+  - **medialane-io**: `TokenCard` call sites gain the same wiring —
+    `app/search/page.tsx`, `app/creator/[address]/creator-username-
+    client.tsx`, `app/account/[address]/creator-page-client.tsx`,
+    `components/creator/collection-carousel-row.tsx`,
+    `components/portfolio/assets-grid.tsx` — confirm each site's exact
+    price-source shape during implementation (some may derive price from
+    `token.activeOrders` the same way `TokenCard` itself does internally).
+  - Same pattern at every site: `useUsdPrices()` once, `usdValueFor(price.
+    formatted, price.currency, usdPrices)` per rendered price, pass as the
+    `usdValue` prop.
 - **Offer/counter-offer dialogs**: same inline `≈ $X` treatment under the
   price input as io's (`offer-dialog.tsx`/`counter-offer-dialog.tsx`
   equivalents, if the dapp has them under different names — confirm exact
