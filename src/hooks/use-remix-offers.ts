@@ -1,10 +1,13 @@
 "use client";
 
 import useSWR from "swr";
+import { useTokenRemixes as useTokenRemixesBase } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-import type { RemixOffer, RemixOfferListResponse, PublicRemix } from "@/types/remix-offers";
+import type { RemixOffer, RemixOfferListResponse } from "@/types/remix-offers";
+
+const apiConfig = { baseUrl: MEDIALANE_BACKEND_URL, apiKey: MEDIALANE_API_KEY };
 
 async function apiFetch(
   url: string,
@@ -56,16 +59,7 @@ export function useRemixOffers(role: "creator" | "requester", status?: string) {
 }
 
 export function useTokenRemixes(contract: string | null, tokenId: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<{ data: PublicRemix[]; meta: { total: number } }>(
-    contract && tokenId ? `token-remixes-${contract}-${tokenId}` : null,
-    () =>
-      fetch(`${MEDIALANE_BACKEND_URL}/v1/tokens/${contract}/${tokenId}/remixes`, {
-        headers: { "x-api-key": MEDIALANE_API_KEY },
-      }).then((r) => r.json()),
-    { refreshInterval: 60000, revalidateOnFocus: false }
-  );
-
-  return { remixes: data?.data ?? [], total: data?.meta.total ?? 0, isLoading, error, mutate };
+  return useTokenRemixesBase(apiConfig, contract, tokenId);
 }
 
 async function authedFetch(url: string, token: string | null, options?: RequestInit): Promise<unknown> {
