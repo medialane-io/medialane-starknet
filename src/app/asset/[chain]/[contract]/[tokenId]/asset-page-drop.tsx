@@ -13,7 +13,8 @@ import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { ipfsToHttp, cn } from "@/lib/utils";
+import { ipfsToHttp, cn, usdValueFor } from "@/lib/utils";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IpTypeBadge } from "@/components/shared/ip-type-badge";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
@@ -151,6 +152,9 @@ export function AssetPageDrop() {
     attributes, hasTemplateData, isDisplayAttr, parentContract, parentTokenId,
   } = useAssetMarketState(token, listings, walletAddress);
 
+  const usdPrices = useUsdPrices();
+  const cheapestUsd = usdValueFor(cheapest?.price?.formatted, cheapest?.price?.currency, usdPrices);
+
   const isERC1155 = collection?.standard === "ERC1155";
 
   const handleAcceptClick = async (order: ApiOrder) => {
@@ -266,6 +270,7 @@ export function AssetPageDrop() {
               walletAddress={walletAddress}
               remixEnabled
               floorPriceRaw={collection?.floorPrice}
+              usdValue={cheapestUsd}
               lastSaleRaw={lastSaleRaw}
               renderAuthAction={() => (
                 <SignedOutAssetActions chain="STARKNET" contract={contract} tokenId={tokenId} />
