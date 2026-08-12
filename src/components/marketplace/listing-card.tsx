@@ -6,7 +6,8 @@ import {
   ListingCard as PackageListingCard,
   ListingCardSkeleton,
 } from "@medialane/ui";
-import { ipfsToHttp } from "@/lib/utils";
+import { ipfsToHttp, usdValueFor } from "@/lib/utils";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,8 @@ interface ListingCardProps {
 
 export function ListingCard({ order, onBuy, compact = false }: ListingCardProps) {
   const [reportOpen, setReportOpen] = useState(false);
+  const usdPrices = useUsdPrices();
+  const usdValue = usdValueFor(order.price?.formatted, order.price?.currency, usdPrices);
 
   // Resolve through the app's /api/ipfs resizing proxy (w=640 covers the
   // largest grid cell at high DPR) instead of the ui package's default
@@ -82,6 +85,7 @@ export function ListingCard({ order, onBuy, compact = false }: ListingCardProps)
         compact={compact}
         overflowMenu={overflowMenu}
         imageUrl={imageUrl}
+        usdValue={usdValue}
       />
       {reportOpen && (
         <ReportDialog
