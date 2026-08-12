@@ -11,7 +11,7 @@ import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { Flag, Inbox, Sparkles, Lock, Settings } from "lucide-react";
-import { LoadMoreSentinel, HiddenContentBanner, CollectionHeroBanner } from "@medialane/ui";
+import { LoadMoreSentinel, HiddenContentBanner, CollectionHeroBanner, ClubOwnerActions, OrderSortControl, sortOrders, type OrderSort } from "@medialane/ui";
 import { ReportDialog } from "@/components/report-dialog";
 import { useCollectionProfile } from "@/hooks/use-profiles";
 import { useGatedContent } from "@/hooks/use-gated-content";
@@ -22,13 +22,11 @@ import { TransferCollectionOwnershipDialog } from "@/components/collection/trans
 import { ShareButton } from "@/components/shared/share-button";
 import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
-import { OrderSortControl, sortOrders, type OrderSort } from "@/components/collection/order-sort-control";
 import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
 import { CollectionTraitsTab } from "@/components/collection/collection-traits-tab";
 import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
-import { ClubOwnerActions } from "@/components/club/club-owner-actions";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
@@ -337,7 +335,7 @@ export default function CollectionPageClient() {
               {getService(collection.service)?.id === "ip-club" && (
                 <ClubOwnerActions
                   contractAddress={collection.contractAddress}
-                  owner={collection.owner}
+                  isOwner
                 />
               )}
               {collection.standard === "ERC1155" && getService(collection.service)?.id === "mip-erc1155" && (
