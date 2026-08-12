@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { useMedialaneClient } from "./use-medialane-client";
 import { normalizeAddress, type ApiOrdersQuery, type ApiOrder, type ApiResponse } from "@medialane/sdk";
 import { queryKeys } from "@/lib/query-keys";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { apiFetch } from "@/lib/api-fetch";
 
 const ACTIVE_ORDER_REFRESH_INTERVAL = 60_000;
 const ACTIVE_ORDER_DEDUPING_INTERVAL = 10_000;
@@ -118,16 +118,7 @@ export function useReceivedOffers(address: string | null) {
 
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiOrder[]>>(
     normalized ? ["received-offers", normalized] : null,
-    async () => {
-      const headers: Record<string, string> = {};
-      if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-      const res = await fetch(
-        `${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/orders/received/${normalized}?limit=50`,
-        { headers }
-      );
-      if (!res.ok) throw new Error("Failed to fetch received offers");
-      return res.json();
-    },
+    () => apiFetch<ApiResponse<ApiOrder[]>>(`/v1/orders/received/${normalized}?limit=50`),
     {
       revalidateOnFocus: false,
       refreshInterval: ACTIVE_ORDER_REFRESH_INTERVAL,
