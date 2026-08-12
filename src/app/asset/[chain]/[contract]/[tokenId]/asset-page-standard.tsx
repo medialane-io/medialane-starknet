@@ -31,7 +31,6 @@ import { SignedOutAssetActions } from "@/components/asset/signed-out-asset-actio
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 import { useFullTokenData } from "@/hooks/use-full-token-data";
-import { SponsorSolicitDialog } from "@/components/sponsorship/sponsor-solicit-dialog";
 
 export function AssetPageStandard() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
@@ -51,7 +50,6 @@ export function AssetPageStandard() {
   const [reportOpen, setReportOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [sponsorSolicitOpen, setSponsorSolicitOpen] = useState(false);
 
   const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
@@ -234,8 +232,6 @@ export function AssetPageStandard() {
               onOpenRemix={handleAutoRemix}
               showDealOption={remixPolicy.showDealOption}
               onProposeDeal={goToDeal}
-              showSponsorSolicitOption={isOwner}
-              onOpenSponsorSolicit={() => setSponsorSolicitOpen(true)}
             />
 
             {isERC1155 && balances.length > 0 ? (
@@ -339,14 +335,6 @@ export function AssetPageStandard() {
         hasActiveListing={activeListings.length > 0}
         mutateListings={mutateListings}
         dialogs={dialogs}
-      />
-
-      <SponsorSolicitDialog
-        open={sponsorSolicitOpen}
-        onOpenChange={setSponsorSolicitOpen}
-        nftContract={contract}
-        tokenId={tokenId}
-        tokenName={name}
       />
     </div>
   );
