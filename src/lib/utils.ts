@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { normalizeAddress } from "@medialane/sdk";
 import { SUPPORTED_TOKENS } from "./constants";
 import { FEATURED_COLLECTIONS } from "./featured-collections";
+import type { UsdPrices } from "@/hooks/use-usd-prices";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -64,6 +65,27 @@ export function formatDisplayPrice(price: string | number | null | undefined): s
   });
 
   return currencyPart ? `${formatted} ${currencyPart}` : formatted;
+}
+
+const fmtUsd = (n: number): string =>
+  n > 0 && n < 0.01 ? "<$0.01" : `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/**
+ * USD equivalent of a human-readable token amount, or null when there's no
+ * live rate for the currency — callers must render nothing rather than a
+ * stale or fabricated conversion.
+ */
+export function usdValueFor(
+  amountFormatted: string | null | undefined,
+  currency: string | null | undefined,
+  usdPrices: UsdPrices | null
+): string | null {
+  if (!amountFormatted || !currency || !usdPrices) return null;
+  const rate = usdPrices[currency.toUpperCase() as keyof UsdPrices];
+  if (rate == null) return null;
+  const amount = parseFloat(amountFormatted);
+  if (isNaN(amount)) return null;
+  return fmtUsd(amount * rate);
 }
 
 /**
