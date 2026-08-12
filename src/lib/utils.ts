@@ -80,7 +80,22 @@ export function ipfsToHttp(uri: string | null | undefined, width?: number): stri
     const cid = uri.slice(7); // strips "ipfs://"
     return width ? `/api/ipfs/${cid}?w=${width}` : `/api/ipfs/${cid}`;
   }
-  return uri;
+  if (uri.startsWith("https://") || uri.startsWith("http://")) {
+    // Route external images through the server-side proxy to avoid:
+    //  - CORS blocks on R2 buckets and CDNs without Access-Control-Allow-Origin
+    //  - Vercel image optimizer quota (/_next/image 402 on free plan)
+    return `/api/img?url=${encodeURIComponent(uri)}`;
+  }
+  // data:image/* is safe to render inline as-is: <img>/next-Image never executes
+  // embedded scripts in a data URI (only top-level navigation or <object>/<iframe>
+  // would), so this is the same trust class as the https:// branch above, not
+  // javascript:/blob:/data:text/html. On-chain generative collections (e.g. the
+  // living-render Lifeform/Wanderers set) return their `image` this way.
+  if (uri.startsWith("data:image/")) {
+    return uri;
+  }
+  // Reject javascript:, data:<non-image>, blob:, and any other non-allowlisted protocol.
+  return "/placeholder.svg";
 }
 
 /**

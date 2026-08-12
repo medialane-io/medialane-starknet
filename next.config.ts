@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @medialane/ui's single barrel entry point pulls all ~65 components (and
+  // their heaviest deps — framer-motion, Radix primitives, the full
+  // lucide-react set) into any route importing even one small component.
+  // Next's compiler rewrites barrel imports to per-file deep imports at
+  // build time when the package is listed here. See medialane-io's
+  // next.config.ts for the io measurement this was validated against.
+  experimental: {
+    optimizePackageImports: ["@medialane/ui"],
+  },
   // @cartridge/controller (Cartridge Controller wallet) ships its signing/
   // session engine as a WASM module (@cartridge/controller-wasm), imported
   // directly rather than lazy-loaded — webpack 5 doesn't parse `.wasm`
@@ -17,10 +26,40 @@ const nextConfig: NextConfig = {
   // instead) so only the client bundle ever needs the wasm experiment.
   serverExternalPackages: ["@cartridge/connector", "@cartridge/controller", "@cartridge/controller-wasm"],
   images: {
+    // All external images are proxied server-side through /api/ipfs and /api/img,
+    // so Vercel's /_next/image optimizer is not needed and hits quota on free plan.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "*",
+        hostname: "gateway.pinata.cloud",
+        pathname: "/ipfs/**",
+      },
+      {
+        // Dedicated Pinata gateways (e.g. myapp.mypinata.cloud)
+        protocol: "https",
+        hostname: "**.mypinata.cloud",
+      },
+      {
+        protocol: "https",
+        hostname: "ipfs.io",
+        pathname: "/ipfs/**",
+      },
+      {
+        protocol: "https",
+        hostname: "dweb.link",
+        pathname: "/ipfs/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cloudflare-ipfs.com",
+        pathname: "/ipfs/**",
+      },
+      {
+        // NFT token images can be hosted on any external CDN — allow all HTTPS sources.
+        // Restricting by hostname breaks images for any collection not on Pinata/IPFS.
+        protocol: "https",
+        hostname: "**",
       },
     ],
   },
