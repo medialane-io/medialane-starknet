@@ -94,10 +94,6 @@ export function AssetPageStandard() {
     router.push(`/create/remix/${contract}/${tokenId}`);
   };
 
-  const goToDeal = () => {
-    router.push(`/create/licensing/${contract}/${tokenId}`);
-  };
-
   if (isLoading) {
     return (
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 pb-8">
@@ -232,7 +228,11 @@ export function AssetPageStandard() {
               onOpenOffer={() => dialogs.setOfferOpen(true)}
               onOpenRemix={handleAutoRemix}
               showDealOption={remixPolicy.showDealOption}
-              onProposeDeal={goToDeal}
+              // No onProposeDeal — the License button is removed from this
+              // page, but showDealOption still goes through so
+              // AssetMarketplacePanel's "no-derivatives" fallback copy
+              // stays accurate. The button itself needs BOTH showDealOption
+              // AND onProposeDeal, so omitting just this one hides it.
             />
 
             {isERC1155 && balances.length > 0 ? (
