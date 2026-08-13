@@ -19,7 +19,13 @@ import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
  * so the user doesn't get a dialog AND a toast. Direct callers (portfolio
  * tables/grids, which have no dialog) omit it and keep the toast.
  */
-interface WriteOpts { silent?: boolean }
+interface WriteOpts {
+    silent?: boolean;
+    /** Auto-swap approve+swap calls (from lib/swap-calls.ts), prepended
+     *  ahead of the fulfill calls in the same atomic multicall when the
+     *  buyer is paying with a token other than the order's own currency. */
+    swapCalls?: Call[];
+}
 
 interface UseMarketplaceReturn {
     createListing: (
@@ -280,7 +286,15 @@ export function useMarketplace(): UseMarketplaceReturn {
 
             toast.info("Executing Purchase", { description: "Approve the final transaction to sweep the cart." });
 
-            const { txHash: hash } = await signer.execute([...fulfillCalls, ...feeCalls]);
+            // Auto-swap calls (if any) go FIRST — swap into the order's
+            // currency, then fulfill, then the platform fee. Same atomicity
+            // guarantee as every other bundled call here: swap and purchase
+            // either both land or both fail.
+            const { txHash: hash } = await signer.execute([
+                ...(opts?.swapCalls ?? []),
+                ...fulfillCalls,
+                ...feeCalls,
+            ]);
             // Best-effort per-item confirm — a failure here doesn't affect the tx.
             await Promise.all(
                 checkoutRes.data.map((r) => (r.id ? client.api.confirmIntent(r.id, hash).catch(() => {}) : Promise.resolve()))

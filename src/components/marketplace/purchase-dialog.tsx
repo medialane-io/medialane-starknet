@@ -29,6 +29,9 @@ import {
 } from "@/components/marketplace/marketplace-dialog-primitives";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
+import { useTokenBalance } from "@/hooks/use-token-balance";
+import { buildSwapCalls } from "@/lib/swap-calls";
+import { PayWithPicker } from "@/components/marketplace/pay-with-picker";
 
 interface PurchaseDialogProps {
   order: ApiOrder;
@@ -215,10 +218,23 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   const [step, setStep] = useState<Step>("details");
   const [quantity, setQuantity] = useState(1);
   const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
+  const [paymentSymbol, setPaymentSymbol] = useState<string | null>(null);
   const isERC1155 = order.offer.itemType === "ERC1155";
   const maxQty = isERC1155
     ? Math.max(1, parseInt(order.remainingAmount ?? order.offer.startAmount ?? "1", 10))
     : 1;
+
+  // The exact amount (raw wei, order's own currency) checkoutCart needs —
+  // shared by the balance check below and the swap-build step in handleBuy.
+  const requiredRaw = orderTotal(order, quantity);
+  const { raw: orderCurrencyBalance, isLoading: balanceLoading } = useTokenBalance(
+    order.price?.currency ?? "",
+    address ?? undefined
+  );
+  // Explicitly false (not null/loading) before showing the pay-with picker —
+  // never flash it while the balance is still resolving.
+  const needsSwap = !balanceLoading && orderCurrencyBalance !== null && orderCurrencyBalance < requiredRaw;
+  const canBuy = !needsSwap || !!paymentSymbol;
 
   useEffect(() => {
     if (open) {
@@ -226,6 +242,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
       setStep("details");
       setQuantity(1);
       setSuccessTxHash(null);
+      setPaymentSymbol(null);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -238,9 +255,34 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
       toast.error("This is your own listing — you can't buy it.");
       return;
     }
+    if (needsSwap && !paymentSymbol) return;
 
     try {
       setStep("processing");
+
+      // Auto-swap: buyer is paying with a token other than the order's own
+      // currency. Build a FRESH swap quote+calls right now (never reuse the
+      // picker's browsing estimate) and prepend them into the same atomic
+      // multicall as the fulfill call — one signature, one transaction.
+      // Unlike medialane-io, this is NOT gas-sponsored — the connected
+      // wallet pays gas as usual, exactly like every other purchase here.
+      let swapCalls: Awaited<ReturnType<typeof buildSwapCalls>>["calls"] | undefined;
+      if (paymentSymbol && order.price?.currency && address) {
+        try {
+          const built = await buildSwapCalls({
+            sellSymbol: paymentSymbol,
+            buySymbol: order.price.currency,
+            buyAmountRaw: orderTotal(order, quantity).toString(),
+            takerAddress: address,
+          });
+          swapCalls = built.calls;
+        } catch {
+          setStep("details");
+          toast.error("Price moved before the swap could be prepared — please try again.");
+          return;
+        }
+      }
+
       const item: CheckoutItem = {
         orderHash: order.orderHash,
         considerationToken: order.consideration.token,
@@ -250,7 +292,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         isERC1155,
         quantity: quantity.toString(),
       };
-      const hash = await checkoutCart([item], { silent: true });
+      const hash = await checkoutCart([item], { silent: true, swapCalls });
       if (hash) {
         setSuccessTxHash(hash);
         setStep("success");
@@ -349,6 +391,16 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 </div>
               ) : null}
 
+              {isConnected && needsSwap && order.price?.currency ? (
+                <PayWithPicker
+                  orderCurrency={order.price.currency}
+                  requiredRaw={requiredRaw}
+                  walletAddress={address}
+                  selected={paymentSymbol}
+                  onSelect={setPaymentSymbol}
+                />
+              ) : null}
+
               {error ? (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -374,14 +426,14 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 </div>
               ) : isConnected ? (
                 <div className="space-y-3">
-                  <div className="btn-border-animated p-[1px] rounded-xl">
+                  <div className={`btn-border-animated p-[1px] rounded-xl ${!canBuy ? "opacity-50 pointer-events-none" : ""}`}>
                     <Button
                       className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30"
                       onClick={handleBuy}
-                      disabled={isProcessing}
+                      disabled={isProcessing || !canBuy}
                     >
                       <ShoppingCart className="h-4 w-4" />
-                      Buy now
+                      {needsSwap && !paymentSymbol ? "Select a token to pay with" : "Buy now"}
                     </Button>
                   </div>
                   <div className="flex items-start justify-center gap-1.5">
