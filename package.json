@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@avnu/avnu-sdk": "4.2.0",
-    "@avnu/gasless-sdk": "^0.1.8",
     "@cartridge/connector": "^0.13.16",
     "@cartridge/presets": "^0.5.2",
     "@hookform/resolvers": "^3",
