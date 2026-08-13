@@ -11,8 +11,7 @@ import { useTokenListings } from "@/hooks/use-orders";
 import { useWallet } from "@/hooks/use-wallet";
 import { useComments } from "@/hooks/use-comments";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { ipfsToHttp, usdValueFor } from "@/lib/utils";
-import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { ipfsToHttp } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
 import { EXPLORER_URL } from "@/lib/constants";
@@ -54,12 +53,9 @@ export function AssetPageEdition() {
 
   const dialogs = useAssetMarketplaceDialogState();
   const {
-    activeListings, activeBids, cheapest, isOwner, myListing,
+    activeListings, activeBids, cheapest, cheapestUsd, isOwner, myListing,
     attributes, hasTemplateData, isDisplayAttr,
   } = useAssetMarketState(token, listings, walletAddress);
-
-  const usdPrices = useUsdPrices();
-  const cheapestUsd = usdValueFor(cheapest?.price?.formatted, cheapest?.price?.currency, usdPrices);
 
   const handleAcceptClick = async (order: ApiOrder) => {
     await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
