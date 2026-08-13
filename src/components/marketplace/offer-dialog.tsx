@@ -18,6 +18,8 @@ import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
 import { resolveTokenImage } from "@/lib/utils";
 import { getListableTokens } from "@medialane/sdk";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { usdValueFor } from "@/lib/utils";
 import {
   CurrencyPicker,
   DurationPicker,
@@ -61,6 +63,11 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
     resolver: zodResolver(schema),
     defaultValues: { price: "", currency: "USDC", durationSeconds: 604800 },
   });
+
+  const usdPrices = useUsdPrices();
+  const watchedPrice = form.watch("price");
+  const watchedCurrency = form.watch("currency");
+  const usdEquivalent = usdValueFor(watchedPrice || undefined, watchedCurrency, usdPrices);
 
   const onSubmit = async (values: FormValues) => {
     if (!isConnected) { toast.error("Connect your wallet first"); return; }
@@ -162,6 +169,9 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                           <span className="text-xs font-bold">{form.watch("currency")}</span>
                         </div>
                       </div>
+                      {usdEquivalent && (
+                        <p className="text-xs text-muted-foreground mt-1">≈ {usdEquivalent}</p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )} />

@@ -24,7 +24,8 @@ import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
 import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
 import { CollectionTraitsTab } from "@/components/collection/collection-traits-tab";
-import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner } from "@/lib/utils";
+import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner, usdValueFor } from "@/lib/utils";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
@@ -83,6 +84,7 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
 
   // Ownership + dialogs
   const { address: walletAddress } = useWallet();
+  const usdPrices = useUsdPrices();
   const [selectedToken, setSelectedToken] = useState<ApiToken | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const [transferToken, setTransferToken] = useState<ApiToken | null>(null);
@@ -172,11 +174,13 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
               const isOwner = collection?.standard === "ERC1155"
                 ? false
                 : checkIsOwner(t, walletAddress);
+              const listingOrder = t.activeOrders?.find((o) => o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155");
               return (
                 <TokenCard
                   key={`${t.contractAddress}-${t.tokenId}`}
                   token={t}
                   isOwner={isOwner}
+                  usdValue={usdValueFor(listingOrder?.price.formatted, listingOrder?.price.currency, usdPrices)}
                   onList={isOwner ? handleList : undefined}
                   onTransfer={isOwner ? handleTransfer : undefined}
                   onCancel={isOwner ? handleCancelRequest : undefined}

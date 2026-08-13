@@ -9,7 +9,8 @@ import { useTokenListings } from "@/hooks/use-orders";
 import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
-import { ipfsToHttp } from "@/lib/utils";
+import { ipfsToHttp, usdValueFor } from "@/lib/utils";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder, Chain } from "@medialane/sdk";
 import { getService } from "@medialane/sdk";
@@ -69,6 +70,9 @@ export function AssetPageStandard() {
     activeListings, activeBids, cheapest, isOwner, myListing,
     attributes, hasTemplateData, isDisplayAttr, parentContract, parentTokenId,
   } = useAssetMarketState(token, listings, walletAddress);
+
+  const usdPrices = useUsdPrices();
+  const cheapestUsd = usdValueFor(cheapest?.price?.formatted, cheapest?.price?.currency, usdPrices);
 
   const isERC1155 = (token?.standard ?? collection?.standard) === "ERC1155";
 
@@ -218,6 +222,7 @@ export function AssetPageStandard() {
               walletAddress={walletAddress}
               remixEnabled={remixPolicy.canRemixDirect}
               floorPriceRaw={collection?.floorPrice}
+              usdValue={cheapestUsd}
               lastSaleRaw={lastSaleRaw}
               renderAuthAction={() => (
                 <SignedOutAssetActions chain="STARKNET" contract={contract} tokenId={tokenId} />

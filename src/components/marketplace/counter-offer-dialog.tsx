@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { usdValueFor } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, ArrowLeftRight } from "lucide-react";
@@ -56,6 +58,10 @@ export function CounterOfferDialog({
     defaultValues: { price: "", durationSeconds: 604800, message: "" },
   });
 
+  const usdPrices = useUsdPrices();
+  const watchedPrice = form.watch("price");
+  const usdEquivalent = usdValueFor(watchedPrice || undefined, currencySymbol, usdPrices);
+
   const onSubmit = async (values: FormValues) => {
     if (!isConnected) { toast.error("Connect your wallet first"); return; }
     try {
@@ -99,6 +105,9 @@ export function CounterOfferDialog({
                     <FormControl>
                       <Input type="number" step="any" placeholder="0.00" {...field} />
                     </FormControl>
+                    {usdEquivalent && (
+                      <p className="text-xs text-muted-foreground">≈ {usdEquivalent}</p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )} />
