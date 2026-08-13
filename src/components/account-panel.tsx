@@ -72,6 +72,27 @@ function SmartChip({
 }
 
 /**
+ * Settings row — same icon/spacing language as SmartChip, but the theme
+ * toggle sits as a sibling control after the link rather than inside it:
+ * NavThemeToggle renders its own <button>s, and nesting interactive
+ * controls inside an <a> is both invalid HTML and would fire navigation
+ * on every theme click.
+ */
+function SettingsRow({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <div className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/40">
+      <Link href="/settings" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-3">
+        <ChipIcon>
+          <Settings className="h-4 w-4" />
+        </ChipIcon>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">Settings</span>
+      </Link>
+      <NavThemeToggle />
+    </div>
+  );
+}
+
+/**
  * The account/wallet panel content — identity, a compact contextual
  * dashboard (last activity, pending offers, asset count — each collapsed
  * to one smart chip, only rendered when there's something real to show),
@@ -141,37 +162,24 @@ export function AccountPanel() {
         </Link>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg bg-muted/30 px-2 py-1.5">
-        <Link
-          href="/settings"
-          onClick={close}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-          aria-label="Settings"
-        >
-          <Settings className="h-4 w-4" />
-        </Link>
-        <NavThemeToggle />
+      <div className="space-y-1">
+        <SettingsRow onNavigate={close} />
+        {lastActivity && (
+          <SmartChip href="/portfolio/activity" icon={<ActivityIcon className="h-4 w-4" />} onNavigate={close}>
+            {activitySummary(lastActivity)} · {timeAgo(lastActivity.timestamp)}
+          </SmartChip>
+        )}
+        {offersCount > 0 && (
+          <SmartChip href="/portfolio/received" icon={<HandCoins className="h-4 w-4" />} onNavigate={close}>
+            {offersCount} offer{offersCount > 1 ? "s" : ""} received
+          </SmartChip>
+        )}
+        {assetsCount > 0 && (
+          <SmartChip href="/portfolio/assets" icon={<LayoutGrid className="h-4 w-4" />} onNavigate={close}>
+            {assetsCount} asset{assetsCount > 1 ? "s" : ""}
+          </SmartChip>
+        )}
       </div>
-
-      {(lastActivity || offersCount > 0 || assetsCount > 0) && (
-        <div className="space-y-1">
-          {lastActivity && (
-            <SmartChip href="/portfolio/activity" icon={<ActivityIcon className="h-4 w-4" />} onNavigate={close}>
-              {activitySummary(lastActivity)} · {timeAgo(lastActivity.timestamp)}
-            </SmartChip>
-          )}
-          {offersCount > 0 && (
-            <SmartChip href="/portfolio/received" icon={<HandCoins className="h-4 w-4" />} onNavigate={close}>
-              {offersCount} offer{offersCount > 1 ? "s" : ""} received
-            </SmartChip>
-          )}
-          {assetsCount > 0 && (
-            <SmartChip href="/portfolio/assets" icon={<LayoutGrid className="h-4 w-4" />} onNavigate={close}>
-              {assetsCount} asset{assetsCount > 1 ? "s" : ""}
-            </SmartChip>
-          )}
-        </div>
-      )}
 
       {isWrongNetwork && (
         <div className="flex gap-3 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
