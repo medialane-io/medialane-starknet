@@ -30,7 +30,7 @@ export function OpenInIoCallout({ chain, contract, tokenId }: OpenInIoCalloutPro
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold leading-snug">Trade with Google or email</p>
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-          Buy, offer, and collect on medialane.io — no wallet needed.
+          Launch, trade with frictionless experience
         </p>
       </div>
     </a>
