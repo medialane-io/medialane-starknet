@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import Image from "next/image";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder, ApiToken } from "@medialane/sdk";
-import { checkIsOwner } from "@/lib/utils";
+import { checkIsOwner, usdValueFor } from "@/lib/utils";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { LICENSE_TRAIT_TYPES } from "@/types/ip";
 import type { IPType } from "@/types/ip";
 import { IP_TEMPLATES, EMBED_PLATFORM_META, SOCIAL_PLATFORM_META } from "@/lib/ip-templates";
@@ -58,7 +59,7 @@ export function useAssetMarketState(
   listings: ApiOrder[],
   walletAddress: string | null | undefined,
 ) {
-  return useMemo(() => {
+  const marketState = useMemo(() => {
     // Listings = NFT in offer (someone selling); bids = ERC20 in offer (someone buying).
     const activeListings = listings.filter(
       (l) => l.status === "ACTIVE" && (l.offer.itemType === "ERC721" || l.offer.itemType === "ERC1155")
@@ -115,4 +116,15 @@ export function useAssetMarketState(
       parentTokenId,
     };
   }, [token, listings, walletAddress]);
+
+  // Kept as a separate, lightweight memo rather than folded into the heavy
+  // memo above — usdPrices refreshes every 60s and shouldn't force a
+  // recompute of everything else in marketState.
+  const usdPrices = useUsdPrices();
+  const cheapestUsd = useMemo(
+    () => usdValueFor(marketState.cheapest?.price?.formatted, marketState.cheapest?.price?.currency, usdPrices),
+    [marketState.cheapest, usdPrices]
+  );
+
+  return { ...marketState, cheapestUsd };
 }

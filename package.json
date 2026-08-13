@@ -13,12 +13,11 @@
   },
   "dependencies": {
     "@avnu/avnu-sdk": "4.2.0",
-    "@avnu/gasless-sdk": "^0.1.8",
     "@cartridge/connector": "^0.13.16",
     "@cartridge/presets": "^0.5.2",
     "@hookform/resolvers": "^3",
     "@medialane/sdk": "0.85.5",
-    "@medialane/ui": "0.115.0",
+    "@medialane/ui": "0.116.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@starknet-react/chains": "^5.0.3",
     "@starknet-react/core": "^5.0.3",
