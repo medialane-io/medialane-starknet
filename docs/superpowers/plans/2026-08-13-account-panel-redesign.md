@@ -1,3 +1,50 @@
+# Account Panel Redesign Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace `account-panel.tsx`'s crypto-balance readout and off-brand colored badges with a compact contextual dashboard — smart-chip Activity/Offers-received/My-assets rows and a Settings/Theme action row — per `docs/superpowers/specs/2026-08-13-account-panel-redesign-design.md`.
+
+**Architecture:** Single-file rewrite of `src/components/account-panel.tsx`. Every data source, route, and reusable component (`NavThemeToggle`, `useActivitiesByAddress`, `useReceivedOffers`, `useTokensByOwner`) already exists in the codebase — no new hooks, no new shared components, no backend changes.
+
+**Tech Stack:** Next.js, React, `@medialane/ui` (`NavThemeToggle`), existing local hooks.
+
+## Global Constraints
+
+- Brand palette is `brand-blue`/`brand-rose`/`brand-purple`/`brand-orange` only — no green, no other ad hoc colors for non-alert UI. Red stays reserved for the wrong-network alert (a real state, not decoration).
+- Content priority if the card gets too tall/busy: Activity > Offers received > My assets — cut "My assets" first.
+- No skeleton loaders and no empty-state placeholders for the smart chips — a chip that has nothing to show (loading, zero data) simply doesn't render.
+- Reuse the existing `bg-foreground/[0.06]` muted circular chip treatment for icons (established this session in `dual-price.tsx`, now used here too) — don't invent a new icon-container style.
+
+---
+
+## Task 1: Redesign account-panel.tsx
+
+**Files:**
+- Modify: `src/components/account-panel.tsx`
+
+**Interfaces:**
+- Consumes (all pre-existing, no changes needed to any of these):
+  - `useActivitiesByAddress(address: string | null)` from `@/hooks/use-activities` → `{ activities: ApiActivity[] }`
+  - `useReceivedOffers(address: string | null)` from `@/hooks/use-orders` → `{ orders: ApiOrder[] }`
+  - `useTokensByOwner(address: string | null, page: number, limit: number)` from `@/hooks/use-tokens` → `{ meta?: { total?: number } }`
+  - `NavThemeToggle` (no props) from `@medialane/ui`
+  - `timeAgo(dateStr: string): string` from `@/lib/utils`
+  - `assetHref` not needed (chips link to portfolio list pages, not individual assets)
+  - `ApiActivity` type from `@medialane/sdk`: `{ type: "mint"|"transfer"|"sale"|"listing"|"offer"|"cancelled"; timestamp: string; token?: { name: string | null } }`
+
+- [ ] **Step 1: Replace the full file contents**
+
+Read the current file first to confirm it still matches this plan's assumptions (it was last touched by the XP-badge-removal commit, `7770f1c`):
+
+```bash
+cat src/components/account-panel.tsx
+```
+
+Expected: matches the version with `CreatorScoreInline` already removed, still has the `Balance` block and the two colored `Badge`s (the two things this task removes).
+
+Replace the entire file with:
+
+```tsx
 "use client";
 
 import Image from "next/image";
@@ -196,3 +243,71 @@ export function AccountPanel() {
     </div>
   );
 }
+```
+
+Notes on what changed vs. the spec's ASCII mock: the header keeps its existing top-right Explorer icon-button unchanged (proven, already there) rather than duplicating it into the new action row — the action row below the header holds only Settings + Theme toggle, not Explorer a second time. No close (✕) button was added — `AccountPanel` never rendered its own; it's rendered inside `<NavAccountSheet>`, which owns the sheet's own close chrome (confirmed: original file had no `close`-triggered X button either, only `handleDisconnect` called `close()`).
+
+- [ ] **Step 2: Typecheck**
+
+Run: `bun run typecheck`
+Expected: no errors.
+
+- [ ] **Step 3: Lint**
+
+Run: `bun run lint`
+Expected: no new warnings/errors in `account-panel.tsx` (pre-existing warnings elsewhere in the repo are unrelated and not a blocker).
+
+- [ ] **Step 4: Full test suite**
+
+Run: `bun test`
+Expected: all existing tests still pass (this file has no dedicated test — this just confirms nothing else broke).
+
+- [ ] **Step 5: Manual verification**
+
+Since there's no test file for this component, verify by hand with a connected wallet:
+- Header shows avatar, address, copy button, muted `WalletName · NetworkName` caption line (no colored badges), explorer icon-button.
+- Action row shows Settings icon-button + Theme toggle (Sun/Moon segmented control).
+- Activity chip appears if the connected address has any activity, showing the most recent event only, correctly worded per its `type`.
+- Offers-received chip appears only if `useReceivedOffers` returns at least one order, and disappears when it's zero.
+- Assets chip appears only if the address owns at least one token, showing the total count.
+- Wrong-network banner and Disconnect button behave exactly as before (unchanged code paths).
+- Clicking Settings, or any smart chip, navigates and closes the sheet.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/components/account-panel.tsx
+git commit -m "$(cat <<'EOF'
+refactor: redesign account panel as a compact contextual dashboard
+
+Drops the crypto balance (the connected wallet already shows it) and
+the off-brand emerald-green badges, replacing them with: a single
+muted wallet/network caption line, a Settings + Theme action row, and
+up to three smart chips (last activity, offers received, asset count)
+that only render when there's real content — no skeletons, no empty
+states. Per docs/superpowers/specs/2026-08-13-account-panel-redesign-design.md.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
+## Self-Review
+
+**Spec coverage:** Every spec section maps to this task — identity header restyle, icon-action row (Settings + Theme; Explorer stays in its existing header slot per the note above, a deliberate deviation from the literal ASCII mock to avoid duplicating it), the three conditional smart chips in priority order, wrong-network banner kept, Disconnect kept, balance and colored badges removed.
+
+**Placeholder scan:** None. The one open note (Explorer placement, no invented close button) is explained inline as an intentional, justified deviation from the spec's illustrative mock — not a gap.
+
+**Type consistency:** `ApiActivity["type"]` union used directly as the `ACTIVITY_VERB` record key type, so it can't drift from the SDK's actual type values. Hook return shapes (`activities`, `orders`, `meta`) match what Step 1's Interfaces section declares, verified against each hook's real source during spec-writing.
+
+---
+
+Plan complete and saved to `docs/superpowers/plans/2026-08-13-account-panel-redesign.md`. Two execution options:
+
+**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+
+**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+
+**Which approach?**
