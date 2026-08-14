@@ -39,9 +39,6 @@ function activitySummary(activity: ApiActivity): string {
   return name ? `${ACTIVITY_VERB[activity.type]} "${name}"` : ACTIVITY_VERB[activity.type];
 }
 
-/** Icon in the same muted circular chip treatment used for currency icons
- *  elsewhere in the app (dual-price.tsx's CoinChip) — keeps smart-chip
- *  icons visually consistent with the rest of the design system. */
 function ChipIcon({ children }: { children: React.ReactNode }) {
   return (
     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-foreground/[0.06] text-muted-foreground">
@@ -71,13 +68,6 @@ function SmartChip({
   );
 }
 
-/**
- * Settings row — same icon/spacing language as SmartChip, but the theme
- * toggle sits as a sibling control after the link rather than inside it:
- * NavThemeToggle renders its own <button>s, and nesting interactive
- * controls inside an <a> is both invalid HTML and would fire navigation
- * on every theme click.
- */
 function SettingsRow({ onNavigate }: { onNavigate: () => void }) {
   return (
     <div className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/40">
@@ -92,21 +82,12 @@ function SettingsRow({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
-/**
- * The account/wallet panel content — identity, a compact contextual
- * dashboard (last activity, pending offers, asset count — each collapsed
- * to one smart chip, only rendered when there's something real to show),
- * and disconnect. No crypto balance here — the connected wallet already
- * shows that natively. Rendered once, globally, inside `<NavAccountSheet>`.
- */
 export function AccountPanel() {
   const { chainId, connector } = useAccount();
   const { networkConfig } = useNetwork();
   const { address, disconnect } = useWallet();
   const { close } = useNavAccountSheet();
-  // The connector's own display name (e.g. "Ready Wallet (formerly Argent)",
-  // "Braavos", "Cartridge Controller") — same source connect-dialog.tsx uses,
-  // so this never drifts out of sync with what a wallet actually calls itself.
+
   const walletName = connector?.name ?? "Browser Wallet";
   const walletIconSrc = getConnectorIconSrc(connector?.icon);
 

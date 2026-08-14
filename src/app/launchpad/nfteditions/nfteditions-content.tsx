@@ -25,7 +25,7 @@ function CollectionRow({ col }: { col: any }) {
 
   return (
     <div className="group bento-cell overflow-hidden flex flex-col sm:flex-row items-stretch">
-      {/* Thumbnail */}
+
       <div className="relative w-full sm:w-32 aspect-square sm:aspect-auto shrink-0 overflow-hidden bg-muted">
         {showImage ? (
           <Image
@@ -43,7 +43,6 @@ function CollectionRow({ col }: { col: any }) {
         )}
       </div>
 
-      {/* Body */}
       <div className="flex flex-col justify-between gap-4 p-5 flex-1 min-w-0">
         <div className="space-y-1">
           <div className="flex items-start justify-between gap-2">
@@ -70,7 +69,6 @@ function CollectionRow({ col }: { col: any }) {
             </p>
           )}
 
-          {/* Stats */}
           <div className="flex items-center gap-3 pt-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Package className="h-3 w-3" />
@@ -88,7 +86,6 @@ function CollectionRow({ col }: { col: any }) {
           </div>
         </div>
 
-        {/* CTA */}
         <div className="flex items-center gap-2">
           <Link
             href={`/launchpad/nfteditions/${col.contractAddress}/mint`}
@@ -137,7 +134,6 @@ export function NFTEditionsContent() {
   return (
     <div className="pb-16">
 
-      {/* ── Header ── */}
       <section className="px-4 pt-10 max-w-5xl mx-auto">
         <ClaimBackButton />
         <FadeIn>
@@ -160,9 +156,7 @@ export function NFTEditionsContent() {
               New collection
             </Link>
             <Button variant="outline" size="sm" asChild>
-              {/* Plain <a> + absolute URL to docs.medialane.io — Next/Link
-                  with a relative /learn path would trigger an RSC prefetch
-                  that then 301s cross-origin and CORS-rejects. */}
+
               <a
                 href="https://docs.medialane.io/learn/ip-collection-1155"
                 target="_blank"
@@ -175,7 +169,6 @@ export function NFTEditionsContent() {
         </FadeIn>
       </section>
 
-      {/* ── Collections list ── */}
       <section className="px-4 pt-8 space-y-5 max-w-5xl mx-auto">
         {!isConnected ? (
           <FadeIn>

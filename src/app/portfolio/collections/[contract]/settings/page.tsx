@@ -223,11 +223,10 @@ export default function CollectionSettingsPage({ params }: Props) {
         discordUrl: form.discordUrl || null,
         telegramUrl: form.telegramUrl || null,
         gatedContentTitle: form.gatedEnabled ? (form.gatedContentTitle || null) : null,
-        // gatedContentUrl and gatedContentType are accepted by the backend but not
-        // yet reflected in ApiCollectionProfile — cast until the SDK type catches up
+
         gatedContentUrl: form.gatedEnabled ? (form.gatedContentUrl || null) : null,
         gatedContentType: form.gatedEnabled ? (form.gatedContentType || null) : null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       } as any;
       await getMedialaneClient().api.updateCollectionProfile(contract, payload, "");
       await mutate();
@@ -264,7 +263,6 @@ export default function CollectionSettingsPage({ params }: Props) {
         <p className="text-sm text-muted-foreground mt-1">Update your collection profile and links.</p>
       </div>
 
-      {/* Identity */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Identity</h3>
@@ -285,7 +283,6 @@ export default function CollectionSettingsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Media */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Media</h3>
@@ -297,7 +294,6 @@ export default function CollectionSettingsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Links */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Links</h3>
@@ -311,7 +307,6 @@ export default function CollectionSettingsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Exclusive content */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -381,7 +376,6 @@ export default function CollectionSettingsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Collection URL slug */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">

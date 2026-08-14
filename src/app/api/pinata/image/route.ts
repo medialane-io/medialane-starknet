@@ -1,14 +1,4 @@
-/**
- * POST /api/pinata/image
- *
- * Uploads a single image file to IPFS via medialane-backend's metered Pinata path.
- * Requires a valid SIWS wallet session.
- *
- * Accepts multipart/form-data:
- *   file  File  — image (JPG/PNG/GIF/SVG/WebP, max 10 MB)
- *
- * Response: { imageUri: "ipfs://...", cid: string }
- */
+
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSiwsWallet } from "@/lib/siws-server";

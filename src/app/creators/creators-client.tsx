@@ -19,17 +19,13 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
   const avatarUrl = creator.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
   const displayName = creator.displayName || `@${creator.username}`;
 
-  // Deterministic gradient from username characters
   const hue = (creator.username ?? "a").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
   const hue2 = (hue + 60) % 360;
   const fallbackGradient = `linear-gradient(135deg, hsl(${hue},55%,35%), hsl(${hue2},50%,22%))`;
 
-  // Fetch collection images only when creator has no uploaded avatar
   const { collections } = useCollectionsByOwner(!avatarUrl ? creator.walletAddress : null);
   const fallbackImage = collections[0]?.image ? ipfsToHttp(collections[0].image) : null;
 
-  // The avatar fills the card — same image, both as the full-bleed background
-  // and the small avatar chip.
   const resolvedImage = avatarUrl ?? fallbackImage;
 
   return (
@@ -37,7 +33,7 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
       href={`/creator/${creator.username}`}
       className="block relative aspect-[3/4] overflow-hidden rounded-2xl active:scale-[0.98] transition-transform duration-150 select-none"
     >
-      {/* Full-bleed background */}
+
       {resolvedImage ? (
         <Image
           src={resolvedImage}
@@ -52,10 +48,8 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
         <div className="absolute inset-0" style={{ background: fallbackGradient }} />
       )}
 
-      {/* Gradient scrim — heavier at bottom for legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-      {/* Social icons — top right */}
       {(creator.twitterUrl || creator.websiteUrl) && (
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
           {creator.twitterUrl && (
@@ -71,9 +65,8 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
         </div>
       )}
 
-      {/* Info overlay — bottom */}
       <div className="absolute bottom-0 inset-x-0 p-4 space-y-2.5 z-10">
-        {/* Avatar */}
+
         <div
           className="h-11 w-11 rounded-full ring-2 ring-white/20 overflow-hidden flex items-center justify-center shrink-0"
           style={!resolvedImage ? { background: fallbackGradient } : {}}
@@ -87,7 +80,6 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
           )}
         </div>
 
-        {/* Name + username */}
         <div>
           <p className="font-bold text-white text-base leading-snug truncate">{displayName}</p>
           {creator.displayName && (
@@ -98,7 +90,6 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
           )}
         </div>
 
-        {/* Bio */}
         {creator.bio && (
           <p className="text-[11px] text-white/65 line-clamp-2 leading-relaxed">
             {creator.bio}
@@ -134,7 +125,6 @@ export default function CreatorsPageClient() {
 
   const { creators, total, isLoading } = useCreators(debouncedSearch || undefined, page, 20);
 
-  // Reset accumulated list when search query changes
   useEffect(() => {
     if (prevSearch.current !== debouncedSearch) {
       prevSearch.current = debouncedSearch;
@@ -143,7 +133,6 @@ export default function CreatorsPageClient() {
     }
   }, [debouncedSearch]);
 
-  // Append newly loaded page to the accumulated list
   useEffect(() => {
     if (isLoading || creators.length === 0) return;
     setAllCreators((prev) => {
@@ -157,7 +146,7 @@ export default function CreatorsPageClient() {
 
   return (
     <div className="pb-16">
-      {/* Hero */}
+
       <section className="relative border-b border-border/50 overflow-hidden">
         <div className="px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
           <FadeIn>
@@ -178,7 +167,6 @@ export default function CreatorsPageClient() {
             </p>
           </FadeIn>
 
-          {/* Stats + search row */}
           <FadeIn delay={0.22}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               {!isInitialLoading && total > 0 && (
@@ -211,7 +199,6 @@ export default function CreatorsPageClient() {
         </div>
       </section>
 
-      {/* Grid */}
       <section className="px-4 sm:px-6 lg:px-8 py-8">
         {isInitialLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

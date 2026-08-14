@@ -130,7 +130,7 @@ export function CoinsScanList({ query }: { query: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Type filter pills */}
+
       <div className="flex items-center gap-2 flex-wrap">
         {([
           ["all", "All tokens"],
@@ -152,7 +152,6 @@ export function CoinsScanList({ query }: { query: string }) {
         ))}
       </div>
 
-      {/* Scan list */}
       {isLoading && items.length === 0 ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => <CoinScanRowSkeleton key={i} />)}

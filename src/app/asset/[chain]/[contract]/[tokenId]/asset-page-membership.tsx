@@ -1,11 +1,5 @@
 "use client";
 
-// Membership asset page — the ip-club uiVariant. Built on the same shared
-// modules as the edition page, with the token presented as a membership tier:
-// the on-chain validity window and supply from get_membership, and a
-// holder-facing "Your membership" state driven by the on-chain is_member_of
-// check. The window gates membership, never minting or trading.
-
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
@@ -36,8 +30,6 @@ import { HelpIcon } from "@/components/ui/help-icon";
 import { SignedOutAssetActions } from "@/components/asset/signed-out-asset-actions";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
-
-// ── Membership status (window-derived only) ───────────────────────────────────
 
 type MembershipStatus = "upcoming" | "active" | "ended" | "lifetime";
 
@@ -86,9 +78,6 @@ function MembershipStatusChip({ status }: { status: MembershipStatus }) {
     </span>
   );
 }
-
-// ── Membership panel — identity, supply, royalty, validity window, and the
-// connected holder's own state (quantity + on-chain is_member_of).
 
 function MembershipPanel({
   membership,
@@ -145,8 +134,6 @@ function MembershipPanel({
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export function AssetPageMembership() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
@@ -168,7 +155,7 @@ export function AssetPageMembership() {
   const [reportOpen, setReportOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
 
-  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false);
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
   const dialogs = useAssetMarketplaceDialogState();

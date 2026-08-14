@@ -1,10 +1,4 @@
-/** Friendly messaging for IPFS upload failures.
- *
- * Uploads are gated by a one-time SIWS sign-in signature. Wallets surface that
- * request in their own UX (Ready X asks email-account users to unlock their
- * smart account first) — when the user declines, the generic "upload failed"
- * toast hid what actually happened. Detect the rejection and say so.
- */
+
 
 export function isUserRejection(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err ?? "");

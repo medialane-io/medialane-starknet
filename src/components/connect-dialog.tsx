@@ -18,13 +18,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { WALLET_INSTALL_URLS, getConnectorIconSrc } from "@/lib/wallet-connectors";
 
-// ---------------------------------------------------------------------------
-// Global open/close — same singleton-event pattern as @medialane/ui's
-// useNavAccountSheet, so every trigger across the app (header, gates, asset
-// pages, the command menu's "Log in" item) shares ONE dialog instead of each
-// <ConnectWallet/> mount rendering its own.
-// ---------------------------------------------------------------------------
-
 const CONNECT_OPEN = "ml:connect-open";
 const CONNECT_CLOSE = "ml:connect-close";
 
@@ -35,11 +28,6 @@ export function useConnectDialog() {
   };
 }
 
-/**
- * The connector picker (Ready / Braavos) — mounted once, globally, in the
- * Shell. Auto-closes on a successful connect and reopens on a failed one
- * (the friendly error toast fires either way).
- */
 export function ConnectDialog() {
   const { connectors } = useConnect();
   const { isConnected, isConnecting: sessionConnecting, connect } = useWallet();
@@ -57,7 +45,6 @@ export function ConnectDialog() {
     };
   }, []);
 
-  // Auto-close once a connection actually completes.
   useEffect(() => {
     if (isConnected) setOpen(false);
   }, [isConnected]);

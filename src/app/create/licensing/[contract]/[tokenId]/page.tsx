@@ -142,7 +142,7 @@ export default function CreateLicensingPage() {
       </div>
     );
   }
-  // You can't license your own work; licensing needs a reachable Medialane owner.
+
   if (viewerIsOwner || !policy.dealAvailable) {
     router.replace(assetHref("STARKNET", contract, tokenId));
     return null;

@@ -29,7 +29,7 @@ export function getCurrency(tokenAddress: string) {
 function adaptiveDecimals(num: number): number {
   if (num === 0 || num >= 1) return 2;
   if (num >= 0.01) return 4;
-  // Show enough decimals to reveal 2 significant figures (e.g. 0.000014 → 6)
+
   const leadingZeros = Math.floor(-Math.log10(Math.abs(num)));
   return leadingZeros + 2;
 }
@@ -70,11 +70,6 @@ export function formatDisplayPrice(price: string | number | null | undefined): s
 const fmtUsd = (n: number): string =>
   n > 0 && n < 0.01 ? "<$0.01" : `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-/**
- * USD equivalent of a human-readable token amount, or null when there's no
- * live rate for the currency — callers must render nothing rather than a
- * stale or fabricated conversion.
- */
 export function usdValueFor(
   amountFormatted: string | null | undefined,
   currency: string | null | undefined,
@@ -88,49 +83,28 @@ export function usdValueFor(
   return fmtUsd(amount * rate);
 }
 
-/**
- * @param width Optional display width (px) for thumbnail/avatar slots — requests an
- * on-the-fly resized rendition from the IPFS proxy instead of the full original file.
- * Omit for full-size (hero images, lightbox, etc).
- */
 export function ipfsToHttp(uri: string | null | undefined, width?: number): string {
   if (!uri) return "/placeholder.svg";
   if (uri.startsWith("ipfs://")) {
-    // Route through our server-side proxy (/api/ipfs/[...cid]) to avoid:
-    //  - Pinata's CORP header blocking cross-origin image loads on free plans
-    //  - Client-visible 429 rate-limit errors from the public gateway
-    const cid = uri.slice(7); // strips "ipfs://"
+
+    const cid = uri.slice(7);
     return width ? `/api/ipfs/${cid}?w=${width}` : `/api/ipfs/${cid}`;
   }
   if (uri.startsWith("https://") || uri.startsWith("http://")) {
-    // Route external images through the server-side proxy to avoid:
-    //  - CORS blocks on R2 buckets and CDNs without Access-Control-Allow-Origin
-    //  - Vercel image optimizer quota (/_next/image 402 on free plan)
+
     return `/api/img?url=${encodeURIComponent(uri)}`;
   }
-  // data:image/* is safe to render inline as-is: <img>/next-Image never executes
-  // embedded scripts in a data URI (only top-level navigation or <object>/<iframe>
-  // would), so this is the same trust class as the https:// branch above, not
-  // javascript:/blob:/data:text/html. On-chain generative collections (e.g. the
-  // living-render Lifeform/Wanderers set) return their `image` this way.
+
   if (uri.startsWith("data:image/")) {
     return uri;
   }
-  // Reject javascript:, data:<non-image>, blob:, and any other non-allowlisted protocol.
+
   return "/placeholder.svg";
 }
 
-/**
- * Resolve a token/collection image value for display in marketplace dialogs and
- * cards. Returns a browser-loadable URL, or `null` when there's no image (so the
- * UI can show its own fallback rather than the /placeholder.svg sentinel).
- * Idempotent: already-resolved URLs (http, /api/ipfs, …) pass through unchanged,
- * so callers may pass a raw `ipfs://` value or an already-resolved one.
- */
 export function resolveTokenImage(raw: string | null | undefined): string | null {
   if (!raw) return null;
-  // Already a resolved/proxied URL (our own /api/* routes or the placeholder
-  // sentinel) — pass through so callers may hand us raw or resolved values.
+
   if (raw.startsWith("/")) return raw;
   return ipfsToHttp(raw);
 }
@@ -148,11 +122,6 @@ export function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
-/**
- * Executes an array of async factory functions in series with a rate-limit
- * delay between each call. Returns all settled results (errors are logged and
- * skipped so one failing fetch doesn't abort the rest).
- */
 export async function fetchWithRateLimit<T>(
   factories: Array<() => Promise<T>>,
   delayMs = 500
@@ -169,12 +138,10 @@ export async function fetchWithRateLimit<T>(
   return results;
 }
 
-/** Converts a bigint or numeric string to a 0x-prefixed hex string. */
 export function toHexString(value: bigint | string | number): string {
   return "0x" + BigInt(value).toString(16);
 }
 
-/** Returns true if the given collection address/id is in the featured list. */
 export function isCollectionFeatured(addressOrId: string): boolean {
   if (!addressOrId) return false;
   const norm = normalizeAddress("STARKNET", addressOrId).toLowerCase();
@@ -184,7 +151,7 @@ export function isCollectionFeatured(addressOrId: string): boolean {
 }
 
 export function timeUntil(dateStr: string | number): string {
-  // Accept Unix seconds as number, numeric string (BigInt serialized), or ISO date string.
+
   const raw = typeof dateStr === "string" && /^\d+$/.test(dateStr.trim())
     ? Number(dateStr)
     : dateStr;
@@ -198,11 +165,6 @@ export function timeUntil(dateStr: string | number): string {
   return `${hours}h ${mins}m`;
 }
 
-/**
- * Check if a wallet address owns (or co-owns) a token.
- * Checks `balances` first (ERC-721 and ERC-1155 via TokenBalance).
- * Falls back to the legacy `owner` field for backward compatibility.
- */
 export function checkIsOwner(
   token: { owner?: string | null; balances?: Array<{ owner: string; amount: string }> | null } | null | undefined,
   walletAddress: string | null | undefined

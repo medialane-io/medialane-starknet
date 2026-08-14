@@ -22,7 +22,6 @@ import { assetHref } from "@/lib/routes";
 
 const PAGE_SIZE = 24;
 
-// ---- Filter chip (shared pill used in the filters dialog) ----
 function FilterChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
     <button
@@ -39,7 +38,6 @@ function FilterChip({ active, onClick, label }: { active: boolean; onClick: () =
   );
 }
 
-// ---- Single token card ----
 function TokenBrowseCard({ token }: { token: ApiToken }) {
   const { isConnected: isSignedIn } = useWallet();
   const router = useRouter();
@@ -49,11 +47,7 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
   const image = ipfsToHttp(token.metadata?.image);
   const name = token.metadata?.name ?? `#${token.tokenId}`;
   const activeOrder = token.activeOrders?.[0];
-  // `token.standard` is the canonical field (derived from the parent collection
-  // at index time). The `.collection?.standard` fallback existed when the
-  // backend didn't yet serialize standard on tokens; that was fixed in SDK v0.6.5.
-  // ApiToken has no `.collection` field, so the second cast was always
-  // dead code — drop it. Keep the activeOrder hint for orphan-token edge cases.
+
   const tokenStandard =
     token.standard ??
     (activeOrder?.offer.itemType === "ERC1155" ? "ERC1155" : undefined);
@@ -65,7 +59,7 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
 
   return (
     <div className="rounded-xl border border-border overflow-hidden bg-card flex flex-col">
-      {/* Image + info — clickable to asset page */}
+
       <Link href={assetHref("STARKNET", token.contractAddress, token.tokenId)} className="block flex-1">
         <div className="aspect-square overflow-hidden bg-muted relative">
           {image && !imgError ? (
@@ -100,7 +94,6 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
         </div>
       </Link>
 
-      {/* Action row — signed-in only; outside Link to prevent navigation on click */}
       {isSignedIn && (
         <div className="px-2 pb-2 pt-0 flex gap-1.5">
           <div className="btn-border-animated p-[1px] rounded-lg flex-1">
@@ -152,7 +145,6 @@ function TokenBrowseCardSkeleton() {
   );
 }
 
-// ---- Main page ----
 interface IpTypePageClientProps {
   slug: string;
 }
@@ -166,14 +158,12 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
   const [allTokens, setAllTokens] = useState<ApiToken[]>([]);
   const prevSlug = useRef(slug);
 
-  // Filter + sort state
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<"recent" | "price_asc" | "price_desc">("recent");
   const [licenseFilter, setLicenseFilter] = useState<string>("all");
   const [creatorSearchInput, setCreatorSearchInput] = useState("");
   const [creatorSearch, setCreatorSearch] = useState("");
 
-  // Reset on slug change
   useEffect(() => {
     if (prevSlug.current !== slug) {
       prevSlug.current = slug;
@@ -182,7 +172,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
     }
   }, [slug]);
 
-  // Debounce creator search
   useEffect(() => {
     const t = setTimeout(() => setCreatorSearch(creatorSearchInput), 300);
     return () => clearTimeout(t);
@@ -190,7 +179,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
 
   const { tokens, meta, isLoading } = useTokensByIpType(slug, page, PAGE_SIZE);
 
-  // Accumulate pages
   useEffect(() => {
     if (isLoading) return;
     if (page === 1) {
@@ -204,7 +192,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
     }
   }, [tokens, isLoading, page]);
 
-  // Active filter count (non-default values only)
   const activeFilterCount =
     (sortOrder !== "recent" ? 1 : 0) +
     (licenseFilter !== "all" ? 1 : 0) +
@@ -219,7 +206,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
     setListedOnly(false);
   };
 
-  // Apply filters + sort client-side
   let displayed = listedOnly
     ? allTokens.filter((t) => (t.activeOrders?.length ?? 0) > 0)
     : [...allTokens];
@@ -263,7 +249,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
 
   return (
     <PageContainer className="box-border max-w-full pt-20 pb-16 space-y-8">
-      {/* Header */}
+
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
@@ -286,7 +272,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
 
         </div>
 
-        {/* Filters bar — single entry point + removable active chips */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setFiltersOpen(true)}
@@ -332,7 +317,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
           )}
         </div>
 
-        {/* Filters dialog — matches the marketplace panel aesthetic */}
         <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
           <DialogContent className="w-full max-w-sm sm:max-w-md p-0 overflow-hidden gap-0 flex flex-col max-h-[85svh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 pr-12">
@@ -348,7 +332,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-              {/* Status */}
+
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground">Status</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -361,7 +345,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
                 </div>
               </div>
 
-              {/* Sort */}
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground">Sort</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -371,7 +354,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
                 </div>
               </div>
 
-              {/* License */}
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground">License</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -386,7 +368,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
                 </div>
               </div>
 
-              {/* Creator */}
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground">Creator</p>
                 <div className="relative">
@@ -400,7 +381,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
                 </div>
               </div>
 
-              {/* IP Type */}
               <div className="space-y-2 pt-1 border-t border-border/60">
                 <p className="text-[10px] font-semibold text-muted-foreground">IP Type</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -432,7 +412,6 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
         </Dialog>
       </div>
 
-      {/* Grid */}
       {isInitialLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {Array.from({ length: PAGE_SIZE }).map((_, i) => (

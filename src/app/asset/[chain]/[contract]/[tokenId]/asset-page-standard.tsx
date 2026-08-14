@@ -51,14 +51,11 @@ export function AssetPageStandard() {
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false);
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
-  // Collection siblings for the filmstrip nav — from the (paged) collection
-  // token list; the filmstrip hides itself when the collection has ≤1 item.
   const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
 
-  // Audited IPNft creation record — undefined for external/legacy contracts (hook returns null).
   const { data: fullTokenData } = useFullTokenData({
     ipNftAddress: contract,
     tokenId: tokenId ? (() => { try { return BigInt(tokenId); } catch { return undefined; } })() : undefined,
@@ -72,8 +69,6 @@ export function AssetPageStandard() {
 
   const isERC1155 = (token?.standard ?? collection?.standard) === "ERC1155";
 
-  // Most recent "sale" activity — `history`'s sort order isn't guaranteed, so
-  // pick the max-timestamp entry explicitly rather than assuming array order.
   const lastSale = (history as ApiActivity[])
     .filter((h) => h.type === "sale" && h.price?.formatted)
     .reduce<ApiActivity | null>((latest, h) => (!latest || h.timestamp > latest.timestamp ? h : latest), null);
@@ -228,11 +223,7 @@ export function AssetPageStandard() {
               onOpenOffer={() => dialogs.setOfferOpen(true)}
               onOpenRemix={handleAutoRemix}
               showDealOption={remixPolicy.showDealOption}
-              // No onProposeDeal — the License button is removed from this
-              // page, but showDealOption still goes through so
-              // AssetMarketplacePanel's "no-derivatives" fallback copy
-              // stays accurate. The button itself needs BOTH showDealOption
-              // AND onProposeDeal, so omitting just this one hides it.
+
             />
 
             {isERC1155 && balances.length > 0 ? (

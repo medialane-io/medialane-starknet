@@ -1,9 +1,4 @@
-/**
- * Breadcrumb trail for the marketplace write pipeline (list/offer/buy/cancel).
- * Every step logs to the console AND to this in-memory buffer so a stuck flow
- * (isProcessing never resolves, no error ever thrown) is still diagnosable —
- * the last breadcrumb tells you exactly which await never returned.
- */
+
 
 interface Breadcrumb {
   t: number;
@@ -19,9 +14,7 @@ export function resetMarketplaceDebug(op: string) {
 
 export function markMarketplaceDebug(label: string, data?: unknown) {
   log.push({ t: Date.now(), label, data });
-  // console.debug is hidden by default under most browsers' DevTools log-level
-  // filter (Verbose-only) — console.log so it's visible without extra setup.
-  // eslint-disable-next-line no-console
+
   console.log(`[marketplace-debug] ${label}`, data ?? "");
 }
 

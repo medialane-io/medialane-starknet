@@ -1,29 +1,4 @@
-/**
- * POST /api/pinata
- *
- * Server-side IP asset upload endpoint.
- * Requires a valid SIWS wallet session — prevents unauthorized Pinata quota usage.
- *
- * Accepts multipart/form-data:
- *   file            File?    — cover image (JPG/PNG/GIF/SVG/WebP, max 10 MB)
- *   name            string   — asset name (required)
- *   description     string?  — asset description
- *   external_url    string?  — canonical URL (default: configured app URL)
- *   creator         string?  — creator wallet address (stored as attribute)
- *   ipType          string?  — e.g. "Art", "Music", "Video", …
- *   licenseType     string?  — e.g. "CC BY", "All Rights Reserved", …
- *   commercialUse   string?  — "Yes" | "No"
- *   derivatives     string?  — "Allowed" | "Not Allowed" | "Share-Alike"
- *   attribution     string?  — "Required" | "Not Required"
- *   geographicScope string?  — e.g. "Worldwide"
- *   aiPolicy        string?  — "Allowed" | "Not Allowed" | "Training Only"
- *   royalty         string?  — "0%"–"50%" or bare number
- *   edition         string?  — e.g. "Genesis" (legacy genesis-mint field)
- *   tmpl_{key}      string?  — template field for selected IP type (e.g. "tmpl_Artist", "tmpl_Spotify URL")
- *                              Any number of these. Stored as standard attributes with trait_type = key.
- *
- * Response: { uri: "ipfs://...", imageUri: "ipfs://..." | null, cid: string }
- */
+
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSiwsWallet } from "@/lib/siws-server";
@@ -37,7 +12,7 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/svg+xml",
   "image/webp",
 ]);
-const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB (server-side fallback guard)
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TEMPLATE_FIELDS = 30;
 const RESERVED_TRAITS = new Set([
   "creator",
@@ -63,7 +38,6 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
 
-    // ── Core fields ───────────────────────────────────────────────────────────
     const name = (formData.get("name") as string | null)?.trim();
     if (!name) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -72,7 +46,6 @@ export async function POST(req: NextRequest) {
     const externalUrl = (formData.get("external_url") as string | null) ?? APP_URL;
     const creator = authenticatedWallet;
 
-    // ── IP / licensing fields ─────────────────────────────────────────────────
     const ipType = formData.get("ipType") as string | null;
     const licenseType = formData.get("licenseType") as string | null;
     const commercialUse = formData.get("commercialUse") as string | null;
@@ -81,15 +54,12 @@ export async function POST(req: NextRequest) {
     const geographicScope = formData.get("geographicScope") as string | null;
     const aiPolicy = formData.get("aiPolicy") as string | null;
     const rawRoyalty = formData.get("royalty") as string | null;
-    const edition = formData.get("edition") as string | null; // genesis-mint compat
+    const edition = formData.get("edition") as string | null;
 
-    // ── Image upload ──────────────────────────────────────────────────────────
-    // Preferred path: client uploaded image directly via signed URL and passes
-    // back the resulting ipfs:// URI. No file bytes flow through this route.
     let imageUri: string | null = (formData.get("imageUri") as string | null) || null;
 
     if (!imageUri) {
-      // Fallback: file sent through this route (subject to body size limits)
+
       const imageFile = formData.get("file") as File | null;
       if (imageFile && imageFile.size > 0) {
         if (!ALLOWED_IMAGE_TYPES.has(imageFile.type)) {
@@ -109,7 +79,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Build OpenSea ERC-721 + Berne Convention compatible metadata ───────────
     type Attr = { trait_type: string; value: string };
     const attributes: Attr[] = [];
 
@@ -122,7 +91,6 @@ export async function POST(req: NextRequest) {
     if (geographicScope) attributes.push({ trait_type: "Territory", value: geographicScope });
     if (aiPolicy) attributes.push({ trait_type: "AI Policy", value: aiPolicy });
 
-    // Royalty — normalise to "X%" format
     if (rawRoyalty) {
       const num = parseFloat(rawRoyalty.replace("%", ""));
       if (!isNaN(num) && num > 0) {
@@ -130,17 +98,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Edition (legacy genesis-mint field)
     if (edition) attributes.push({ trait_type: "Edition", value: edition });
 
-    // Template-specific and custom fields — stored as standard NFT attributes.
-    // Skip reserved traits so callers cannot duplicate/override core licensing markers.
     let templateFieldCount = 0;
     const seenTemplateTraits = new Set<string>();
     for (const [key, value] of formData.entries()) {
       if (typeof key === "string" && key.startsWith("tmpl_") && value) {
         if (templateFieldCount >= MAX_TEMPLATE_FIELDS) break;
-        const traitType = key.slice(5); // strip "tmpl_" prefix → exact trait_type
+        const traitType = key.slice(5);
         const cleanTraitType = traitType.trim();
         const cleanValue = String(value).trim();
         const traitKey = cleanTraitType.toLowerCase();
@@ -153,7 +118,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Berne Convention marker — only when licensing data is provided
     if (licenseType) {
       attributes.push({ trait_type: "Standard", value: "Berne Convention" });
       attributes.push({
@@ -162,7 +126,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ── Upload metadata JSON ───────────────────────────────────────────────────
     const metadata = {
       name,
       description,

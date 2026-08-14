@@ -2,36 +2,16 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createRateLimiter } from "@/lib/rate-limit";
 
 const PINATA_JWT = process.env.PINATA_JWT;
-// Dedicated gateway takes precedence; falls back to Pinata public gateway.
-// Set PINATA_DEDICATED_GATEWAY in Vercel/Railway to your Pinata dedicated gateway URL.
+
 const GATEWAY =
   process.env.PINATA_DEDICATED_GATEWAY ||
   "https://gateway.pinata.cloud";
 const MAX_RESPONSE_BYTES = 25 * 1024 * 1024;
-// Reasonable ceiling for a proxied thumbnail request.
+
 const MAX_WIDTH = 2000;
 
 const checkRateLimit = createRateLimiter(60_000, 120);
 
-/**
- * GET /api/ipfs/[...cid]
- *
- * Server-side IPFS proxy. Fetches content from Pinata using the server-only
- * PINATA_JWT, then streams it back to the browser. This avoids:
- *  - Pinata's Cross-Origin-Resource-Policy: same-origin header on free plans
- *  - Browser-visible rate limit (429) errors from the public gateway
- *  - The need for a dedicated Pinata gateway on the client
- *
- * Supports paths: /api/ipfs/QmXxx  and  /api/ipfs/QmXxx/image.png
- *
- * Optional `w` query param requests an on-the-fly resized/re-encoded
- * rendition via Pinata's gateway image optimization (`img-width` etc,
- * only documented on the `/files/{cid}` path — not the classic `/ipfs/{cid}`
- * one, and confirmed to 401 on the shared public gateway domain without a
- * gateway-scoped token). Only attempted when `PINATA_DEDICATED_GATEWAY` is
- * actually configured; falls back to the plain unresized `/ipfs/{cid}`
- * original otherwise — never a broken image.
- */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ cid: string[] }> }
@@ -44,13 +24,10 @@ export async function GET(
   const { cid: segments } = await params;
   const cidPath = segments.join("/");
 
-  // Validate CID format — CIDv0 (Qm...) or CIDv1 (bafy..., bafk..., etc.)
-  // Optional sub-path after the CID (letters, digits, dots, dashes, underscores, slashes)
   if (!/^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[a-z2-7]{58,})(\/[\w.\-/]*)?$/.test(cidPath)) {
     return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
   }
-  // The sub-path grammar allows dots — reject `..` traversal segments so a
-  // request can't escape the gateway's /ipfs/ path with our JWT attached.
+
   if (cidPath.split("/").includes("..")) {
     return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
   }
@@ -89,20 +66,12 @@ export async function GET(
     return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
   }
 
-  // Allowlist safe MIME type prefixes; text/html, text/javascript, … are
-  // served as application/octet-stream so they can't render as scriptable
-  // documents. SVG keeps its type so it renders as image artwork, but the CSP
-  // below (`sandbox` = opaque origin, no scripts) neutralises the direct-
-  // navigation XSS an inline SVG would otherwise allow on this same-origin proxy.
   const SAFE_PREFIXES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/svg+xml",
     "video/", "audio/", "model/", "font/", "application/json", "application/octet-stream"];
   const safeContentType = SAFE_PREFIXES.some((p) => upstreamContentType.startsWith(p))
     ? upstreamContentType
     : "application/octet-stream";
 
-  // Stream and abort past MAX_RESPONSE_BYTES. The Content-Length check above is
-  // advisory (origins can omit or lie), so `arrayBuffer()` would buffer the
-  // whole body BEFORE the size check — this caps memory during the read.
   if (!upstream.body) {
     return NextResponse.json({ error: "IPFS gateway returned no body" }, { status: 502 });
   }
@@ -131,16 +100,11 @@ export async function GET(
     headers: {
       "Content-Type": safeContentType,
       "X-Content-Type-Options": "nosniff",
-      // Neutralise scripts if this response is opened as a top-level document
-      // (e.g. an SVG navigated to directly): `sandbox` gives it a unique opaque
-      // origin with no script execution. Harmless for media loaded via
-      // <img>/<video> (CSP doesn't apply to subresources).
+
       "Content-Security-Policy": "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
-      // Cache aggressively — IPFS content is immutable by CID. `s-maxage` (vs
-      // browser-only `max-age`) lets Vercel's edge cache this across *all*
-      // visitors, not just the requesting browser.
+
       "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
-      // Allow any origin to embed this content (images, etc.)
+
       "Access-Control-Allow-Origin": "*",
     },
   });

@@ -5,11 +5,6 @@ import { TokenCard as UiTokenCard, TokenCardSkeleton, type TokenCardProps } from
 import { OfferDialog } from "@/components/marketplace/offer-dialog";
 import { ReportDialog } from "@/components/report-dialog";
 
-// Thin wrapper over the shared @medialane/ui TokenCard. The full presentation
-// (dropdown menu, price chip, indexing badge, chain-aware hrefs via token.chain)
-// lives in the package; this wrapper owns only the wallet/auth-coupled dialogs
-// (Offer, Report), passed in as the onOffer/onReport callbacks. Mirrors
-// medialane-io's wrapper.
 export function TokenCard(props: Omit<TokenCardProps, "onOffer" | "onReport"> & {
   onOffer?: TokenCardProps["onOffer"];
 }) {

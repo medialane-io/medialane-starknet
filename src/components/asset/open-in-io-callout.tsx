@@ -8,12 +8,6 @@ interface OpenInIoCalloutProps {
   tokenId: string;
 }
 
-/**
- * Bridge from this chain-native dapp to medialane.io — the chain-agnostic
- * consumer app for visitors who'd rather trade with a managed, frictionless
- * wallet (Google/email) than connect their own. Mirrors OpenInDappCallout on
- * medialane-io, which bridges the opposite direction.
- */
 export function OpenInIoCallout({ chain, contract, tokenId }: OpenInIoCalloutProps) {
   const url = `https://medialane.io${assetHref(chain, contract, tokenId)}`;
 

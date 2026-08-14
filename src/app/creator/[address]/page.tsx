@@ -12,7 +12,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { address } = await params;
-  // For address-based routes, title will be set after redirect
+
   const title = `@${address}`;
   const description = `Creator profile for @${address} on Medialane.`;
   return {
@@ -26,13 +26,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CreatorPage({ params }: Props) {
   const { address } = await params;
 
-  // Wallet addresses start with 0x — redirect them to /account/[address]
-  // to keep /creator/[slug] exclusively for username-based profiles.
   if (address.startsWith("0x") || address.startsWith("0X")) {
     redirect(`/account/${address}`);
   }
 
-  // Otherwise treat as a username slug
   const jsonLd = [
     {
       "@context": "https://schema.org",

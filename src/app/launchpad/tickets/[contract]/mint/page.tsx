@@ -1,12 +1,5 @@
 "use client";
 
-// Mint Tickets — creates a new ticket type and mints its full supply straight
-// to the creator's own wallet, in one action. Same shape as the ERC-1155
-// edition mint page (mint_edition): one form, no redundant panels, no
-// recipient field — the creator ends up holding the tickets and lists them
-// on the marketplace like any other asset. Listing/holder management for
-// existing tickets lives on the collection page, not here.
-
 import { use, useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -132,10 +125,7 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
   });
 
   useEffect(() => {
-    // Wait for the profile fetch to settle before defaulting — otherwise this
-    // fires once with no slug (setting the plain contract URL), and the
-    // "field already has a value" guard blocks the nicer slug URL from ever
-    // landing once the profile actually loads.
+
     if (!contract || profileLoading) return;
     const suggested = profile?.slug
       ? absoluteUrl(`/collection/${profile.slug}`)
@@ -223,9 +213,6 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
 
       if (!address) throw new Error("Wallet not ready. Please reconnect and try again.");
 
-      // Ids are sequential and only the owner can ever call create_ticket, so the
-      // id can still be predicted ahead of time and both intents' calls bundled
-      // into one multicall — one wallet signature for what is one "mint" action.
       const ticketId = await predictNextTicketId(contract);
       setMintedTicketId(String(ticketId));
 

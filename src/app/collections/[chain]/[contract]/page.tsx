@@ -36,9 +36,7 @@ export default async function CollectionPage({ params }: Props) {
   const { chain, contract } = await params;
   const parsedChain = chainFromSlug(chain);
   if (!parsedChain) notFound();
-  // Creator Coins are canonical at /coins/[chain]/[address]; redirect coin
-  // contracts hit under /collections so the friendlier URL is always the one in
-  // the bar. (The fetch is deduped with generateMetadata's identical request.)
+
   const col = await fetchCollectionMeta(contract);
   if (col?.service && getService(col.service)?.uiVariant === "coin") {
     redirect(coinHref(parsedChain, contract));

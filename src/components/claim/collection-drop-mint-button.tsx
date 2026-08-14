@@ -77,14 +77,12 @@ export function CollectionDropMintButton({
         });
       }
 
-      // claim(quantity: u256(1,0))
       calls.push({
         contractAddress: collectionAddress,
         entrypoint: "claim",
         calldata: ["1", "0"],
       });
 
-      // Platform fee (creators fund) — paid mints only; quantity fixed at 1.
       if (isPaid && conditions && conditions.paymentToken !== "0x0") {
         const feeCall = buildFeeCall(
           { surface: "launchpad", token: conditions.paymentToken, grossAmount: price },
@@ -123,7 +121,6 @@ export function CollectionDropMintButton({
     }
   };
 
-  // Per-wallet allowance: maxPerWallet "0" = unlimited.
   const maxPerWallet = conditions ? parseInt(conditions.maxPerWallet, 10) : 0;
   const mintedByWallet = mintStatus?.mintedByWallet ?? 0;
   const remaining = maxPerWallet > 0 ? Math.max(0, maxPerWallet - mintedByWallet) : Infinity;

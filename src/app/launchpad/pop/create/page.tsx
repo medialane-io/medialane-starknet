@@ -138,9 +138,7 @@ export default function CreatePOPPage() {
       );
 
       if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
-      // Metered through the intents API — the backend deploys via the POP
-      // factory server-side and returns fully-populated calls (no client-side
-      // calldata construction).
+
       const intentRes = await client.api.createCollectionIntent({
         owner: walletAddress,
         name: values.name,
@@ -162,7 +160,6 @@ export default function CreatePOPPage() {
     }
   };
 
-  // ── Success ────────────────────────────────────────────────────────────────
   if (done) {
     return (
       <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
@@ -199,7 +196,6 @@ export default function CreatePOPPage() {
     );
   }
 
-  // ── Create form ────────────────────────────────────────────────────────────
   return (
     <ConnectGate
       title="Connect your wallet"
@@ -224,7 +220,6 @@ export default function CreatePOPPage() {
     >
       <div className="space-y-6">
 
-      {/* Event type selector */}
       <FadeIn delay={0.06}>
         <div className="space-y-3">
           <p className="text-sm font-medium">What kind of event is this?</p>
@@ -258,7 +253,6 @@ export default function CreatePOPPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
-          {/* Badge image */}
           <FadeIn delay={0.1}>
             <div className="space-y-2">
               <p className="text-sm font-medium">
@@ -319,7 +313,6 @@ export default function CreatePOPPage() {
             </div>
           </FadeIn>
 
-          {/* Name */}
           <FadeIn delay={0.12}>
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem>
@@ -330,7 +323,6 @@ export default function CreatePOPPage() {
             )} />
           </FadeIn>
 
-          {/* Symbol */}
           <FadeIn delay={0.14}>
             <FormField control={form.control} name="symbol" render={({ field }) => (
               <FormItem>
@@ -349,7 +341,6 @@ export default function CreatePOPPage() {
             )} />
           </FadeIn>
 
-          {/* Claim window */}
           <FadeIn delay={0.16}>
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Claim window closes *</p>
@@ -372,7 +363,6 @@ export default function CreatePOPPage() {
             </div>
           </FadeIn>
 
-          {/* Visibility */}
           <FadeIn delay={0.18}>
             <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20">
               <div className="space-y-0.5">
@@ -403,7 +393,6 @@ export default function CreatePOPPage() {
             </div>
           </FadeIn>
 
-          {/* Submit */}
           <FadeIn delay={0.2}>
             <Button
               type="submit"

@@ -15,12 +15,6 @@ import {
 import { EXPLORER_URL } from "@/lib/constants";
 import { fireConfetti } from "@/lib/confetti";
 
-/**
- * Terminal-state dialog for one-shot write flows (claims, mints) that don't
- * already render their result inside a dialog/sheet of their own. Wraps the
- * shared MarketplaceSuccessState / MarketplaceErrorState primitives in a Dialog
- * and wires EXPLORER_URL + success confetti so callsites stay tiny.
- */
 export type TxResult =
   | {
       status: "success";
@@ -43,11 +37,11 @@ export type TxResult =
 
 interface TransactionResultDialogProps {
   result: TxResult | null;
-  /** Clears the result → closes the dialog. Wired to onDone (and onRetry's reset). */
+
   onClose: () => void;
-  /** Fire confetti when a success result first appears. Default true. */
+
   confettiOnSuccess?: boolean;
-  /** Optional extra node rendered under the success Done button (e.g. a link). */
+
   footer?: ReactNode;
 }
 

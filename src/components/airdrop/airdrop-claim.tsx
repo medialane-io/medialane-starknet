@@ -10,10 +10,6 @@ interface AirdropClaimProps {
   locale?: "en" | "br";
 }
 
-/**
- * Shared CTA used on /mint and /airdrop. Shows the wallet-connect CTA when
- * disconnected, or the GenesisMint claim button once a wallet is connected.
- */
 export function AirdropClaim({ storageKey, locale = "en" }: AirdropClaimProps) {
   const { isConnected } = useWallet();
 

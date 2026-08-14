@@ -34,15 +34,15 @@ interface CollectionProgressDialogProps {
   txHash: string | null;
   error: string | null;
   onCreateAnother: () => void;
-  /** Label for the "create another" button. Defaults to "Create another". */
+
   createAnotherLabel?: string;
-  /** Label for first step. Defaults to "Create collection intent". */
+
   firstStepLabel?: string;
-  /** If provided, the "Mint" button navigates here. */
+
   mintHref?: string;
-  /** Label for the mintHref button. Defaults to "Mint tokens". */
+
   mintLabel?: string;
-  /** Deployed contract address shown in success state with explorer link. */
+
   deployedAddress?: string | null;
 }
 
@@ -117,7 +117,6 @@ export function CollectionProgressDialog({
             : "Your collection deployment failed."}
         </DialogDescription>
 
-        {/* ── Processing ── */}
         {isProcessing && (
           <div className="flex flex-col items-center gap-6 py-4">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -170,7 +169,6 @@ export function CollectionProgressDialog({
           </div>
         )}
 
-        {/* ── Success ── */}
         {isSuccess && (
           <div className="flex flex-col items-center gap-5 py-2">
             <div className="relative">
@@ -250,7 +248,6 @@ export function CollectionProgressDialog({
           </div>
         )}
 
-        {/* ── Error ── */}
         {isError && (
           <div className="flex flex-col items-center gap-5 py-2">
             <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">

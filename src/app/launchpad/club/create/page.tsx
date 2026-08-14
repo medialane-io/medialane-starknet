@@ -156,10 +156,7 @@ export default function CreateClubPage() {
     setCollectionStep("processing");
 
     try {
-      // Pin collection metadata to IPFS first so the URI can go on-chain in the deploy tx.
-      // base_uri on the contract is the authoritative source — the backend is just a cache.
-      // If an image was provided, a failed pin is fatal: deploying with an empty
-      // base_uri would permanently strip the club image (contracts are immutable).
+
       let baseUri = "";
       if (imageUri) {
         const token = await getValidToken();
@@ -176,8 +173,7 @@ export default function CreateClubPage() {
         if (!res.ok || !pinData?.uri) {
           throw new Error(pinData?.error ?? "Club metadata upload failed — please try again");
         }
-        // Bare file URI — a trailing slash makes resolvers treat it as a
-        // directory and probe <uri>/collection.json, which doesn't exist.
+
         baseUri = pinData.uri;
       }
 
@@ -194,8 +190,6 @@ export default function CreateClubPage() {
       const txH = await execute(intentRes.data.calls as Call[]);
       if (!txH) throw new Error("Transaction failed");
       setDialogTxStatus("confirming");
-      // CREATE_COLLECTION intents aren't in the backend's confirmable set —
-      // nothing to confirm here; the backend's own factory poll indexes the deploy.
 
       const addr = await readDeployedAddress(txH);
 
@@ -273,7 +267,6 @@ export default function CreateClubPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-            {/* Club image */}
             <div className="space-y-2">
               <p className="text-sm font-medium">Club image</p>
               <div className="flex items-start gap-4">

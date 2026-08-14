@@ -32,7 +32,6 @@ export function useRemixOffers(role: "creator" | "requester", status?: string) {
   const { address: walletAddress } = useWallet();
   const { token } = useSiwsToken();
 
-  // Only fetch when a valid SIWS token is already stored — never auto-prompt.
   const key = walletAddress && token ? `remix-offers-${role}-${status ?? "all"}-${walletAddress}` : null;
 
   const { data, error, isLoading, mutate } = useSWR<RemixOfferListResponse>(
@@ -99,7 +98,6 @@ export async function submitAutoRemixOffer(
   return (res as { data: RemixOffer }).data;
 }
 
-/** Record a permissionless self-minted remix (provenance). */
 export async function registerRemix(
   body: {
     originalContract: string;

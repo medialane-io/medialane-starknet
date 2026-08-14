@@ -1,16 +1,9 @@
 "use client";
 
-/**
- * CoinCard / CoinRow — dapp bindings of the shared @medialane/ui coin tiles.
- * The ui components are chain-agnostic; the dapp injects its Ekubo price read
- * and the internal /coins href (this app IS the Starknet trading surface).
- */
-
 import { CoinCard as UICoinCard, CoinRow as UICoinRow, CoinCardSkeleton, type CoinCollectionLike } from "@medialane/ui";
 import { useCoinPrice } from "@/hooks/use-coin-price";
 import { coinHref as buildCoinHref } from "@/lib/routes";
 
-/** dapp price adapter: live Ekubo spot price for a Starknet coin. */
 function useDappCoinPrice(collection: CoinCollectionLike) {
   const { price, isLoading } = useCoinPrice(collection.contractAddress);
   return { price, isLoading };

@@ -1,14 +1,5 @@
 "use client";
 
-/**
- * Creator Coin Launch Studio (dapp) — wallet-signed variant of the io studio.
- * The creator designs their coin (image, description: platform-layer profile)
- * with a live preview, sets the economics in plain language, then launches
- * through the existing two-transaction flow (AVNU paymaster / wallet signing).
- *
- * Spec: medialane-core/docs/specs/2026-06-11-coin-launch-studio-design.md
- */
-
 import { useMemo, useState } from "react";
 import { rewardToast } from "@/lib/reward-toast";
 import { coinHref } from "@/lib/routes";
@@ -123,8 +114,6 @@ export default function CoinCreatePage() {
     teamPct,
   };
 
-  /** Platform-layer identity → the coin's CollectionProfile. Auth is SIWS on
-   *  the dapp; claimedBy lands when the factory event indexes — retry briefly. */
   const saveCoinProfile = async (contract: string) => {
     if (!imageUri && !description) return;
     setProfileStatus("saving");
@@ -142,7 +131,7 @@ export default function CoinCreatePage() {
         setProfileStatus("saved");
         return;
       } catch {
-        // claimedBy may not be indexed yet — retry
+
       }
     }
     setProfileStatus("failed");
@@ -175,7 +164,6 @@ export default function CoinCreatePage() {
     status === "launching" ? "Opening the market…" :
     status === "indexing" ? "Almost there…" : null;
 
-  // ── Success ────────────────────────────────────────────────────────────────
   if (status === "done" && coinAddress) {
     return (
       <PageContainer className="box-border max-w-2xl pt-24 pb-8 space-y-6 text-center">
@@ -231,7 +219,6 @@ export default function CoinCreatePage() {
       >
         <div className="space-y-7">
 
-          {/* ── Give it a face ── */}
           <section className="space-y-4">
             <div>
               <h3 className="text-lg font-bold">Give it a face</h3>
@@ -246,7 +233,7 @@ export default function CoinCreatePage() {
                     className="relative h-24 w-24 shrink-0 rounded-full overflow-hidden border border-dashed border-border bg-muted/20 flex items-center justify-center"
                   >
                     {imagePreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
+
                       <img src={imagePreview} alt="Coin" className="h-full w-full object-cover" />
                     ) : (
                       <ImagePlus className="h-6 w-6 text-muted-foreground" />
@@ -308,7 +295,6 @@ export default function CoinCreatePage() {
 
           <div className="h-px bg-border/60" />
 
-          {/* ── Set the numbers ── */}
           <section className="space-y-4">
             <div>
               <h3 className="text-lg font-bold">Set the numbers</h3>
@@ -389,7 +375,6 @@ export default function CoinCreatePage() {
 
           <div className="h-px bg-border/60" />
 
-          {/* ── Launch ── */}
           <section className="space-y-4">
               <ul className="space-y-2.5 text-sm">
                 <li className="flex items-start gap-2">

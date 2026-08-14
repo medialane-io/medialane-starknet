@@ -14,11 +14,8 @@ import { Loader2 } from "lucide-react";
 
 type Step = "input" | "verifying" | "success" | "manual" | "pending";
 
-/** Loose Starknet address check — catches typos without rejecting valid (often
- *  leading-zero-trimmed) contract addresses. */
 const isValidAddress = (a: string) => /^0x[0-9a-fA-F]{40,64}$/.test(a.trim());
 
-/** Default (generic) helper — collection + coin. Overridden per surface. */
 const DEFAULT_HELPER_TEXT =
   "Paste the Starknet contract address you own — an NFT collection or a coin. Coins are reviewed by our team before they go live.";
 
@@ -41,7 +38,7 @@ export function ClaimCollectionPanel({ helperText }: { helperText?: string } = {
     }
     setStep("verifying");
     try {
-      // Backend verifies on-chain ownership — no JWT required
+
       const result = await getMedialaneClient().api.claimCollection(
         contractAddress.trim(),
         walletAddress,

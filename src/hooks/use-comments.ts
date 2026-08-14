@@ -17,7 +17,7 @@ export function useComments(
   tokenId: string,
   page = 1,
   limit = 20,
-  /** false = fetch once but don't poll — for count-only callers (badges). The visible comments list keeps the default. */
+
   active = true
 ): UseCommentsResult {
   const { data, error, isLoading, mutate } = useSWR(

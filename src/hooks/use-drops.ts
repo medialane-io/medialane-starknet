@@ -113,13 +113,6 @@ export interface OnChainDropState {
   paused: boolean;
 }
 
-// Reads live drop state (conditions/supply/allowlist/pause) — the chain is the
-// only authority for these (architecture 01 §I). Served by the backend's
-// metered GET /v1/drop/:contract/state pass-through
-// (medialane-backend/src/api/routes/drop-onchain.ts), which does the same
-// on-chain read server-side, credited, instead of the browser reading the
-// chain directly. Replaces the old direct-RPC read that bypassed the credit
-// gate entirely (and, before that, a fragile DB conditions mirror).
 export function useOnChainDropState(contract: string | null) {
   const { data, error, isLoading, mutate } = useSWR<OnChainDropState>(
     contract ? `drop-onchain-${contract}` : null,

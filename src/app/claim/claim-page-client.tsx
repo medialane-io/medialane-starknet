@@ -24,7 +24,7 @@ function SectionDivider({ label }: { label: string }) {
 export function ClaimPageClient() {
   return (
     <div className="mx-auto px-4 sm:px-6 py-12 max-w-5xl space-y-16 pb-20">
-      {/* Page header */}
+
       <div>
         <ClaimBackButton />
         <div className="mt-6">
@@ -37,7 +37,6 @@ export function ClaimPageClient() {
         </div>
       </div>
 
-      {/* Section 1 — Genesis Mint */}
       <section className="space-y-8">
         <SectionDivider label="Genesis drop" />
         <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-4">
@@ -63,7 +62,6 @@ export function ClaimPageClient() {
         </div>
       </section>
 
-      {/* Section 2 — NFT Collection */}
       <section className="space-y-8">
         <SectionDivider label="Claim your collection" />
         <div>
@@ -77,7 +75,6 @@ export function ClaimPageClient() {
         </div>
       </section>
 
-      {/* Section 3 — Creator Username */}
       <section className="space-y-8">
         <SectionDivider label="Claim your creator page" />
         <div>
@@ -92,7 +89,6 @@ export function ClaimPageClient() {
         </div>
       </section>
 
-      {/* Section 4 — Branded Collection Page */}
       <section className="space-y-8">
         <SectionDivider label="Your collection page" />
         <div>
@@ -101,13 +97,13 @@ export function ClaimPageClient() {
             Every collection you deploy on Medialane gets a fully branded, shareable page — no setup required.
           </p>
           <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-5">
-            {/* URL bar mockup */}
+
             <div className="flex items-center gap-2 bg-muted/50 border border-border/60 rounded-lg px-3 py-2 tabular-nums text-sm max-w-md">
               <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="text-muted-foreground text-xs">medialane.io/collections/</span>
               <span className="text-foreground text-xs font-semibold truncate">0x04f5…1a3b</span>
             </div>
-            {/* Feature grid */}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-start gap-3">
                 <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -137,7 +133,7 @@ export function ClaimPageClient() {
                 </div>
               </div>
             </div>
-            {/* CTAs */}
+
             <div className="flex flex-wrap gap-2 pt-1 border-t border-border/60">
               <Button size="sm" asChild>
                 <Link href="/launchpad/single-editions/collection">

@@ -16,8 +16,6 @@ import { useDropInfo, useOnChainDropState } from "@/hooks/use-drops";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// ── Address parsing ───────────────────────────────────────────────────────────
-
 function parseAddresses(raw: string): string[] {
   return raw
     .split(/[\n,\s]+/)
@@ -25,13 +23,9 @@ function parseAddresses(raw: string): string[] {
     .filter((a) => /^0x[0-9a-fA-F]+$/.test(a));
 }
 
-// ── Calldata helpers ──────────────────────────────────────────────────────────
-
 function batchAllowlistCalldata(addresses: string[]): string[] {
   return [addresses.length.toString(), ...addresses];
 }
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 function AllowlistToggle({
   enabled,
@@ -182,8 +176,6 @@ function RemoveSection({
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
-
 export default function DropManagePage({
   params,
 }: {
@@ -311,7 +303,6 @@ export default function DropManagePage({
         </div>
       </FadeIn>
 
-      {/* Allowlist toggle */}
       <FadeIn delay={0.08}>
         <AllowlistToggle
           enabled={allowlistEnabled ?? false}
@@ -320,17 +311,14 @@ export default function DropManagePage({
         />
       </FadeIn>
 
-      {/* Batch add */}
       <FadeIn delay={0.12}>
         <BatchAddSection onAdd={handleBatchAdd} isSubmitting={isProcessing} />
       </FadeIn>
 
-      {/* Remove single */}
       <FadeIn delay={0.16}>
         <RemoveSection onRemove={handleRemove} isSubmitting={isProcessing} />
       </FadeIn>
 
-      {/* Withdraw payments */}
       {isPaidDrop && (
         <FadeIn delay={0.2}>
           <div className="bento-cell p-5 space-y-3">

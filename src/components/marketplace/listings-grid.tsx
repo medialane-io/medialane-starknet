@@ -15,10 +15,10 @@ const BACKEND_PAGE_SIZE = 50;
 interface ListingsGridProps {
   sort?: string;
   currency?: string;
-  orderType?: string; // "listings" | "offers" | "" (all)
+  orderType?: string;
   minPrice?: string;
   maxPrice?: string;
-  /** Server-fetched first page (default filter state) — renders real cards in the initial HTML; SWR replaces it on mount and filter changes clear it. */
+
   initialOrders?: ApiOrder[];
 }
 
@@ -29,7 +29,6 @@ export function ListingsGrid({ sort = "recent", currency, orderType = "", minPri
   const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
 
-  // Reset accumulated orders when filters change
   const prevFilters = useRef({ sort, currency, orderType, minPrice, maxPrice });
   useEffect(() => {
     const f = prevFilters.current;
@@ -51,7 +50,6 @@ export function ListingsGrid({ sort = "recent", currency, orderType = "", minPri
     limit: BACKEND_PAGE_SIZE,
   });
 
-  // Append incoming page to accumulated list
   useEffect(() => {
     if (isLoading) return;
     if (backendPage === 1) {
@@ -65,9 +63,6 @@ export function ListingsGrid({ sort = "recent", currency, orderType = "", minPri
     }
   }, [orders, isLoading, backendPage]);
 
-  // Client-side type filter (backend doesn't support itemType param).
-  // Default ("" / "all") shows only listings — offers (bids) are not useful
-  // in the browse grid and are accessible via the "Offers" filter tab.
   const filteredOrders = orderType === "offers"
     ? allOrders.filter((o) => o.offer.itemType === "ERC20")
     : allOrders.filter((o) => o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155");

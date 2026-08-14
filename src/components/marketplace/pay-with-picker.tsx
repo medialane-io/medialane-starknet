@@ -23,9 +23,6 @@ function PayWithOption({
   const { raw: rawBalance } = useTokenBalance(symbol, walletAddress ?? undefined);
   const hasBalance = rawBalance !== null && rawBalance > 0n;
 
-  // Only fetch a browsing quote for tokens the user actually holds — a zero
-  // balance can never cover the purchase regardless of rate, so there's no
-  // reason to spend a credit finding out.
   const { quote, isLoading } = useSwapQuote(
     hasBalance ? symbol : null,
     orderCurrency,
@@ -75,12 +72,6 @@ interface PayWithPickerProps {
   onSelect: (symbol: string) => void;
 }
 
-/**
- * Shown only when the buyer's balance in the order's own currency is
- * insufficient — lets them pay with any other SWAP_TOKENS currency instead,
- * auto-swapped into the order's currency as part of the same atomic
- * purchase transaction (executed via checkoutCart's swapCalls option).
- */
 export function PayWithPicker({ orderCurrency, requiredRaw, walletAddress, selected, onSelect }: PayWithPickerProps) {
   const alternatives = SWAP_TOKENS.filter((t) => t.symbol !== orderCurrency);
 

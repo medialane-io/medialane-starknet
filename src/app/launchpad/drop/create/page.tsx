@@ -31,7 +31,6 @@ import type { MetadataField } from "@/components/create/ip-type-fields";
 
 const PAYMENT_TOKENS = getListableTokens().map((t) => ({ symbol: t.symbol, address: t.address }));
 
-// Default mint window: opens today, closes in 7 days.
 function defaultSchedule() {
   const pad = (n: number) => String(n).padStart(2, "0");
   const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -49,8 +48,7 @@ export default function CreateDropPage() {
   const client = useMedialaneClient();
 
   const [items, setItems] = useState<DraftItem[]>([]);
-  // Read only at submit time — keep in a ref so each keystroke in IPTypeFields
-  // doesn't re-render this whole form (see /launchpad/single-editions flicker fix).
+
   const metadataFieldsRef = useRef<MetadataField[]>([]);
   const handleMetadataFields = useCallback((fields: MetadataField[]) => {
     metadataFieldsRef.current = fields;
@@ -131,14 +129,13 @@ export default function CreateDropPage() {
     setPriceFree(true); setIsPublic(true); setSelectedToken(PAYMENT_TOKENS[0]); setTokenDropdownOpen(false); setAutoSymbol("");
   };
 
-  // Parse the deployed collection address from the create_drop receipt's DropCreated event.
   const addressFromReceipt = async (txHash: string): Promise<string | null> => {
     try {
       const selector = hash.getSelectorFromName("DropCreated");
       let receipt: any = null;
       for (let attempt = 0; attempt < 4 && !receipt; attempt++) {
         if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
-        try { receipt = await starknetProvider.getTransactionReceipt(txHash); } catch { /* retry */ }
+        try { receipt = await starknetProvider.getTransactionReceipt(txHash); } catch {  }
       }
       const ev = (receipt?.events ?? []).find((e: any) => e.keys?.[0] && BigInt(e.keys[0]) === BigInt(selector));
       return ev?.data?.[0] ? normalizeAddress("STARKNET", ev.data[0]) : null;
@@ -183,9 +180,7 @@ export default function CreateDropPage() {
       };
 
       if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
-      // Metered through the intents API — the backend deploys via the Drop
-      // factory server-side and returns fully-populated calls (no client-side
-      // calldata construction).
+
       const intentRes = await client.api.createCollectionIntent({
         owner: walletAddress,
         name: values.name,
@@ -198,7 +193,6 @@ export default function CreateDropPage() {
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       const txHash = await execute(intentRes.data.calls as Call[]);
 
-      // Optional whitelist: set on the new drop address (from the receipt), same wallet session.
       const whitelist = values.whitelistEnabled ? parseAddresses(values.allowlistAddresses) : [];
       if (whitelist.length > 0) {
         const dropAddress = await addressFromReceipt(txHash);
@@ -208,7 +202,7 @@ export default function CreateDropPage() {
               { contractAddress: dropAddress, entrypoint: "set_allowlist_enabled", calldata: ["1"] },
               { contractAddress: dropAddress, entrypoint: "batch_add_to_allowlist", calldata: batchAllowlistCalldata(whitelist) },
             ]);
-          } catch { /* creator can finish whitelist setup in Manage */ }
+          } catch {  }
         }
       }
       setDone(true);
@@ -222,7 +216,6 @@ export default function CreateDropPage() {
 
   const isSubmitting = building;
 
-  // ── Success ───────────────────────────────────────────────────────────────
   if (done) {
     return (
       <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-6">
@@ -245,7 +238,6 @@ export default function CreateDropPage() {
     );
   }
 
-  // ── Launch form ─────────────────────────────────────────────────────────────
   return (
     <ConnectGate
       title="Connect wallet to launch a drop"

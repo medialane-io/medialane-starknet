@@ -14,8 +14,6 @@ export const metadata: Metadata = {
   ...buildSocialMetadata({ title, description, imageAlt: "Medialane" }),
 };
 
-// ISR — the hero collections render in the server HTML instead of after
-// hydration + a client fetch (they were the LCP bottleneck).
 export const revalidate = 60;
 
 export default async function Page() {

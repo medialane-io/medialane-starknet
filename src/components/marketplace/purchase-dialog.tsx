@@ -90,12 +90,6 @@ function TokenHero({ order, quantity }: { order: ApiOrder; quantity: number }) {
   );
 }
 
-// checkoutCart bundles the platform fee as a separate ERC-20 transfer() in the
-// SAME multicall as fulfill_order — the buyer's wallet must hold price + fee,
-// not just the listed price. This was never disclosed here, so a wallet
-// funded to exactly the listed price always failed the wallet's own pre-flight
-// simulation ("Argent multicall failed", reported 2026-07-02). Only render
-// when a fee actually applies (enabled, fund address set, bps > 0).
 function PriceBreakdown({ order, quantity }: { order: ApiOrder; quantity: number }) {
   if (!order.price?.formatted) return null;
   const unitPrice = parseFloat(order.price.formatted);
@@ -208,9 +202,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   const router = useRouter();
   const { address, isConnected } = useWallet();
   const { checkoutCart, isProcessing, txHash, error, resetState } = useMarketplace();
-  // The marketplace contract reverts ("Cannot fill own order") if the buyer
-  // is the order's offerer. Guard the buy path so users never submit a
-  // transaction that is guaranteed to fail.
+
   const isOwnOrder =
     isConnected &&
     !!address &&
@@ -224,15 +216,12 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     ? Math.max(1, parseInt(order.remainingAmount ?? order.offer.startAmount ?? "1", 10))
     : 1;
 
-  // The exact amount (raw wei, order's own currency) checkoutCart needs —
-  // shared by the balance check below and the swap-build step in handleBuy.
   const requiredRaw = orderTotal(order, quantity);
   const { raw: orderCurrencyBalance, isLoading: balanceLoading } = useTokenBalance(
     order.price?.currency ?? "",
     address ?? undefined
   );
-  // Explicitly false (not null/loading) before showing the pay-with picker —
-  // never flash it while the balance is still resolving.
+
   const needsSwap = !balanceLoading && orderCurrencyBalance !== null && orderCurrencyBalance < requiredRaw;
   const canBuy = !needsSwap || !!paymentSymbol;
 
@@ -244,7 +233,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
       setSuccessTxHash(null);
       setPaymentSymbol(null);
     }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleBuy = async () => {
     if (!isConnected) {
@@ -260,12 +249,6 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     try {
       setStep("processing");
 
-      // Auto-swap: buyer is paying with a token other than the order's own
-      // currency. Build a FRESH swap quote+calls right now (never reuse the
-      // picker's browsing estimate) and prepend them into the same atomic
-      // multicall as the fulfill call — one signature, one transaction.
-      // Unlike medialane-io, this is NOT gas-sponsored — the connected
-      // wallet pays gas as usual, exactly like every other purchase here.
       let swapCalls: Awaited<ReturnType<typeof buildSwapCalls>>["calls"] | undefined;
       if (paymentSymbol && order.price?.currency && address) {
         try {
@@ -286,7 +269,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
       const item: CheckoutItem = {
         orderHash: order.orderHash,
         considerationToken: order.consideration.token,
-        // orderTotal() owns the price-per-edition × quantity maths.
+
         considerationAmount: orderTotal(order, quantity).toString(),
         offerIdentifier: order.offer.identifier,
         isERC1155,

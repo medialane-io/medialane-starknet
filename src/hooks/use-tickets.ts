@@ -6,9 +6,6 @@ import { starknetProvider } from "@/lib/starknet";
 import { Contract } from "starknet";
 import { IPTicketCollectionABI } from "@medialane/sdk/starknet";
 
-// ── useMyTicketCollections ────────────────────────────────────────────────────
-// The connected creator's tickets collections (launchpad browse page).
-
 export function useMyTicketCollections(ownerAddress: string | null) {
   const client = useMedialaneClient();
 
@@ -21,11 +18,6 @@ export function useMyTicketCollections(ownerAddress: string | null) {
   const collections = (data?.data ?? []).filter((c) => c.service === "ip-tickets");
   return { collections, isLoading, error, mutate };
 }
-
-// ── useTicketOnchain ──────────────────────────────────────────────────────────
-// Per-ticket on-chain record via get_ticket(token_id) — supply, minted count,
-// validity window, royalty. Failover-covered read provider + SWR, same pattern
-// as use-coin-supply. Returns null while loading or if the ticket doesn't exist.
 
 export interface TicketOnchain {
   maxSupply: bigint;
@@ -47,11 +39,6 @@ async function readTicket(contract: string, tokenId: string): Promise<TicketOnch
     royaltyBps: json.data.royaltyBps,
   };
 }
-
-// ── useTicketList ─────────────────────────────────────────────────────────────
-// All tickets in a collection, straight from the chain: one ticket_count()
-// read, then get_ticket per id. Includes tickets that have never been minted —
-// which the indexer can't know about yet.
 
 export interface TicketListItem extends TicketOnchain {
   id: string;
@@ -77,14 +64,6 @@ async function readTicketList(contract: string): Promise<TicketListItem[]> {
   }
   return tickets;
 }
-
-// ── predictNextTicketId ───────────────────────────────────────────────────────
-// Ids are assigned sequentially on-chain starting at 1, and only the collection
-// owner can ever call create_ticket. That means the caller minting a new ticket
-// can safely predict its id ahead of time (current count + 1) and bundle
-// create_ticket + mint into ONE multicall — one wallet signature instead of two
-// separate transactions for what is, from the creator's point of view, a single
-// "mint a ticket" action.
 
 export async function predictNextTicketId(contract: string): Promise<number> {
   return (await readTicketCount(contract)) + 1;

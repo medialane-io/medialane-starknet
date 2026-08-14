@@ -6,7 +6,7 @@ export interface FullTokenData {
   owner: string;
   metadataUri: string;
   originalCreator: string;
-  registeredAt: number; // unix seconds
+  registeredAt: number;
 }
 
 interface UseFullTokenDataArgs {
@@ -14,11 +14,6 @@ interface UseFullTokenDataArgs {
   tokenId: bigint | undefined;
 }
 
-/**
- * Wraps the audited IPNft.get_full_token_data view.
- * Returns owner + metadata URI + original creator + mint timestamp in a single read.
- * Use this instead of separate owner_of / token_uri / get_token_creator calls.
- */
 export function useFullTokenData({ ipNftAddress, tokenId }: UseFullTokenDataArgs) {
   const enabled = Boolean(ipNftAddress && tokenId !== undefined);
 
@@ -34,7 +29,6 @@ export function useFullTokenData({ ipNftAddress, tokenId }: UseFullTokenDataArgs
     return { data: null as FullTokenData | null, isLoading, error, refetch };
   }
 
-  // Cairo tuple decoded by starknet.js: [owner, metadata_uri, original_creator, registered_at]
   const tuple = data as unknown as [bigint, string, bigint, bigint];
   const parsed: FullTokenData = {
     owner: num.toHex(tuple[0]),

@@ -1,7 +1,6 @@
 import { Coins, UserCircle, TrendingUp } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 
-/** Right-rail content for /launchpad/memecoin. */
 export function ClaimMemecoinAside() {
   return (
     <ClaimRail

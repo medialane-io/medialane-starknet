@@ -1,14 +1,5 @@
 "use client";
 
-/**
- * CoinPageClient — Creator Coin detail view (uiVariant === "coin").
- *
- * Rendered by the collection dispatcher for ERC-20 Creator Coins (and external
- * ERC-20s). A coin has no per-token grid/listings — it has a live spot price
- * (read straight from its Ekubo pool via the SDK). Read-side first: the price
- * renders the moment the page loads, independent of any swap integration.
- */
-
 import Link from "next/link";
 import Image from "next/image";
 import { ExternalLink, Settings } from "lucide-react";
@@ -44,12 +35,9 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
 
   const serviceLabel = getService(coin.service)?.displayName ?? "Creator Coin";
 
-  // Supply read on-chain (works for every coin, incl. external ERC-20s the
-  // backend doesn't index). Market cap = live spot price × that supply.
   const { supply } = useCoinSupply(contract, coin.decimals ?? 18);
   const marketCap = price && supply != null && supply > 0 ? price.quotePerCoin * supply : null;
 
-  // Only render stats that actually resolve — no empty placeholder boxes.
   const stats: { label: string; value: string }[] = [];
   if (supply != null && supply > 0) stats.push({ label: "Supply", value: formatCompact(supply) });
   if (marketCap != null) stats.push({ label: "Market Cap", value: `${formatCompact(marketCap)} ${price?.quoteSymbol ?? ""}`.trim() });
@@ -61,8 +49,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
 
   return (
     <div className="relative z-0 min-h-screen">
-      {/* Atmospheric blur background — identical settings to the standard asset
-          pages' AssetAtmosphere (opacity-30, no color wash). */}
+
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         {bannerUrl && (
           <Image
@@ -80,7 +67,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
 
       <div className="mx-auto px-4 pt-20 pb-12 max-w-3xl">
         <div className="grid grid-cols-1">
-          {/* ── Identity + price + trust ── */}
+
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <CoinAvatar url={bannerUrl} symbol={coin.symbol} />
@@ -108,7 +95,6 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
               </div>
             </div>
 
-            {/* Live price */}
             <Panel className="p-5">
               <p className="text-[11px] text-muted-foreground mb-1.5">
                 Price
@@ -134,21 +120,18 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
               </p>
             </Panel>
 
-            {/* Stats — only those that resolve (no empty boxes) */}
             {stats.length > 0 && (
               <div className={cn("grid gap-3", stats.length === 1 ? "grid-cols-1" : stats.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
                 {stats.map((s) => <StatCell key={s.label} label={s.label} value={s.value} />)}
               </div>
             )}
 
-            {/* Description */}
             {coin.description && (
               <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
                 {coin.description}
               </p>
             )}
 
-            {/* Meta */}
             <div className="flex items-center gap-3 pt-1">
               <AddressDisplay address={contract ?? ""} chars={6} className="text-xs text-muted-foreground/70" />
               <a
@@ -169,11 +152,6 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
   );
 }
 
-/**
- * Coin-shaped loading skeleton — mirrors the CoinPageClient layout so the
- * /coins/[address] route doesn't flash the NFT-collection layout while the
- * collection record loads (the dispatch can't know it's a coin until then).
- */
 export function CoinPageSkeleton() {
   return (
     <div className="mx-auto px-4 pt-20 pb-12 max-w-3xl">
@@ -196,10 +174,6 @@ export function CoinPageSkeleton() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Small presentational helpers
-// ---------------------------------------------------------------------------
-
 function CoinAvatar({ url, symbol }: { url: string | null; symbol?: string | null }) {
   if (url) {
     return (
@@ -220,12 +194,6 @@ function CoinAvatar({ url, symbol }: { url: string | null; symbol?: string | nul
   );
 }
 
-/**
- * Auxiliary panel — a card surface with a subtle brand gradient fill (Primary
- * gradient, blue→purple) layered over the base, per the design system. The
- * gradient is an overlay so inner content keeps full contrast against the
- * frosted backdrop. `rounded-2xl` is the default; pass `rounded-xl` to override.
- */
 function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <div className={cn("relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm", className)}>

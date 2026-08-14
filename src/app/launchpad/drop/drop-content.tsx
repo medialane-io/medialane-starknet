@@ -49,7 +49,7 @@ function DropCollectionCard({ collection }: { collection: any }) {
   const imageUrl = collection.image ? ipfsToHttp(collection.image) : null;
   const showImage = imageUrl && !imgError;
   const initial = (collection.name ?? "D").charAt(0).toUpperCase();
-  // Real status from chain (conditions + supply); falls back to indexed supply if RPC is down.
+
   const { state } = useOnChainDropState(collection.contractAddress);
   const status = getDropStatus(state?.conditions ?? null, state?.totalMinted ?? collection.totalSupply ?? 0);
 
@@ -156,7 +156,6 @@ export function DropContent() {
   return (
     <div className="pb-16 space-y-10">
 
-      {/* ── Header ── */}
       <section className="px-4 pt-10 max-w-5xl mx-auto">
         <ClaimBackButton />
         <FadeIn>
@@ -183,7 +182,6 @@ export function DropContent() {
         </FadeIn>
       </section>
 
-      {/* Features grid */}
       <section className="px-4 max-w-5xl mx-auto">
         <FadeIn>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -198,7 +196,6 @@ export function DropContent() {
         </FadeIn>
       </section>
 
-      {/* Collections grid */}
       <section className="px-4 space-y-4 max-w-5xl mx-auto">
         <FadeIn>
           <div className="flex items-center justify-between">

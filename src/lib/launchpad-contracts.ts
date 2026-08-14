@@ -1,10 +1,9 @@
-// Factory addresses — the SDK's chain-named constants (single source).
+
 export {
   STARKNET_DROP_FACTORY_CONTRACT,
   STARKNET_POP_FACTORY_CONTRACT,
 } from "@medialane/sdk";
 
-/** Minimal ABI for create_drop on the Drop Factory contract */
 export const DropFactoryABI = [
   {
     type: "struct",
@@ -32,7 +31,6 @@ export const DropFactoryABI = [
   },
 ] as const;
 
-/** Minimal ABI for the Drop Collection: claim, allowlist ops */
 export const DropCollectionABI = [
   {
     type: "function",
@@ -83,7 +81,6 @@ export type PopEventType =
   | "Course"
   | "Other";
 
-/** Minimal ABI — POP Factory: create_collection */
 export const POPFactoryABI = [
   {
     type: "enum",
@@ -113,7 +110,6 @@ export const POPFactoryABI = [
   },
 ] as const;
 
-/** Minimal ABI — POP Collection: claim, batch_add_to_allowlist, remove_from_allowlist */
 export const POPCollectionABI = [
   {
     type: "function",
@@ -141,11 +137,6 @@ export const POPCollectionABI = [
   },
 ] as const;
 
-/**
- * Minimal read ABI for DropCollection view calls (verified against the deployed class
- * 0x00092e72… on 2026-06-15). Used by use-drops to read live state from chain. Includes the
- * ClaimConditions struct so starknet.js can decode get_claim_conditions().
- */
 export const DropCollectionReadABI = [
   {
     type: "struct",

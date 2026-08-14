@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Server-only — the API key is read from the non-NEXT_PUBLIC env var so it
-// never ends up in the browser bundle (2026-05-24 cleanup).
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL!;
 const API_KEY = process.env.MEDIALANE_API_KEY!;
 
@@ -39,7 +37,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid targetType" }, { status: 400 });
   }
 
-  // Normalize addresses before computing targetKey
   const normalizedContract = body.targetContract
     ? normalizeAddress(body.targetContract)
     : undefined;
@@ -47,7 +44,6 @@ export async function POST(req: NextRequest) {
     ? normalizeAddress(body.targetAddress)
     : undefined;
 
-  // Compute canonical targetKey
   let targetKey: string;
   if (body.targetType === "TOKEN" && normalizedContract && body.targetTokenId) {
     targetKey = `TOKEN:${normalizedContract}:${body.targetTokenId}`;

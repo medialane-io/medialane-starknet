@@ -25,16 +25,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: name,
     description,
-    // Canonical lives at /coins/[chain]/[address]; /collections/[chain]/[address]
-    // still resolves the same coin view for old links and points here.
+
     alternates: canonical(coinHref(parsedChain ?? "STARKNET", address)),
     ...buildSocialMetadata({ title: name, description, imageUrl }),
   };
 }
 
-// Creator Coins render through the same dispatcher as collections (it
-// early-returns the coin view for `uiVariant === "coin"`); the client reads the
-// `address` route param. /coins/[chain]/[address] is the friendlier canonical URL.
 export default async function CoinDetailPage({ params }: Props) {
   const { chain, address } = await params;
   const parsedChain = chainFromSlug(chain);

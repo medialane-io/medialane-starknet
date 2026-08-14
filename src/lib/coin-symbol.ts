@@ -1,5 +1,4 @@
-/** Suggest a ticker symbol from a coin/collection name (ported from io's
- *  launchpad-defaults — initials + digits, 3–10 chars). */
+
 export function suggestCoinSymbol(name: string, maxLength = 10): string {
   const cleaned = name.toUpperCase().replace(/[^A-Z0-9 ]+/g, " ").trim();
   if (!cleaned) return "";

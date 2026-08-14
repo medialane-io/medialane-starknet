@@ -18,12 +18,10 @@ export interface UsernameClaim {
 
 export type { ApiCreatorProfile as CreatorByUsername };
 
-/** Fetch the current user's username claim status. */
 export function useMyUsernameClaim() {
   const { address, isConnected } = useWallet();
   const { token } = useSiwsToken();
 
-  // Gate on token so we never auto-prompt the wallet to sign on mount.
   const { data, error, isLoading, mutate } = useSWR(
     isConnected && address && token ? `username-claim-me-${address}` : null,
     async () => {
@@ -39,7 +37,6 @@ export function useMyUsernameClaim() {
   return { username: data?.username ?? null, claim: data?.claim ?? null, isLoading, error, mutate };
 }
 
-/** Check if a username is available (no auth required). */
 export async function checkUsernameAvailability(
   username: string
 ): Promise<{ available: boolean; reason?: string }> {
@@ -47,7 +44,6 @@ export async function checkUsernameAvailability(
   return res.json();
 }
 
-/** Submit a username claim. */
 export async function submitUsernameClaim(
   username: string,
   siwsToken: string | null,
@@ -65,7 +61,6 @@ export async function submitUsernameClaim(
   return { claim: json.claim };
 }
 
-/** Resolve a username slug to a creator profile (public, no auth). */
 export function useCreatorByUsername(username: string | null | undefined) {
   const { data, error, isLoading } = useSWR(
     username ? `creator-by-username-${username}` : null,

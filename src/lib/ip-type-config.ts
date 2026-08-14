@@ -19,7 +19,7 @@ export interface IpTypeConfig {
   icon: React.ElementType;
   colorClass: string;
   bgClass: string;
-  /** API ipType value — null means "nft" special case (NFT | untagged) */
+
   apiValue: string | null;
 }
 

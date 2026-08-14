@@ -13,8 +13,6 @@ import { NOTIFICATION_ICON, NOTIFICATION_COLOR, NOTIFICATION_LABEL } from "@/lib
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/types/notification";
 
-// ── Spotlight card ────────────────────────────────────────────────────────────
-
 function SpotlightCard({
   notification,
   index,
@@ -30,7 +28,7 @@ function SpotlightCard({
 }) {
   const router = useRouter();
   const Icon = NOTIFICATION_ICON[notification.type] ?? Bell;
-  // Only the text colour for the badge — strip the bg half from NOTIFICATION_COLOR
+
   const colorClass = NOTIFICATION_COLOR[notification.type]?.split(" ")[0] ?? "text-primary";
   const isLast = index === total - 1;
 
@@ -41,7 +39,7 @@ function SpotlightCard({
 
   return (
     <div className="flex flex-col">
-      {/* Asset image or icon fallback */}
+
       <div className="relative w-full aspect-square max-h-64 bg-muted overflow-hidden shrink-0">
         {notification.image ? (
           <Image
@@ -59,7 +57,7 @@ function SpotlightCard({
       </div>
 
       <div className="px-5 pt-5 pb-6 space-y-5">
-        {/* Type badge */}
+
         <div className="flex items-center gap-2">
           <Icon className={cn("h-3.5 w-3.5 shrink-0", colorClass)} />
           <span className={cn("text-xs font-semibold uppercase tracking-widest", colorClass)}>
@@ -67,7 +65,6 @@ function SpotlightCard({
           </span>
         </div>
 
-        {/* Headline + description */}
         <div className="space-y-1.5">
           <p className="text-2xl font-black leading-tight tracking-tight">
             {notification.title}
@@ -77,7 +74,6 @@ function SpotlightCard({
           </p>
         </div>
 
-        {/* CTAs */}
         <div className="space-y-2.5">
           <div className="btn-border-animated p-[1px] rounded-xl">
             <Button
@@ -104,7 +100,6 @@ function SpotlightCard({
           </Button>
         </div>
 
-        {/* Pagination dots */}
         {total > 1 && (
           <div className="flex items-center justify-center gap-1.5 pt-1">
             {Array.from({ length: total }).map((_, i) => (
@@ -125,8 +120,6 @@ function SpotlightCard({
   );
 }
 
-// ── Provider / watcher ────────────────────────────────────────────────────────
-
 export function NotificationSpotlight() {
   const { address, isConnected } = useWallet();
   const { notifications, markRead } = useNotifications(isConnected ? address : null);
@@ -138,7 +131,6 @@ export function NotificationSpotlight() {
   const shownForRef = useRef<string | null>(null);
   const confettiFiredRef = useRef(false);
 
-  // Build and show the queue once per wallet session, after notifications load
   useEffect(() => {
     if (!isConnected || !address || notifications.length === 0) return;
     if (shownForRef.current === address) return;
@@ -158,7 +150,6 @@ export function NotificationSpotlight() {
     setOpen(true);
   }, [isConnected, address, notifications]);
 
-  // Fire confetti once when the panel opens for a celebratory item
   useEffect(() => {
     if (open && queue.length > 0 && !confettiFiredRef.current) {
       if (queue[0].celebratory) {
@@ -171,13 +162,12 @@ export function NotificationSpotlight() {
   const handleNext = () => {
     const next = index + 1;
     if (next >= queue.length) return;
-    // Mark the current item read as the user moves past it
+
     markRead(queue[index].id);
     if (queue[next].celebratory) fireConfetti();
     setIndex(next);
   };
 
-  // Only mark notifications the user has actually reached as read
   const handleDone = () => {
     for (let i = 0; i <= index; i++) markRead(queue[i].id);
     setOpen(false);

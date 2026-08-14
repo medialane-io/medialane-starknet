@@ -5,10 +5,6 @@ import { useMedialaneClient } from "./use-medialane-client";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import type { ApiCoin, ApiResponse } from "@medialane/sdk";
 
-/**
- * List fungible coins from /v1/coins (the Coin model — separate from
- * Collections since the 2026-06-14 split). Price is read separately (Ekubo).
- */
 export function useCoins(opts: { service?: string; page?: number; limit?: number } = {}) {
   const { service, page = 1, limit = 24 } = opts;
   const key = `coins-${page}-${limit}-${service ?? ""}`;
@@ -31,7 +27,6 @@ export function useCoins(opts: { service?: string; page?: number; limit?: number
   return { coins: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
 }
 
-/** Single coin from /v1/coins/:contract. Pass null to skip the fetch. */
 export function useCoin(contract: string | null) {
   const client = useMedialaneClient();
 
@@ -44,7 +39,6 @@ export function useCoin(contract: string | null) {
   return { coin: data?.data ?? null, isLoading, error, mutate };
 }
 
-/** Coins created by `address` — the "my coins" list (→ /v1/coins?creator=). */
 export function useCoinsByCreator(address: string | null) {
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiCoin[]>>(
     address ? `coins-by-creator-${address}` : null,
@@ -62,7 +56,6 @@ export function useCoinsByCreator(address: string | null) {
   return { coins: data?.data ?? [], isLoading, error, mutate };
 }
 
-/** PATCH a coin's creator-editable profile (image/description) via the BFF proxy. */
 export async function updateCoinProfile(
   contract: string,
   data: { image?: string | null; description?: string | null },

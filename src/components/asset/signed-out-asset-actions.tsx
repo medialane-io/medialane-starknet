@@ -11,15 +11,6 @@ interface SignedOutAssetActionsProps {
   tokenId: string;
 }
 
-/**
- * Balanced 2-column entry point for signed-out visitors — the inverse
- * pairing of medialane-io's SignedOutAssetActions. This is the wallet-native
- * dapp, so the wallet connect is the primary (left) action; the bridge to
- * medialane.io's managed Google/email wallet is secondary (right). Colors
- * are inverted too, so each slot keeps a consistent visual language across
- * both apps (left = blue→purple, right = rose→orange) regardless of which
- * action occupies it.
- */
 export function SignedOutAssetActions({ chain, contract, tokenId }: SignedOutAssetActionsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">

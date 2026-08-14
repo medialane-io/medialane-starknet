@@ -97,7 +97,7 @@ function PriceDisplay({ conditions }: { conditions: DropConditions }) {
 export default function DropDetailPage({ contract }: { contract: string }) {
   const { address: walletAddress } = useWallet();
   const { dropInfo, isLoading } = useDropInfo(contract);
-  // Live conditions/supply from chain (authority); dropInfo provides display fields.
+
   const { state: chainState } = useOnChainDropState(contract);
 
   if (isLoading) {
@@ -137,7 +137,6 @@ export default function DropDetailPage({ contract }: { contract: string }) {
   return (
     <div className="max-w-2xl mx-auto px-4 pt-10 pb-16 space-y-8">
 
-      {/* Back + manage */}
       <FadeIn>
         <div className="flex items-center justify-between">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
@@ -157,7 +156,6 @@ export default function DropDetailPage({ contract }: { contract: string }) {
         </div>
       </FadeIn>
 
-      {/* Hero image */}
       {imageUrl && (
         <FadeIn delay={0.04}>
           <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-muted">
@@ -172,7 +170,6 @@ export default function DropDetailPage({ contract }: { contract: string }) {
         </FadeIn>
       )}
 
-      {/* Header */}
       <FadeIn delay={0.08}>
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -195,11 +192,9 @@ export default function DropDetailPage({ contract }: { contract: string }) {
         </div>
       </FadeIn>
 
-      {/* Stats grid */}
       <FadeIn delay={0.12}>
         <div className="grid grid-cols-2 gap-3">
 
-          {/* Supply */}
           <div className="bento-cell p-4 col-span-2 space-y-3">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <ShieldCheck className="h-4 w-4 text-brand-orange" />
@@ -214,7 +209,6 @@ export default function DropDetailPage({ contract }: { contract: string }) {
             )}
           </div>
 
-          {/* Price */}
           {conditions && (
             <div className="bento-cell p-4 space-y-1">
               <div className="flex items-center gap-2 text-sm font-semibold mb-2">
@@ -230,7 +224,6 @@ export default function DropDetailPage({ contract }: { contract: string }) {
             </div>
           )}
 
-          {/* Time window */}
           {conditions && (
             <div className="bento-cell p-4 space-y-1">
               <div className="flex items-center gap-2 text-sm font-semibold mb-2">
@@ -250,7 +243,6 @@ export default function DropDetailPage({ contract }: { contract: string }) {
             </div>
           )}
 
-          {/* Collectors */}
           <div className="bento-cell p-4 space-y-1">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Users className="h-4 w-4 text-brand-orange" />
@@ -262,7 +254,6 @@ export default function DropDetailPage({ contract }: { contract: string }) {
         </div>
       </FadeIn>
 
-      {/* Mint */}
       <FadeIn delay={0.18}>
         <div className="bento-cell p-5 space-y-3">
           <p className="text-sm font-semibold">Mint your token</p>

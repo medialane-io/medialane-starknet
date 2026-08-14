@@ -1,12 +1,5 @@
 "use client";
 
-// Create Membership — creates a new membership tier and mints its full supply
-// straight to the creator's own wallet, in one action. Same shape as the IP
-// Tickets mint page: one form, no redundant panels, no recipient field — the
-// creator ends up holding the membership cards and lists them on the
-// marketplace like any other asset. The validity window gates membership,
-// never minting, so a future season pass can be minted and sold today.
-
 import { use, useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -215,9 +208,6 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
 
       if (!address) throw new Error("Wallet not ready. Please reconnect and try again.");
 
-      // Ids are sequential and only the owner can ever call create_membership, so
-      // the id can still be predicted ahead of time and both intents' calls
-      // bundled into one multicall — one wallet signature for one "create" action.
       const tierId = await predictNextMembershipId(contract);
       setMintedTierId(String(tierId));
 

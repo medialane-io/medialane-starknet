@@ -13,11 +13,6 @@ async function backendFetch<T>(url: string): Promise<T> {
   return res.json();
 }
 
-// Mirrors medialane-backend's Prisma models 1:1 (src/api/routes/sponsorship.ts) —
-// v3: one contract is both the offer/bid/proposal registry and the license
-// collection. `duration`/`royaltyBps` are plain numbers; `transferable`/
-// `expiresAt` are declarative only, never contract-enforced.
-
 export interface SponsorshipOffer {
   id: string;
   chain: string;
@@ -90,8 +85,6 @@ export interface SponsorshipLicense {
   currentHolder?: string | null;
 }
 
-// ── useSponsorshipOffers ──────────────────────────────────────────────────────
-
 export function useSponsorshipOffers(params?: { nftContract?: string; author?: string; owner?: string; open?: boolean }) {
   const key = `sponsorship-offers-${JSON.stringify(params ?? {})}`;
   const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipOffer[]; meta: unknown }>(
@@ -110,8 +103,6 @@ export function useSponsorshipOffers(params?: { nftContract?: string; author?: s
   return { offers: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
 }
 
-// ── useSponsorshipOffer ───────────────────────────────────────────────────────
-
 export function useSponsorshipOffer(offerId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipOffer }>(
     offerId ? `sponsorship-offer-${offerId}` : null,
@@ -122,8 +113,6 @@ export function useSponsorshipOffer(offerId: string | null) {
   return { offer: data?.data ?? null, isLoading, error, mutate };
 }
 
-// ── useSponsorshipBids ────────────────────────────────────────────────────────
-
 export function useSponsorshipBids(offerId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipBid[] }>(
     offerId ? `sponsorship-bids-${offerId}` : null,
@@ -133,8 +122,6 @@ export function useSponsorshipBids(offerId: string | null) {
 
   return { bids: data?.data ?? [], isLoading, error, mutate };
 }
-
-// ── useSponsorshipProposals ───────────────────────────────────────────────────
 
 export function useSponsorshipProposals(params?: { nftContract?: string; proposer?: string; owner?: string; open?: boolean }) {
   const key = `sponsorship-proposals-${JSON.stringify(params ?? {})}`;
@@ -154,8 +141,6 @@ export function useSponsorshipProposals(params?: { nftContract?: string; propose
   return { proposals: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
 }
 
-// ── useSponsorshipProposal ────────────────────────────────────────────────────
-
 export function useSponsorshipProposal(proposalId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipProposal }>(
     proposalId ? `sponsorship-proposal-${proposalId}` : null,
@@ -166,15 +151,12 @@ export function useSponsorshipProposal(proposalId: string | null) {
   return { proposal: data?.data ?? null, isLoading, error, mutate };
 }
 
-/** Proposals awaiting the CURRENT asset owner's decision — for an asset's own page. */
 export function usePendingProposalsForAsset(nftContract: string | null) {
   const { proposals, isLoading, error, mutate } = useSponsorshipProposals(
     nftContract ? { nftContract, open: true } : undefined
   );
   return { proposals: nftContract ? proposals : [], isLoading, error, mutate };
 }
-
-// ── NEW ──────────────────────────────────────────────────────────────────────
 
 export function useSponsorshipLicenses(params?: { holder?: string; author?: string }) {
   const key = `sponsorship-licenses-${JSON.stringify(params ?? {})}`;
@@ -192,8 +174,6 @@ export function useSponsorshipLicenses(params?: { holder?: string; author?: stri
   return { licenses: data?.data ?? [], meta: data?.meta, isLoading, error, mutate };
 }
 
-/** Received proposals + bids on the user's own offers, awaiting a decision —
- *  the number the Portfolio nav badge shows. */
 export function useMySponsorshipDealCounts(walletAddress: string | null) {
   const { proposals, isLoading: proposalsLoading } = useSponsorshipProposals(
     walletAddress ? { owner: walletAddress, open: true } : undefined
@@ -201,9 +181,7 @@ export function useMySponsorshipDealCounts(walletAddress: string | null) {
   const { offers, isLoading: offersLoading } = useSponsorshipOffers(
     walletAddress ? { author: walletAddress, open: true } : undefined
   );
-  // Bid counts would need a per-offer call — deferred to the portfolio page
-  // itself, which renders the real per-offer bid lists; this hook only
-  // feeds the nav badge with the proposal count.
+
   void offers;
   return { pendingCount: proposals.length, isLoading: proposalsLoading || offersLoading };
 }

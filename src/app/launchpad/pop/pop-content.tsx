@@ -27,7 +27,7 @@ function PopCollectionCard({ collection }: { collection: PopCollection }) {
 
   return (
     <div className="bento-cell overflow-hidden flex flex-col">
-      {/* Cover */}
+
       <div className="relative aspect-video w-full overflow-hidden bg-muted shrink-0">
         {showImage ? (
           <Image
@@ -48,7 +48,6 @@ function PopCollectionCard({ collection }: { collection: PopCollection }) {
         </span>
       </div>
 
-      {/* Body */}
       <div className="p-4 flex flex-col gap-3 flex-1">
         <div className="flex-1 space-y-1">
           <p className="font-bold text-sm leading-tight">{collection.name ?? "Unnamed Event"}</p>
@@ -125,7 +124,6 @@ export function PopContent() {
   return (
     <div className="pb-16 space-y-10">
 
-      {/* ── Header ── */}
       <section className="px-4 pt-10 max-w-5xl mx-auto">
         <ClaimBackButton />
         <FadeIn>
@@ -152,7 +150,6 @@ export function PopContent() {
         </FadeIn>
       </section>
 
-      {/* Features grid */}
       <section className="px-4 max-w-5xl mx-auto">
         <FadeIn>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -167,7 +164,6 @@ export function PopContent() {
         </FadeIn>
       </section>
 
-      {/* Collections grid */}
       <section className="px-4 space-y-4 max-w-5xl mx-auto">
         <FadeIn>
           <div className="flex items-center justify-between">

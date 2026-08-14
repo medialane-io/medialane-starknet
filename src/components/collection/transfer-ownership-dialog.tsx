@@ -25,17 +25,12 @@ import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-di
 import { EXPLORER_URL } from "@/lib/constants";
 
 interface TransferOwnershipDialogProps {
-  /** On-chain numeric collection ID (decimal string). */
+
   collectionId: string;
   currentOwner: string;
   onTransferred?: () => void;
 }
 
-/**
- * Per-collection ownership handoff via the audited IPCollection
- * registry. The new owner controls future minting and ownership
- * transfers for this collection only — existing tokens are unaffected.
- */
 export function TransferCollectionOwnershipDialog({
   collectionId,
   currentOwner,

@@ -5,20 +5,6 @@ import { useNavCommandMenu } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
 
-/**
- * Replaces the command menu footer's static "medialane" text (NavCommandMenu's
- * `brandSlot`) with an actionable connect entry point when disconnected — users
- * had no obvious way to connect from the menu after the wallet component was
- * removed from it. The "⌘K" shortcut hint stays regardless of connection state
- * — only the brand label itself was meant to go, never the shortcut hint.
- * Once connected, only the hint remains; the "Log out" row in the Account
- * command group covers disconnecting.
- *
- * Filled brand-gradient treatment (`.btn-border-animated` as a 1px wrapper
- * around a transparent-fill button — the same technique `GradientButton`
- * uses, just sized for this compact footer slot) rather than the bordered
- * `.ml-gbtn` ring — this is the primary "connect a wallet" entry point.
- */
 export function NavConnectButton() {
   const { isConnected } = useWallet();
   const { close } = useNavCommandMenu();

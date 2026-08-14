@@ -21,7 +21,7 @@ interface CancelOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  /** Controls the label shown — auto-detected from order type if omitted. */
+
   variant?: "listing" | "offer";
 }
 
@@ -79,7 +79,7 @@ export function CancelOrderDialog({
 
   useEffect(() => {
     if (open) resetState();
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleConfirm = async () => {
     if (!order) return;
@@ -97,7 +97,6 @@ export function CancelOrderDialog({
           Cancel this onchain marketplace {resolvedVariant} and remove it from active trading.
         </DialogDescription>
 
-        {/* ── Success ── */}
         {isSuccess ? (
           <div className="flex flex-col items-center gap-5 p-6 py-8">
             <div className="h-16 w-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
@@ -130,7 +129,7 @@ export function CancelOrderDialog({
           </div>
 
         ) : isProcessing ? (
-          /* ── Processing ── */
+
           <MarketplaceProcessingState
             title="Submitting cancellation..."
             description="Confirm the wallet prompt and keep this window open."
@@ -139,7 +138,7 @@ export function CancelOrderDialog({
           />
 
         ) : (
-          /* ── Confirm ── */
+
           order && (
             <div className="space-y-0">
               <TokenHero order={order} variant={resolvedVariant} />

@@ -26,9 +26,7 @@ import { UserRegistration } from "@/components/shared/user-registration";
 import { useWallet } from "@/hooks/use-wallet";
 
 function Shell({ children }: { children: React.ReactNode }) {
-  // NAV_COMMANDS itself stays static and wallet-unaware (cheaper to construct,
-  // no re-render coupling to wallet state) — only this one small group is
-  // computed here, where wallet state actually lives.
+
   const pathname = usePathname();
   const suppressAmbient =
     pathname.startsWith("/asset/") ||

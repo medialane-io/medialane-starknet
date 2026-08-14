@@ -97,7 +97,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-/** Reads the token id the contract assigned, from the IPMinted event of a mint_edition tx. */
 async function readAssignedEditionId(txHash: string, collection: string): Promise<string> {
   const receipt = await starknetProvider.getTransactionReceipt(txHash);
   const selector = hash.getSelectorFromName("IPMinted");
@@ -109,7 +108,7 @@ async function readAssignedEditionId(txHash: string, collection: string): Promis
       BigInt(e.keys[0]) === BigInt(selector),
   );
   if (!ev) throw new Error("Minted, but could not read the assigned token id from the receipt");
-  // keys = [selector, token_id_low, token_id_high, recipient]; token_id is a u256 key.
+
   const low = BigInt(ev.keys[1] ?? 0);
   const high = BigInt(ev.keys[2] ?? 0);
   return (low + (high << 128n)).toString();
@@ -162,15 +161,14 @@ export default function MintNFTEditionsPage() {
   const [licensingOpen, setLicensingOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [ipTypeOpen, setIpTypeOpen] = useState(true);
-  // Read only at submit time — keep in a ref so each keystroke in IPTypeFields
-  // doesn't re-render this whole form (see /launchpad/single-editions flicker fix).
+
   const metadataFieldsRef = useRef<MetadataField[]>([]);
   const handleMetadataFields = useCallback((fields: MetadataField[]) => {
     metadataFieldsRef.current = fields;
   }, []);
   const [metadataResetKey, setMetadataResetKey] = useState(0);
   const [autoExternalUrl, setAutoExternalUrl] = useState("");
-  // The on-chain-assigned edition id, read from the IPMinted event in the mint handler.
+
   const [mintedTokenId, setMintedTokenId] = useState<string | null>(null);
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -200,18 +198,12 @@ export default function MintNFTEditionsPage() {
     },
   });
 
-  // Pre-fill recipient with connected wallet
   useEffect(() => {
     if (walletAddress && !form.getValues("recipient")) {
       form.setValue("recipient", walletAddress);
     }
   }, [walletAddress, form]);
 
-  // Pre-fill external URL with the collection page (not the asset URL — the
-  // token doesn't exist on-chain until mint completes, and indexers won't
-  // resolve /asset/:contract/:tokenId until they pick up the Transfer event).
-  // Pointing to the collection page gives collectors a working link the
-  // moment the metadata JSON is written to IPFS. Creators can still override.
   useEffect(() => {
     if (!collectionAddress) return;
     const suggested = absoluteUrl(collectionHref("STARKNET", collectionAddress));
@@ -222,13 +214,6 @@ export default function MintNFTEditionsPage() {
     }
   }, [autoExternalUrl, collectionAddress, form]);
 
-  // Verify the connected wallet is the collection owner before showing the
-  // form. Reads the indexed Collection.owner via the credited backend
-  // (GET /v1/collections/:contract) instead of a raw on-chain call — the
-  // backend already indexes this field, so a second live RPC read was a
-  // pure duplicate that also bypassed the credit gate. A failed read now
-  // denies rather than silently granting access (the previous raw-RPC
-  // version fell back to "ok" on any error, including a transient one).
   useEffect(() => {
     if (!walletAddress || !collectionAddress) return;
     client.api.getCollection(collectionAddress)
@@ -271,7 +256,7 @@ export default function MintNFTEditionsPage() {
       setImageUri(`ipfs://${data.cid}`);
       toast.success("Image uploaded to IPFS");
     } catch (err) {
-      // Clear the preview so the form doesn't pretend an image is attached
+
       if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }
       setImagePreview(null);
       const t = uploadFailureToast(err);
@@ -338,21 +323,16 @@ export default function MintNFTEditionsPage() {
         collectionContract: collectionAddress,
         tokenUri,
         value: values.value,
-        // royaltyBps has no effect on mip-erc1155 mints (set via per-collection
-        // controls, not per mint) — the backend rejects a nonzero value here,
-        // and this form has no royalty field for editions mint.
+
         royaltyBps: 0,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt mint intent");
 
-      // The contract assigns the edition id on-chain (sequential from 1).
       const txHashResult = await execute(intentRes.data.calls as Call[]);
       if (!txHashResult) throw new Error("Mint transaction failed");
-      // MINT intents accept confirmation (RECEIPT_HYDRATED_INTENT_TYPES) — report
-      // the tx so the backend can hydrate receipt-derived state if it needs to.
+
       await confirmIntentBestEffort(client, intentRes.data.id, txHashResult);
 
-      // Read the assigned id from the IPMinted event for the success/asset link.
       setMintedTokenId(await readAssignedEditionId(txHashResult, collectionAddress));
 
       setTxHash(txHashResult);
@@ -395,7 +375,6 @@ export default function MintNFTEditionsPage() {
     });
   };
 
-  // ── Not connected ─────────────────────────────────────────────────────────
   if (!isConnected) {
     return (
       <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
@@ -407,7 +386,6 @@ export default function MintNFTEditionsPage() {
     );
   }
 
-  // ── Ownership check ───────────────────────────────────────────────────────
   if (ownerCheck === "denied") {
     return (
       <div className="max-w-lg mx-auto px-4 pt-24 pb-8 text-center space-y-4">
@@ -423,7 +401,6 @@ export default function MintNFTEditionsPage() {
     );
   }
 
-  // ── Mint form ──────────────────────────────────────────────────────────────
   return (
     <>
       <ClaimRouteShell
@@ -452,7 +429,6 @@ export default function MintNFTEditionsPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
-            {/* ── Image ── */}
             <FadeIn delay={0.06}>
               <div className="space-y-2">
                 <p className="text-sm font-medium">
@@ -500,7 +476,6 @@ export default function MintNFTEditionsPage() {
               </div>
             </FadeIn>
 
-            {/* ── Name ── */}
             <FadeIn delay={0.08}>
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
@@ -512,7 +487,6 @@ export default function MintNFTEditionsPage() {
               )} />
             </FadeIn>
 
-            {/* ── Description ── */}
             <FadeIn delay={0.1}>
               <FormField control={form.control} name="description" render={({ field }) => (
                 <FormItem>
@@ -525,7 +499,6 @@ export default function MintNFTEditionsPage() {
               )} />
             </FadeIn>
 
-            {/* ── External URL ── */}
             <FadeIn delay={0.12}>
               <FormField control={form.control} name="external_url" render={({ field }) => (
                 <FormItem>
@@ -538,7 +511,6 @@ export default function MintNFTEditionsPage() {
               )} />
             </FadeIn>
 
-            {/* ── Licensing Terms ── */}
             <FadeIn delay={0.13}>
               <Collapsible open={licensingOpen} onOpenChange={setLicensingOpen}>
                 <div className="sm:overflow-hidden sm:rounded-xl sm:border sm:border-border">
@@ -685,7 +657,6 @@ export default function MintNFTEditionsPage() {
               </Collapsible>
             </FadeIn>
 
-            {/* ── IP Type & metadata traits ── */}
             <FadeIn delay={0.135}>
               <Collapsible open={ipTypeOpen} onOpenChange={setIpTypeOpen}>
                 <div className="sm:overflow-hidden sm:rounded-xl sm:border sm:border-border">
@@ -740,7 +711,6 @@ export default function MintNFTEditionsPage() {
               </Collapsible>
             </FadeIn>
 
-            {/* ── Quantity ── */}
             <FadeIn delay={0.14}>
               <FormField control={form.control} name="value" render={({ field }) => (
                 <FormItem>
@@ -754,7 +724,6 @@ export default function MintNFTEditionsPage() {
               )} />
             </FadeIn>
 
-            {/* ── Recipient ── */}
             <FadeIn delay={0.16}>
               <FormField control={form.control} name="recipient" render={({ field }) => (
                 <FormItem>
@@ -768,7 +737,6 @@ export default function MintNFTEditionsPage() {
               )} />
             </FadeIn>
 
-            {/* ── Submit ── */}
             <FadeIn delay={0.2}>
               <Button
                 type="submit"

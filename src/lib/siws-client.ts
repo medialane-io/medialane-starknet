@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * Thin wrapper over @medialane/sdk's SIWS client (single source since 0.44.0
- * — see medialane-core/docs/specs/2026-06-30-remove-clerk-from-backend-
- * design.md §IX). Kept local: `getAnyStoredSiwsToken` (used by
- * pinata-fetch.ts, not needed elsewhere) and the legacy-storage-key
- * migration in `getStoredSiwsToken` (historical, this app's own baggage —
- * not worth pushing into the shared SDK for a single caller).
- */
 import {
   requestSiwsToken as sdkRequestSiwsToken,
   storeSiwsToken,

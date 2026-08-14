@@ -13,17 +13,9 @@ import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
 import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 
-/**
- * Per-call options for marketplace write ops. `silent` suppresses the success
- * toast — passed by dialog callers that render their own inline success state,
- * so the user doesn't get a dialog AND a toast. Direct callers (portfolio
- * tables/grids, which have no dialog) omit it and keep the toast.
- */
 interface WriteOpts {
     silent?: boolean;
-    /** Auto-swap approve+swap calls (from lib/swap-calls.ts), prepended
-     *  ahead of the fulfill calls in the same atomic multicall when the
-     *  buyer is paying with a token other than the order's own currency. */
+
     swapCalls?: Call[];
 }
 
@@ -59,21 +51,12 @@ interface UseMarketplaceReturn {
     ) => Promise<string | undefined>;
 
     isProcessing: boolean;
-    isLoading: boolean; // For compatibility
+    isLoading: boolean;
     txHash: string | null;
     error: string | null;
     resetState: () => void;
 }
 
-/**
- * Marketplace write hook. Every write (list / offer / cancel / fulfil /
- * checkout) builds its order/calldata server-side via the metered
- * `/v1/intents/*` API (medialane-backend) and only signs/executes locally —
- * see src/lib/intent-tx.ts. `checkoutCart` is a multi-item atomic sweep and
- * `acceptOffer` is a seller-side fulfil, both composed from per-order
- * FULFILL_ORDER intents; both execute through the shared `useVenueSigner`
- * port, so wallet selection + confirmation are unified.
- */
 export function useMarketplace(): UseMarketplaceReturn {
     const signer = useVenueSigner();
     const client = useMedialaneClient();
@@ -90,13 +73,7 @@ export function useMarketplace(): UseMarketplaceReturn {
     }, []);
 
     const invalidateMarketplaceCaches = useCallback(() => {
-        // Revalidate matching keys WITHOUT clearing their cached data. Passing
-        // `undefined` as mutate's data arg wipes the cache — and since the asset
-        // page's `token-<contract>-<id>` key matches this filter, wiping it flips
-        // `useToken().isLoading` true, which unmounts the asset variant (and any
-        // open marketplace dialog) into the skeleton branch — destroying the
-        // success dialog mid-flow so only the toast survives. Filter-only mutate
-        // re-fetches in the background while keeping the variant mounted.
+
         mutate(
             (key) => {
                 if (typeof key !== "string") return false;
@@ -118,17 +95,6 @@ export function useMarketplace(): UseMarketplaceReturn {
         window.setTimeout(invalidateMarketplaceCaches, INDEXER_REVALIDATION_DELAY_MS);
     }, [invalidateMarketplaceCaches]);
 
-    // Wraps an async operation with isProcessing state and unified error handling.
-    // `op` seeds a fresh breadcrumb trail (src/lib/marketplace-debug.ts, logged live
-    // via console.debug at each step in use-venue-signer.ts) so a hang with no
-    // thrown error (isProcessing never resolves) is still diagnosable from the
-    // console alone — the last "[marketplace-debug]" line is where it got stuck.
-    //
-    // `opts.silent` suppresses the error toast too (not just success, below) —
-    // every dialog caller already renders `error` inline via its own <Alert>, so
-    // firing a toast on top duplicated the same message twice. Direct callers
-    // with no dialog (portfolio tables/grids) omit `opts` and keep the toast as
-    // their only feedback surface.
     const withProcessing = useCallback(async <T>(
         op: string,
         fn: () => Promise<T>,
@@ -157,7 +123,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         } finally {
             setIsProcessing(false);
         }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
 
     const createListing = useCallback(async (
         assetContractAddress: string,
@@ -186,7 +152,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 nftContract: assetContractAddress,
                 tokenId,
                 currency: token.address,
-                price, // human-readable — the backend converts via the token's decimals
+                price,
                 endTime: now + durationSeconds,
                 amount: is1155 ? (amount ?? "1") : undefined,
             });
@@ -272,9 +238,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             }
             const fulfillCalls = checkoutRes.data.flatMap((r) => (r.calls as Call[]) ?? []);
 
-            // Platform fee (creators fund) — one transfer per token, summed. Stays
-            // app-side: 02-protocol-app-split.md §II, fee is added to the quote
-            // before signing, never computed by the backend.
             const tokenTotals = new Map<string, bigint>();
             items.forEach((item) => {
                 const amt = BigInt(item.considerationAmount);
@@ -286,16 +249,12 @@ export function useMarketplace(): UseMarketplaceReturn {
 
             toast.info("Executing Purchase", { description: "Approve the final transaction to sweep the cart." });
 
-            // Auto-swap calls (if any) go FIRST — swap into the order's
-            // currency, then fulfill, then the platform fee. Same atomicity
-            // guarantee as every other bundled call here: swap and purchase
-            // either both land or both fail.
             const { txHash: hash } = await signer.execute([
                 ...(opts?.swapCalls ?? []),
                 ...fulfillCalls,
                 ...feeCalls,
             ]);
-            // Best-effort per-item confirm — a failure here doesn't affect the tx.
+
             await Promise.all(
                 checkoutRes.data.map((r) => (r.id ? client.api.confirmIntent(r.id, hash).catch(() => {}) : Promise.resolve()))
             );
@@ -335,12 +294,6 @@ export function useMarketplace(): UseMarketplaceReturn {
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
-    /**
-     * Asset owner accepts an incoming bid. Fulfilment is unsigned (the owner is
-     * the fulfiller); the owner approves the NFT transfer to the marketplace, then
-     * executes both calls atomically. Kept app-side because the venue's fulfil
-     * models a buyer paying, not a seller approving their NFT.
-     */
     const acceptOffer = useCallback(async (
         orderHash: string,
         _nftContractAddress: string,

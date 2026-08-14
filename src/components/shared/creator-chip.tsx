@@ -1,18 +1,5 @@
 "use client";
 
-/**
- * CreatorChip — links an account/creator address to its Medialane profile.
- *
- * Resolves the creator profile by wallet address (SWR-cached, 404 → null) and
- * renders avatar + name when a profile exists, gracefully falling back to a
- * generated avatar + shortened address when it doesn't. Always renders a link
- * (to `/creator/{username|address}`) as long as an address is provided, so a
- * creator is always reachable even before they've set up a profile.
- *
- * Reusable anywhere an owner/creator address should be shown as a person rather
- * than a raw hex string (coin page, asset pages, collection headers, …).
- */
-
 import Link from "next/link";
 import Image from "next/image";
 import { useCreatorProfile } from "@/hooks/use-profiles";
@@ -20,7 +7,7 @@ import { ipfsToHttp, cn } from "@/lib/utils";
 
 interface CreatorChipProps {
   address?: string | null;
-  /** Leading label, e.g. "by" / "Created by". Pass null to hide. */
+
   label?: string | null;
   className?: string;
 }

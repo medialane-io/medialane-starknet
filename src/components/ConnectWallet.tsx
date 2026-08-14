@@ -10,33 +10,15 @@ import { isWrongNetwork as computeIsWrongNetwork } from "@/lib/wallet-error";
 import { useNavAccountSheet } from "@medialane/ui";
 import { useConnectDialog } from "@/components/connect-dialog";
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 interface ConnectWalletProps {
   label?: string;
   className?: string;
-  /** Overrides the default icon+label trigger content (not-connected state only). */
+
   children?: React.ReactNode;
-  /**
-   * Replaces the entire clickable trigger element, in BOTH the connected and
-   * not-connected states — for a caller that owns its own trigger visual
-   * across both states (e.g. a header component that already knows whether
-   * a wallet is connected). Unlike `children`, this is not nested inside the
-   * default `<Button>` — it receives the click handler directly, so it
-   * renders as-is.
-   */
+
   trigger?: React.ReactElement<{ onClick?: () => void }>;
 }
 
-/**
- * A pure trigger — all real UI lives in two global singletons mounted once
- * in the Shell: `ConnectDialog` (connector picker, not connected) and
- * `NavAccountSheet`+`AccountPanel` (identity/wallet, connected). Every
- * `<ConnectWallet/>` mounted anywhere in the app opens the SAME dialog/panel
- * instead of rendering its own — clicking any instance behaves identically.
- */
 export function ConnectWallet({ label, className, children, trigger }: ConnectWalletProps = {}) {
   const { isConnected: injectedConnected, chainId } = useAccount();
   const { networkConfig } = useNetwork();
@@ -46,20 +28,8 @@ export function ConnectWallet({ label, className, children, trigger }: ConnectWa
 
   const isWrongNetwork = injectedConnected && computeIsWrongNetwork(chainId, networkConfig.chainId);
 
-  // ---------------------------------------------------------------------------
-  // Loading state
-  // ---------------------------------------------------------------------------
-
   if (sessionConnecting && !isConnected) {
-    // `sessionConnecting` is global (one shared wallet slot), so every
-    // mounted <ConnectWallet/> on the page hits this branch simultaneously —
-    // including ones rendered as a full custom card via `className`/
-    // `children` (e.g. the asset page's signed-out actions). This used to
-    // unconditionally collapse into a bare 8x8 icon button regardless of
-    // what was passed in, discarding the caller's layout entirely and
-    // reading as the component breaking. Preserve the caller's shape:
-    // custom content keeps rendering as-is (just disabled); the default
-    // icon/label trigger swaps its icon for a spinner as before.
+
     return (
       <Button
         variant="ghost"
@@ -76,10 +46,6 @@ export function ConnectWallet({ label, className, children, trigger }: ConnectWa
       </Button>
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Connected — opens the global account panel
-  // ---------------------------------------------------------------------------
 
   if (isConnected && address) {
     return trigger ? (
@@ -102,10 +68,6 @@ export function ConnectWallet({ label, className, children, trigger }: ConnectWa
       </Button>
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Not connected — opens the global connector picker
-  // ---------------------------------------------------------------------------
 
   return trigger ? (
     React.cloneElement(trigger, { onClick: openConnectDialog })

@@ -92,7 +92,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
 
   useEffect(() => {
     if (open) { resetState(); form.reset(); setTxStatus("idle"); }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>

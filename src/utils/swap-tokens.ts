@@ -1,9 +1,4 @@
-/**
- * Swap token presets + amount formatting helpers.
- *
- * Token metadata + bigint amount formatting shared across coin-related
- * balance/price reads. Pure utilities — no wallet or swap-engine dependency.
- */
+
 
 import { getTokenBySymbol } from "@medialane/sdk";
 
@@ -15,9 +10,6 @@ export interface SwapToken {
   color: string;
 }
 
-// Address + decimals come from the SDK's SUPPORTED_TOKENS (single source — kills
-// the bridged-vs-native USDC drift); only the display name + brand color are
-// local UI metadata.
 const SWAP_TOKEN_META: { symbol: string; name: string; color: string }[] = [
   { symbol: "ETH",  name: "Ether",           color: "#627EEA" },
   { symbol: "STRK", name: "Starknet Token",  color: "#FF875B" },
@@ -31,7 +23,6 @@ export const SWAP_TOKENS: SwapToken[] = SWAP_TOKEN_META.map(({ symbol, name, col
   return { symbol, name, address: t.address, decimals: t.decimals, color };
 });
 
-/** Format a bigint token amount to a human-readable string (up to 6 significant decimals). */
 export function formatTokenAmount(raw: bigint, decimals: number): string {
   const divisor = 10n ** BigInt(decimals);
   const whole = raw / divisor;
@@ -41,7 +32,6 @@ export function formatTokenAmount(raw: bigint, decimals: number): string {
   return `${whole}.${fractionStr}`;
 }
 
-/** Parse a human-readable amount string to raw bigint. */
 export function parseTokenAmount(value: string, decimals: number): bigint {
   if (!value || isNaN(parseFloat(value))) return 0n;
   const [wholePart, fracPart = ""] = value.split(".");

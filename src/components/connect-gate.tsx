@@ -13,18 +13,6 @@ export type ConnectGateProps = {
   icon?: ReactNode;
 };
 
-/**
- * Single source of truth for "you must connect to use this page".
- *
- * Three states off useWallet():
- *  - isConnecting  → skeleton placeholder (returning users never flash the panel)
- *  - !isConnected  → friendly connect panel (reuses the shared <ConnectWallet/>)
- *  - connected     → children
- *
- * Wrap the body of any protected launchpad/portfolio page in this. Public
- * discovery pages (/launchpad landing, /marketplace, /asset, /collections)
- * must NOT use it.
- */
 export function ConnectGate({ children, title, subtitle, icon }: ConnectGateProps) {
   const { isConnected, isConnecting } = useWallet();
 
@@ -48,8 +36,7 @@ export function ConnectGate({ children, title, subtitle, icon }: ConnectGateProp
           {subtitle ?? "Connect your wallet to continue."}
         </p>
         <div className="flex justify-center">
-          {/* Animated brand-gradient CTA — same treatment as the asset page's
-              "Connect wallet to trade" button (.btn-border-animated fill). */}
+
           <div className="btn-border-animated p-[1px] rounded-2xl w-full max-w-xs">
             <ConnectWallet
               label="Connect wallet"

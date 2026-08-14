@@ -98,7 +98,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
     setLoading(true);
 
     try {
-      // 1. Upload remix IPFS metadata
+
       const token = await getValidToken();
       const royaltyStr = offer.royaltyPct != null ? `${offer.royaltyPct}%` : undefined;
       const metadata = {
@@ -124,13 +124,12 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       const pinData = await pinRes.json().catch(() => ({}));
       if (!pinRes.ok || !pinData.uri) throw new Error(pinData.error ?? "Metadata upload failed");
 
-      // 2. Mint via createMintIntent
       const intentRes = await client.api.createMintIntent({
         owner: walletAddress,
         collectionId: effectiveCollectionId,
         recipient: walletAddress,
         tokenUri: pinData.uri,
-        royaltyBps: 0, // remix-approval mint has no royalty input UI yet — default to none
+        royaltyBps: 0,
       });
       const mintCalls = (intentRes.data as any)?.calls as Call[];
       if (!mintCalls?.length) throw new Error("No mint calls returned");
@@ -139,7 +138,6 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       if (mintResult === null) throw new Error("Mint reverted");
       setMintHash(mintResult);
 
-      // 3. Poll for new tokenId
       let remixTokenId: string | undefined;
       const mintDeadline = Date.now() + 10_000;
       while (Date.now() < mintDeadline) {
@@ -151,24 +149,22 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
             remixTokenId = newest.tokenId;
             break;
           }
-        } catch { /* ignore */ }
+        } catch {  }
       }
       if (!remixTokenId) throw new Error("Could not determine remix token ID");
 
-      // 4. Create marketplace listing
       const currencySymbol = currencyToken?.symbol ?? "STRK";
       await createListing(
         selectedCollection.contractAddress,
         remixTokenId,
         offer.proposedPrice ?? "0",
         currencySymbol,
-        30 * 24 * 60 * 60, // 30 days
+        30 * 24 * 60 * 60,
         undefined,
         undefined,
-        { silent: true }, // sheet shows its own success state for the whole flow
+        { silent: true },
       );
 
-      // 5. Poll for listing to get orderHash
       let orderHash: string | undefined;
       const listingDeadline = Date.now() + 15_000;
       while (Date.now() < listingDeadline) {
@@ -185,11 +181,10 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
             orderHash = listing.orderHash;
             break;
           }
-        } catch { /* ignore */ }
+        } catch {  }
       }
       if (!orderHash) throw new Error("Could not confirm listing orderHash — check portfolio shortly");
 
-      // 6. Confirm offer in backend
       await confirmRemixOffer(
         offer.id,
         {

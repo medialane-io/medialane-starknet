@@ -1,7 +1,6 @@
 import { Layers, LayoutGrid, Plus, Gift } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 
-/** Right-rail content for /launchpad/single-editions/collection. */
 export function CreateCollectionAside() {
   return (
     <ClaimRail

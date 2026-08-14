@@ -8,7 +8,7 @@ import "@medialane/ui/styles";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
-// Brand display face — headings pick it up via --font-display (@medialane/ui styles).
+
 const urbanist = Urbanist({ subsets: ["latin"], display: "swap", variable: "--font-display" });
 
 export const metadata: Metadata = {
@@ -86,9 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Every asset/collection/coin image resolves through the Pinata gateway
-            (src/utils/ipfs.ts IPFS_GATEWAYS[0]) — preconnect shaves the TLS/DNS
-            handshake off the LCP image on nearly every page. */}
+
         <link rel="preconnect" href="https://gateway.pinata.cloud" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://gateway.pinata.cloud" />
         {BACKEND_ORIGIN && (
@@ -99,7 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body className={`${inter.className} ${urbanist.variable}`}>
-        {/* Google tag (gtag.js) — Google Ads conversion tracking */}
+
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-18112836088"
           strategy="afterInteractive"

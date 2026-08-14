@@ -4,7 +4,6 @@ import type { ApiOrder } from "@medialane/sdk";
 
 const ONE_STRK = 10n ** 18n;
 
-/** Minimal ApiOrder stub — orderTotal only reads consideration + offer.itemType. */
 function order(itemType: "ERC721" | "ERC1155", editions = "1"): ApiOrder {
   return {
     offer: { itemType, startAmount: editions },
@@ -19,8 +18,7 @@ test("ERC-1155: charges price per edition × quantity", () => {
 });
 
 test("ERC-1155: does NOT divide by the listing edition count (regression)", () => {
-  // The original bug divided price by offer.startAmount. editions=5, qty=2
-  // must be 2 STRK — not 0.4 STRK.
+
   expect(orderTotal(order("ERC1155", "5"), 2)).toBe(2n * ONE_STRK);
 });
 

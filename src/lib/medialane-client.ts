@@ -13,15 +13,6 @@ import {
 
 let _client: MedialaneClient | null = null;
 
-/**
- * The chain-scoped MedialaneConfig the app uses everywhere (the client and the
- * StarknetVenue adapter build from this same shape — single source).
- * The SDK validates rpcUrl as an ABSOLUTE url (z.string().url()) and builds its
- * own RpcProvider — so it can't take a relative "/api/rpc", and it must never be
- * empty (that crashed the /_not-found prerender). Browser → the same-origin proxy
- * made absolute (key stays server-side); server → the keyed MAIN, then the
- * keyless FALLBACK (which always has a value).
- */
 export function medialaneConfig() {
   const rpcUrl =
     typeof window === "undefined"

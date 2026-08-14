@@ -64,7 +64,6 @@ export default function LaunchpadCreateCollectionPage() {
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
 
-  // Image upload state
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -83,7 +82,6 @@ export default function LaunchpadCreateCollectionPage() {
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
 
-  // Once the wallet address is known, pre-fill the external_link with the creator page URL
   useEffect(() => {
     if (walletAddress && !form.getValues("external_link")) {
       form.setValue("external_link", `https://medialane.io/account/${walletAddress}`);
@@ -93,7 +91,7 @@ export default function LaunchpadCreateCollectionPage() {
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
   const handleImageSelect = async (file: File) => {
-    const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+    const MAX_BYTES = 10 * 1024 * 1024;
     if (!ALLOWED_TYPES.includes(file.type)) {
       toast.error("Unsupported format", { description: "Please upload a JPG, PNG, GIF, SVG, or WebP image." });
       return;
@@ -134,7 +132,7 @@ export default function LaunchpadCreateCollectionPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
-    // If the user selected an image but the upload failed, block submission
+
     if (imageFile && !imageUri && !imageUploading) {
       toast.error("Image upload failed", { description: "Please re-upload your collection image before continuing." });
       return;
@@ -149,8 +147,7 @@ export default function LaunchpadCreateCollectionPage() {
     setCollectionStep("processing");
 
     try {
-      // 1. Upload collection metadata JSON to IPFS so permissionless dapps can resolve
-      //    the collection image onchain (base_uri → collection metadata → image field).
+
       let baseUri: string | undefined;
       if (imageUri) {
         const metaToken = await getValidToken();
@@ -163,7 +160,6 @@ export default function LaunchpadCreateCollectionPage() {
         }, metaToken);
       }
 
-      // 2. Create collection intent — pre-signed, returns calls immediately
       const intentRes = await client.api.createCollectionIntent({
         owner: walletAddress,
         name: values.name,
@@ -180,14 +176,12 @@ export default function LaunchpadCreateCollectionPage() {
       const calls = intentData.calls as Call[];
       if (!calls || calls.length === 0) throw new Error("No calls returned from intent");
 
-      // 3. Execute directly with the connected wallet
       const result = await executeTransaction(calls);
 
       if (result === null) {
         throw new Error("Collection transaction reverted on chain");
       }
 
-      // Immediately register the collection from the tx so it appears in portfolio without waiting for the indexer.
       try {
         await Promise.race([
           fetch(`${MEDIALANE_BACKEND_URL}/v1/collections/sync-tx`, {
@@ -198,7 +192,7 @@ export default function LaunchpadCreateCollectionPage() {
           new Promise<never>((_, reject) => setTimeout(() => reject(), 6000)),
         ]);
       } catch {
-        // timeout or error — indexer will catch up regardless
+
       }
 
       setCollectionStep("success");
@@ -242,7 +236,7 @@ export default function LaunchpadCreateCollectionPage() {
         subtitle="Set up a collection to mint your work into — free to publish, and it's yours."
         aside={
           <>
-            {/* Live collectors-card preview of the collection being created */}
+
             <MedialaneCollectionCard
               image={imagePreview}
               name={form.watch("name") || "My Creative Works"}
@@ -255,7 +249,7 @@ export default function LaunchpadCreateCollectionPage() {
       >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            {/* Collection image */}
+
             <div className="space-y-2">
               <p className="text-sm font-medium">Collection image</p>
               <div className="flex items-start gap-4">

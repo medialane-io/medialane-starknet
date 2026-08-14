@@ -6,8 +6,6 @@ import type { ApiCollection } from "@medialane/sdk";
 
 const BASE = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
 
-// ── Shared fetch helper ───────────────────────────────────────────────────────
-
 async function backendFetch<T>(url: string): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
@@ -15,8 +13,6 @@ async function backendFetch<T>(url: string): Promise<T> {
   if (!res.ok) throw new Error(`Backend fetch failed: ${res.status}`);
   return res.json();
 }
-
-// ── usePopCollections ─────────────────────────────────────────────────────────
 
 export function usePopCollections() {
   const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[]; meta: unknown }>(
@@ -38,8 +34,6 @@ export function usePopCollections() {
   };
 }
 
-// ── usePopClaimStatus ─────────────────────────────────────────────────────────
-
 export interface PopClaimStatus {
   isEligible: boolean;
   hasClaimed: boolean;
@@ -60,8 +54,6 @@ export function usePopClaimStatus(collection: string | null, wallet: string | nu
 
   return { claimStatus: data?.data ?? null, isLoading, error, mutate };
 }
-
-// ── useMyEvents ───────────────────────────────────────────────────────────────
 
 export function useMyEvents(ownerAddress: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[] }>(

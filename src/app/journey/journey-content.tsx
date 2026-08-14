@@ -7,8 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useRewardsConfig } from "@/hooks/use-rewards";
 
-// A representative subset, not the full action list -- this section is
-// "prove the mechanism is real," not a duplicate of /rewards' full catalog.
 const EXAMPLE_ACTION_TYPES = [
   "mint_asset", "buy_asset", "create_collection", "comment",
   "launch_launchpad", "make_offer", "join_club", "list_asset",

@@ -42,7 +42,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
       setSuccessTxHash(null);
       setLocalError(null);
     }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);
 
   if (!order) return null;
 
@@ -108,10 +108,9 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
           Review the offer price and transaction status before accepting this marketplace offer.
         </DialogDescription>
 
-        {/* ── Confirm ── */}
         {step === "confirm" && (
           <div className="flex flex-col">
-            {/* Asset hero */}
+
             <div className="relative h-40 w-full bg-muted overflow-hidden shrink-0">
               {image ? (
                 <Image src={image} alt={name} fill sizes="384px" className="h-full w-full object-cover" unoptimized />
@@ -128,7 +127,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
             </div>
 
             <div className="px-5 py-5 space-y-4">
-              {/* Offer details */}
+
               <div className="rounded-xl border border-border divide-y divide-border text-sm">
                 <div className="flex items-center justify-between px-4 py-2.5">
                   <span className="text-muted-foreground">You receive</span>
@@ -159,7 +158,6 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
           </div>
         )}
 
-        {/* ── Processing ── */}
         {step === "processing" && (
           <MarketplaceProcessingState
             title="Accepting offer..."
@@ -171,7 +169,6 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
           />
         )}
 
-        {/* ── Success ── */}
         {step === "success" && (
           <MarketplaceSuccessState
             tokenImage={image}
@@ -196,7 +193,6 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
           />
         )}
 
-        {/* ── Error ── */}
         {step === "error" && (
           <MarketplaceErrorState
             tokenImage={image}

@@ -22,9 +22,6 @@ import { MedialaneLogo } from "@/components/brand/medialane-logo";
 import { ipfsToHttp } from "@/lib/utils";
 import { GENESIS_NFT_IMAGE_URL } from "@/lib/constants";
 
-// Accept http(s) URLs, local paths, ipfs:// URIs, or bare CIDs. ipfs://
-// and bare CIDs are routed through the /api/ipfs proxy via ipfsToHttp;
-// browsers cannot load an ipfs:// scheme directly in an <img>.
 function resolveImageSrc(value: string, fallback: string): string {
   if (!value) return fallback;
   if (value.startsWith("http") || value.startsWith("/")) return value;
@@ -32,7 +29,7 @@ function resolveImageSrc(value: string, fallback: string): string {
 }
 
 function EventCard() {
-  // Try env-configured URL first, then the local /genesis.jpg, then placeholder.
+
   const sources = [
     GENESIS_NFT_IMAGE_URL ? resolveImageSrc(GENESIS_NFT_IMAGE_URL, "") : "",
     "/genesis.jpg",
@@ -75,7 +72,7 @@ function EventCard() {
 export function MintContent() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header — logo only, no distractions */}
+
       <header className="px-6 py-4 flex items-center">
         <Link href="/"><MedialaneLogo /></Link>
       </header>
@@ -83,7 +80,6 @@ export function MintContent() {
       <div className="flex-1 w-full">
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
 
-          {/* Hero */}
           <section className="py-12 lg:py-20">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
               <div className="space-y-6">
@@ -118,7 +114,6 @@ export function MintContent() {
             </div>
           </section>
 
-          {/* Creator Fund */}
           <section className="py-10 border-t border-border/30 space-y-6">
             <h2 className="text-2xl sm:text-3xl font-black">Creator Fund</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -140,7 +135,6 @@ export function MintContent() {
             </div>
           </section>
 
-          {/* How it works */}
           <section className="py-10 border-t border-border/30 space-y-6">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">How it works</p>
@@ -199,7 +193,6 @@ export function MintContent() {
             </div>
           </section>
 
-          {/* Distribution phases */}
           <section className="py-10 border-t border-border/30 space-y-6">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Distribution</p>
@@ -236,7 +229,6 @@ export function MintContent() {
             </div>
           </section>
 
-          {/* Eligibility + Disclaimer */}
           <section className="py-10 border-t border-border/30">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               <div className="space-y-4">
@@ -287,7 +279,6 @@ export function MintContent() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-border/40">
         <p className="text-[11px] text-center text-muted-foreground/50 px-5 pt-4">
           Free to join · No purchase required ·{" "}

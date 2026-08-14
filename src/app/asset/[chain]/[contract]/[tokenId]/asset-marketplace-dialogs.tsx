@@ -10,7 +10,6 @@ import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog"
 
 type TokenStandard = "ERC721" | "ERC1155" | "UNKNOWN";
 
-/** All marketplace-dialog open/target state for an asset page, in one hook. */
 export function useAssetMarketplaceDialogState() {
   const [purchaseOrder, setPurchaseOrder] = useState<ApiOrder | null>(null);
   const [listOpen, setListOpen] = useState(false);
@@ -47,9 +46,7 @@ interface AssetMarketplaceDialogsProps {
   contract: string;
   tokenId: string;
   tokenName: string;
-  /** Resolved (http) asset image — shown on the success/processing states so the
-   *  creator artwork is always front-and-centre. Buy/cancel derive theirs from
-   *  the order, so they don't need it passed. */
+
   tokenImage?: string | null;
   tokenStandard?: TokenStandard;
   hasActiveListing: boolean;
@@ -57,7 +54,6 @@ interface AssetMarketplaceDialogsProps {
   dialogs: AssetMarketplaceDialogState;
 }
 
-/** Renders the five marketplace dialogs (buy, list, offer, transfer, cancel) for an asset page. */
 export function AssetMarketplaceDialogs({
   contract,
   tokenId,
@@ -83,13 +79,6 @@ export function AssetMarketplaceDialogs({
     setCancelOpen,
   } = dialogs;
 
-  // A dialog's on-chain tx confirming doesn't mean the backend has indexed
-  // the resulting event yet (~6s poll cycle) — an immediate mutate() can
-  // still return the pre-write list, leaving stale UI (e.g. "List on
-  // Marketplace" after a listing actually went through) until the next
-  // scheduled poll. One extra revalidation a few seconds later closes that
-  // gap without waiting for the full poll interval. Same pattern as io's
-  // useMarketplace() "stale order sync".
   const handleSuccess = useCallback(() => {
     mutateListings();
     setTimeout(mutateListings, 8000);

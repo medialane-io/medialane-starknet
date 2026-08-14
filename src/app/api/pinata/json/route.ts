@@ -1,12 +1,4 @@
-/**
- * POST /api/pinata/json
- *
- * Uploads a JSON document to IPFS via medialane-backend's metered Pinata path.
- * Requires a valid SIWS wallet session.
- *
- * Accepts: application/json body (any JSON object)
- * Response: { uri: "ipfs://...", cid: string }
- */
+
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSiwsWallet } from "@/lib/siws-server";

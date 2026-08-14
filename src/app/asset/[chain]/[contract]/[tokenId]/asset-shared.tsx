@@ -10,12 +10,6 @@ import { LICENSE_TRAIT_TYPES } from "@/types/ip";
 import type { IPType } from "@/types/ip";
 import { IP_TEMPLATES, EMBED_PLATFORM_META, SOCIAL_PLATFORM_META } from "@/lib/ip-templates";
 
-/**
- * The backend enriches tokens with fields not yet declared on the SDK's
- * `ApiToken` (SDK 0.12.0): per-holder `balances` and the `isHidden` flag.
- * `AssetToken` is the local extension the asset pages work against, so the
- * `(token as any)` casts that used to be scattered everywhere are gone.
- */
 export type AssetToken = ApiToken & {
   balances?: Array<{ owner: string; amount: string }> | null;
   isHidden?: boolean;
@@ -23,11 +17,9 @@ export type AssetToken = ApiToken & {
 
 type AssetAttribute = { trait_type?: string; value?: string };
 
-/** Full-bleed blurred backdrop from the asset image, shared by every asset page. */
 export function AssetAtmosphere({
   imageUrl,
-  // Backdrop alpha. Standard (single IP asset) pages use the balanced
-  // `opacity-30` (matches medialane-io); pop/drop/edition keep `opacity-20`.
+
   opacityClassName = "opacity-20",
 }: {
   imageUrl: string | null;
@@ -50,17 +42,13 @@ export function AssetAtmosphere({
   );
 }
 
-/**
- * Derives the listing/bid/ownership and metadata state shared by the edition,
- * standard, and drop asset pages. Safe to call before the token has loaded.
- */
 export function useAssetMarketState(
   token: AssetToken | null,
   listings: ApiOrder[],
   walletAddress: string | null | undefined,
 ) {
   const marketState = useMemo(() => {
-    // Listings = NFT in offer (someone selling); bids = ERC20 in offer (someone buying).
+
     const activeListings = listings.filter(
       (l) => l.status === "ACTIVE" && (l.offer.itemType === "ERC721" || l.offer.itemType === "ERC1155")
     );
@@ -80,12 +68,10 @@ export function useAssetMarketState(
       ? (token!.metadata!.attributes as AssetAttribute[])
       : [];
 
-    // Per-type keys avoid cross-type collisions from shared keys like "Genre", "Duration".
     const activeTemplate = IP_TEMPLATES[
       (attributes.find((a) => a.trait_type?.toLowerCase() === "ip type")?.value ?? "") as IPType
     ];
-    // Keys rendered by IPTypeDisplay (embeds + socials) are kept out of the
-    // generic attribute grid; trait values fall through to it.
+
     const activeTemplateEmbedSocialKeys = activeTemplate
       ? [
           ...(activeTemplate.embeds ?? []).map((p) => EMBED_PLATFORM_META[p].traitKey),
@@ -117,9 +103,6 @@ export function useAssetMarketState(
     };
   }, [token, listings, walletAddress]);
 
-  // Kept as a separate, lightweight memo rather than folded into the heavy
-  // memo above — usdPrices refreshes every 60s and shouldn't force a
-  // recompute of everything else in marketState.
   const usdPrices = useUsdPrices();
   const cheapestUsd = useMemo(
     () => usdValueFor(marketState.cheapest?.price?.formatted, marketState.cheapest?.price?.currency, usdPrices),

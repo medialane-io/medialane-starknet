@@ -36,21 +36,21 @@ interface MintProgressDialogProps {
   explorerAssetHref?: string | null;
   listingStep?: ListingStep;
   listingError?: string | null;
-  /** Override "Mint another" label */
+
   mintAnotherLabel?: string;
-  /** Override primary success button label (default: "View portfolio") */
+
   primaryActionLabel?: string;
-  /** Override primary success button href (default: "/portfolio/assets") */
+
   primaryActionHref?: string;
-  /** When set, the primary success button calls this instead of navigating. */
+
   onPrimaryAction?: () => void;
-  /** Override processing title */
+
   processingTitle?: string;
-  /** Override success title */
+
   successTitle?: string;
-  /** Override success subtitle */
+
   successSubtitle?: string;
-  /** Steps to display (overrides default MINT_STEPS) */
+
   uploadStepLabel?: string;
 }
 
@@ -135,7 +135,6 @@ export function MintProgressDialog({
           {isProcessing ? "Minting asset…" : isListing ? "Listing on marketplace…" : isFullSuccess ? "Asset minted and listed!" : isSuccess ? "Asset minted!" : "Mint failed"}
         </DialogTitle>
 
-        {/* ── Processing (mint) ── */}
         {isProcessing && (
           <div className="flex flex-col items-center gap-6 py-4">
             <div className="relative">
@@ -187,7 +186,6 @@ export function MintProgressDialog({
           </div>
         )}
 
-        {/* ── Listing in progress ── */}
         {isListing && (
           <div className="flex flex-col items-center gap-6 py-4">
             <div className="relative">
@@ -225,7 +223,6 @@ export function MintProgressDialog({
           </div>
         )}
 
-        {/* ── Full success (mint + listed) ── */}
         {isFullSuccess && (
           <div className="flex flex-col items-center gap-5 py-2">
             <div className="relative">
@@ -259,7 +256,6 @@ export function MintProgressDialog({
           </div>
         )}
 
-        {/* ── Mint success only (no listing, or listing failed) ── */}
         {isSuccess && (
           <div className="flex flex-col items-center gap-5 py-2">
             <div className="relative">
@@ -308,7 +304,6 @@ export function MintProgressDialog({
           </div>
         )}
 
-        {/* ── Error ── */}
         {isError && (
           <div className="flex flex-col items-center gap-5 py-2">
             <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">

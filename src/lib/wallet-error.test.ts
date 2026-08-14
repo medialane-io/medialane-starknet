@@ -12,10 +12,7 @@ test("isBareExecuteFailure does not match an on-chain revert with a reason", () 
 });
 
 test("a bare 'Execute failed' gets accurate copy naming all three real causes, not just user decline", () => {
-  // Regression for 2026-08-04: this exact message was produced by a transient
-  // Braavos estimateFee RPC hiccup with zero user action — a retry with no
-  // code change succeeded immediately after. The old copy asserted "you may
-  // have closed or declined it" as if that were the only real possibility.
+
   const friendly = getFriendlyWalletError(new Error("Execute failed"));
   expect(friendly.isUserRejection).toBe(true);
   expect(friendly.description).toContain("temporary network hiccup");

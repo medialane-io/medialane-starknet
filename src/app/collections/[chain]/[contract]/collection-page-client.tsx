@@ -40,10 +40,6 @@ import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
 
 const PAGE_SIZE = 24;
 
-/**
- * Parse a backend price string like "0.000012000000 WBTC" into a clean display + symbol.
- * Strips trailing zeros from the decimal part. Guards against raw-wei values (> 1e12 → "—").
- */
 function parsePriceDisplay(raw: string | null | undefined): { numStr: string; symbol: string | null } {
   if (!raw) return { numStr: "—", symbol: null };
   const parts = raw.trim().split(" ");
@@ -64,7 +60,7 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
   const [allTokens, setAllTokens] = useState<ApiToken[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
   const { tokens, meta, isLoading, mutate } = useCollectionTokens(contract, page, PAGE_SIZE, sort);
-  // SWR deduplicates — the parent also calls this hook; no extra network request.
+
   const { collection } = useCollection(contract);
 
   function handleSortChange(next: CollectionTokensSort) {
@@ -73,7 +69,6 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
     setAllTokens([]);
   }
 
-  // Build tokenId → listing map so Items tab can show Buy buttons for listed tokens
   const listingByTokenId = useMemo(() => {
     const map = new Map<string, ApiOrder>();
     for (const o of activeListings) {
@@ -82,7 +77,6 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
     return map;
   }, [activeListings]);
 
-  // Ownership + dialogs
   const { address: walletAddress } = useWallet();
   const usdPrices = useUsdPrices();
   const [selectedToken, setSelectedToken] = useState<ApiToken | null>(null);
@@ -106,7 +100,6 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
     }
   }, [tokens, page]);
 
-  // Enrich tokens with listing data so listed items show Buy button
   const enrichedTokens = useMemo(() => {
     if (listingByTokenId.size === 0) return allTokens;
     return allTokens.map((t) => {
@@ -123,7 +116,7 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
       const attrs = Array.isArray(token.metadata?.attributes)
         ? (token.metadata.attributes as { trait_type?: string; value?: string }[])
         : [];
-      // AND across trait types, OR within a type's selected values.
+
       return filterEntries.every(([traitType, values]) =>
         attrs.some((a) => a.trait_type === traitType && values.includes(String(a.value)))
       );
@@ -169,8 +162,7 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {filteredTokens.map((t) => {
-              // ERC-1155 list responses don't include per-holder balances — can't
-              // determine ownership here. Holders manage from Portfolio instead.
+
               const isOwner = collection?.standard === "ERC1155"
                 ? false
                 : checkIsOwner(t, walletAddress);
@@ -196,7 +188,6 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
         />
       </div>
 
-      {/* Owner dialogs */}
       {selectedToken && (
         <ListingDialog
           open={listOpen}
@@ -235,12 +226,10 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
 }
 
 export default function CollectionPageClient() {
-  // Served from both /collections/[contract] and /coins/[address] (the
-  // friendlier canonical URL for Creator Coins) — accept either param name.
+
   const params = useParams<{ contract?: string; address?: string }>();
   const contract = params.contract ?? params.address ?? "";
-  // Reached via /coins/[address] — the URL intends a coin, so loading shows a
-  // coin-shaped skeleton rather than the NFT-collection layout.
+
   const isCoinRoute = params.address != null;
   const [reportOpen, setReportOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -258,9 +247,7 @@ export default function CollectionPageClient() {
   const handleBuy = (o: ApiOrder) => { setBuyOrder(o); setPurchaseOpen(true); };
   const { address: walletAddress } = useWallet();
   const { collection, isLoading: colLoading } = useCollection(isCoinRoute ? null : contract);
-  // Coins are their own model now (2026-06-14 split). Resolve via useCoin on the
-  // /coins route, or as a fallback for old /collections/[coin] links once we
-  // know there's no NFT collection for this address.
+
   const tryCoin = isCoinRoute || (!colLoading && !collection);
   const { coin, isLoading: coinLoading } = useCoin(tryCoin ? contract : null);
   const { profile } = useCollectionProfile(contract);
@@ -288,13 +275,10 @@ export default function CollectionPageClient() {
   );
   const activeBids = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC20");
 
-  // Coin dispatch: a fungible coin (Creator Coin / external ERC-20) renders the
-  // coin view — price + embedded swap, no per-token grid/listings.
   if (coin) {
     return <CoinPageClient coin={coin} />;
   }
-  // Show the coin skeleton while a coin is resolving (the /coins route, or an
-  // old /collections/[coin] link) instead of flashing the NFT layout.
+
   if (tryCoin && coinLoading) {
     return <CoinPageSkeleton />;
   }
@@ -322,12 +306,9 @@ export default function CollectionPageClient() {
         stats={stats}
       />
 
-      {/* ── Meta section — two columns on large screens: description left,
-          contract/share/report top-right; creator chip + owner actions
-          get their own row below, stacks on mobile ── */}
       {!colLoading && collection && (
         <div className="px-4 sm:px-6 pt-4 pb-2 space-y-3">
-          {/* Owner-only actions, own row (only rendered for the owner — never empty) */}
+
           {walletAddress && collection.owner && normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
             <div className="flex items-center justify-end gap-2">
               {getService(collection.service)?.id === "ip-tickets" && (
@@ -409,7 +390,6 @@ export default function CollectionPageClient() {
             </div>
           </div>
 
-          {/* Service action slot (POP claim, etc.) */}
           <CollectionServiceAction
             service={collection.service}
             contractAddress={collection.contractAddress}
@@ -427,7 +407,6 @@ export default function CollectionPageClient() {
         </div>
       )}
 
-      {/* Gated content hero — shown to all visitors when collection has exclusive content */}
       {!colLoading && collection && profile && (
         <GatedContentHero
           profile={profile}
@@ -436,7 +415,6 @@ export default function CollectionPageClient() {
         />
       )}
 
-      {/* ── Tabs ── */}
       <div className="px-4 sm:px-6 pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="sticky top-0 z-10 pt-3 pb-1">
@@ -556,7 +534,6 @@ export default function CollectionPageClient() {
         </Tabs>
       </div>
 
-      {/* Owner setup checklist — after the items, before the footer */}
       {!colLoading && collection && walletAddress && collection.owner &&
         normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
         <>
@@ -575,7 +552,6 @@ export default function CollectionPageClient() {
         </>
       )}
 
-      {/* Inline buy for listed items (Listings tab) */}
       {buyOrder && (
         <PurchaseDialog
           order={buyOrder}
@@ -586,10 +562,6 @@ export default function CollectionPageClient() {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
 
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (

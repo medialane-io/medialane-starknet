@@ -8,10 +8,6 @@ import { Button } from "@/components/ui/button";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
 import { cn } from "@/lib/utils";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MarketplaceTxLink
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface MarketplaceTxLinkProps {
   txHash: string;
   explorerUrl: string;
@@ -34,10 +30,6 @@ export function MarketplaceTxLink({ txHash, explorerUrl, className }: Marketplac
     </a>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MarketplaceProcessingState
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface MarketplaceProcessingStateProps {
   title: string;
@@ -78,10 +70,6 @@ export function MarketplaceProcessingState({
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MarketplaceSuccessState
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface MarketplaceSuccessStateProps {
   tokenImage?: string | null;
@@ -134,10 +122,6 @@ export function MarketplaceSuccessState({
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MarketplaceErrorState
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface MarketplaceErrorStateProps {
   tokenImage?: string | null;
@@ -203,10 +187,6 @@ export function MarketplaceErrorState({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MarketplaceDialogHero
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface MarketplaceDialogHeroProps {
   tokenImage?: string | null;
   tokenName?: string;
@@ -238,10 +218,6 @@ export function MarketplaceDialogHero({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CurrencyPicker
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface CurrencyPickerProps {
   currencies: string[];
   value: string;
@@ -269,10 +245,6 @@ export function CurrencyPicker({ currencies, value, onChange, disabled }: Curren
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DurationPicker
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface DurationPickerProps {
   options: ReadonlyArray<{ label: string; seconds: number }>;

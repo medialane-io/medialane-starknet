@@ -6,15 +6,8 @@ import { uploadDirectoryToBackend } from "@/lib/backend-metadata";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// One item's authoring fields. `creator` + `registrationDate` are injected server-side.
 type DropItemFields = Omit<BuildAssetMetadataInput, "creator" | "registrationDate">;
 
-// Pins per-token metadata + a collection.json card file as a single IPFS directory,
-// via medialane-backend's metered Pinata path (POST /v1/metadata/upload-directory):
-// items[0] → file "1", items[1] → file "2", … so callers set base_uri =
-// ipfs://<folderCID>/ → token_uri(N) = ipfs://<folderCID>/N. Each item is encoded
-// with buildAssetMetadata — byte-identical to a normal IP asset (OpenSea + Berne
-// license attributes), so every drop token is a first-class asset.
 export async function POST(req: NextRequest) {
   const wallet = getSiwsWallet(req.headers.get("authorization"));
   if (!wallet) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,12 +33,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "collection.image must be an ipfs:// URI" }, { status: 400 });
   }
 
-  // Creator = the authenticated SIWS wallet — never trusted from the client.
   const creator = wallet;
   const registrationDate = new Date().toISOString().split("T")[0];
 
   const files: { name: string; content: unknown }[] = items.map((fields, i) => ({
-    name: String(i + 1), // contract mints sequentially from token id 1
+    name: String(i + 1),
     content: buildAssetMetadata({ ...fields, creator, registrationDate }),
   }));
 

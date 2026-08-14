@@ -19,9 +19,9 @@ import { getFriendlyWalletError } from "@/lib/wallet-error";
 export interface LaunchCoinInput {
   name: string;
   symbol: string;
-  supplyHuman: string;     // validated whole-number string
+  supplyHuman: string;
   quoteSymbol: "STRK" | "ETH";
-  teamPct: number;         // 0–10
+  teamPct: number;
 }
 
 export type LaunchStatus = "idle" | "deploying" | "launching" | "indexing" | "done" | "error";
@@ -49,8 +49,7 @@ export function useLaunchCoin() {
       const client = getMedialaneClient();
 
       try {
-        // Tx1 — deploy the coin (full supply to the Factory). Metered through
-        // the intents API — no client-side calldata construction.
+
         setStatus("deploying");
         const createIntent = await client.api.createCoinIntent({
           owner: ownerAddr,
@@ -63,10 +62,6 @@ export function useLaunchCoin() {
         const receipt = await starknetProvider.waitForTransaction(createRes.transaction_hash);
         const coinAddress = parseCreatorCoinCreated(receipt as unknown as CreatorCoinReceiptLike);
 
-        // Tx2 — launch on Ekubo at the fixed validated price; buyback pre-funded
-        // in the same multicall. Anti-snipe off (delay 0) in v1. Metered through
-        // the intents API — the backend defaults the Ekubo pool params to the
-        // same validated constant the SDK builder used to apply client-side.
         setStatus("launching");
         const launchIntent = await client.api.launchCoinIntent({
           owner: ownerAddr,
@@ -80,13 +75,12 @@ export function useLaunchCoin() {
         if (launchIntent.data.requiresSignature) throw new Error("Expected a prebuilt launch-coin intent");
         await signer.execute(launchIntent.data.calls as Call[]);
 
-        // Index instantly (50s factory poll is the backstop).
         setStatus("indexing");
         await fetch("/api/proxy/v1/coins/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ coinAddress, owner: ownerAddr }),
-        }).catch(() => { /* poll backstop will index it */ });
+        }).catch(() => {  });
 
         setStatus("done");
         return { coinAddress };

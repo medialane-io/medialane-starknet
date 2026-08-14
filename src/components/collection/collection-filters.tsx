@@ -72,7 +72,6 @@ export function CollectionFilters({
             onToggleValue={toggleValue}
           />
 
-          {/* Footer */}
           <div className="px-5 py-4 border-t border-border shrink-0">
             <Button
               className="w-full"

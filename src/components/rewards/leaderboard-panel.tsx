@@ -20,8 +20,6 @@ export interface LeaderboardPanelProps {
   className?: string;
 }
 
-/** Avatar + display name when a creator has set a profile, falling back to
- *  a plain address — real identity where it exists, never fabricated. */
 function CreatorIdentity({ address }: { address: string }) {
   const { profile } = useCreatorProfile(address);
   const avatarUrl = resolveTokenImage(profile?.avatarImage);
@@ -56,9 +54,7 @@ export function LeaderboardPanel({
 }: LeaderboardPanelProps) {
   const { data, isLoading } = useLeaderboard(1, limit);
   const rows = data?.data ?? [];
-  // LeaderboardTable does a plain string-equality highlight check; entry
-  // addresses come back pre-normalized from the API, so normalize myAddress
-  // the same way rather than teaching the shared component about chains.
+
   const highlightAddress = myAddress ? normalizeAddress("STARKNET", myAddress) : null;
 
   return (

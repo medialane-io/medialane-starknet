@@ -71,7 +71,6 @@ export default function CreateNFTEditionsCollectionPage() {
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
   const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
 
-  // Image upload state
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -88,10 +87,6 @@ export default function CreateNFTEditionsCollectionPage() {
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
 
-  // Default external_link to the creator's public profile on medialane.io —
-  // matches the ERC-721 create-collection form and gives collectors a
-  // landing page even when the creator doesn't have a personal site yet.
-  // The creator can still override before submitting.
   useEffect(() => {
     if (walletAddress && !form.getValues("external_link")) {
       form.setValue("external_link", `https://medialane.io/account/${walletAddress}`);
@@ -168,7 +163,7 @@ export default function CreateNFTEditionsCollectionPage() {
     setCollectionStep("processing");
 
     try {
-      // 1. Pin metadata JSON to IPFS — base_uri goes on-chain; must succeed when image is set.
+
       let collectionMetaUri: string | undefined;
       if (imageUri) {
         const token = await getValidToken();
@@ -187,9 +182,6 @@ export default function CreateNFTEditionsCollectionPage() {
         collectionMetaUri = d.uri;
       }
 
-      // 2. Create the collection through the metered intents API — the backend
-      // deploys via the mip-erc1155 factory server-side and returns
-      // fully-populated calls (no client-side calldata construction).
       setDialogTxStatus("submitting");
       if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
       const intentRes = await client.api.createCollectionIntent({
@@ -204,14 +196,7 @@ export default function CreateNFTEditionsCollectionPage() {
 
       if (!txHash) throw new Error("Transaction failed — no hash returned");
       setDialogTxStatus("confirming");
-      // CREATE_COLLECTION intents aren't in the backend's confirmable set
-      // (medialane-backend/src/api/routes/intents/lifecycle.ts's
-      // MARKETPLACE_INTENT_TYPES/RECEIPT_HYDRATED_INTENT_TYPES) — nothing to
-      // confirm here; the backend's own factory poll indexes the deploy.
 
-      // 3. Extract deployed collection address from CollectionDeployed event in the receipt.
-      // Best-effort: if event parsing fails the tx still succeeded — the collection will
-      // appear in portfolio once the indexer processes the event on the next poll cycle.
       let addr: string | null = null;
       try {
         let receipt: any = null;
@@ -219,16 +204,15 @@ export default function CreateNFTEditionsCollectionPage() {
           try {
             if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
             receipt = await starknetProvider.getTransactionReceipt(txHash);
-          } catch { /* retry */ }
+          } catch {  }
         }
         const events = receipt?.events ?? [];
         const deployEvent = events.find((e: any) =>
           e.keys?.[0] && BigInt(e.keys[0]) === BigInt(COLLECTION_DEPLOYED_SELECTOR)
         );
         if (deployEvent?.keys?.[1]) addr = normalizeAddress("STARKNET", deployEvent.keys[1]);
-      } catch { /* non-fatal */ }
+      } catch {  }
 
-      // 4. Register with backend so the collection appears in portfolio immediately.
       if (addr) {
         try {
           const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -243,7 +227,7 @@ export default function CreateNFTEditionsCollectionPage() {
               source: "MEDIALANE_ERC1155",
             }),
           });
-        } catch { /* non-fatal */ }
+        } catch {  }
       }
 
       if (walletAddress) invalidatePortfolioCache(walletAddress);
@@ -299,7 +283,6 @@ export default function CreateNFTEditionsCollectionPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
-            {/* ── Collection image ── */}
             <div className="space-y-2">
               <p className="text-sm font-medium">Collection image</p>
               <div className="flex items-start gap-4">
@@ -359,7 +342,6 @@ export default function CreateNFTEditionsCollectionPage() {
               </div>
             </div>
 
-            {/* ── Name ── */}
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem>
                 <FormLabel>Collection name *</FormLabel>
@@ -369,7 +351,6 @@ export default function CreateNFTEditionsCollectionPage() {
               </FormItem>
             )} />
 
-            {/* ── Symbol ── */}
             <FormField control={form.control} name="symbol" render={({ field }) => (
               <FormItem>
                 <FormLabel>Symbol *</FormLabel>
@@ -385,7 +366,6 @@ export default function CreateNFTEditionsCollectionPage() {
               </FormItem>
             )} />
 
-            {/* ── Description ── */}
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
@@ -396,7 +376,6 @@ export default function CreateNFTEditionsCollectionPage() {
               </FormItem>
             )} />
 
-            {/* ── External link ── */}
             <FormField control={form.control} name="external_link" render={({ field }) => (
               <FormItem>
                 <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
@@ -406,7 +385,6 @@ export default function CreateNFTEditionsCollectionPage() {
               </FormItem>
             )} />
 
-            {/* ── Submit ── */}
             <button
               type="submit"
               disabled={collectionStep !== "idle" || imageUploading}

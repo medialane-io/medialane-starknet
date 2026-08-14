@@ -23,8 +23,6 @@ import { cn } from "@/lib/utils";
 import { addressPalette } from "@/lib/creator-utils";
 import { ActivityRow } from "@/components/creator/activity-row";
 
-// ─── Tab config ───────────────────────────────────────────────────────────────
-
 const TABS = [
   { id: "collections", label: "Collections", Icon: LayoutList },
   { id: "listings",    label: "Listings",    Icon: ShoppingBag },
@@ -33,8 +31,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState({ icon: Icon, heading, body }: { icon: React.ElementType; heading: string; body: string }) {
   return (
@@ -50,8 +46,6 @@ function EmptyState({ icon: Icon, heading, body }: { icon: React.ElementType; he
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 interface Props { username: string }
 
 export default function CreatorUsernamePageClient({ username }: Props) {
@@ -59,7 +53,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   const { creator, isLoading, error } = useCreatorByUsername(username);
   const walletAddress = creator?.walletAddress ? normalizeAddress("STARKNET", creator.walletAddress) : null;
 
-  // Lazy data fetching — only fire when the tab is active
   const { orders,      isLoading: ordersLoading      } = useUserOrders(activeTab === "listings"    ? walletAddress : null);
   const { collections, isLoading: collectionsLoading } = useCollectionsByOwner(activeTab === "collections" ? walletAddress : null);
   const { activities,  isLoading: activitiesLoading  } = useActivitiesByAddress(walletAddress);
@@ -69,7 +62,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   const { h1, h2, h3 } = addressPalette(walletAddress ?? "0x0");
   const avatarUrl = creator?.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
 
-  // ── Loading ──────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="pb-20 min-h-screen">
@@ -93,7 +85,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
     );
   }
 
-  // ── Not found ────────────────────────────────────────────────────────────────
   if (error || !creator) {
     return (
       <div className="mx-auto px-4 py-24 max-w-lg text-center space-y-4">
@@ -113,7 +104,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
 
   return (
     <div className="pb-20 min-h-screen">
-      {/* ── Hero banner ───────────────────────────────────────────────────────── */}
+
       <div className="relative h-56 sm:h-80 overflow-hidden">
         {avatarUrl && (
           <div className="absolute inset-0">
@@ -138,7 +129,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
         />
         <div className="absolute inset-x-0 bottom-0 h-32" style={{ background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%)` }} />
         <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-background/15 to-transparent" />
-        {/* Share button */}
+
         <div className="absolute top-4 right-4 z-10">
           <Button
             variant="outline" size="sm"
@@ -151,12 +142,11 @@ export default function CreatorUsernamePageClient({ username }: Props) {
         </div>
       </div>
 
-      {/* ── Page body ─────────────────────────────────────────────────────────── */}
       <div className="px-6">
-        {/* Identity section */}
+
         <div className="-mt-16 sm:-mt-20 relative z-10 space-y-4 pb-6">
           <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
-            {/* Avatar */}
+
             <div
               className="rounded-full shrink-0 ring-[3px] ring-background overflow-hidden flex items-center justify-center text-white font-bold"
               style={{
@@ -174,7 +164,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
               )}
             </div>
 
-            {/* Name + handle */}
             <div className="flex-1 min-w-0 pb-1 space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="pill-badge">Creator</span>
@@ -186,7 +175,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
               )}
             </div>
 
-            {/* CTA */}
             <div className="pb-1">
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/account/${creator.walletAddress}`}>
@@ -197,7 +185,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             </div>
           </div>
 
-          {/* Stats bar */}
           <div className="flex flex-wrap items-center gap-2">
             {activities.length > 0 && (
               <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm">
@@ -219,7 +206,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             )}
           </div>
 
-          {/* Social links */}
           {(creator.websiteUrl || creator.twitterUrl) && (
             <div className="flex items-center gap-2">
               {creator.websiteUrl && (
@@ -238,7 +224,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
           )}
         </div>
 
-        {/* ── Tab navigation ─────────────────────────────────────────────────── */}
         <div className="sticky top-0 z-10 -mx-6 px-6 bg-background/95 backdrop-blur-sm border-b border-border">
           <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none -mb-px">
             {TABS.map(({ id, label, Icon }) => {
@@ -268,10 +253,8 @@ export default function CreatorUsernamePageClient({ username }: Props) {
           </div>
         </div>
 
-        {/* ── Tab content ────────────────────────────────────────────────────── */}
         <div className="mt-6">
 
-          {/* Collections */}
           {activeTab === "collections" && (
             collectionsLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -286,7 +269,6 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             )
           )}
 
-          {/* Listings */}
           {activeTab === "listings" && (
             ordersLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -301,14 +283,12 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             )
           )}
 
-          {/* Analytics */}
           {activeTab === "analytics" && (
             <div className="max-w-2xl">
               <CreatorAnalytics activities={activities} isLoading={activitiesLoading} />
             </div>
           )}
 
-          {/* Activity */}
           {activeTab === "activity" && (
             <div className="max-w-2xl">
               {activitiesLoading ? (

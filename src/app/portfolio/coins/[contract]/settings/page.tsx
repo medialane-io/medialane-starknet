@@ -92,7 +92,6 @@ export default function CoinSettingsPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Media */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Logo</h3>
@@ -122,7 +121,6 @@ export default function CoinSettingsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Identity */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Description</h3>

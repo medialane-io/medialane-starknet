@@ -1,7 +1,5 @@
 import { readOptionalAddressEnv } from "./env";
 
-// Protocol contract addresses — the SDK's chain-named constants (single source).
-// No NEXT_PUBLIC_ overrides, no *_MAINNET, no duplicate comments name.
 export {
   SUPPORTED_TOKENS,
   STARKNET_MARKETPLACE_721_CONTRACT,
@@ -11,39 +9,13 @@ export {
   STARKNET_NFTCOMMENTS_CONTRACT,
 } from "@medialane/sdk";
 
-// ── Starknet RPC — provider-agnostic, two roles, server-only ────────────────
-// MAIN: the keyed provider (Alchemy today, any provider tomorrow). SERVER-ONLY —
-//   never a NEXT_PUBLIC_ var, or the key is inlined into the browser bundle (the
-//   2026-06-23 key leak). The browser never uses it directly.
-// FALLBACK: the keyless public node (lava). Hardcoded default so a missing env
-//   can never break the build; override with STARKNET_RPC_FALLBACK_URL.
-// PROXY: the same-origin path the browser uses — the /api/rpc route forwards to
-//   MAIN → FALLBACK server-side, so the keyed URL stays off the bundle.
 export const RPC_MAIN_URL = process.env.STARKNET_RPC_URL ?? "";
 export const RPC_FALLBACK_URL =
   process.env.STARKNET_RPC_FALLBACK_URL || "https://rpc.starknet.lava.build";
 export const RPC_PROXY_PATH = "/api/rpc";
 
-/**
- * `MEDIALANE_BACKEND_URL` + `MEDIALANE_API_KEY` are **environment-aware**:
- *
- * - **Server-side** (RSC, BFF routes, sitemap): real backend URL + real key.
- * - **Browser**: `/api/proxy` + empty string. The same-origin proxy
- *   (`src/app/api/proxy/v1/[...path]/route.ts`) injects the real key
- *   server-side. The browser bundle never sees the key.
- *
- * Replaces the legacy `NEXT_PUBLIC_MEDIALANE_API_KEY` pattern that shipped
- * the key in the JS bundle. Existing call sites that do
- * `${MEDIALANE_BACKEND_URL}/v1/...` with `x-api-key: MEDIALANE_API_KEY`
- * work unchanged — the empty header is stripped and replaced by the proxy.
- */
 const isServer = typeof window === "undefined";
 
-// On the client, target the same-origin BFF proxy. We use an absolute URL
-// (origin + path) rather than a bare path because `MedialaneClient`'s Zod
-// schema validates `backendUrl` with `z.string().url()` — `/api/proxy`
-// alone is rejected as not a URL. fetch() against the absolute same-origin
-// URL works identically to a relative one in the browser.
 export const MEDIALANE_BACKEND_URL = isServer
   ? (process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL || "http://localhost:3001")
   : `${window.location.origin}/api/proxy`;
@@ -52,12 +24,6 @@ export const MEDIALANE_API_KEY = isServer
   ? (process.env.MEDIALANE_API_KEY || "")
   : "";
 
-// Regression guard: if a future refactor accidentally renames the env var to
-// `NEXT_PUBLIC_MEDIALANE_API_KEY` (the exact bug the BFF proxy replaced — see
-// the 2026-06-23 key leak above), or otherwise causes a non-empty key to
-// materialize in the browser bundle, fail loudly at module init rather than
-// silently leaking. The check runs only in the browser — server-side the key
-// is supposed to be set.
 if (!isServer && MEDIALANE_API_KEY) {
   throw new Error(
     "MEDIALANE_API_KEY is non-empty in the browser bundle — the server-only " +

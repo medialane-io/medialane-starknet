@@ -3,9 +3,6 @@
 import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 
-/** Builds the IPTypeFields `uploadDocument` callback over the dapp's SIWS rail.
- *  Resolves to the ipfs:// URI stored as the "Document File" trait; errors are
- *  remapped to friendly messages (signature declined, etc.). */
 export function makeUploadDocument(getValidToken: () => Promise<string | null>) {
   return async (file: File): Promise<string> => {
     try {

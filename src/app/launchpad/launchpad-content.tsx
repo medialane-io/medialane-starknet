@@ -10,7 +10,6 @@ import { getService } from "@medialane/sdk";
 import { LaunchpadGroupedSections, LaunchpadFilterBar, useLaunchpadFilter, type ServiceOverrides } from "@medialane/ui";
 import { ArrowRight, ExternalLink } from "lucide-react";
 
-// ── dapp-specific service overrides (hrefs + rollout flips) ─────────────────
 const DAPP_OVERRIDES: ServiceOverrides = {
   "nfts": { href: "/launchpad/single-editions" },
   "limited-editions": { href: "/launchpad/nfteditions" },
@@ -32,7 +31,6 @@ export function LaunchpadContent() {
   const filter = useLaunchpadFilter();
   const { collections } = useCollectionsByOwner(walletAddress ?? null);
 
-  // Live per-user facts on the cards — real counts, shown only when nonzero.
   const overrides = useMemo<ServiceOverrides>(() => {
     const nftCount = collections.filter((c) => getService(c.service)?.id === "mip-erc721").length;
     const editionsCount = collections.filter((c) => c.standard === "ERC1155").length;
@@ -44,7 +42,6 @@ export function LaunchpadContent() {
   return (
     <div className="relative pb-20 space-y-8 sm:space-y-10">
 
-      {/* ── medialane.io widget — top right, scrolls with the page ── */}
       <a
         href="https://medialane.io/launchpad"
         target="_blank"
@@ -70,7 +67,6 @@ export function LaunchpadContent() {
         </FadeIn>
       </section>
 
-      {/* Grouped services (shared @medialane/ui component) */}
       <section className="px-4">
         <LaunchpadGroupedSections
           overrides={overrides}

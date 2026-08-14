@@ -3,53 +3,30 @@ import { isTransientRpcError } from "@medialane/sdk";
 import { RPC_MAIN_URL, RPC_FALLBACK_URL, MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { createRateLimiter } from "@/lib/rate-limit";
 
-/**
- * Server-side Starknet RPC proxy.
- *
- * Keeps the keyed RPC key OUT of the browser bundle. The dapp's client RPC
- * providers point at this same-origin route (/api/rpc); the keyed URL lives only
- * in the server-only MAIN var. MAIN stays the PRIMARY upstream; on a transient
- * failure (e.g. Alchemy's intermittent 503 / -32001) it rotates to the keyless
- * public FALLBACK (lava). Both come from `constants.ts` (single source).
- *
- * The dapp has no user session to gate on. Abuse protection:
- *  - same-origin guard: reject browser requests whose Origin is a different host
- *    (the realistic cross-origin abuse vector). Requests without an Origin
- *    (non-CORS / SSR) are allowed; the method allowlist + main cap + fallback
- *    bound the residual risk.
- *  - method allowlist: only forward the JSON-RPC methods the dapp actually uses
- *    (reads + addInvoke); trace/debug/declare/deploy-account are excluded.
- */
-
-// Keyed MAIN first (primary), then the keyless public FALLBACK. Public providers
-// are rate-limited, so rotation continues on transient JSON-RPC errors.
 const RPC_URLS = Array.from(new Set(
   [RPC_MAIN_URL, RPC_FALLBACK_URL].filter((url): url is string => Boolean(url)),
 ));
 
-// Allowlist of JSON-RPC methods forwarded upstream. Covers reads, approvals,
-// tx lifecycle, fee estimation, and starknet.js internal handshake calls.
-// Dangerous methods (trace, declare, deploy-account) are intentionally excluded.
 const ALLOWED_METHODS = new Set([
-  // ── Core read/write ───────────────────────────────────────────────────────
+
   "starknet_call",
   "starknet_addInvokeTransaction",
-  // ── Transaction lifecycle ─────────────────────────────────────────────────
+
   "starknet_getTransactionReceipt",
   "starknet_getTransactionStatus",
   "starknet_getTransactionByHash",
   "starknet_getTransaction",
   "starknet_getBlockWithReceipts",
-  // ── Fee estimation & nonce ────────────────────────────────────────────────
+
   "starknet_estimateFee",
   "starknet_getNonce",
   "starknet_simulateTransactions",
-  // ── Provider initialisation (called automatically by starknet.js) ─────────
+
   "starknet_specVersion",
   "starknet_chainId",
   "starknet_blockNumber",
   "starknet_blockHashAndNumber",
-  // ── Contract / account introspection ─────────────────────────────────────
+
   "starknet_getClassAt",
   "starknet_getClass",
   "starknet_getClassHashAt",
@@ -67,14 +44,9 @@ function isAllowedMethod(body: unknown): boolean {
   return false;
 }
 
-/**
- * Same-origin guard. Blocks browser cross-origin abuse (which always carries an
- * Origin header) without breaking same-origin calls that omit it. Returns false
- * only when an Origin is present AND its host differs from the request host.
- */
 function isSameOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
-  if (!origin) return true; // no Origin (SSR / non-CORS) → allow
+  if (!origin) return true;
   const host = req.headers.get("host");
   try {
     return new URL(origin).host === host;
@@ -83,10 +55,6 @@ function isSameOrigin(req: NextRequest): boolean {
   }
 }
 
-/**
- * JSON-RPC error envelope. Always HTTP 200 so client-side starknet.js (which
- * crashes on `.json()` of a non-JSON body) can read a meaningful error.
- */
 function rpcError(code: number, message: string, status = 200, id: number | null = null) {
   return NextResponse.json(
     { jsonrpc: "2.0", error: { code, message }, id },
@@ -94,11 +62,6 @@ function rpcError(code: number, message: string, status = 200, id: number | null
   );
 }
 
-// Per-IP rate limit. The same-origin guard only stops cross-origin *browsers*
-// (a request with no Origin header is allowed), so a script can still use this
-// as an open RPC relay and drain the keyed upstream's quota. Cap per-IP volume
-// — generous enough for legit heavy use (a single tx fires ~20-40 calls incl.
-// receipt polling), tight enough to bound abuse.
 const checkRateLimit = createRateLimiter(60_000, 600);
 
 function extractMethod(body: unknown): string {
@@ -110,14 +73,6 @@ function extractMethod(body: unknown): string {
   return "unknown";
 }
 
-/**
- * Bill this app's credit balance for the upcoming upstream RPC call, via the
- * backend's metered POST /v1/rpc/meter (medialane-backend/src/api/routes/rpc-meter.ts).
- * The RPC call itself still goes straight to Alchemy with this app's own key
- * below — this only makes it a credited action instead of a free bypass.
- * Returns false (caller must refuse to forward) on insufficient credits or
- * any billing failure — an RPC call this app can't account for must not run.
- */
 async function billRpcCall(method: string): Promise<boolean> {
   if (!MEDIALANE_API_KEY) {
     console.error("[/api/rpc] MEDIALANE_API_KEY is not configured — refusing to bill/forward");
@@ -175,8 +130,6 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify(body),
       });
 
-      // Read as text first so a non-JSON upstream (rate-limit HTML, Cloudflare
-      // error page, empty body) doesn't crash `.json()`.
       const text = await response.text();
       const upstream = rpcUrl.split("/")[2];
       if (!text) {
@@ -188,9 +141,6 @@ export async function POST(req: NextRequest) {
       try {
         const data = JSON.parse(text);
 
-        // Transient JSON-RPC errors wrapped in a 200 envelope (rate limit /
-        // capacity) → rotate to the next fallback. Deterministic contract errors
-        // (revert, invalid params, missing block) propagate verbatim.
         if (isTransientRpcError({ status: response.status, body: data })) {
           const errObj = (data as { error?: { code?: unknown; message?: unknown } }).error;
           lastError = `Upstream RPC returned transient JSON-RPC error: ${String(errObj?.message ?? "(no message)")}`;
@@ -200,7 +150,6 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Pass the JSON-RPC envelope through verbatim. Always HTTP 200.
         return NextResponse.json(data, { status: 200 });
       } catch {
         lastError = `Upstream RPC returned non-JSON (HTTP ${response.status})`;

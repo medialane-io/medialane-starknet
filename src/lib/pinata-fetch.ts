@@ -2,17 +2,6 @@
 
 import { getAnyStoredSiwsToken } from "@/lib/siws-client";
 
-/**
- * Wraps a fetch RequestInit with an Authorization: Bearer header.
- *
- * Preferred usage — pass an explicit token from getValidToken() so sign-in
- * is triggered before the request if needed:
- *   const token = await getValidToken();
- *   const res = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
- *
- * Legacy usage (silent — no sign-in prompt, just reads localStorage):
- *   const res = await fetch("/api/pinata/signed-url", withSiwsAuth({ method: "POST" }));
- */
 export function withSiwsAuth(
   tokenOrInit?: string | null | RequestInit,
   init?: RequestInit,

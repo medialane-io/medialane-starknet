@@ -13,8 +13,6 @@ export const metadata: Metadata = {
   ...buildSocialMetadata({ title, description, imageAlt: "Medialane Marketplace" }),
 };
 
-// ISR — the first page of listings renders as real cards in the server HTML
-// instead of skeletons awaiting a client fetch.
 export const revalidate = 30;
 
 export default async function MarketplacePage() {

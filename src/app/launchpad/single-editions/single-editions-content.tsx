@@ -157,9 +157,6 @@ function CollectionThumb({ image, size }: { image: string | null | undefined; si
   );
 }
 
-/** Collection field — a compact trigger showing the selected collection
- *  (thumbnail + name + work count) that opens a searchable list, so the form
- *  stays the same height whether the creator has one collection or fifty. */
 function CollectionPicker({
   collections,
   loading,
@@ -291,7 +288,6 @@ export function SingleEditionsContent() {
   const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
-  // Fetch the creator's own Medialane ERC-721 collections from the API.
   const { collections: allCollections, isLoading: collectionsLoading } = useCollectionsByOwner(walletAddress ?? null);
   const collections = allCollections.filter(
     (c) => getService(c.service)?.id === "mip-erc721" && c.collectionId != null
@@ -304,9 +300,7 @@ export function SingleEditionsContent() {
   const [ipTypeOpen, setIpTypeOpen] = useState(false);
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
-  // IP-type template fields are only read at submit time — keep them in a ref so
-  // every keystroke in IPTypeFields doesn't re-render this whole form (the cause
-  // of the visible flicker on this page).
+
   const templateFieldsRef = useRef<MetadataField[]>([]);
   const handleTemplateFields = useCallback((fields: MetadataField[]) => {
     templateFieldsRef.current = fields;
@@ -339,14 +333,12 @@ export function SingleEditionsContent() {
     },
   });
 
-  // Default to the creator's only collection, or their most recently created one.
   useEffect(() => {
     if (collections.length > 0 && !form.getValues("collectionId")) {
       form.setValue("collectionId", collections[0].collectionId!);
     }
   }, [collections, form]);
 
-  // When a collection is selected, pre-fill external_url with the collection page URL
   const selectedCollectionId = form.watch("collectionId");
   useEffect(() => {
     const col = collections.find((c) => c.collectionId === selectedCollectionId);
@@ -376,7 +368,7 @@ export function SingleEditionsContent() {
     setMintStep("uploading");
 
     try {
-      // 1. Upload image + metadata to IPFS via /api/pinata
+
       const formData = new FormData();
       formData.set("name", values.name);
       formData.set("description", values.description ?? "");
@@ -392,7 +384,7 @@ export function SingleEditionsContent() {
       formData.set("royalty", String(values.royalty));
       const token = await getValidToken();
       if (imageFile) {
-        // Upload image directly to Pinata via signed URL (bypasses Next.js 4 MB body limit)
+
         const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
         const signedData = await signedRes.json();
         if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
@@ -408,7 +400,6 @@ export function SingleEditionsContent() {
         formData.set("imageUri", `ipfs://${cid}`);
       }
 
-      // Forward suggested and custom traits — keyed as "tmpl_{trait_type}".
       templateFieldsRef.current.forEach(({ traitType, value }) => {
         if (traitType.trim() && value.trim()) formData.append(`tmpl_${traitType.trim()}`, value.trim());
       });
@@ -423,13 +414,12 @@ export function SingleEditionsContent() {
 
       setMintStep("processing");
 
-      // 2. Create mint intent — backend validates ownership onchain + encodes Cairo calldata
       const intentRes = await client.api.createMintIntent({
         owner: walletAddress,
         collectionId: values.collectionId,
         recipient: walletAddress,
         tokenUri,
-        // Form royalty is a percentage (0–50); EIP-2981 is basis points. Set once, immutable.
+
         royaltyBps: Math.round(values.royalty * 100),
       });
 
@@ -438,7 +428,6 @@ export function SingleEditionsContent() {
         throw new Error("Mint intent returned no calls");
       }
 
-      // 3. Execute directly with the connected wallet
       const result = await executeTransaction(intentData.calls as Call[]);
 
       if (result === null) {
@@ -513,7 +502,6 @@ export function SingleEditionsContent() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-            {/* Collection picker */}
             <FormField
               control={form.control}
               name="collectionId"
@@ -534,7 +522,6 @@ export function SingleEditionsContent() {
               )}
             />
 
-            {/* Cover image */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Cover image</label>
               <div
@@ -583,7 +570,6 @@ export function SingleEditionsContent() {
               </div>
             </div>
 
-            {/* Name */}
             <FormField
               control={form.control}
               name="name"
@@ -598,7 +584,6 @@ export function SingleEditionsContent() {
               )}
             />
 
-            {/* Description */}
             <FormField
               control={form.control}
               name="description"
@@ -617,7 +602,6 @@ export function SingleEditionsContent() {
               )}
             />
 
-            {/* External URL */}
             <FormField
               control={form.control}
               name="external_url"
@@ -632,7 +616,6 @@ export function SingleEditionsContent() {
               )}
             />
 
-            {/* Licensing Terms — optional, collapsed by default */}
             <Collapsible open={licensingOpen} onOpenChange={setLicensingOpen}>
               <div className="sm:overflow-hidden sm:rounded-xl sm:border sm:border-border">
                 <CollapsibleTrigger asChild>
@@ -777,7 +760,6 @@ export function SingleEditionsContent() {
               </div>
             </Collapsible>
 
-            {/* IP Type & template fields — optional, collapsed by default */}
             <Collapsible open={ipTypeOpen} onOpenChange={setIpTypeOpen}>
               <div className="sm:overflow-hidden sm:rounded-xl sm:border sm:border-border">
                 <CollapsibleTrigger asChild>

@@ -44,8 +44,6 @@ import type { Call } from "starknet";
 
 const TOKENS = getListableTokens();
 
-// ── Main Page ────────────────────────────────────────────────────────────────
-
 export default function CreateRemixPage() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
@@ -76,16 +74,11 @@ export default function CreateRemixPage() {
     : [];
   const attr = (t: string) => originalAttributes.find((a) => a.trait_type === t)?.value;
 
-  // Remix is permissionless self-mint, gated only by the creator's declared
-  // derivatives term (non-owners). A non-owner of a no-derivatives asset is sent
-  // to the licensing deal — their only path.
   const remixPolicy = resolveRemixPolicy({
     parentNoDerivatives: getDerivativesTerm(originalAttributes) === "Not Allowed",
     viewerIsParentOwner: isOwner,
-    dealAvailable: true, // unused for the remix gate (canRemixDirect only)
+    dealAvailable: true,
   });
-
-  // ── Form state ─────────────────────────────────────────────────────────────
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -99,19 +92,14 @@ export default function CreateRemixPage() {
   const [royalty, setRoyalty] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  // Self-mint flow — mints directly with the connected wallet (no PIN dialog;
-  // dapp uses injected wallets, not a custodial provider). The previous
-  // setPinOpen gate was orphaned (no PinDialog rendered) so the owner mint never fired.
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
 
-  // Pre-fill name after token loads
   useEffect(() => {
     if (token && !name) setName(`Remix of ${originalName}`);
-  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [token]);
 
-  // Pre-fill collection to match original asset's collection if possible
   useEffect(() => {
     if (eligibleCollections.length > 0 && !collectionId) {
       const match = eligibleCollections.find(
@@ -119,9 +107,8 @@ export default function CreateRemixPage() {
       );
       setCollectionId(match?.collectionId ?? eligibleCollections[0]?.collectionId ?? "");
     }
-  }, [eligibleCollections.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [eligibleCollections.length]);
 
-  // Sync license preset defaults
   const handleLicenseChange = (value: string) => {
     setLicenseType(value);
     const preset = LICENSE_TYPES.find((l) => l.value === value);
@@ -131,13 +118,12 @@ export default function CreateRemixPage() {
     }
   };
 
-  // Image upload
   useEffect(() => {
     return () => { if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current); };
   }, []);
 
   const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
-  const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
+  const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
   const handleImageChange = (file: File) => {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -155,15 +141,11 @@ export default function CreateRemixPage() {
     setImagePreview(url);
   };
 
-  // ── Validation ─────────────────────────────────────────────────────────────
-
   const validate = (): string | null => {
     if (!name.trim()) return "Remix name is required";
     if (!collectionId) return "Select a collection";
     return null;
   };
-
-  // ── Owner: mint flow ───────────────────────────────────────────────────────
 
   const handleOwnerSubmit = async () => {
     const err = validate();
@@ -180,7 +162,6 @@ export default function CreateRemixPage() {
       const selectedCollection = eligibleCollections.find((c) => c.collectionId === collectionId);
       if (!selectedCollection) throw new Error("Collection not found");
 
-      // 1. Build metadata
       const metadata = {
         name: name.trim(),
         description: description.trim() || `Remix of ${originalName}`,
@@ -202,9 +183,9 @@ export default function CreateRemixPage() {
 
       const siwsToken = await getValidToken();
       if (imageFile) {
-        // Upload via /api/pinata (image + metadata)
+
         const formData = new FormData();
-        // Upload image directly to Pinata via signed URL (bypasses Next.js 4 MB body limit)
+
         const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(siwsToken, { method: "POST" }));
         const signedData = await signedRes.json();
         if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
@@ -236,7 +217,7 @@ export default function CreateRemixPage() {
         if (!uploadRes.ok || !uploadData.uri) throw new Error(uploadData.error ?? "Upload failed");
         tokenUri = uploadData.uri;
       } else {
-        // Upload metadata JSON only
+
         const pinRes = await fetch("/api/pinata/json", withSiwsAuth(siwsToken, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -249,13 +230,12 @@ export default function CreateRemixPage() {
 
       setMintStep("processing");
 
-      // 2. Mint intent
       const intentRes = await client.api.createMintIntent({
         owner: walletAddress,
         collectionId,
         recipient: walletAddress,
         tokenUri,
-        royaltyBps: 0, // remix mint has no royalty input UI yet — default to none
+        royaltyBps: 0,
       });
       const intentData = intentRes.data;
       if (!intentData || intentData.requiresSignature) {
@@ -267,7 +247,6 @@ export default function CreateRemixPage() {
       const result = await executeTransaction(calls);
       if (result === null) throw new Error("Mint reverted");
 
-      // 3. Poll for new tokenId
       let remixTokenId: string | undefined;
       const deadline = Date.now() + 10_000;
       while (Date.now() < deadline) {
@@ -278,11 +257,10 @@ export default function CreateRemixPage() {
             (t) => normalizeAddress("STARKNET", t.contractAddress) === normalizeAddress("STARKNET", selectedCollection.contractAddress)
           );
           if (newest) { remixTokenId = newest.tokenId; break; }
-        } catch { /* ignore */ }
+        } catch {  }
       }
       if (!remixTokenId) throw new Error("Could not determine remix token ID — check portfolio shortly");
 
-      // 4. Register the self-minted remix (provenance) in backend
       await registerRemix(
         {
           originalContract: contract,
@@ -307,11 +285,6 @@ export default function CreateRemixPage() {
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
-  // Remixing creates a new asset — it needs a connected wallet. Distinguish the
-  // reload reconnect window (show "Connecting…") from a settled disconnected
-  // state (show the connect prompt) so the page never hangs on a dead spinner.
   if (!isConnected) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-24">
@@ -358,8 +331,6 @@ export default function CreateRemixPage() {
     );
   }
 
-  // Non-owner of a `Derivatives: Not Allowed` asset can't self-mint — the
-  // licensing deal is their path.
   if (!remixPolicy.canRemixDirect) {
     router.replace(`/create/licensing/${contract}/${tokenId}`);
     return null;
@@ -381,7 +352,7 @@ export default function CreateRemixPage() {
       />
 
       <div className="max-w-5xl mx-auto px-4 pt-14 pb-12 space-y-6">
-        {/* Header */}
+
         <div className="space-y-3">
           <Link
             href={assetHref("STARKNET", contract, tokenId)}
@@ -400,13 +371,10 @@ export default function CreateRemixPage() {
           </p>
         </div>
 
-        {/* Body */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
 
-          {/* ── Left: form ──────────────────────────────────────────────── */}
           <div className="space-y-4">
 
-            {/* Remix Artwork */}
             <Section title="Remix Artwork" icon={<ImagePlus className="h-4 w-4" />}>
               <div
                 className={cn(
@@ -450,7 +418,6 @@ export default function CreateRemixPage() {
               </div>
             </Section>
 
-            {/* Remix Details */}
             <Section title="Remix Details" icon={<GitBranch className="h-4 w-4" />}>
               <div className="space-y-1.5">
                 <Label>Remix Name *</Label>
@@ -472,7 +439,6 @@ export default function CreateRemixPage() {
               </div>
             </Section>
 
-            {/* Collection — the remix is minted into the creator's own collection */}
             <Section title="Collection" icon={<Boxes className="h-4 w-4" />}>
               {collectionsLoading ? (
                 <Skeleton className="h-10 w-full rounded-md" />
@@ -502,7 +468,6 @@ export default function CreateRemixPage() {
               )}
             </Section>
 
-            {/* IP Type */}
             <Section title="IP Type" icon={<Info className="h-4 w-4" />}>
               <Select value={ipType} onValueChange={setIpType}>
                 <SelectTrigger>
@@ -516,7 +481,6 @@ export default function CreateRemixPage() {
               </Select>
             </Section>
 
-            {/* License Configuration */}
             <Section title="License Terms" icon={<Shield className="h-4 w-4" />}>
               <div className="space-y-1.5">
                 <Label>License Type</Label>
@@ -582,7 +546,6 @@ export default function CreateRemixPage() {
               </Collapsible>
             </Section>
 
-            {/* Submit */}
             <div className="btn-border-animated p-[1px] rounded-xl">
               <button
                 type="button"
@@ -599,10 +562,8 @@ export default function CreateRemixPage() {
             </p>
           </div>
 
-          {/* ── Right: original asset card ──────────────────────────────── */}
           <div className="space-y-4 lg:sticky lg:top-16">
 
-            {/* Original asset card */}
             <div className="rounded-xl border border-border overflow-hidden bg-card">
               <div className="relative aspect-square w-full bg-muted">
                 {originalImage ? (
@@ -627,7 +588,6 @@ export default function CreateRemixPage() {
                   )}
                 </div>
 
-                {/* Original license info */}
                 {(attr("License") || attr("Commercial Use") || attr("Derivatives")) && (
                   <div className="rounded-lg bg-muted/40 p-3 space-y-1.5 text-xs">
                     <p className="text-[10px] font-semibold text-muted-foreground">Original License</p>
@@ -654,7 +614,6 @@ export default function CreateRemixPage() {
               </div>
             </div>
 
-            {/* What happens next */}
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3 text-sm">
               <p className="font-semibold flex items-center gap-2">
                 <Info className="h-4 w-4 text-primary" />

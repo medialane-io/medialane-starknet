@@ -1,10 +1,5 @@
 "use client";
 
-// Ticket asset page — the ip-tickets uiVariant. Built on the same shared
-// modules as the edition page, with the token presented as a ticket: the
-// on-chain validity window and supply from get_ticket, and a holder-facing
-// "Your ticket" door panel driven by the on-chain is_valid check.
-
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
@@ -35,8 +30,6 @@ import { HelpIcon } from "@/components/ui/help-icon";
 import { SignedOutAssetActions } from "@/components/asset/signed-out-asset-actions";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
-
-// ── Ticket status (window-derived only — the ticket is what affects holders) ──
 
 type TicketStatus = "upcoming" | "valid" | "ended";
 
@@ -80,10 +73,6 @@ function TicketStatusChip({ status }: { status: TicketStatus }) {
   );
 }
 
-// ── Ticket panel — identity, quantity, royalty, and validity window. Holder
-// status (quantity held, valid/ready-to-present) lives in the owner row
-// after the action buttons — not duplicated here.
-
 function TicketPanel({ ticket }: { ticket: TicketOnchain }) {
   const status = ticketStatus(ticket);
   const hasWindow = ticket.startTime != null || ticket.endTime != null;
@@ -112,8 +101,6 @@ function TicketPanel({ ticket }: { ticket: TicketOnchain }) {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export function AssetPageTicket() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
@@ -134,7 +121,7 @@ export function AssetPageTicket() {
   const [reportOpen, setReportOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
 
-  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false);
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
   const dialogs = useAssetMarketplaceDialogState();

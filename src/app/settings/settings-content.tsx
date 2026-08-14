@@ -98,14 +98,6 @@ function UsernameClaimInput({
   );
 }
 
-/**
- * The creator profile as a Medialane collectible card — same foil material
- * as `MedialaneCollectionCard` (the live preview on every mint form), without
- * its decorative gradient frame/sheen. A square cover image (banner, no
- * color wash — shown as-is) with the level badge overlaid bottom-right, then
- * name, @username, bio, and link icons. Vertical, self-contained, pure
- * presentation — Save lives with the form, not here.
- */
 function ProfileLivePreview({
   form, approvedUsername, walletAddress,
 }: {
@@ -120,7 +112,7 @@ function ProfileLivePreview({
 
   return (
     <div className="rounded-[24px] border border-border/60 bg-card overflow-hidden">
-      {/* Cover — square, shown as-is, no tint/blur/gradient. The chosen avatar fills it. */}
+
       <div className="px-2.5 pt-2.5">
         <div className="relative aspect-square w-full overflow-hidden rounded-[16px] bg-muted ring-1 ring-black/10 dark:ring-white/10">
           {avatarUrl ? (
@@ -197,7 +189,6 @@ function SnapshotStat({ icon: Icon, value, label }: { icon: React.ElementType; v
   );
 }
 
-/** Portfolio at a glance — same three counts the portfolio pages track, so this stays a quick pulse-check rather than a second portfolio surface. */
 function PortfolioSnapshot({ assets, listings, collections }: { assets: number; listings: number; collections: number }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
@@ -221,7 +212,6 @@ function PortfolioSnapshot({ assets, listings, collections }: { assets: number; 
   );
 }
 
-/** Rewards at a glance — mirrors the same level/XP data the portfolio header and /rewards page read from `useRewards`. */
 function RewardsSnapshot({ address }: { address?: string | null }) {
   const { data: rewards } = useRewards(address);
   if (!rewards) return null;
@@ -268,11 +258,7 @@ export default function SettingsContent() {
   const { getValidToken, token: siwsToken, isSigningIn } = useSiwsToken();
   const { profile, isLoading: profileLoading, mutate } = useCreatorProfile(walletAddress ?? undefined);
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
-  // useMyUsernameClaim only reads an already-stored SIWS token — it never
-  // requests one, so without a prior sign-in this session it silently never
-  // fetches and `approvedUsername` stays null even when a username exists.
-  // Track whether we've actually checked, so the UI can say "checking" /
-  // "verify" instead of falsely asserting "no username yet".
+
   const usernameVerified = !!siwsToken;
   const { tokens: ownedTokens, isLoading: assetsLoading } = useTokensByOwner(walletAddress ?? null, 1, 100);
   const { orders } = useUserOrders(walletAddress ?? null);
@@ -434,7 +420,7 @@ export default function SettingsContent() {
       }
     >
       <div className="space-y-8">
-        {/* Username claim */}
+
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -447,7 +433,7 @@ export default function SettingsContent() {
           </div>
 
           <div className="border-t border-border pt-4 space-y-3">
-            {/* Unverified — we haven't checked yet (no SIWS signature this session); never assert "no username" without actually checking */}
+
             {!usernameVerified && !approvedUsername && (
               <div className="rounded-xl border border-border bg-muted/20 p-4 flex items-start gap-3">
                 <AtSign className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -469,7 +455,6 @@ export default function SettingsContent() {
               </div>
             )}
 
-            {/* Approved */}
             {approvedUsername && (
               <div className={cn(
                 "rounded-xl border border-green-500/40 bg-green-500/5 p-4 flex items-start gap-3"
@@ -490,7 +475,6 @@ export default function SettingsContent() {
               </div>
             )}
 
-            {/* Pending review */}
             {!approvedUsername && claim?.status === "PENDING" && (
               <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 flex items-start gap-3">
                 <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
@@ -508,7 +492,6 @@ export default function SettingsContent() {
               </div>
             )}
 
-            {/* Rejected — allow retry */}
             {!approvedUsername && claim?.status === "REJECTED" && (
               <div className="space-y-4">
                 <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
@@ -535,7 +518,6 @@ export default function SettingsContent() {
               </div>
             )}
 
-            {/* No claim yet */}
             {usernameVerified && !approvedUsername && !claim && (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
@@ -558,7 +540,6 @@ export default function SettingsContent() {
           </div>
         </div>
 
-        {/* Identity */}
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Identity</h3>
@@ -579,7 +560,6 @@ export default function SettingsContent() {
           </div>
         </div>
 
-        {/* Media */}
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Media</h3>
@@ -609,7 +589,6 @@ export default function SettingsContent() {
           </div>
         </div>
 
-        {/* Links */}
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Links</h3>
@@ -623,7 +602,6 @@ export default function SettingsContent() {
           </div>
         </div>
 
-        {/* Save — attached to the form, not the preview rail */}
         <div className="pt-4 border-t border-border">
           <Button onClick={handleSave} disabled={saving || !walletAddress || profileLoading} className="w-full sm:w-auto">
             {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save changes"}

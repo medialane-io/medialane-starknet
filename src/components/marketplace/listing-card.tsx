@@ -34,9 +34,6 @@ export function ListingCard({ order, onBuy, compact = false }: ListingCardProps)
   const usdPrices = useUsdPrices();
   const usdValue = usdValueFor(order.price?.formatted, order.price?.currency, usdPrices);
 
-  // Resolve through the app's /api/ipfs resizing proxy (w=640 covers the
-  // largest grid cell at high DPR) instead of the ui package's default
-  // full-size gateway URL.
   const imageUrl = order.token?.image ? ipfsToHttp(order.token.image, 640) : null;
 
   const overflowMenu = (

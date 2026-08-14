@@ -74,7 +74,7 @@ export function CounterOfferDialog({
 
   useEffect(() => {
     if (open) { resetState(); form.reset(); setDone(false); }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>

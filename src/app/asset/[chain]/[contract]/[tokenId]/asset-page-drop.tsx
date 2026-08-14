@@ -142,7 +142,7 @@ export function AssetPageDrop() {
   const [reportOpen, setReportOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
 
-  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false); // count only — no background poll
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false);
   const { total: remixCount } = useTokenRemixes(contract, tokenId);
 
   const dialogs = useAssetMarketplaceDialogState();
@@ -162,8 +162,6 @@ export function AssetPageDrop() {
     router.push(`/create/remix/${contract}/${tokenId}`);
   };
 
-  // Most recent "sale" activity — `history`'s sort order isn't guaranteed, so
-  // pick the max-timestamp entry explicitly rather than assuming array order.
   const lastSale = (history as ApiActivity[])
     .filter((h) => h.type === "sale" && h.price?.formatted)
     .reduce<ApiActivity | null>((latest, h) => (!latest || h.timestamp > latest.timestamp ? h : latest), null);

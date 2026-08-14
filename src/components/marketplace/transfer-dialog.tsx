@@ -29,12 +29,9 @@ import { resolveTokenImage } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-
 import { useTransfer } from "@/hooks/use-transfer";
 import { EXPLORER_URL } from "@/lib/constants";
 
-// Schema defined outside component — no component-level variables needed.
-// Self-transfer check is done in onSubmit with form.setError for better UX.
 const schema = z.object({
   toAddress: z
     .string()
@@ -54,8 +51,7 @@ interface TransferDialogProps {
   tokenId: string;
   tokenName?: string;
   tokenImage?: string | null;
-  /** ERC-721 default; pass "ERC1155" for edition assets so the hook
-   *  routes through `safe_transfer_from` instead of `transfer_from`. */
+
   tokenStandard?: "ERC721" | "ERC1155";
   onSuccess?: () => void;
   hasActiveListing?: boolean;
@@ -100,7 +96,7 @@ export function TransferDialog({
           return;
         }
       } catch {
-        // BigInt parse failed — safe to continue.
+
       }
     }
     setPendingAddress(values.toAddress);
@@ -154,7 +150,7 @@ export function TransferDialog({
             />
           ) : (
             <div className="space-y-4">
-              {/* Asset info */}
+
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
                 <Badge variant="outline" className="tabular-nums">
                   #{tokenId}
@@ -162,7 +158,6 @@ export function TransferDialog({
                 <span className="text-sm font-medium truncate">{displayName}</span>
               </div>
 
-              {/* Irreversibility warning */}
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="text-xs">
@@ -171,7 +166,6 @@ export function TransferDialog({
                 </AlertDescription>
               </Alert>
 
-              {/* Active listing warning */}
               {hasActiveListing && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />

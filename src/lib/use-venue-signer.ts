@@ -6,18 +6,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useSigner } from "@/hooks/use-signer";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
 
-/**
- * The app's single implementation of the SDK's chain-neutral `VenueSigner`
- * — the ONE place marketplace signing/execution is resolved, over the
- * connected injected wallet (Ready/Braavos).
- *
- * It wraps the marketplace's existing execution pipeline exactly
- * (`account.execute`, then `waitForTransaction` + revert-detection), so the
- * collapse onto `StarknetVenue` changes no on-chain behavior. `execute`
- * awaits confirmation and throws on revert before resolving, so the SDK
- * adapter can treat a resolved `execute` as on-chain-and-final and safely
- * read the receipt (for the OrderCreated order id) afterwards.
- */
 export function useVenueSigner(): StarknetVenueSigner | null {
   const account = useSigner();
   const { address } = useWallet();
@@ -29,7 +17,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       markMarketplaceDebug("signTypedData: awaiting wallet signature");
       const sig = await account.signMessage(data);
       markMarketplaceDebug("signTypedData: signature received");
-      // starknet account returns [] or {r,s}
+
       return Array.isArray(sig) ? sig.map(String) : [String(sig.r), String(sig.s)];
     },
     [account],

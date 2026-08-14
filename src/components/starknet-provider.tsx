@@ -7,13 +7,6 @@ import { RpcProvider } from "starknet";
 import { failoverFetch, RPC_PRIMARY_URL, RPC_BLOCK_IDENTIFIER } from "@/lib/starknet";
 import { QueryClient } from "@tanstack/react-query";
 
-/**
- * Tamed React Query defaults for starknet-react. Without this it uses RQ's
- * defaults — `refetchOnWindowFocus: true` + 3 retries — so every tab focus
- * fired a burst of contract reads (visible as the 503 storm during the
- * 2026-06-03 Alchemy outage). Disable focus refetching, bound retries, and add
- * a small staleTime so reads aren't hammered. Module-scoped → one stable client.
- */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -53,8 +46,6 @@ export const useNetwork = () => {
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
   const chains = useMemo(() => [mainnet], []);
 
-  // Mainnet-only, identified by chain ("starknet"), not tier. When multichain
-  // ships, add real chains here — never testnets.
   const currentNetwork = 'starknet' as const;
 
   const networkConfigs = {
@@ -67,8 +58,6 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
 
   const networkConfig = networkConfigs[currentNetwork];
 
-  // Single source of truth for the primary RPC URL (the /api/rpc proxy in prod)
-  // + shared failover — never read the raw keyed env here (see lib/starknet.ts).
   const providerFactory = useCallback(
     (_chain: unknown) =>
       new RpcProvider({ nodeUrl: RPC_PRIMARY_URL, baseFetch: failoverFetch, blockIdentifier: RPC_BLOCK_IDENTIFIER }),

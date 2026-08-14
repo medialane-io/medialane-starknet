@@ -81,8 +81,7 @@ export default function SponsorshipOfferPage() {
         sponsor,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-      // Direct signer — bundle the platform fee atomically into the same tx,
-      // same pattern as use-marketplace.ts's checkout multicall.
+
       const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig);
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
       await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });

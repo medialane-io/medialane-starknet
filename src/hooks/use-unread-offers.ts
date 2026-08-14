@@ -19,5 +19,5 @@ export function markOffersAsSeen(hashes: string[]) {
     const seen = getSeenOffers();
     hashes.forEach((h) => seen.add(h));
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...seen]));
-  } catch { /* ignore */ }
+  } catch {  }
 }

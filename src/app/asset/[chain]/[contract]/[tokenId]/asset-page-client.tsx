@@ -12,8 +12,6 @@ import { AssetPageTicket } from "./asset-page-ticket";
 import { AssetPageMembership } from "./asset-page-membership";
 import { getService } from "@medialane/sdk";
 
-// Registry-driven (05-service-model). Falls back to standard-based generic
-// UI for external/unknown collections (service null → getService undefined).
 function detectAssetType(
   service: string | null | undefined,
   standard: string | undefined

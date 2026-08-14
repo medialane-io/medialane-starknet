@@ -158,10 +158,7 @@ export default function CreateTicketCollectionPage() {
     setCollectionStep("processing");
 
     try {
-      // Pin collection metadata to IPFS first so the URI can go on-chain in the deploy tx.
-      // base_uri on the contract is the authoritative source — the backend is just a cache.
-      // If an image was provided, a failed pin is fatal: deploying with an empty
-      // base_uri would permanently strip the collection image (contracts are immutable).
+
       let baseUri = "";
       if (imageUri) {
         const token = await getValidToken();
@@ -178,8 +175,7 @@ export default function CreateTicketCollectionPage() {
         if (!res.ok || !pinData?.uri) {
           throw new Error(pinData?.error ?? "Collection metadata upload failed — please try again");
         }
-        // Bare file URI — a trailing slash makes resolvers treat it as a
-        // directory and probe <uri>/collection.json, which doesn't exist.
+
         baseUri = pinData.uri;
       }
 
@@ -195,8 +191,7 @@ export default function CreateTicketCollectionPage() {
       setDialogTxStatus("submitting");
       const txH = await execute(intentRes.data.calls as Call[]);
       if (!txH) throw new Error("Transaction failed");
-      // CREATE_COLLECTION intents aren't in the backend's confirmable set —
-      // nothing to confirm here; the backend's own factory poll indexes the deploy.
+
       setDialogTxStatus("confirming");
 
       const addr = await readDeployedAddress(txH);
@@ -275,7 +270,6 @@ export default function CreateTicketCollectionPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-            {/* Collection image */}
             <div className="space-y-2">
               <p className="text-sm font-medium">Collection image</p>
               <div className="flex items-start gap-4">

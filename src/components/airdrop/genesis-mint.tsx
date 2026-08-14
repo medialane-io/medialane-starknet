@@ -8,10 +8,8 @@ import { useWallet } from "@/hooks/use-wallet";
 import { serializeByteArray } from "@/lib/cairo-calldata";
 import { GENESIS_NFT_IMAGE_URL } from "@/lib/constants";
 
-// ─── Featured airdrop image ────────────────────────────────────────────────────
-
 export function AirdropEventCard() {
-  // Try env-configured URL first, then the local /genesis.jpg, then a placeholder.
+
   const sources = [GENESIS_NFT_IMAGE_URL, "/genesis.jpg"].filter(Boolean) as string[];
   const [srcIndex, setSrcIndex] = useState(0);
   const [errored, setErrored] = useState(false);
@@ -27,7 +25,7 @@ export function AirdropEventCard() {
           <p className="text-xs text-muted-foreground font-medium">Medialane Airdrop 2026</p>
         </div>
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
+
         <img
           key={src}
           src={src}
@@ -89,7 +87,6 @@ export function GenesisMint({
 
   const lsKey = address ? `${storageKey}_${address}` : null;
 
-  // Restore prior mint from localStorage
   useEffect(() => {
     if (!lsKey) return;
     const stored = localStorage.getItem(lsKey);
@@ -101,7 +98,6 @@ export function GenesisMint({
     setPhase(isConnected ? "ready" : "idle");
   }, [lsKey, isConnected]);
 
-  // Sync idle <-> ready when wallet connects/disconnects
   useEffect(() => {
     setPhase((prev) => {
       if (prev === "success" || prev === "minting") return prev;
@@ -114,9 +110,7 @@ export function GenesisMint({
     setPhase("minting");
     setError(null);
     try {
-      // The mint_item contract requires an ipfs:// or ar:// scheme. The
-      // configured URI env var is a bare CID, so normalize it the same way
-      // medialane-io does before building calldata.
+
       const tokenUri =
         nftUri.startsWith("ipfs://") || nftUri.startsWith("ar://")
           ? nftUri

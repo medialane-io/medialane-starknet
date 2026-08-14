@@ -35,7 +35,7 @@ export default function PortfolioRemixOffersPage() {
 
   return (
     <div className="space-y-8">
-      {/* Incoming remix offers (creator view) */}
+
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <GitBranch className="h-4 w-4 text-primary" />
@@ -102,7 +102,6 @@ export default function PortfolioRemixOffersPage() {
         )}
       </section>
 
-      {/* Outgoing remix offers (requester view) */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <GitBranch className="h-4 w-4 text-muted-foreground" />

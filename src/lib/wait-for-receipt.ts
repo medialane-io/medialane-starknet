@@ -1,14 +1,5 @@
 import { starknetProvider } from "@/lib/starknet";
 
-/**
- * Wait for a tx to reach on-chain finality and detect reverts.
- *
- * Returns:
- *  - `{ ok: true }` on confirmed success
- *  - `{ ok: false, reason }` on on-chain revert (caller surfaces error)
- *  - `{ ok: true, polledOk: false }` on polling failure — tx may still
- *    confirm on-chain.
- */
 export async function waitForReceipt(hash: string): Promise<
   | { ok: true; polledOk?: boolean }
   | { ok: false; reason: string }
@@ -17,7 +8,7 @@ export async function waitForReceipt(hash: string): Promise<
     const receipt = await starknetProvider.waitForTransaction(hash, {
       retryInterval: 3000,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = receipt as any;
     const executionStatus: string | undefined = r?.execution_status ?? r?.status;
     const isReverted =
@@ -31,9 +22,7 @@ export async function waitForReceipt(hash: string): Promise<
     }
     return { ok: true, polledOk: true };
   } catch (waitErr) {
-    // RPC blip / timeout — the tx may still be on-chain, we just couldn't
-    // verify it from this client. Optimistic: return ok so consumers don't
-    // throw, but log so a missed revert leaves a trail.
+
     console.warn("[waitForReceipt] receipt polling failed", {
       hash,
       err: waitErr instanceof Error ? waitErr.message : String(waitErr),

@@ -3,7 +3,6 @@
 import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 import { withSiwsAuth } from "@/lib/pinata-fetch";
 
-// License/IP fields shared across every item in the drop (the "shared defaults").
 export interface SharedLicense {
   ipType: string;
   licenseType: string;
@@ -13,7 +12,7 @@ export interface SharedLicense {
   geographicScope?: string;
   aiPolicy?: string;
   royalty: number;
-  /** Shared IP-type template traits (from IPTypeFields), applied to every item. */
+
   templateTraits?: { traitType: string; value: string }[];
 }
 
@@ -26,17 +25,14 @@ export interface DropItemInput {
 export interface CollectionCover {
   name: string;
   description?: string;
-  image?: string | null; // ipfs:// cover URI (already uploaded)
+  image?: string | null;
 }
 
 export interface BuiltSet {
-  baseUri: string; // ipfs://<folderCID>/
+  baseUri: string;
   count: number;
 }
 
-// Uploads every item image to IPFS, then pins one full OpenSea+Berne metadata JSON per item
-// (plus collection.json) as an IPFS directory. tokenId N = items[N-1]. Returns base_uri for
-// create_drop so token_uri(N) resolves to a unique, fully-licensed asset.
 export async function buildDropSet(
   items: DropItemInput[],
   license: SharedLicense,

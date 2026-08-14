@@ -15,10 +15,6 @@ import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { assetHref } from "@/lib/routes";
 
-/**
- * Fetches and renders a single counter-offer row for one original bid.
- * Isolated into its own component to safely use SWR hooks per bid.
- */
 function CounterOfferFetcher({
   originalBid,
   isProcessing,
@@ -58,7 +54,6 @@ function CounterOfferFetcher({
         </div>
       </div>
 
-      {/* Original bid → Counter price */}
       <div className="shrink-0 hidden sm:flex flex-col items-end gap-0.5">
         <p className="text-xs text-muted-foreground line-through">
           {formatDisplayPrice(originalBid.price.formatted)} {originalBid.price.currency}
@@ -109,12 +104,7 @@ function CounterOfferFetcher({
 export function CounterOffersTable({ address }: { address: string }) {
   const { orders, isLoading, error, mutate } = useUserOrders(address);
   const { checkoutCart, isProcessing } = useMarketplace();
-  // My bids that the seller has countered.
-  // Predicate: ERC-20 offer (bid) I made + the backend-derived flag
-  // `hasActiveCounterOffer` is true. The flag was added in SDK 0.22.0 alongside
-  // backend support; it replaces the legacy `status === "COUNTER_OFFERED"`
-  // check (audit P0-1, 01-core-model §V — counter-offers are linked orders,
-  // not a third lifecycle state). The parent bid keeps `status: ACTIVE`.
+
   const counterOfferedBids = orders.filter(
     (o) =>
       o.offer.itemType === "ERC20" &&

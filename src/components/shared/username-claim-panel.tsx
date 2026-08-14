@@ -56,22 +56,12 @@ function UsernameInput({ value, onChange, onCheck, onSubmit, checkState, checkRe
   );
 }
 
-/**
- * Self-contained username claim panel. Shows the current claim state and
- * allows the user to check availability and submit a new claim.
- * Safe to render on any page where a signed-in user might not have a username yet.
- * `bare` drops the card chrome + headings — for pages whose header already
- * introduces the claim (e.g. /claim/username).
- */
 export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
   const shell = bare ? "space-y-3 max-w-lg" : "bento-cell p-5 space-y-3";
   const { address: walletAddress } = useWallet();
   const { getValidToken, token: siwsToken, isSigningIn } = useSiwsToken();
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
-  // useMyUsernameClaim only reads an already-stored SIWS token — without a
-  // prior sign-in this session it never fetches, so approvedUsername/claim
-  // stay null even when a username already exists. Never fall through to
-  // "claim a new username" without actually having checked first.
+
   const usernameVerified = !!siwsToken;
   const [claimInput, setClaimInput] = useState("");
   const [claiming, setClaiming] = useState(false);
@@ -113,7 +103,6 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
     }
   }
 
-  // Already has an approved username — show it
   if (approvedUsername) {
     return (
       <div className={shell}>
@@ -141,7 +130,6 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
     );
   }
 
-  // Haven't verified yet (no SIWS signature this session) — check before assuming no username
   if (!usernameVerified) {
     return (
       <div className={shell}>
@@ -166,7 +154,6 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
     );
   }
 
-  // Pending claim
   if (claim?.status === "PENDING") {
     return (
       <div className={shell}>
@@ -190,7 +177,6 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
     );
   }
 
-  // Rejected claim or no claim — show claim form
   return (
     <div className={shell}>
       {!bare && (

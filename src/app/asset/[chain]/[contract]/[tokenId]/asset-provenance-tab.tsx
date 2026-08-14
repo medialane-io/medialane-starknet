@@ -4,8 +4,6 @@ import dynamic from "next/dynamic";
 import { CurrencyIcon } from "@/components/shared/currency-icon";
 import { RemixesTab } from "@/components/asset/remixes-tab";
 
-// Lazy-loaded: recharts (~100 kB gz) otherwise lands in the asset page's
-// first load for a chart that lives behind the provenance tab.
 const PriceHistoryChart = dynamic(
   () => import("@/components/asset/price-history-chart").then((m) => m.PriceHistoryChart),
   {
@@ -71,7 +69,6 @@ export function AssetProvenanceTab({
   return (
     <div className="mt-4 space-y-6">
 
-      {/* Onchain attestation badge */}
       <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-4 py-2.5">
         <Fingerprint className="h-4 w-4 text-primary shrink-0" />
         <div className="min-w-0">
@@ -92,7 +89,6 @@ export function AssetProvenanceTab({
         <CreationRecord originalCreator={originalCreator} registeredAt={registeredAt} />
       ) : null}
 
-      {/* Stats grid */}
       {history.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl bg-muted/20 p-3 text-center">
@@ -128,7 +124,6 @@ export function AssetProvenanceTab({
         </div>
       )}
 
-      {/* Remixes section */}
       {remixCount > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground">Remixes ({remixCount})</p>
@@ -136,10 +131,8 @@ export function AssetProvenanceTab({
         </div>
       )}
 
-      {/* Price history chart */}
       <PriceHistoryChart history={history} />
 
-      {/* Event timeline */}
       <div className="space-y-2">
         <p className="text-xs font-semibold text-muted-foreground">
           History
@@ -157,7 +150,7 @@ export function AssetProvenanceTab({
           </div>
         ) : (
           <div className="relative">
-            {/* Timeline spine */}
+
             <div className="absolute left-[19px] top-6 bottom-6 w-px bg-border/60" />
 
             <div className="space-y-1">
@@ -180,12 +173,11 @@ export function AssetProvenanceTab({
 
                 return (
                   <div key={i} className="relative flex gap-4 group">
-                    {/* Timeline dot */}
+
                     <div className={`relative z-10 h-10 w-10 rounded-full border flex items-center justify-center shrink-0 mt-1 transition-colors group-hover:border-primary/50 ${style.badgeCls}`}>
                       {style.icon}
                     </div>
 
-                    {/* Row content */}
                     <div
                       className={`flex-1 min-w-0 rounded-xl bg-card/40 px-3 py-2.5 transition-colors group-hover:bg-card/60 ${txLink ? "cursor-pointer" : ""}`}
                       onClick={() => txLink && window.open(txLink, "_blank", "noopener,noreferrer")}
@@ -231,7 +223,6 @@ export function AssetProvenanceTab({
                           </div>
                         </div>
 
-                        {/* Price + amount + time + tx link */}
                         <div className="flex items-center gap-2 shrink-0">
                           {amount && BigInt(amount) > 1n && (
                             <span className="text-[11px] text-muted-foreground tabular-nums bg-muted/60 px-1.5 py-0.5 rounded">

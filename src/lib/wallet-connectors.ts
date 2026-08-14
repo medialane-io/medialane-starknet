@@ -20,40 +20,8 @@ import {
   getListableTokens,
 } from "@medialane/sdk";
 
-/**
- * Cartridge session policies — pre-approved, popup-free calls for the
- * connected session. Only fixed protocol contracts can be listed here;
- * per-creator collections (POP/Drop/Ticket/Club/mint instances) are deployed
- * at a new address every time, so they can't be pre-registered in a static
- * policy list.
- *
- * Verified against the actual SDK call-builders (not guessed from names):
- * listing AND making an offer both call `register_order`; buying/accepting
- * calls `fulfill_order`; canceling calls `cancel_order` (all on the
- * marketplace contracts). Every one of those also does an ERC20 `approve` on
- * the payment token as part of the same atomic multicall, plus a `transfer`
- * for the platform fee — both against one of the fixed listable-token
- * contracts, so they're listed here too. Listing an item and accepting a
- * single offer ALSO need an approve/set_approval_for_all on the traded NFT's
- * own contract, which is a different address per listing — that can never be
- * covered by a static policy, so those two actions still prompt normally
- * even with Cartridge connected.
- */
 const method = (name: string) => ({ name, entrypoint: name });
 
-/**
- * An `approve` policy without `spender`/`amount` renders in Cartridge's
- * authorization screen with a $0 spending limit (confirmed against Cartridge's
- * own docs — those two fields are what drive the "Spending Limit" review UI;
- * `transfer` has no such fields/limit). A $0 limit doesn't fail the tx
- * outright, but it forces a manual re-approval on every real approve() (any
- * real listing/offer price exceeds it) — defeating the point of a pre-
- * authorized session. Listing/offer prices are user-chosen and unbounded, so
- * a fixed numeric cap would eventually block a legitimate high-price listing
- * too; "*" (unlimited allowance to the marketplace contract itself, the
- * standard session-marketplace pattern) is the correct choice here, one
- * `approve` entry per marketplace contract since either can be the spender.
- */
 const approvalMethod = (spender: string) => ({
   name: "approve",
   entrypoint: "approve",
@@ -75,17 +43,6 @@ const paymentTokenPolicies = Object.fromEntries(
   ]),
 );
 
-/**
- * SNIP-12 message policies — pre-authorizes the exact typed-data shapes
- * `register_order`/`cancel_order` sign (mirrors
- * `@medialane/sdk`'s `starknet/marketplace/signing.ts` byte-for-byte; that
- * file is the source of truth, this is a declarative copy for Cartridge's
- * session policy, not a second implementation). Without this, Cartridge has
- * no pre-authorized "messages" list (only `contracts` was configured), so
- * every `signMessage` call misses the silent session-sign path and falls
- * back to a manual popup — listing/offer signing that never resolved for
- * Cartridge users traced back to this gap.
- */
 const STARKNET_DOMAIN_TYPE = [
   { name: "name", type: "shortstring" },
   { name: "version", type: "shortstring" },
@@ -202,11 +159,6 @@ const cartridgeController = new ControllerConnector({
   },
 });
 
-/**
- * Single source of truth for every supported wallet: its connector instance
- * and (if it has one) where to send a user who doesn't have it installed.
- * Add a wallet here — nothing else needs to change.
- */
 const SUPPORTED_WALLETS: { connector: Connector; installUrl?: string }[] = [
   { connector: new ArgentX(), installUrl: "https://www.ready.co/download" },
   { connector: new Braavos(), installUrl: "https://braavos.app/download-braavos-wallet/" },
@@ -225,7 +177,6 @@ export const WALLET_INSTALL_URLS: Record<string, string> = Object.fromEntries(
 
 type ConnectorIconObj = { dark?: string; light?: string };
 
-/** A connector's icon can be a single data-URI or a {dark, light} pair — pick one src either way. */
 export function getConnectorIconSrc(icon: ConnectorIconObj | string | undefined): string | undefined {
   if (!icon) return undefined;
   if (typeof icon === "string") return icon;

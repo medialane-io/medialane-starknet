@@ -13,10 +13,6 @@ import { timeAgo, cn } from "@/lib/utils";
 
 const FEED_LIMIT = 8;
 
-/** A small header shared by both columns — icon chip + title (+ optional
- *  caption) on the left, a link on the right. Keeps the two panels reading
- *  as a paired "what's happening right now" dashboard rather than one panel
- *  with a caption and one without. */
 function ColumnHeader({
   icon,
   iconBg,
@@ -53,12 +49,6 @@ function ColumnHeader({
   );
 }
 
-/** Discover page's Community section — the old horizontal activity-card
- *  carousel read as "just another section" (2026-07-05 feedback). Replaced
- *  with the /activities page's list language (ActivityRow) on the left and
- *  the Rewards scoreboard on the right, each with its own "Activities" /
- *  "Rewards" header (2026-07-05 follow-up) so the pairing reads as two
- *  distinct, titled panels rather than one shared "Community" banner. */
 export function CommunitySection() {
   const { activities, isLoading } = useActivities({ limit: FEED_LIMIT });
   const { address } = useWallet();
@@ -79,7 +69,7 @@ export function CommunitySection() {
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-      {/* Left — recent on-chain activity, /activities-page list language */}
+
       <div className="lg:col-span-7 space-y-4 sm:space-y-5">
         <ColumnHeader
           icon={<Activity className="h-3.5 w-3.5 text-white" />}
@@ -133,7 +123,6 @@ export function CommunitySection() {
         </div>
       </div>
 
-      {/* Right — Rewards scoreboard */}
       <div className="lg:col-span-5 space-y-4 sm:space-y-5">
         <ColumnHeader
           icon={<Sparkles className="h-3.5 w-3.5 text-white" />}
@@ -143,7 +132,6 @@ export function CommunitySection() {
           linkLabel="Scoreboard"
         />
 
-        {/* Compact pitch */}
         <div className="relative rounded-xl border border-border/40 bg-card overflow-hidden px-4 py-4 space-y-3">
           <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand-rose to-brand-orange" />
           <p className="text-sm font-semibold leading-snug">

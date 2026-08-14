@@ -17,7 +17,6 @@ export function useSiwsToken() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync stored token on address change (handles wallet switch / disconnect)
   useEffect(() => {
     if (!activeAddress) {
       setToken(null);
@@ -31,8 +30,6 @@ export function useSiwsToken() {
   const signIn = useCallback(async (): Promise<string | null> => {
     if (!activeAddress) return null;
 
-    // Injected `account` hydrates async and can be momentarily undefined while
-    // connected; surface that as a retryable message instead of a silent null.
     const signer = account;
     if (!signer) {
       const message = "Your wallet isn't ready to sign yet — try again in a moment.";
@@ -42,12 +39,7 @@ export function useSiwsToken() {
 
     setIsSigningIn(true);
     setError(null);
-    // Every SIWS-gated action (image upload, metadata upload, etc.) routes
-    // through here — this is the single place to tell the user a wallet
-    // signature is pending. Extensions don't reliably self-focus, so a
-    // spinner alone can look like a stuck upload with no visible cause
-    // (reported: user didn't notice the wallet needed a signature until they
-    // happened to check it — the loading UI gave no hint why it wasn't moving).
+
     const signToast = toast.loading("Check your wallet to sign in and continue.");
     try {
       const newToken = await requestSiwsToken({ walletAddress: activeAddress, signer });
@@ -55,13 +47,7 @@ export function useSiwsToken() {
       setToken(newToken);
       return newToken;
     } catch (err) {
-      // Capture for UI surfaces that read the hook's `error` field, AND
-      // rethrow so callers awaiting getValidToken() see the real reason
-      // (e.g. "Check if your wallet is deployed on Starknet.") in their
-      // try/catch instead of a null they convert to a generic message.
-      // getFriendlyWalletError() passes specific, safe messages like that
-      // one through unchanged — it only rewrites raw wallet/RPC blobs (e.g.
-      // the SNIP wallet-api's own "An error occurred (UNKNOWN_ERROR)").
+
       console.error("[siws] error:", err);
       const message = getFriendlyWalletError(err).message;
       toast.dismiss(signToast);
@@ -72,10 +58,6 @@ export function useSiwsToken() {
     }
   }, [activeAddress, account]);
 
-  /**
-   * Returns an existing valid token or triggers the SIWS sign-in flow.
-   * Call this inside SWR fetchers or mutation handlers, not at render time.
-   */
   const getValidToken = useCallback(async (): Promise<string | null> => {
     if (!activeAddress) return null;
 

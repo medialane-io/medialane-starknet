@@ -52,7 +52,6 @@ export default function AirdropPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
 
-      {/* Header — logo only, no distractions */}
       <header className="px-6 py-4 flex items-center border-b border-border/30">
         <MedialaneLogo />
       </header>
@@ -60,11 +59,9 @@ export default function AirdropPage() {
       <div className="flex-1 w-full">
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
 
-          {/* ── Hero ── */}
           <section className="py-14 lg:py-20">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
 
-              {/* Left: badge + title + description + CTA */}
               <div className="space-y-5">
                 <div className="inline-flex items-center gap-2 rounded-full border border-brand-orange/30 bg-brand-orange/5 px-3 py-1">
                   <Sparkles className="h-3.5 w-3.5 text-brand-orange" />
@@ -82,7 +79,6 @@ export default function AirdropPage() {
                 <AirdropClaim storageKey="ml_airdrop" locale="en" />
               </div>
 
-              {/* Right: featured airdrop image */}
               <div className="lg:top-24 space-y-4">
                 <AirdropEventCard />
               </div>
@@ -90,7 +86,6 @@ export default function AirdropPage() {
             </div>
           </section>
 
-          {/* ── Airdrop rewards ── */}
           <section className="py-10 border-t border-border/30 space-y-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Rewards</p>
@@ -136,7 +131,6 @@ export default function AirdropPage() {
             </div>
           </section>
 
-          {/* ── Participation tiers ── */}
           <section className="py-10 border-t border-border/30 space-y-6">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">How it works</p>
@@ -146,7 +140,6 @@ export default function AirdropPage() {
               </p>
             </div>
 
-            {/* Base tier */}
             <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/5 p-6">
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
@@ -164,7 +157,6 @@ export default function AirdropPage() {
               </div>
             </div>
 
-            {/* Bonus tiers */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-2xl border border-border/40 bg-card/30 p-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -197,7 +189,6 @@ export default function AirdropPage() {
             </div>
           </section>
 
-          {/* ── Distribution phases ── */}
           <section className="py-10 border-t border-border/30 space-y-6">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Distribution</p>
@@ -237,11 +228,9 @@ export default function AirdropPage() {
             </a>
           </section>
 
-          {/* ── Rules + Disclaimer ── */}
           <section className="py-10 border-t border-border/30">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-              {/* Rules */}
               <div className="space-y-5">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Rules</p>
@@ -283,7 +272,6 @@ export default function AirdropPage() {
                 </div>
               </div>
 
-              {/* Disclaimer */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-muted-foreground" />
@@ -309,7 +297,6 @@ export default function AirdropPage() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-border/40">
         <p className="text-[11px] text-center text-muted-foreground/50 px-5 pt-4">
           Free to join · No purchase required ·{" "}

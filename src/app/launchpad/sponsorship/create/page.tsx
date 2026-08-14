@@ -32,7 +32,6 @@ const TOKEN_SYMBOLS = LISTABLE_TOKENS.map((t) => t.symbol);
 
 type Mode = "offer" | "propose";
 
-/** Pending proposals on a specific owned asset, with accept/reject actions. */
 function PendingProposalsPanel({
   nftContract, signer, client, owner,
 }: {
@@ -52,7 +51,7 @@ function PendingProposalsPanel({
         ? await client.api.acceptSponsorshipProposalIntent({ owner, proposalId })
         : await client.api.rejectSponsorshipProposalIntent({ owner, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
-      // Direct signer — bundle the platform fee atomically into the accept tx.
+
       const feeCall = decision === "accept"
         ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig)
         : null;
@@ -88,8 +87,6 @@ function PendingProposalsPanel({
   );
 }
 
-/** Pins the deal's terms as a small JSON document — the contract only ever
- *  sees the resulting ipfs:// URI, never the terms themselves. */
 async function pinLicenseTerms(terms: SponsorshipTerms, siwsToken: string): Promise<string> {
   return uploadJsonToIpfs(toLicenseMetadata(terms), siwsToken);
 }
@@ -115,8 +112,6 @@ export default function CreateSponsorshipPage() {
     image: resolveTokenImage(t.metadata?.image),
   }));
 
-  // search callback — this app's backend fetch has no shared apiFetch wrapper
-  // (see use-sponsorship.ts's own backendFetch), so build the request directly
   const searchAssets = async (query: string): Promise<OwnedAsset[]> => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;

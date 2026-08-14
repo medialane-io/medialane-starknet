@@ -29,8 +29,6 @@ export const metadata: Metadata = {
   ...buildSocialMetadata({ title, description }),
 };
 
-// ── Feature definitions ──────────────────────────────────────────────────────
-
 const FEATURES = [
   {
     icon: Zap,
@@ -122,8 +120,6 @@ const FEATURES = [
   },
 ] as const;
 
-// ── CTA cards ─────────────────────────────────────────────────────────────────
-
 const ACTIONS = [
   {
     href: "/launchpad/single-editions",
@@ -149,22 +145,18 @@ const ACTIONS = [
   },
 ] as const;
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default function CreatePage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Subtle background tint — visible in dark mode, near-invisible in light */}
+
       <div className="absolute inset-0 dark:bg-gradient-to-b dark:from-[#07000f]/80 dark:via-transparent dark:to-transparent pointer-events-none" />
 
-      {/* Top accent line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 space-y-12 sm:space-y-16">
 
-        {/* ── Hero ── */}
         <div className="max-w-2xl space-y-4 sm:space-y-5">
-          {/* Eyebrow badge */}
+
           <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300 backdrop-blur-sm">
             <Rocket className="h-3.5 w-3.5" />
             Creator Studio
@@ -180,7 +172,6 @@ export default function CreatePage() {
           </p>
         </div>
 
-        {/* ── Action cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 max-w-2xl">
           {ACTIONS.map(({ href, icon: Icon, label, description, ring, iconBg, iconColor }) => (
             <Link
@@ -192,7 +183,7 @@ export default function CreatePage() {
                 ring
               )}
             >
-              {/* Icon */}
+
               <div
                 className={cn(
                   "h-11 w-11 rounded-xl flex items-center justify-center mb-4 sm:mb-5",
@@ -212,7 +203,6 @@ export default function CreatePage() {
           ))}
         </div>
 
-        {/* ── Divider ── */}
         <div className="flex items-center gap-4">
           <div className="flex-1 h-px bg-border" />
           <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60 font-semibold whitespace-nowrap">
@@ -221,7 +211,6 @@ export default function CreatePage() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* ── Features grid ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {FEATURES.map(({ icon: Icon, title, body, accent, border, bg }) => (
             <div
@@ -232,7 +221,7 @@ export default function CreatePage() {
                 bg
               )}
             >
-              {/* Gradient icon */}
+
               <div
                 className={cn(
                   "h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-sm",
@@ -250,7 +239,6 @@ export default function CreatePage() {
           ))}
         </div>
 
-        {/* ── Stats strip ── */}
         <div className="rounded-2xl border border-border bg-card p-5 sm:p-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 sm:gap-8">
             {[
