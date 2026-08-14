@@ -115,6 +115,33 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Baseline security headers, site-wide. Deliberately NOT a full Content-Security-
+  // Policy: the wallet-connector stack (Cartridge's hosted iframe keychain,
+  // WalletConnect's relay for Argent/Braavos/Keplr mobile handshakes) legitimately
+  // calls out to a wide, version-fragile set of external origins
+  // (x.cartridge.gg/api.cartridge.gg/static.cartridge.gg, cloud.walletconnect.com,
+  // login.argent.xyz, link.braavos.app, deeplink.keplr.app, …). Getting that
+  // allowlist wrong silently breaks wallet connect for real users — worse than no
+  // CSP — and it can't be verified without clicking through each live connector,
+  // which needs a real browser + real wallets/mobile apps. These four headers are
+  // safe with zero connector surface: none of them touch script/connect/frame
+  // origins.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=()",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
