@@ -87,17 +87,6 @@ export async function submitRemixOffer(
   return (res as { data: RemixOffer }).data;
 }
 
-export async function submitAutoRemixOffer(
-  body: { originalContract: string; originalTokenId: string },
-  siwsToken: string | null
-): Promise<RemixOffer> {
-  const res = await authedFetch(`${MEDIALANE_BACKEND_URL}/v1/remix-offers/auto`, siwsToken, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  return (res as { data: RemixOffer }).data;
-}
-
 export async function registerRemix(
   body: {
     originalContract: string;
@@ -127,14 +116,6 @@ export async function confirmRemixOffer(
   const res = await authedFetch(`${MEDIALANE_BACKEND_URL}/v1/remix-offers/${id}/confirm`, siwsToken, {
     method: "POST",
     body: JSON.stringify(body),
-  });
-  return (res as { data: RemixOffer }).data;
-}
-
-export async function rejectRemixOffer(id: string, siwsToken: string | null): Promise<RemixOffer> {
-  const res = await authedFetch(`${MEDIALANE_BACKEND_URL}/v1/remix-offers/${id}/reject`, siwsToken, {
-    method: "POST",
-    body: JSON.stringify({}),
   });
   return (res as { data: RemixOffer }).data;
 }
