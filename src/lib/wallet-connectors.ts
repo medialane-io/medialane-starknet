@@ -110,6 +110,7 @@ const cancellationMessagePolicy = (name: string, description: string, version: "
 });
 
 const cartridgeController = new ControllerConnector({
+  lazyload: true,
   policies: {
     messages: [
       orderMessagePolicy("List / offer (721)", "Sign a marketplace listing or offer", "5"),
