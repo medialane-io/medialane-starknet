@@ -1,12 +1,9 @@
 import { test, expect } from "bun:test";
 import { ipfsToHttp } from "./utils";
-import { MEDIA_BASE_URL } from "./constants";
 
-test("ipfsToHttp routes https URLs through the backend's media proxy", () => {
+test("ipfsToHttp routes https URLs through the image proxy", () => {
   const result = ipfsToHttp("https://gateway.pinata.cloud/ipfs/abc123");
-  expect(result).toBe(
-    `${MEDIA_BASE_URL}/media/external?url=` + encodeURIComponent("https://gateway.pinata.cloud/ipfs/abc123")
-  );
+  expect(result).toBe("/api/img?url=" + encodeURIComponent("https://gateway.pinata.cloud/ipfs/abc123"));
 });
 
 test("ipfsToHttp passes data:image/* URIs through unchanged", () => {
@@ -26,6 +23,6 @@ test("ipfsToHttp rejects blob: URIs", () => {
   expect(ipfsToHttp("blob:https://evil.example/abc")).toBe("/placeholder.svg");
 });
 
-test("ipfsToHttp still proxies ipfs:// URIs through the backend's media proxy", () => {
-  expect(ipfsToHttp("ipfs://QmXxx")).toBe(`${MEDIA_BASE_URL}/media/ipfs/QmXxx`);
+test("ipfsToHttp still proxies ipfs:// URIs through /api/ipfs", () => {
+  expect(ipfsToHttp("ipfs://QmXxx")).toBe("/api/ipfs/QmXxx");
 });
