@@ -20,6 +20,8 @@ export const MEDIALANE_BACKEND_URL = isServer
   ? (process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL || "http://localhost:3001")
   : `${window.location.origin}/api/proxy`;
 
+export const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL || "http://localhost:3001";
+
 export const MEDIALANE_API_KEY = isServer
   ? (process.env.MEDIALANE_API_KEY || "")
   : "";
