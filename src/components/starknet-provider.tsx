@@ -1,11 +1,23 @@
 "use client";
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 import { mainnet } from "@starknet-react/chains";
-import { StarknetConfig, voyager } from "@starknet-react/core";
+import { ConnectorNotConnectedError, StarknetConfig, voyager } from "@starknet-react/core";
 import { walletConnectors } from "@/lib/wallet-connectors";
 import { RpcProvider } from "starknet";
 import { failoverFetch, RPC_PRIMARY_URL, RPC_BLOCK_IDENTIFIER } from "@/lib/starknet";
 import { QueryClient } from "@tanstack/react-query";
+
+function useSuppressStaleAutoConnectRejection(): void {
+  useEffect(() => {
+    function onUnhandledRejection(event: PromiseRejectionEvent) {
+      if (event.reason instanceof ConnectorNotConnectedError) {
+        event.preventDefault();
+      }
+    }
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    return () => window.removeEventListener("unhandledrejection", onUnhandledRejection);
+  }, []);
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +56,7 @@ export const useNetwork = () => {
 };
 
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
+  useSuppressStaleAutoConnectRejection();
   const chains = useMemo(() => [mainnet], []);
 
   const currentNetwork = 'starknet' as const;
