@@ -20,11 +20,13 @@ export function HomePage({ initialFeatured }: { initialFeatured?: ApiCollection[
         <ActivityTicker limit={14} />
       </PageContainer>
 
-      <PageContainer className="box-border max-w-full pt-0 pb-0 space-y-20 mt-16">
+      <PageContainer className="box-border max-w-full pt-0 pb-0 space-y-10 sm:space-y-16 lg:space-y-20 mt-16">
         <TrendingCollections />
         <NewOnMarketplace />
-        <CreatorAirdropBanner />
-        <CommunityRewards />
+        <div className="space-y-3 sm:space-y-4">
+          <CreatorAirdropBanner />
+          <CommunityRewards />
+        </div>
         <AirdropSection />
       </PageContainer>
     </div>
