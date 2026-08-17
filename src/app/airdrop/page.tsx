@@ -41,8 +41,8 @@ const PHASES = [
   },
   {
     label: "Your share",
-    milestone: "Score Board points",
-    desc: "Each round is split by Score Board points. You earn points by creating, trading, and engaging on Medialane — your points are your share of every distribution.",
+    milestone: "XP",
+    desc: "Each round is split by XP. You earn XP by creating, trading, and engaging on Medialane — your XP is your share of every distribution.",
     color: "border-brand-purple/30 bg-brand-purple/5",
     badge: "bg-brand-purple/10 text-brand-purple",
   },
@@ -108,7 +108,7 @@ export default function AirdropPage() {
                   color: "text-brand-maeve",
                   bg: "bg-brand-maeve/10",
                   title: "Creator fund distributions",
-                  desc: "Each time the Creator's Fund reaches $1,000, it is distributed to participants by Score Board points. The more you contribute, the larger your share.",
+                  desc: "Each time the Creator's Fund reaches $1,000, it is distributed to participants by XP. The more you contribute, the larger your share.",
                 },
                 {
                   icon: Star,
@@ -134,9 +134,9 @@ export default function AirdropPage() {
           <section className="py-10 border-t border-border/30 space-y-6">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">How it works</p>
-              <h2 className="text-2xl sm:text-3xl font-black">Sign up. That&apos;s it.</h2>
+              <h2 className="text-2xl sm:text-3xl font-black">Connect and claim your spot.</h2>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Creating an account is all you need to be eligible. Do more — earn more.
+                Connect a wallet and confirm one transaction to be eligible. Do more — earn more.
               </p>
             </div>
 
@@ -151,7 +151,8 @@ export default function AirdropPage() {
                     <span className="text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full">Minimum — you&apos;re in</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                    Sign up and claim your record. That&apos;s the only requirement to participate in the airdrop.
+                    Connect your wallet and confirm the claim transaction (network gas applies).
+                    That&apos;s the only requirement to participate in the airdrop.
                   </p>
                 </div>
               </div>
@@ -194,7 +195,7 @@ export default function AirdropPage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Distribution</p>
               <h2 className="text-2xl sm:text-3xl font-black">How distribution works</h2>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Every $1,000 the Creator&apos;s Fund collects is airdropped to participants — weighted by Score Board points.
+                Every $1,000 the Creator&apos;s Fund collects is airdropped to participants — weighted by XP.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
