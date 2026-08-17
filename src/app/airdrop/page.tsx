@@ -136,7 +136,7 @@ export default function AirdropPage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">How it works</p>
               <h2 className="text-2xl sm:text-3xl font-black">Connect and claim your spot.</h2>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Connect a wallet and confirm one transaction to be eligible. Do more — earn more.
+                Connect your wallet and confirm to be eligible. Do more — earn more.
               </p>
             </div>
 
@@ -151,7 +151,7 @@ export default function AirdropPage() {
                     <span className="text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full">Minimum — you&apos;re in</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                    Connect your wallet and confirm the claim transaction (network gas applies).
+                    Connect your wallet and confirm your claim.
                     That&apos;s the only requirement to participate in the airdrop.
                   </p>
                 </div>
