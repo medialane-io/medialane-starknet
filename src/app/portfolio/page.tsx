@@ -6,7 +6,7 @@ import { useUserOrders } from "@/hooks/use-orders";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
-import { PortfolioOverview, CollectionCard, AssetCard, type PortfolioBentoTileConfig } from "@medialane/ui";
+import { PortfolioSectionGrid, CollectionCard, AssetCard, type PortfolioSectionConfig } from "@medialane/ui";
 import { AssetsGrid } from "@/components/portfolio/assets-grid";
 import { ActivityRow } from "@/components/shared/activity-row";
 import { Button } from "@/components/ui/button";
@@ -36,11 +36,12 @@ export default function PortfolioOverviewPage() {
     activities.length === 0 &&
     orders.length === 0;
 
-  const tiles: PortfolioBentoTileConfig[] = [
+  const sections: PortfolioSectionConfig[] = [
     {
       key: "assets",
       title: "Assets",
       href: "/portfolio/assets",
+      color: "blue",
       isEmpty: !loadingTokens && totalAssets === 0,
       content: (
         <AssetsGrid
@@ -54,6 +55,7 @@ export default function PortfolioOverviewPage() {
       key: "collections",
       title: "Collections",
       href: "/portfolio/collections",
+      color: "maeve",
       isEmpty: collections.length === 0,
       content: (
         <div className="grid grid-cols-2 gap-3">
@@ -67,6 +69,7 @@ export default function PortfolioOverviewPage() {
       key: "tickets",
       title: "Tickets & memberships",
       href: "/portfolio/assets",
+      color: "orange",
       isEmpty: !loadingTokens && passItems.length === 0,
       content: (
         <div className="grid grid-cols-2 gap-3">
@@ -87,6 +90,7 @@ export default function PortfolioOverviewPage() {
       key: "activity",
       title: "Activity",
       href: "/portfolio/activity",
+      color: "purple",
       size: "wide",
       isEmpty: !loadingActivity && recentActivity.length === 0,
       content: (
@@ -104,8 +108,8 @@ export default function PortfolioOverviewPage() {
   ];
 
   return (
-    <PortfolioOverview
-      tiles={tiles}
+    <PortfolioSectionGrid
+      sections={sections}
       isEmpty={isEmpty}
       emptyState={
         <div className="rounded-2xl bg-gradient-to-br from-brand-purple to-brand-orange p-10 text-center space-y-4 text-white">
