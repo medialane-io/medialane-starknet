@@ -1,6 +1,6 @@
-# Medialane — Starknet App
+# Medialane Starknet App
 
-Permissionless Web3 app for programmable IP monetization on Starknet — Creator Launchpad + IP Marketplace with full wallet sovereignty.
+Permissionless Web3 app for programmable IP monetization on Starknet: Creator Launchpad and IP Marketplace with full wallet sovereignty.
 
 **Starknet App:** https://starknet.medialane.io  
 **Consumer App (Media Wallet, email login, sponsored transactions):** https://medialane.io
@@ -11,16 +11,16 @@ Permissionless Web3 app for programmable IP monetization on Starknet — Creator
 
 ### Creator Launchpad
 Deploy and manage tokenized IP assets on-chain:
-- **Collection Drops** — ERC721 curated NFT launches with mint pages
-- **IP1155** — ERC1155 multi-edition IP tokens
-- **Proof of Participation (POP)** — soulbound on-chain credentials for events, communities, and milestones
-- **Creator Coins & Memecoins** — launch a standard ERC-20 paired with a permanently-locked Ekubo pool, or claim a coin you already launched on Starknet
-- **IP Tickets** — sell redeemable, tradeable ERC-721 tickets for events and access
-- **IP Club** — membership clubs with a transferable ERC-1155 membership card; a validity window gates membership, not minting or trading
-- **IP Sponsorship** — sell a direct-settlement sponsorship license on an asset you own, no escrow
+- **Collection Drops**: ERC721 curated NFT launches with mint pages
+- **IP1155**: ERC1155 multi-edition IP tokens
+- **Proof of Participation (POP)**: soulbound on-chain credentials for events, communities, and milestones
+- **Creator Coins & Memecoins**: launch a standard ERC-20 paired with a permanently-locked Ekubo pool, or claim a coin you already launched on Starknet
+- **IP Tickets**: sell redeemable, tradeable ERC-721 tickets for events and access
+- **IP Club**: membership clubs with a transferable ERC-1155 membership card; a validity window gates membership
+- **IP Sponsorship**: sell a sponsorship license on an asset you own, settled directly between the two parties
 
 ### Coins
-Discover creator coins and memecoins (`/coins`) — live spot price read directly from each coin's Ekubo pool, non-custodial.
+Discover creator coins and memecoins (`/coins`) with a live, non-custodial spot price read directly from each coin's Ekubo pool.
 
 ### NFT Marketplace
 The high-integrity exchange for all tokenized creator assets:
@@ -36,7 +36,7 @@ The high-integrity exchange for all tokenized creator assets:
 
 ### Claims Hub (`/claim`)
 - Genesis NFT claim
-- Collection ownership claim (on-chain verified, no auth token required)
+- Collection ownership claim, verified entirely on-chain
 - Username claim (DAO-reviewed)
 - Branded creator page claim
 
@@ -71,9 +71,9 @@ The high-integrity exchange for all tokenized creator assets:
 
 ## Wallet System
 
-Seven connectors via `@starknet-react/core` — Argent (Ready), Braavos, Cartridge Controller,
-MetaMask, Keplr, Fordefi, Xverse — unified under a single hook: `useWallet()` — `{ address,
-isConnected, isConnecting, walletType, connect, disconnect, execute }`.
+Seven connectors via `@starknet-react/core` (Argent/Ready, Braavos, Cartridge Controller,
+MetaMask, Keplr, Fordefi, Xverse), unified under a single hook: `useWallet()`, returning
+`{ address, isConnected, isConnecting, walletType, connect, disconnect, execute }`.
 
 ---
 
@@ -149,7 +149,7 @@ src/
 │   └── use-drops.ts                 # Drop contract data
 ├── lib/
 │   ├── constants.ts            # Contract addresses, tokens
-│   ├── creator-utils.ts        # addressPalette() — deterministic color from address
+│   ├── creator-utils.ts        # addressPalette(): deterministic color from address
 │   ├── medialane-client.ts     # @medialane/sdk singleton
 │   └── utils.ts                # cn, ipfsToHttp, normalizeAddress, timeAgo, formatDisplayPrice
 └── abis/                       # Starknet contract ABIs
@@ -160,7 +160,7 @@ src/
 ## Key Patterns
 
 ### Backend API calls
-Empty JWT string — backend verifies on-chain ownership:
+An empty JWT string works, since the backend verifies ownership on-chain:
 ```ts
 const client = getMedialaneClient();
 await client.api.claimCollection(contract, wallet, "");
@@ -190,7 +190,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_MEDIALANE_API_URL` | Backend API base URL |
 | `NEXT_PUBLIC_MEDIALANE_API_KEY` | Backend API key |
 
-Marketplace contract addresses are sourced from `@medialane/sdk`; do not configure marketplace addresses in dapp env files.
+Marketplace contract addresses are sourced entirely from `@medialane/sdk`.
 
 ---
 
@@ -208,9 +208,9 @@ npm run lint         # ESLint
 
 ## Protocol Integrations
 
-**Mediolano Protocol** — Zero-fee IP tokenization. Provides collection registry, on-chain provenance, ERC721/ERC1155 ownership.
+**Mediolano Protocol**: zero-fee IP tokenization, providing collection registry, on-chain provenance, ERC721/ERC1155 ownership.
 
-**Medialane Protocol** — Marketplace smart contracts on SNIP-12 typed data signing:
+**Medialane Protocol**: marketplace smart contracts on SNIP-12 typed data signing:
 1. Seller signs order parameters off-chain
 2. ERC721 `approve` + `register_order` multicall submitted on-chain
 3. Buyer fulfills via signed `fulfill_order` + `approve` + execute multicall
