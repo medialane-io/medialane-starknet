@@ -1,9 +1,14 @@
 import { test, expect } from "bun:test";
 import { ipfsToHttp } from "./utils";
 
-test("ipfsToHttp routes https URLs through the image proxy", () => {
+test("ipfsToHttp routes known IPFS gateway URLs through the authenticated proxy", () => {
   const result = ipfsToHttp("https://gateway.pinata.cloud/ipfs/abc123");
-  expect(result).toBe("/api/img?url=" + encodeURIComponent("https://gateway.pinata.cloud/ipfs/abc123"));
+  expect(result).toBe("/api/ipfs/abc123");
+});
+
+test("ipfsToHttp routes unrecognized https URLs through the generic image proxy", () => {
+  const result = ipfsToHttp("https://example.com/some-image.png");
+  expect(result).toBe("/api/img?url=" + encodeURIComponent("https://example.com/some-image.png"));
 });
 
 test("ipfsToHttp passes data:image/* URIs through unchanged", () => {
