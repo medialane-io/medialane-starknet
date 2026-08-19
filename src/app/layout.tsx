@@ -93,8 +93,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
 
-        <link rel="preconnect" href="https://gateway.pinata.cloud" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://gateway.pinata.cloud" />
         {BACKEND_ORIGIN && (
           <>
             <link rel="preconnect" href={BACKEND_ORIGIN} />

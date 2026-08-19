@@ -32,10 +32,6 @@ if (!isServer && MEDIALANE_API_KEY) {
   );
 }
 
-export const PINATA_GATEWAY =
-  process.env.NEXT_PUBLIC_PINATA_GATEWAY ||
-  "https://gateway.pinata.cloud";
-
 export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://voyager.online";
 
