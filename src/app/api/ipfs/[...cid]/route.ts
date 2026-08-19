@@ -1,14 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
-const PINATA_JWT = process.env.PINATA_JWT;
-
-const GATEWAY =
-  process.env.PINATA_DEDICATED_GATEWAY ||
-  "https://gateway.pinata.cloud";
 const MAX_RESPONSE_BYTES = 25 * 1024 * 1024;
-
-const MAX_WIDTH = 2000;
 
 const checkRateLimit = createRateLimiter(60_000, 120);
 
@@ -32,26 +26,15 @@ export async function GET(
     return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
   }
 
-  const isDedicatedGateway = !!process.env.PINATA_DEDICATED_GATEWAY;
-  const width = Number.parseInt(req.nextUrl.searchParams.get("w") ?? "", 10);
-  const wantsResize = isDedicatedGateway && Number.isFinite(width) && width > 0 && width <= MAX_WIDTH;
-
-  const url = new URL(`${GATEWAY}/${wantsResize ? "files" : "ipfs"}/${cidPath}`);
-  if (wantsResize) {
-    url.searchParams.set("img-width", String(width));
-    url.searchParams.set("img-fit", "cover");
-    url.searchParams.set("img-format", "auto");
-    url.searchParams.set("img-quality", "80");
-  }
-
-  const headers: HeadersInit = {};
-  if (PINATA_JWT) {
-    headers["Authorization"] = `Bearer ${PINATA_JWT}`;
-  }
+  const url = `${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/metadata/image/${cidPath}`;
 
   let upstream: Response;
   try {
-    upstream = await fetch(url, { headers, signal: AbortSignal.timeout(18_000), next: { revalidate: 86400 } });
+    upstream = await fetch(url, {
+      headers: { "x-api-key": MEDIALANE_API_KEY },
+      signal: AbortSignal.timeout(18_000),
+      next: { revalidate: 86400 },
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch from IPFS" }, { status: 502 });
   }
