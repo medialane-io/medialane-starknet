@@ -1,8 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
+import {
+  isValidIpfsCidPath,
+  resolveSafeImageContentType,
+  MAX_IPFS_GATEWAY_RESPONSE_BYTES,
+} from "@medialane/sdk";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-
-const MAX_RESPONSE_BYTES = 25 * 1024 * 1024;
 
 const checkRateLimit = createRateLimiter(60_000, 120);
 
@@ -18,11 +21,7 @@ export async function GET(
   const { cid: segments } = await params;
   const cidPath = segments.join("/");
 
-  if (!/^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[a-z2-7]{58,})(\/[\w.\-/]*)?$/.test(cidPath)) {
-    return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
-  }
-
-  if (cidPath.split("/").includes("..")) {
+  if (!isValidIpfsCidPath(cidPath)) {
     return NextResponse.json({ error: "Invalid IPFS path" }, { status: 400 });
   }
 
@@ -45,15 +44,11 @@ export async function GET(
 
   const upstreamContentType = upstream.headers.get("content-type") ?? "";
   const upstreamContentLength = Number(upstream.headers.get("content-length") ?? 0);
-  if (upstreamContentLength > MAX_RESPONSE_BYTES) {
+  if (upstreamContentLength > MAX_IPFS_GATEWAY_RESPONSE_BYTES) {
     return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
   }
 
-  const SAFE_PREFIXES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/svg+xml",
-    "video/", "audio/", "model/", "font/", "application/json", "application/octet-stream"];
-  const safeContentType = SAFE_PREFIXES.some((p) => upstreamContentType.startsWith(p))
-    ? upstreamContentType
-    : "application/octet-stream";
+  const safeContentType = resolveSafeImageContentType(upstreamContentType);
 
   if (!upstream.body) {
     return NextResponse.json({ error: "IPFS gateway returned no body" }, { status: 502 });
@@ -65,7 +60,7 @@ export async function GET(
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > MAX_RESPONSE_BYTES) {
+    if (total > MAX_IPFS_GATEWAY_RESPONSE_BYTES) {
       await reader.cancel();
       return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
     }
