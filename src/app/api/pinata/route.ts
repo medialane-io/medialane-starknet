@@ -1,9 +1,7 @@
-
-
 import { NextRequest, NextResponse } from "next/server";
+import { buildAssetMetadata } from "@medialane/sdk";
 import { getSiwsWallet } from "@/lib/siws-server";
 import { uploadFileToBackend, uploadJsonToBackend } from "@/lib/backend-metadata";
-import { APP_URL } from "@/lib/seo";
 
 const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -14,24 +12,10 @@ const ALLOWED_IMAGE_TYPES = new Set([
 ]);
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TEMPLATE_FIELDS = 30;
-const RESERVED_TRAITS = new Set([
-  "creator",
-  "ip type",
-  "license",
-  "commercial use",
-  "derivatives",
-  "attribution",
-  "territory",
-  "ai policy",
-  "royalty",
-  "edition",
-  "standard",
-  "registration",
-]);
 
 export async function POST(req: NextRequest) {
-  const authenticatedWallet = getSiwsWallet(req.headers.get("authorization"));
-  if (!authenticatedWallet) {
+  const creator = getSiwsWallet(req.headers.get("authorization"));
+  if (!creator) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -43,8 +27,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
     }
     const description = (formData.get("description") as string | null) ?? "";
-    const externalUrl = (formData.get("external_url") as string | null) ?? APP_URL;
-    const creator = authenticatedWallet;
+
+    const rawExternalUrl = (formData.get("external_url") as string | null)?.trim() ?? "";
+    const externalUrl = rawExternalUrl || "https://medialane.io";
+    if (rawExternalUrl && !/^https?:\/\//i.test(rawExternalUrl)) {
+      return NextResponse.json(
+        { error: "external_url must be a valid http or https URL" },
+        { status: 400 }
+      );
+    }
 
     const ipType = formData.get("ipType") as string | null;
     const licenseType = formData.get("licenseType") as string | null;
@@ -58,8 +49,14 @@ export async function POST(req: NextRequest) {
 
     let imageUri: string | null = (formData.get("imageUri") as string | null) || null;
 
-    if (!imageUri) {
+    if (imageUri && !imageUri.startsWith("ipfs://")) {
+      return NextResponse.json(
+        { error: "imageUri must be an ipfs:// URI" },
+        { status: 400 }
+      );
+    }
 
+    if (!imageUri) {
       const imageFile = formData.get("file") as File | null;
       if (imageFile && imageFile.size > 0) {
         if (!ALLOWED_IMAGE_TYPES.has(imageFile.type)) {
@@ -79,60 +76,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    type Attr = { trait_type: string; value: string };
-    const attributes: Attr[] = [];
-
-    if (creator) attributes.push({ trait_type: "Creator", value: creator });
-    if (ipType) attributes.push({ trait_type: "IP Type", value: ipType });
-    if (licenseType) attributes.push({ trait_type: "License", value: licenseType });
-    if (commercialUse) attributes.push({ trait_type: "Commercial Use", value: commercialUse });
-    if (derivatives) attributes.push({ trait_type: "Derivatives", value: derivatives });
-    if (attribution) attributes.push({ trait_type: "Attribution", value: attribution });
-    if (geographicScope) attributes.push({ trait_type: "Territory", value: geographicScope });
-    if (aiPolicy) attributes.push({ trait_type: "AI Policy", value: aiPolicy });
-
-    if (rawRoyalty) {
-      const num = parseFloat(rawRoyalty.replace("%", ""));
-      if (!isNaN(num) && num > 0) {
-        attributes.push({ trait_type: "Royalty", value: `${num}%` });
-      }
+    const tmplEntries = [...formData.entries()].filter(
+      ([k]) => typeof k === "string" && k.startsWith("tmpl_")
+    );
+    if (tmplEntries.length > MAX_TEMPLATE_FIELDS) {
+      return NextResponse.json({ error: `Too many template fields (max ${MAX_TEMPLATE_FIELDS})` }, { status: 400 });
     }
+    const templateTraits = tmplEntries.map(([key, value]) => ({
+      traitType: (key as string).slice(5),
+      value: String(value),
+    }));
 
-    if (edition) attributes.push({ trait_type: "Edition", value: edition });
-
-    let templateFieldCount = 0;
-    const seenTemplateTraits = new Set<string>();
-    for (const [key, value] of formData.entries()) {
-      if (typeof key === "string" && key.startsWith("tmpl_") && value) {
-        if (templateFieldCount >= MAX_TEMPLATE_FIELDS) break;
-        const traitType = key.slice(5);
-        const cleanTraitType = traitType.trim();
-        const cleanValue = String(value).trim();
-        const traitKey = cleanTraitType.toLowerCase();
-        if (!cleanTraitType || !cleanValue || RESERVED_TRAITS.has(traitKey) || seenTemplateTraits.has(traitKey)) {
-          continue;
-        }
-        seenTemplateTraits.add(traitKey);
-        templateFieldCount += 1;
-        attributes.push({ trait_type: cleanTraitType, value: cleanValue });
-      }
-    }
-
-    if (licenseType) {
-      attributes.push({ trait_type: "Standard", value: "Berne Convention" });
-      attributes.push({
-        trait_type: "Registration",
-        value: new Date().toISOString().split("T")[0],
-      });
-    }
-
-    const metadata = {
+    const metadata = buildAssetMetadata({
       name,
       description,
-      image: imageUri,
-      external_url: externalUrl,
-      attributes,
-    };
+      externalUrl,
+      imageUri,
+      creator,
+      ipType,
+      licenseType,
+      commercialUse,
+      derivatives,
+      attribution,
+      geographicScope,
+      aiPolicy,
+      royalty: rawRoyalty,
+      edition,
+      templateTraits,
+    });
 
     const metadataUpload = await uploadJsonToBackend(metadata);
 
