@@ -3,7 +3,7 @@
 Permissionless Web3 app for programmable IP monetization on Starknet — Creator Launchpad + IP Marketplace with full wallet sovereignty.
 
 **Starknet App:** https://starknet.medialane.io  
-**Consumer App (social login):** https://medialane.io
+**Consumer App (Media Wallet, email login, sponsored transactions):** https://medialane.io
 
 ---
 
@@ -13,10 +13,10 @@ Permissionless Web3 app for programmable IP monetization on Starknet — Creator
 Deploy and manage tokenized IP assets on-chain:
 - **Collection Drops** — ERC721 curated NFT launches with mint pages
 - **IP1155** — ERC1155 multi-edition IP tokens
-- **Proof of Purchase (POP)** — on-chain purchase receipts and access passes
+- **Proof of Participation (POP)** — soulbound on-chain credentials for events, communities, and milestones
 - **Creator Coins & Memecoins** — launch a standard ERC-20 paired with a permanently-locked Ekubo pool, or claim a coin you already launched on Starknet
 - **IP Tickets** — sell redeemable, tradeable ERC-721 tickets for events and access
-- **IP Club** — membership clubs with a non-transferable, soulbound NFT membership card
+- **IP Club** — membership clubs with a transferable ERC-1155 membership card; a validity window gates membership, not minting or trading
 - **IP Sponsorship** — sell a direct-settlement sponsorship license on an asset you own, no escrow
 
 ### Coins
@@ -49,8 +49,6 @@ The high-integrity exchange for all tokenized creator assets:
 | Creator Launchpad | 1% |
 | NFT Marketplace | 1% |
 
-Gas fees are sponsored for all users via the AVNU Paymaster.
-
 ---
 
 ## Tech Stack
@@ -60,8 +58,7 @@ Gas fees are sponsored for all users via the AVNU Paymaster.
 | Framework | Next.js 15 (App Router) |
 | Blockchain | Starknet Mainnet |
 | RPC | Alchemy |
-| Wallet — Browser | Argent (Ready) / Braavos via `@starknet-react/core` |
-| Gasless Transactions | AVNU Paymaster |
+| Wallet | Argent (Ready) / Braavos / Cartridge Controller / MetaMask / Keplr / Fordefi / Xverse via `@starknet-react/core` |
 | IP Tokenization | Mediolano Protocol (zero-fee) |
 | Marketplace Protocol | Medialane Protocol (SNIP-12 signed orders) |
 | Backend API | medialane-backend via `@medialane/sdk` |
@@ -74,9 +71,9 @@ Gas fees are sponsored for all users via the AVNU Paymaster.
 
 ## Wallet System
 
-Injected browser wallets (Argent/Ready, Braavos) via `@starknet-react/core`, unified under a
-single hook: `useWallet()` — `{ address, isConnected, isConnecting, walletType, connect,
-disconnect, execute }`. Gas is sponsored via the AVNU Paymaster.
+Seven connectors via `@starknet-react/core` — Argent (Ready), Braavos, Cartridge Controller,
+MetaMask, Keplr, Fordefi, Xverse — unified under a single hook: `useWallet()` — `{ address,
+isConnected, isConnecting, walletType, connect, disconnect, execute }`.
 
 ---
 
@@ -92,7 +89,7 @@ disconnect, execute }`. Gas is sponsored via the AVNU Paymaster.
 | `/launchpad/drop/[contract]` | Drop detail + mint |
 | `/launchpad/ip1155/create` | Deploy new ERC1155 collection |
 | `/launchpad/ip1155/[contract]/mint` | ERC1155 mint page |
-| `/launchpad/pop/[contract]` | Proof of Purchase page |
+| `/launchpad/pop/[contract]` | Proof of Participation page |
 | `/launchpad/tickets` | IP Tickets browse |
 | `/launchpad/tickets/create` | Deploy a ticket collection |
 | `/launchpad/tickets/[contract]` | Ticket collection detail + mint |
@@ -143,7 +140,6 @@ src/
 │   └── ui/                     # shadcn/ui base components
 ├── hooks/
 │   ├── use-unified-wallet.ts        # Single interface across all wallet types
-│   ├── use-paymaster-transaction.ts # Core AVNU paymaster hook (executeAuto)
 │   ├── use-marketplace.ts           # SNIP-12 order creation & fulfillment
 │   ├── use-collections.ts           # Collection data
 │   ├── use-orders.ts                # Order / listing data
@@ -152,7 +148,7 @@ src/
 │   ├── use-username-claims.ts       # Username claim + resolution
 │   └── use-drops.ts                 # Drop contract data
 ├── lib/
-│   ├── constants.ts            # Contract addresses, tokens, AVNU config
+│   ├── constants.ts            # Contract addresses, tokens
 │   ├── creator-utils.ts        # addressPalette() — deterministic color from address
 │   ├── medialane-client.ts     # @medialane/sdk singleton
 │   └── utils.ts                # cn, ipfsToHttp, normalizeAddress, timeAgo, formatDisplayPrice
@@ -162,13 +158,6 @@ src/
 ---
 
 ## Key Patterns
-
-### Transactions
-Always use `executeAuto` — tries AVNU sponsored gas, falls back silently:
-```ts
-const { executeAuto } = usePaymasterTransaction();
-await executeAuto([{ contractAddress, entrypoint, calldata }]);
-```
 
 ### Backend API calls
 Empty JWT string — backend verifies on-chain ownership:
@@ -198,8 +187,6 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_COLLECTION_CONTRACT` | Optional collection registry override |
 | `NEXT_PUBLIC_EXPLORER_URL` | Block explorer base URL |
 | `NEXT_PUBLIC_GATEWAY_URL` | IPFS gateway URL |
-| `PINATA_JWT` | Pinata JWT for server-side uploads |
-| `NEXT_PUBLIC_AVNU_PAYMASTER_API_KEY` | AVNU API key for sponsored gas |
 | `NEXT_PUBLIC_MEDIALANE_API_URL` | Backend API base URL |
 | `NEXT_PUBLIC_MEDIALANE_API_KEY` | Backend API key |
 
@@ -228,8 +215,6 @@ npm run lint         # ESLint
 2. ERC721 `approve` + `register_order` multicall submitted on-chain
 3. Buyer fulfills via signed `fulfill_order` + `approve` + execute multicall
 4. Cancellations: signed off-chain → `cancel_order`
-
-**AVNU Paymaster** — All transactions attempt sponsored execution first (`executeAuto`), falling back silently if AVNU rejects. Users never need ETH/STRK.
 
 ---
 
