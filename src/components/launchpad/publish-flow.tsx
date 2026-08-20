@@ -9,7 +9,7 @@ import * as z from "zod";
 import { hash, type Call } from "starknet";
 import { normalizeAddress, getService } from "@medialane/sdk";
 import {
-  ImagePlus, Music, Video, FileText, X, Loader2, Upload,
+  ImagePlus, FileText, X, Loader2, Upload,
   Layers, ImagePlus as SingleIcon, ArrowRight, CheckCircle2, ChevronDown, Boxes, Plus, Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -45,26 +45,36 @@ import type { ApiCollection } from "@medialane/sdk";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 
-type MediaKind = "image" | "audio" | "video" | "document";
+type MediaKind = "image" | "document";
 
-function detectMediaKind(mime: string): MediaKind {
-  if (mime.startsWith("image/")) return "image";
-  if (mime.startsWith("audio/")) return "audio";
-  if (mime.startsWith("video/")) return "video";
-  return "document";
+const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"]);
+const DOCUMENT_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.oasis.opendocument.text",
+  "application/rtf",
+  "text/plain",
+  "text/markdown",
+]);
+const MEDIA_MAX_BYTES: Record<MediaKind, number> = {
+  image: 10 * 1024 * 1024,
+  document: 20 * 1024 * 1024,
+};
+
+function detectMediaKind(mime: string): MediaKind | null {
+  if (IMAGE_MIME_TYPES.has(mime)) return "image";
+  if (DOCUMENT_MIME_TYPES.has(mime)) return "document";
+  return null;
 }
 
 const IP_TYPE_BY_KIND: Record<MediaKind, IPType> = {
   image: "NFT",
-  audio: "Audio",
-  video: "Video",
   document: "Documents",
 };
 
 const MEDIA_KIND_ICON: Record<MediaKind, typeof ImagePlus> = {
   image: ImagePlus,
-  audio: Music,
-  video: Video,
   document: FileText,
 };
 
@@ -257,11 +267,17 @@ export function PublishFlow() {
   const erc1155Collections = collections.filter((c) => c.standard === "ERC1155");
 
   const handleMediaSelect = async (file: File) => {
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error("File too large", { description: "Maximum file size is 25 MB." });
+    const kind = detectMediaKind(file.type);
+    if (!kind) {
+      toast.error("Unsupported file type", {
+        description: "Publish an image (JPG, PNG, GIF, SVG, WebP) or document (PDF, DOC, DOCX, ODT, RTF, TXT, MD) for now — audio and video support is coming soon.",
+      });
       return;
     }
-    const kind = detectMediaKind(file.type);
+    if (file.size > MEDIA_MAX_BYTES[kind]) {
+      toast.error("File too large", { description: `Maximum size is ${MEDIA_MAX_BYTES[kind] / (1024 * 1024)} MB for ${kind}s.` });
+      return;
+    }
     setMediaFile(file);
     setMediaKind(kind);
     setIpType(IP_TYPE_BY_KIND[kind]);
@@ -274,7 +290,7 @@ export function PublishFlow() {
     try {
       const token = await getValidToken();
       if (!token) throw new Error("Connect your wallet first");
-      const { uri } = await uploadFileToIpfs(file, token, "document");
+      const { uri } = await uploadFileToIpfs(file, token, kind);
       setMediaUri(uri);
     } catch (err) {
       const t = uploadFailureToast(err);
@@ -552,7 +568,7 @@ export function PublishFlow() {
             <div className="space-y-1.5 px-6">
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Publish your work</h2>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                Drop a photo, song, video, or document, or click to upload — image, audio, video, or document, max 25 MB. Everything else can wait.
+                Drop a photo or document, or click to upload — JPG, PNG, GIF, SVG, WebP, or PDF/DOC/RTF/TXT. Everything else can wait.
               </p>
             </div>
             <Button
