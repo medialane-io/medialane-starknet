@@ -19,7 +19,7 @@ import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useLaunchCoin, type LaunchCoinInput } from "@/hooks/use-launch-coin";
 import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
 import { useSiwsToken } from "@/hooks/use-siws-token";
-import { suggestCoinSymbol } from "@/lib/coin-symbol";
+import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { CoinLaunchPreview, type CoinPreviewData } from "@/components/coin/coin-launch-preview";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ export default function CoinCreatePage() {
 
   const handleNameChange = (v: string) => {
     setName(v);
-    const suggested = suggestCoinSymbol(v);
+    const suggested = suggestLaunchpadSymbol(v);
     if (suggested && (!symbol || symbol === autoSymbol)) {
       setSymbol(suggested);
       setAutoSymbol(suggested);

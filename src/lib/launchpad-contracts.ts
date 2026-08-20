@@ -31,47 +31,6 @@ export const DropFactoryABI = [
   },
 ] as const;
 
-export const DropCollectionABI = [
-  {
-    type: "function",
-    name: "claim",
-    inputs: [{ name: "quantity", type: "core::integer::u256" }],
-    outputs: [],
-    state_mutability: "external",
-  },
-  {
-    type: "function",
-    name: "is_allowlist_enabled",
-    inputs: [],
-    outputs: [{ type: "core::bool" }],
-    state_mutability: "view",
-  },
-  {
-    type: "function",
-    name: "set_allowlist_enabled",
-    inputs: [{ name: "enabled", type: "core::bool" }],
-    outputs: [],
-    state_mutability: "external",
-  },
-  {
-    type: "function",
-    name: "batch_add_to_allowlist",
-    inputs: [
-      { name: "addresses_len", type: "core::integer::u32" },
-      { name: "addresses",     type: "core::array::Array::<core::starknet::contract_address::ContractAddress>" },
-    ],
-    outputs: [],
-    state_mutability: "external",
-  },
-  {
-    type: "function",
-    name: "remove_from_allowlist",
-    inputs: [{ name: "address", type: "core::starknet::contract_address::ContractAddress" }],
-    outputs: [],
-    state_mutability: "external",
-  },
-] as const;
-
 export type PopEventType =
   | "Conference"
   | "Bootcamp"
@@ -106,33 +65,6 @@ export const POPFactoryABI = [
       { name: "event_type",     type: "launchpad::pop::EventType"                     },
     ],
     outputs: [{ type: "core::starknet::contract_address::ContractAddress" }],
-    state_mutability: "external",
-  },
-] as const;
-
-export const POPCollectionABI = [
-  {
-    type: "function",
-    name: "claim",
-    inputs: [],
-    outputs: [],
-    state_mutability: "external",
-  },
-  {
-    type: "function",
-    name: "batch_add_to_allowlist",
-    inputs: [
-      { name: "addresses_len", type: "core::integer::u32" },
-      { name: "addresses",     type: "core::array::Array::<core::starknet::contract_address::ContractAddress>" },
-    ],
-    outputs: [],
-    state_mutability: "external",
-  },
-  {
-    type: "function",
-    name: "remove_from_allowlist",
-    inputs: [{ name: "address", type: "core::starknet::contract_address::ContractAddress" }],
-    outputs: [],
     state_mutability: "external",
   },
 ] as const;
