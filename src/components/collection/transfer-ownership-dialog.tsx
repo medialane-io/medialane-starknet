@@ -21,7 +21,7 @@ import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk/starknet";
 import { STARKNET_COLLECTION_721_CONTRACT } from "@/lib/constants";
 import { normalizeAddress } from "@medialane/sdk";
 import { toast } from "sonner";
-import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-dialog-primitives";
+import { MarketplaceSuccessState } from "@medialane/ui";
 import { EXPLORER_URL } from "@/lib/constants";
 
 interface TransferOwnershipDialogProps {

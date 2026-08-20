@@ -21,7 +21,7 @@ import {
   DurationPicker,
   MarketplaceSuccessState,
   MarketplaceProcessingState,
-} from "@/components/marketplace/marketplace-dialog-primitives";
+} from "@medialane/ui";
 
 const schema = z.object({
   price: z.string().min(1, "Price required").refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, "Must be positive"),

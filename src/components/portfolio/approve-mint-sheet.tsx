@@ -22,7 +22,7 @@ import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";
 import type { Call } from "starknet";
 import { INDEXER_REVALIDATION_DELAY_MS, EXPLORER_URL } from "@/lib/constants";
-import { MarketplaceSuccessState } from "@/components/marketplace/marketplace-dialog-primitives";
+import { MarketplaceSuccessState } from "@medialane/ui";
 import { fireConfetti } from "@/lib/confetti";
 import { assetHref } from "@/lib/routes";
 

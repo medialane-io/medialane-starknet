@@ -8,7 +8,7 @@ import { AlertCircle, ArrowRightLeft, Loader2 } from "lucide-react";
 import {
   MarketplaceProcessingState,
   MarketplaceSuccessState,
-} from "@/components/marketplace/marketplace-dialog-primitives";
+} from "@medialane/ui";
 import {
   Dialog,
   DialogContent,

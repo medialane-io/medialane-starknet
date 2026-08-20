@@ -12,7 +12,7 @@ import { ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
 import {
   MarketplaceProcessingState,
   MarketplaceTxLink,
-} from "@/components/marketplace/marketplace-dialog-primitives";
+} from "@medialane/ui";
 import { EXPLORER_URL } from "@/lib/constants";
 import type { ApiOrder } from "@medialane/sdk";
 
