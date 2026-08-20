@@ -15,7 +15,7 @@
     "@avnu/avnu-sdk": "4.2.0",
     "@cartridge/connector": "^0.13.16",
     "@hookform/resolvers": "^3",
-    "@medialane/sdk": "0.85.11",
+    "@medialane/sdk": "0.85.12",
     "@medialane/ui": "0.126.8",
     "@radix-ui/react-dialog": "^1.1.15",
     "@starknet-react/chains": "^5.0.3",
