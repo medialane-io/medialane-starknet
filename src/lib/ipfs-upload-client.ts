@@ -10,7 +10,7 @@ export interface UploadedIpfsFile {
 export async function uploadFileToIpfs(
   file: File,
   siwsToken: string,
-  kind: "image" | "document" = "image",
+  kind: "image" | "document" | "media" = "image",
 ): Promise<UploadedIpfsFile> {
   const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(siwsToken, {
     method: "POST",
