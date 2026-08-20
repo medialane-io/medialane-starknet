@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { assetHref, collectionHref } from "@/lib/routes";
@@ -68,6 +68,19 @@ export function AssetPageStandard() {
   } = useAssetMarketState(token, listings, walletAddress);
 
   const isERC1155 = (token?.standard ?? collection?.standard) === "ERC1155";
+
+  const autoActionRef = useRef(false);
+  useEffect(() => {
+    if (autoActionRef.current || isLoading || !token || !isOwner) return;
+    const action = new URLSearchParams(window.location.search).get("action");
+    if (action === "list") {
+      dialogs.setListOpen(true);
+      autoActionRef.current = true;
+    } else if (action === "transfer") {
+      dialogs.setTransferOpen(true);
+      autoActionRef.current = true;
+    }
+  }, [isLoading, token, isOwner, dialogs]);
 
   const lastSale = (history as ApiActivity[])
     .filter((h) => h.type === "sale" && h.price?.formatted)

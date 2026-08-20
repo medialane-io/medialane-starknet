@@ -10,8 +10,8 @@ import { hash, type Call } from "starknet";
 import { normalizeAddress, getService } from "@medialane/sdk";
 import {
   ImagePlus, Music, Video, FileText, Loader2, Upload,
-  Layers, ImagePlus as SingleIcon, ArrowRight, CheckCircle2, ChevronDown, Boxes, Plus, Check,
-  ShieldCheck,
+  Layers, ImagePlus as SingleIcon, CheckCircle2, ChevronDown, Boxes, Plus, Check,
+  ShieldCheck, Tag, ArrowRightLeft, GitBranch, Eye,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +46,26 @@ import { toast } from "sonner";
 import type { ApiCollection } from "@medialane/sdk";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
+const IP_MINTED_SELECTOR = hash.getSelectorFromName("IPMinted");
+
+async function readMintedTokenId(txHash: string, contractAddress: string): Promise<string | null> {
+  let receipt: any = null;
+  for (let attempt = 0; attempt < 3 && !receipt; attempt++) {
+    try {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+      receipt = await starknetProvider.getTransactionReceipt(txHash);
+    } catch { /* retry */ }
+  }
+  const events = receipt?.events ?? [];
+  const mintEvent = events.find((e: any) =>
+    e.from_address && BigInt(e.from_address) === BigInt(contractAddress) &&
+    e.keys?.[0] && BigInt(e.keys[0]) === BigInt(IP_MINTED_SELECTOR)
+  );
+  if (!mintEvent?.keys?.[1]) return null;
+  const low = BigInt(mintEvent.keys[1] ?? 0);
+  const high = BigInt(mintEvent.keys[2] ?? 0);
+  return (low + (high << 128n)).toString();
+}
 
 type MediaKind = "image" | "audio" | "video" | "document";
 
@@ -243,7 +263,7 @@ export function PublishFlow() {
 
   const [mintStatus, setMintStatus] = useState<"idle" | "working" | "success" | "error">("idle");
   const [mintErrorMsg, setMintErrorMsg] = useState<string | null>(null);
-  const [mintedHref, setMintedHref] = useState<string | null>(null);
+  const [mintedAsset, setMintedAsset] = useState<{ contract: string; tokenId: string } | null>(null);
 
   useEffect(() => () => {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -400,6 +420,7 @@ export function PublishFlow() {
 
       if (assetType === "single") {
         let collectionId = existingCollectionId;
+        let contractAddress = erc721Collections.find((c) => c.collectionId === existingCollectionId)?.contractAddress ?? null;
 
         if (collectionMode === "new") {
           const intentRes = await client.api.createCollectionIntent({
@@ -414,6 +435,7 @@ export function PublishFlow() {
           const found = await pollForNewCollection(newCollectionName, newCollectionSymbol);
           if (!found) throw new Error("Collection created, but it's still indexing — try minting again in a moment from My Collections.");
           collectionId = found.collectionId!;
+          contractAddress = found.contractAddress ?? null;
         }
 
         const intentRes = await client.api.createMintIntent({
@@ -428,7 +450,10 @@ export function PublishFlow() {
         const result = await execute(intentData.calls as Call[]);
         if (!result) throw new Error("Mint transaction reverted on chain");
 
-        setMintedHref("/portfolio");
+        if (contractAddress) {
+          const tokenId = await readMintedTokenId(result, contractAddress);
+          if (tokenId) setMintedAsset({ contract: contractAddress, tokenId });
+        }
       } else {
         let collectionContract = existingCollectionContract;
 
@@ -471,7 +496,8 @@ export function PublishFlow() {
         const result = await execute(intentRes.data.calls as Call[]);
         if (!result) throw new Error("Mint transaction reverted on chain");
 
-        setMintedHref(`/launchpad/nfteditions/${collectionContract}/mint`);
+        const tokenId = await readMintedTokenId(result, collectionContract);
+        if (tokenId) setMintedAsset({ contract: collectionContract, tokenId });
       }
 
       setMintStatus("success");
@@ -486,7 +512,7 @@ export function PublishFlow() {
   const resetAll = () => {
     setMintStatus("idle");
     setMintErrorMsg(null);
-    setMintedHref(null);
+    setMintedAsset(null);
     form.reset();
     clearMedia();
     setFeaturePreview(null);
@@ -503,34 +529,77 @@ export function PublishFlow() {
     templateFieldsRef.current = [];
   };
 
+  const KindIcon = MEDIA_KIND_ICON[mediaKind];
+  const selectedExistingCollection = assetType === "single"
+    ? erc721Collections.find((c) => c.collectionId === existingCollectionId)
+    : erc1155Collections.find((c) => c.contractAddress === existingCollectionContract);
+  const collectionLabel = mediaUri
+    ? (collectionMode === "new"
+      ? (newCollectionName || "New collection")
+      : (selectedExistingCollection?.name || "IP Asset"))
+    : undefined;
+
   if (mintStatus === "success") {
     return (
-      <section className="rounded-3xl bg-brand-blue/5 p-6 sm:p-10 text-center space-y-5">
-        <div className="flex justify-center">
-          <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center">
-            <CheckCircle2 className="h-8 w-8 text-green-500" />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <h2 className="text-2xl font-bold">Published</h2>
-          <p className="text-sm text-muted-foreground">Your work is live onchain. It'll appear in your portfolio shortly.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button variant="outline" onClick={resetAll}>Publish another</Button>
-          {mintedHref && (
-            <Button asChild className="bg-brand-blue hover:brightness-110">
-              <Link href={mintedHref}>View <ArrowRight className="h-3.5 w-3.5 ml-1.5" /></Link>
+      <section className="rounded-2xl border border-border p-6 sm:p-8">
+        <div className="grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-6 items-start">
+          <MedialaneCollectionCard
+            image={mediaKind === "image" ? mediaPreview : featurePreview}
+            name={name}
+            collection={collectionLabel}
+          />
+          <div className="space-y-5">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-green-500">
+                <CheckCircle2 className="h-5 w-5" />
+                <p className="text-sm font-semibold">Published — live onchain</p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {mintedAsset ? "Ready to share, sell, or remix." : "It'll appear in your portfolio shortly."}
+              </p>
+            </div>
+
+            {mintedAsset && (
+              <div className="grid grid-cols-2 gap-2.5">
+                <Link
+                  href={`/asset/STARKNET/${mintedAsset.contract}/${mintedAsset.tokenId}`}
+                  className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-muted/40 transition-colors"
+                >
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  View asset
+                </Link>
+                <Link
+                  href={`/asset/STARKNET/${mintedAsset.contract}/${mintedAsset.tokenId}?action=list`}
+                  className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-muted/40 transition-colors"
+                >
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  List on marketplace
+                </Link>
+                <Link
+                  href={`/asset/STARKNET/${mintedAsset.contract}/${mintedAsset.tokenId}?action=transfer`}
+                  className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-muted/40 transition-colors"
+                >
+                  <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                  Transfer
+                </Link>
+                <Link
+                  href={`/create/remix/${mintedAsset.contract}/${mintedAsset.tokenId}`}
+                  className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-muted/40 transition-colors"
+                >
+                  <GitBranch className="h-4 w-4 text-muted-foreground" />
+                  Create a remix
+                </Link>
+              </div>
+            )}
+
+            <Button variant="outline" onClick={resetAll} className="w-full sm:w-auto">
+              Publish another
             </Button>
-          )}
+          </div>
         </div>
       </section>
     );
   }
-
-  const KindIcon = MEDIA_KIND_ICON[mediaKind];
-  const collectionLabel = mediaUri
-    ? (collectionMode === "new" ? (newCollectionName || "New collection") : "IP Asset")
-    : undefined;
 
   if (!mediaFile) {
     return (
