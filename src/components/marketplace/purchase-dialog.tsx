@@ -26,7 +26,7 @@ import { CurrencyIcon } from "@/components/shared/currency-icon";
 import {
   MarketplaceErrorState,
   MarketplaceTxLink,
-} from "@/components/marketplace/marketplace-dialog-primitives";
+} from "@medialane/ui";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { useTokenBalance } from "@/hooks/use-token-balance";

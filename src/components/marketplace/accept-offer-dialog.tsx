@@ -16,7 +16,7 @@ import {
   MarketplaceErrorState,
   MarketplaceProcessingState,
   MarketplaceSuccessState,
-} from "@/components/marketplace/marketplace-dialog-primitives";
+} from "@medialane/ui";
 import type { ApiOrder } from "@medialane/sdk";
 
 interface AcceptOfferDialogProps {

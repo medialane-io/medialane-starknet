@@ -27,7 +27,7 @@ import {
   MarketplaceSuccessState,
   MarketplaceProcessingState,
   MarketplaceDialogHero,
-} from "@/components/marketplace/marketplace-dialog-primitives";
+} from "@medialane/ui";
 
 const CURRENCIES = getListableTokens().map((t) => t.symbol);
 
