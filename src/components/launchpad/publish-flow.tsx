@@ -33,7 +33,6 @@ import { rewardToast } from "@/lib/reward-toast";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { starknetProvider } from "@/lib/starknet";
 import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { cn, ipfsToHttp } from "@/lib/utils";
@@ -64,7 +63,8 @@ const DOCUMENT_SIGNED_URL_MIME_TYPES = new Set([
   "text/plain",
   "text/markdown",
 ]);
-const MEDIA_MAX_BYTES = 10 * 1024 * 1024;
+const MEDIA_MAX_BYTES = 100 * 1024 * 1024;
+const DOCUMENT_MAX_BYTES = 20 * 1024 * 1024;
 
 function detectMediaKind(mime: string): MediaKind | null {
   if (mime.startsWith("image/")) return MEDIA_ROUTE_MIME_TYPES.has(mime) ? "image" : null;
@@ -285,7 +285,7 @@ export function PublishFlow() {
       return;
     }
     const viaMediaRoute = MEDIA_ROUTE_MIME_TYPES.has(file.type);
-    const maxBytes = viaMediaRoute ? MEDIA_MAX_BYTES : 20 * 1024 * 1024;
+    const maxBytes = viaMediaRoute ? MEDIA_MAX_BYTES : DOCUMENT_MAX_BYTES;
     if (file.size > maxBytes) {
       toast.error("File too large", { description: `Maximum size is ${maxBytes / (1024 * 1024)} MB.` });
       return;
@@ -302,17 +302,8 @@ export function PublishFlow() {
     try {
       const token = await getValidToken();
       if (!token) throw new Error("Connect your wallet first");
-      if (viaMediaRoute) {
-        const fd = new FormData();
-        fd.append("file", file, file.name);
-        const res = await fetch("/api/pinata/media", withSiwsAuth(token, { method: "POST", body: fd }));
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.mediaUri) throw new Error(data.error ?? "Upload failed");
-        setMediaUri(data.mediaUri);
-      } else {
-        const { uri } = await uploadFileToIpfs(file, token, "document");
-        setMediaUri(uri);
-      }
+      const { uri } = await uploadFileToIpfs(file, token, viaMediaRoute ? "media" : "document");
+      setMediaUri(uri);
     } catch (err) {
       const t = uploadFailureToast(err);
       toast.error(t.title, { description: t.description });
@@ -560,7 +551,7 @@ export function PublishFlow() {
           <div className="space-y-1.5 px-6">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Publish your work</h2>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Drop a photo or document, or click to upload — JPG, PNG, GIF, SVG, WebP, or PDF/DOC/RTF/TXT. Everything else can wait.
+              Drop a photo, song, video, or document, or click to upload — images, audio, video, and PDFs up to 100 MB; other documents up to 20 MB. Everything else can wait.
             </p>
           </div>
           <Button
