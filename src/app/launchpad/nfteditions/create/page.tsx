@@ -38,6 +38,7 @@ import { hash, type Call } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
@@ -70,6 +71,7 @@ export default function CreateNFTEditionsCollectionPage() {
   const [collectionError, setCollectionError] = useState<string | null>(null);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
   const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
+  const [autoSymbol, setAutoSymbol] = useState("");
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -86,12 +88,24 @@ export default function CreateNFTEditionsCollectionPage() {
     resolver: zodResolver(schema),
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
+  const collectionName = form.watch("name");
 
   useEffect(() => {
     if (walletAddress && !form.getValues("external_link")) {
       form.setValue("external_link", `https://medialane.io/account/${walletAddress}`);
     }
   }, [walletAddress, form]);
+
+  useEffect(() => {
+    const suggestedSymbol = suggestLaunchpadSymbol(collectionName);
+    if (!suggestedSymbol) return;
+
+    const currentSymbol = form.getValues("symbol");
+    if (!currentSymbol || currentSymbol === autoSymbol) {
+      form.setValue("symbol", suggestedSymbol);
+      setAutoSymbol(suggestedSymbol);
+    }
+  }, [autoSymbol, collectionName, form]);
 
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
@@ -147,6 +161,7 @@ export default function CreateNFTEditionsCollectionPage() {
     setCollectionError(null);
     setDeployedAddress(null);
     setDialogTxStatus("idle");
+    setAutoSymbol("");
     form.reset();
     clearImage();
   };

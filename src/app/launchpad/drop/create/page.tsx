@@ -21,6 +21,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
+import { getDefaultDropSchedule, suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { makeUploadDocument } from "@/lib/upload-document";
 import { buildDropSet } from "@/lib/drop-build-set";
 import { parseAddresses, batchAllowlistCalldata } from "../drop-allowlist";
@@ -30,17 +31,6 @@ import type { DraftItem } from "../drop-item-list";
 import type { MetadataField } from "@/components/create/ip-type-fields";
 
 const PAYMENT_TOKENS = getListableTokens().map((t) => ({ symbol: t.symbol, address: t.address }));
-
-function defaultSchedule() {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const now = new Date();
-  const end = new Date(now.getTime() + 7 * 86400_000);
-  return { startDate: fmt(now), startTime: "00:00", endDate: fmt(end), endTime: "23:59" };
-}
-function suggestSymbol(name: string): string {
-  return name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase();
-}
 
 export default function CreateDropPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
@@ -86,13 +76,13 @@ export default function CreateDropPage() {
   const collectionName = form.watch("name");
 
   useEffect(() => {
-    const d = defaultSchedule();
+    const d = getDefaultDropSchedule();
     if (!form.getValues("startDate")) { form.setValue("startDate", d.startDate); form.setValue("startTime", d.startTime); }
     if (!form.getValues("endDate")) { form.setValue("endDate", d.endDate); form.setValue("endTime", d.endTime); }
   }, [form]);
 
   useEffect(() => {
-    const s = suggestSymbol(collectionName);
+    const s = suggestLaunchpadSymbol(collectionName);
     if (!s) return;
     const current = form.getValues("symbol");
     if (!current || current === autoSymbol) { form.setValue("symbol", s); setAutoSymbol(s); }
@@ -114,7 +104,7 @@ export default function CreateDropPage() {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
 
   const resetAll = () => {
-    const d = defaultSchedule();
+    const d = getDefaultDropSchedule();
     setDone(false);
     setItems((prev) => { prev.forEach((it) => URL.revokeObjectURL(it.previewUrl)); return []; });
     form.reset({

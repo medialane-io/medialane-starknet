@@ -29,6 +29,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { type PopEventType } from "@/lib/launchpad-contracts";
+import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,7 @@ export default function CreatePOPPage() {
   const [eventType, setEventType] = useState<PopEventType>("Conference");
   const [isPublic, setIsPublic] = useState(false);
   const [done, setDone] = useState(false);
+  const [autoSymbol, setAutoSymbol] = useState("");
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -78,6 +80,26 @@ export default function CreatePOPPage() {
     resolver: zodResolver(schema),
     defaultValues: { name: "", symbol: "", claimEndDate: "", claimEndTime: "23:59" },
   });
+  const eventName = form.watch("name");
+
+  useEffect(() => {
+    const defaults = getDefaultClaimWindow();
+    if (!form.getValues("claimEndDate")) {
+      form.setValue("claimEndDate", defaults.claimEndDate);
+      form.setValue("claimEndTime", defaults.claimEndTime);
+    }
+  }, [form]);
+
+  useEffect(() => {
+    const suggestedSymbol = suggestLaunchpadSymbol(eventName);
+    if (!suggestedSymbol) return;
+
+    const currentSymbol = form.getValues("symbol");
+    if (!currentSymbol || currentSymbol === autoSymbol) {
+      form.setValue("symbol", suggestedSymbol);
+      setAutoSymbol(suggestedSymbol);
+    }
+  }, [autoSymbol, eventName, form]);
 
   const handleImageSelect = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
@@ -186,6 +208,7 @@ export default function CreatePOPPage() {
               setImagePreview(null);
               setImageUri(null);
               setEventType("Conference");
+              setAutoSymbol("");
             }}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
