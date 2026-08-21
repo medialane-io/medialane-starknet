@@ -1,36 +1,19 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
-import { Button } from "@/components/ui/button";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { getService } from "@medialane/sdk";
 import {
   LaunchpadGroupedSections,
   LaunchpadFilterBar,
+  LaunchpadCtaBanner,
+  LAUNCHPAD_ROUTE_OVERRIDES,
   useLaunchpadFilter,
   type ServiceOverrides,
 } from "@medialane/ui";
 import { PublishFlow } from "@/components/launchpad/publish-flow";
-import { ArrowRight, ExternalLink } from "lucide-react";
-
-const DAPP_OVERRIDES: ServiceOverrides = {
-  "nfts": { href: "/launchpad/single-editions" },
-  "limited-editions": { href: "/launchpad/nfteditions" },
-  "remix-asset": { href: "/launchpad/remix" },
-  "pop-protocol": { href: "/launchpad/pop" },
-  "collection-drop": { href: "/launchpad/drop" },
-  "ip-tickets": { href: "/launchpad/tickets" },
-  "ip-club": { href: "/launchpad/club" },
-  "ip-sponsorship": { href: "/launchpad/sponsorship" },
-  "creator-coins": { href: "/launchpad/coin/create" },
-  "claim-memecoin": { href: "/launchpad/memecoin" },
-  "claim-username": { href: "/claim/username" },
-  "claim-collection": { href: "/claim/collection" },
-  "claim-collection-name": { href: "/claim/collection-name" },
-};
 
 export function LaunchpadContent() {
   const { isConnected, address: walletAddress } = useWallet();
@@ -41,8 +24,8 @@ export function LaunchpadContent() {
     const nftCount = collections.filter((c) => getService(c.service)?.id === "mip-erc721").length;
     const editionsCount = collections.filter((c) => c.standard === "ERC1155").length;
     const withMeta = (key: string, count: number): ServiceOverrides =>
-      count > 0 ? { [key]: { ...DAPP_OVERRIDES[key], meta: `${count} collection${count === 1 ? "" : "s"}` } } : {};
-    return { ...DAPP_OVERRIDES, ...withMeta("nfts", nftCount), ...withMeta("limited-editions", editionsCount) };
+      count > 0 ? { [key]: { ...LAUNCHPAD_ROUTE_OVERRIDES[key], meta: `${count} collection${count === 1 ? "" : "s"}` } } : {};
+    return { ...LAUNCHPAD_ROUTE_OVERRIDES, ...withMeta("nfts", nftCount), ...withMeta("limited-editions", editionsCount) };
   }, [collections]);
 
   return (
@@ -80,38 +63,28 @@ export function LaunchpadContent() {
 
       <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <div className="rounded-2xl border border-border/40 p-5 bg-gradient-to-r from-brand-blue/10 to-brand-purple/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="section-label">Media wallet version</p>
-              <p className="font-bold text-base mt-0.5">Prefer the simple experience?</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Every launchpad service is also available on Medialane io, with self-custody sign-in and gas-sponsored transactions.
-              </p>
-            </div>
-            <Button variant="outline" asChild className="shrink-0">
-              <a href="https://medialane.io/launchpad" target="_blank" rel="noopener noreferrer">
-                Sign in with email <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-              </a>
-            </Button>
-          </div>
+          <LaunchpadCtaBanner
+            eyebrow="Media wallet version"
+            title="Prefer the simple experience?"
+            description="Every launchpad service is also available on Medialane io, with self-custody sign-in and gas-sponsored transactions."
+            href="https://medialane.io/launchpad"
+            ctaLabel="Sign in with email"
+            external
+          />
         </FadeIn>
       </section>
 
       {isConnected ? (
         <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
-            <div className="rounded-2xl border border-border/40 p-5 bg-gradient-to-r from-brand-navy/10 to-brand-purple/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="section-label">Manage</p>
-                <p className="font-bold text-base mt-0.5">Your portfolio</p>
-                <p className="text-sm text-muted-foreground mt-1">Assets, listings, offers, and activity.</p>
-              </div>
-              <Button variant="outline" asChild className="shrink-0">
-                <Link href="/portfolio">
-                  View portfolio <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                </Link>
-              </Button>
-            </div>
+            <LaunchpadCtaBanner
+              eyebrow="Manage"
+              title="Your portfolio"
+              description="Assets, listings, offers, and activity."
+              href="/portfolio"
+              ctaLabel="View portfolio"
+              tone="manage"
+            />
           </FadeIn>
         </section>
       ) : null}
