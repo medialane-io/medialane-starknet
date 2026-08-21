@@ -623,28 +623,27 @@ export function PublishFlow() {
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); mediaInputRef.current?.click(); } }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleMediaSelect(f); }}
-        className="relative flex flex-col items-center justify-center gap-3 cursor-pointer overflow-hidden transition-colors text-center rounded-3xl bg-brand-blue/5 min-h-[22rem] sm:min-h-[28rem] p-2 sm:p-3"
+        className="relative flex flex-col items-center justify-center gap-4 cursor-pointer transition-colors text-center rounded-3xl border-[3px] border-dashed border-brand-blue/40 hover:border-brand-blue/70 hover:bg-brand-blue/[0.04] min-h-[20rem] sm:min-h-[24rem] p-6"
       >
-        <div className="flex flex-col items-center justify-center gap-3 flex-1 w-full m-2 sm:m-3 rounded-[1.65rem] border-2 border-dashed border-border/60 hover:border-brand-blue/40 hover:bg-brand-blue/[0.06] transition-colors">
-          <div className="h-14 w-14 rounded-2xl bg-card flex items-center justify-center">
-            <ImagePlus className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div className="space-y-1.5 px-6">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Publish your work</h2>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Drop a photo, song, video, or document, or click to upload — images, audio, video, and PDFs up to 100 MB; other documents up to 20 MB. Everything else can wait.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-full mt-1 bg-card"
-            onClick={(e) => { e.stopPropagation(); mediaInputRef.current?.click(); }}
-          >
-            <Upload className="h-3.5 w-3.5 mr-1.5" />
-            Browse files
-          </Button>
+        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
+          <ImagePlus className="h-6 w-6 text-muted-foreground" />
         </div>
+        <div className="space-y-1.5 px-6">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Drop or upload your media</h2>
+          <p className="text-base text-muted-foreground max-w-sm mx-auto">
+            Protect your creation and start earning from it worldwide.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-full mt-1 bg-card"
+          onClick={(e) => { e.stopPropagation(); mediaInputRef.current?.click(); }}
+        >
+          <Upload className="h-3.5 w-3.5 mr-1.5" />
+          Browse files
+        </Button>
+        <p className="text-2xs text-muted-foreground/70">Images, audio, video, and PDFs up to 100 MB; other documents up to 20 MB</p>
         <input ref={mediaInputRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMediaSelect(f); }} />
       </section>
     );

@@ -48,23 +48,10 @@ export function LaunchpadContent() {
   return (
     <div className="relative pb-20 space-y-16 sm:space-y-24">
 
-      <a
-        href="https://medialane.io/launchpad"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute top-3 right-4 sm:right-6 lg:right-8 z-20 flex items-center gap-2 h-11 px-4 rounded-full bg-background/10 backdrop-blur-xl text-sm font-semibold hover:bg-background/20 active:scale-[0.98] transition-all"
-      >
-        Sign in with email
-        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-      </a>
-
-      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-5">
+      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 space-y-6">
         <FadeIn>
           <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">Creator Launchpad</h1>
         </FadeIn>
-      </section>
-
-      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn delay={0.06}>
           <PublishFlow />
         </FadeIn>
@@ -89,6 +76,25 @@ export function LaunchpadContent() {
           activeGroups={filter.activeGroups}
           onClearFilters={filter.clear}
         />
+      </section>
+
+      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn>
+          <div className="rounded-2xl border border-border/40 p-5 bg-gradient-to-r from-brand-blue/10 to-brand-purple/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="section-label">Media wallet version</p>
+              <p className="font-bold text-base mt-0.5">Prefer the simple experience?</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Every launchpad service is also available on Medialane io, with self-custody sign-in and gas-sponsored transactions.
+              </p>
+            </div>
+            <Button variant="outline" asChild className="shrink-0">
+              <a href="https://medialane.io/launchpad" target="_blank" rel="noopener noreferrer">
+                Sign in with email <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+              </a>
+            </Button>
+          </div>
+        </FadeIn>
       </section>
 
       {isConnected ? (
