@@ -60,7 +60,7 @@ export function LaunchpadContent() {
 
       <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-5">
         <FadeIn>
-          <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">Launchpad</h1>
+          <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">Creator Launchpad</h1>
         </FadeIn>
       </section>
 
@@ -72,7 +72,7 @@ export function LaunchpadContent() {
 
       <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <FadeIn>
-          <h2 className="text-3xl sm:text-4xl font-semibold leading-tight">Creator Launchpad Services</h2>
+          <h2 className="text-3xl sm:text-4xl font-semibold leading-tight">Launchpad Services</h2>
         </FadeIn>
         <FadeIn delay={0.06}>
           <LaunchpadFilterBar
