@@ -7,7 +7,7 @@ import { useUserOrders } from "@/hooks/use-orders";
 import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCard, CollectionCardSkeleton, CollectionHeroBanner } from "@medialane/ui";
+import { CollectionCard, CollectionCardSkeleton, CollectionHeroBanner, TabEmptyState } from "@medialane/ui";
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,20 +29,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
-
-function EmptyState({ icon: Icon, heading, body }: { icon: React.ElementType; heading: string; body: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-      <div className="h-14 w-14 rounded-2xl border border-border/60 bg-muted/40 flex items-center justify-center">
-        <Icon className="h-6 w-6 text-muted-foreground/60" />
-      </div>
-      <div className="space-y-1.5">
-        <p className="text-sm font-semibold">{heading}</p>
-        <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">{body}</p>
-      </div>
-    </div>
-  );
-}
 
 interface Props { username: string }
 
@@ -179,7 +165,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
                 {Array.from({ length: 3 }).map((_, i) => <CollectionCardSkeleton key={i} />)}
               </div>
             ) : collections.length === 0 ? (
-              <EmptyState icon={LayoutList} heading="No collections yet" body="This creator hasn't deployed any collections on Medialane yet." />
+              <TabEmptyState icon={LayoutList} heading="No collections yet" body="This creator hasn't deployed any collections on Medialane yet." />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {collections.map((c) => <CollectionCard key={c.contractAddress} collection={c} />)}
@@ -193,7 +179,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
                 {Array.from({ length: 4 }).map((_, i) => <ListingCardSkeleton key={i} />)}
               </div>
             ) : activeListings.length === 0 ? (
-              <EmptyState icon={ShoppingBag} heading="No active listings" body="This creator has no IP assets listed for sale right now." />
+              <TabEmptyState icon={ShoppingBag} heading="No active listings" body="This creator has no IP assets listed for sale right now." />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {activeListings.map((o) => <ListingCard key={o.orderHash} order={o} />)}
@@ -222,7 +208,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
                   ))}
                 </div>
               ) : activities.length === 0 ? (
-                <EmptyState icon={Activity} heading="No activity yet" body="On-chain events for this creator will appear here as they happen." />
+                <TabEmptyState icon={Activity} heading="No activity yet" body="On-chain events for this creator will appear here as they happen." />
               ) : (
                 <div>
                   {activities.map((a, i) => (
