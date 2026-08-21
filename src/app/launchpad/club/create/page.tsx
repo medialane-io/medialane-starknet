@@ -246,6 +246,7 @@ export default function CreateClubPage() {
             name={form.watch("name")}
             collection={form.watch("symbol") || "Club"}
             creator={address ? `${address.slice(0, 6)}…${address.slice(-4)}` : undefined}
+            creatorHref={address ? `/account/${address}` : undefined}
           />
           <ClaimRail
             included={[

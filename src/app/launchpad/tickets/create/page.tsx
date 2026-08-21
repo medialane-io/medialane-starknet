@@ -249,6 +249,7 @@ export default function CreateTicketCollectionPage() {
             name={form.watch("name")}
             collection={form.watch("symbol") || "Tickets"}
             creator={address ? `${address.slice(0, 6)}…${address.slice(-4)}` : undefined}
+            creatorHref={address ? `/account/${address}` : undefined}
           />
           <ClaimRail
             included={[
