@@ -2,25 +2,23 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import NextImage from "next/image";
-import { toast } from "sonner";
 import { useCreatorByUsername } from "@/hooks/use-username-claims";
 import { useUserOrders } from "@/hooks/use-orders";
 import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
+import { CollectionCard, CollectionCardSkeleton, CollectionHeroBanner } from "@medialane/ui";
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ShareButton } from "@/components/shared/share-button";
 import { ipfsToHttp } from "@/lib/utils";
 import { normalizeAddress } from "@medialane/sdk";
 import {
   Activity, LayoutList, ShoppingBag, BarChart2,
-  Globe, Twitter, ExternalLink, Share2,
+  Globe, Twitter, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { addressPalette } from "@/lib/creator-utils";
 import { ActivityRow } from "@/components/creator/activity-row";
 
 const TABS = [
@@ -54,29 +52,18 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   const walletAddress = creator?.walletAddress ? normalizeAddress("STARKNET", creator.walletAddress) : null;
 
   const { orders,      isLoading: ordersLoading      } = useUserOrders(activeTab === "listings"    ? walletAddress : null);
-  const { collections, isLoading: collectionsLoading } = useCollectionsByOwner(activeTab === "collections" ? walletAddress : null);
+  const { collections, isLoading: collectionsLoading } = useCollectionsByOwner(walletAddress);
   const { activities,  isLoading: activitiesLoading  } = useActivitiesByAddress(walletAddress);
 
   const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721");
 
-  const { h1, h2, h3 } = addressPalette(walletAddress ?? "0x0");
   const avatarUrl = creator?.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
 
   if (isLoading) {
     return (
       <div className="pb-20 min-h-screen">
-        <Skeleton className="w-full h-56 sm:h-80 rounded-none" />
-        <div className="px-6">
-          <div className="-mt-16 sm:-mt-20 relative z-10 pb-6 space-y-4">
-            <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
-              <Skeleton className="h-[112px] w-[112px] rounded-full shrink-0" />
-              <div className="flex-1 min-w-0 pb-1 space-y-2">
-                <Skeleton className="h-3.5 w-20" />
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-3 w-64" />
-              </div>
-            </div>
-          </div>
+        <CollectionHeroBanner bannerUrl={null} loading name="" stats={[]} />
+        <div className="px-6 pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => <CollectionCardSkeleton key={i} />)}
           </div>
@@ -101,81 +88,38 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   }
 
   const displayName = creator.displayName || `@${creator.username}`;
+  const showSocials = Boolean(creator.websiteUrl || creator.twitterUrl);
 
   return (
     <div className="pb-20 min-h-screen">
 
-      <div className="relative h-56 sm:h-80 overflow-hidden">
-        {avatarUrl && (
-          <div className="absolute inset-0">
-            <NextImage
-              src={avatarUrl} alt="" fill
-              className="object-cover scale-150"
-              style={{ opacity: 0.6, filter: "blur(48px) saturate(1.8) brightness(0.55)" }}
-              unoptimized aria-hidden
-            />
-            <div className="absolute inset-0 bg-background/25" />
-          </div>
-        )}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 90% 90% at 15% 60%, hsl(${h1}, 68%, 42% / ${avatarUrl ? 0.28 : 0.52}) 0%, transparent 65%),
-              radial-gradient(ellipse 65% 65% at 85% 25%, hsl(${h2}, 68%, 38% / ${avatarUrl ? 0.18 : 0.42}) 0%, transparent 60%),
-              radial-gradient(ellipse 45% 45% at 55% 85%, hsl(${h3}, 68%, 38% / ${avatarUrl ? 0.12 : 0.30}) 0%, transparent 55%)
-            `,
-          }}
-        />
-        <div className="absolute inset-x-0 bottom-0 h-32" style={{ background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%)` }} />
-        <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-background/15 to-transparent" />
-
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            variant="outline" size="sm"
-            className="bg-background/60 backdrop-blur-sm border-white/20 text-white hover:bg-background/80 hover:text-white"
-            onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}
-          >
-            <Share2 className="h-3.5 w-3.5 mr-1.5" />
-            Share
-          </Button>
-        </div>
-      </div>
+      <CollectionHeroBanner
+        bannerUrl={avatarUrl}
+        name={displayName}
+        eyebrowSlot={
+          <span className="text-[11px] font-semibold text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
+            Creator
+          </span>
+        }
+        stats={[
+          { label: "Collections", display: !collectionsLoading ? String(collections.length) : "—" },
+          { label: "Listed", display: !ordersLoading ? String(activeListings.length) : "—" },
+          { label: "Events", display: !activitiesLoading ? String(activities.length) : "—" },
+        ]}
+      />
 
       <div className="px-6">
 
-        <div className="-mt-16 sm:-mt-20 relative z-10 space-y-4 pb-6">
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
-
-            <div
-              className="rounded-full shrink-0 ring-[3px] ring-background overflow-hidden flex items-center justify-center text-white font-bold"
-              style={{
-                width: 112, height: 112,
-                background: avatarUrl
-                  ? "transparent"
-                  : `linear-gradient(145deg, hsl(${h1}, 72%, 60%), hsl(${h2}, 72%, 50%))`,
-                fontSize: 37,
-              }}
-            >
-              {avatarUrl ? (
-                <NextImage src={avatarUrl} alt={displayName} width={112} height={112} className="w-full h-full object-cover" unoptimized />
-              ) : (
-                (walletAddress ?? "0x").slice(2, 4).toUpperCase()
-              )}
-            </div>
-
-            <div className="flex-1 min-w-0 pb-1 space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="pill-badge">Creator</span>
-                <span className="text-xs tabular-nums text-muted-foreground">@{creator.username}</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold leading-tight truncate">{displayName}</h1>
-              {creator.bio && (
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-xl line-clamp-2">{creator.bio}</p>
-              )}
-            </div>
-
-            <div className="pb-1">
+        <div className="pt-5 pb-1 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground tabular-nums">@{creator.username}</p>
+            <div className="flex items-center gap-2">
+              <ShareButton
+                title={displayName}
+                variant="ghost"
+                size="icon"
+                className="min-h-0 min-w-0 h-auto w-auto p-0 hover:bg-transparent text-muted-foreground/40 hover:text-muted-foreground"
+              />
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/account/${creator.walletAddress}`}>
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
@@ -185,46 +129,27 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {activities.length > 0 && (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm">
-                <span className="font-bold tabular-nums">{activities.length}</span>
-                <span className="text-muted-foreground">Events</span>
-              </div>
-            )}
-            {activeListings.length > 0 && (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm">
-                <span className="font-bold tabular-nums">{activeListings.length}</span>
-                <span className="text-muted-foreground">Listed</span>
-              </div>
-            )}
-            {collections.length > 0 && (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm">
-                <span className="font-bold tabular-nums">{collections.length}</span>
-                <span className="text-muted-foreground">Collections</span>
-              </div>
-            )}
-          </div>
+          {creator.bio && (
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xl line-clamp-2">{creator.bio}</p>
+          )}
 
-          {(creator.websiteUrl || creator.twitterUrl) && (
-            <div className="flex items-center gap-2">
+          {showSocials && (
+            <div className="flex items-center gap-3 pt-1">
               {creator.websiteUrl && (
-                <a href={creator.websiteUrl} target="_blank" rel="noopener noreferrer"
-                  className="h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors" title="Website">
-                  <Globe className="h-3.5 w-3.5" />
+                <a href={creator.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Globe className="h-4 w-4" />
                 </a>
               )}
               {creator.twitterUrl && (
-                <a href={creator.twitterUrl} target="_blank" rel="noopener noreferrer"
-                  className="h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors" title="Twitter / X">
-                  <Twitter className="h-3.5 w-3.5" />
+                <a href={creator.twitterUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Twitter className="h-4 w-4" />
                 </a>
               )}
             </div>
           )}
         </div>
 
-        <div className="sticky top-0 z-10 -mx-6 px-6 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="sticky top-0 z-10 -mx-6 px-6 bg-background/95 backdrop-blur-sm border-b border-border mt-4">
           <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none -mb-px">
             {TABS.map(({ id, label, Icon }) => {
               const isActive = activeTab === id;
@@ -239,14 +164,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {label}
-                  {isActive && (
-                    <span
-                      className="absolute bottom-0 inset-x-0 h-0.5 rounded-full"
-                      style={{
-                        background: `linear-gradient(90deg, hsl(${h1}, 68%, 62%), hsl(${h2}, 68%, 58%))`,
-                      }}
-                    />
-                  )}
+                  {isActive && <span className="absolute bottom-0 inset-x-0 h-0.5 rounded-full bg-primary" />}
                 </button>
               );
             })}
