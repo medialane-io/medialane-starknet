@@ -419,8 +419,9 @@ export default function MintNFTEditionsPage() {
               image={imagePreview}
               name={form.watch("name")}
               collection="Edition"
-              serial={Number(form.watch("value")) > 1 ? `× ${form.watch("value")}` : undefined}
+              serial={Number(form.watch("value")) > 1 ? `${form.watch("value")} editions` : undefined}
               creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
+              creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
             />
             <MintEditionAside />
           </>
