@@ -12,15 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ShareButton } from "@/components/shared/share-button";
 import { CreatorChip } from "@/components/shared/creator-chip";
+import { formatCoinPrice, CoinGuarantees } from "@medialane/ui";
+import { MAX_TEAM_ALLOCATION_PERCENT } from "@medialane/sdk/starknet";
+import { useCoinGuarantees } from "@/hooks/use-coin-guarantees";
 import { ipfsToHttp, cn } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
-
-function formatPrice(n: number): string {
-  if (n === 0) return "0";
-  if (n < 0.000001) return n.toExponential(2);
-  if (n < 1) return n.toPrecision(3);
-  return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
-}
 
 function formatCompact(n: number): string {
   return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(n);
@@ -28,12 +24,16 @@ function formatCompact(n: number): string {
 
 export function CoinPageClient({ coin }: { coin: ApiCoin }) {
   const contract = coin.contractAddress;
-  const { price, isLoading: priceLoading } = useCoinPrice(contract);
+  const { price, status, isLoading: priceLoading } = useCoinPrice(contract);
 
   const bannerSource = coin.image;
   const bannerUrl = bannerSource ? ipfsToHttp(bannerSource) : null;
 
-  const serviceLabel = getService(coin.service)?.displayName ?? "Creator Coin";
+  const service = getService(coin.service);
+  const serviceLabel = service?.displayName ?? "Creator Coin";
+
+  const isCreatorCoin = service?.provenance === "MEDIALANE";
+  const { guarantees, isLoading: guaranteesLoading } = useCoinGuarantees(contract, isCreatorCoin);
 
   const { supply } = useCoinSupply(contract, coin.decimals ?? 18);
   const marketCap = price && supply != null && supply > 0 ? price.quotePerCoin * supply : null;
@@ -104,26 +104,44 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
               ) : price ? (
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold tabular-nums text-brand-orange">
-                    {formatPrice(price.quotePerCoin)}
+                    {formatCoinPrice(price.quotePerCoin)}
                   </span>
                   <span className="text-sm text-muted-foreground">
                     {price.quoteSymbol ?? "quote"} / {coin.symbol ?? "coin"}
                   </span>
                 </div>
-              ) : (
+              ) : status === "pre-launch" ? (
                 <p className="text-sm text-muted-foreground">
-                  Not trading yet — no market price available.
+                  Not trading yet. Liquidity has not been launched for this coin.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Price unavailable right now.</p>
+              )}
+              {price && (
+                <p className="mt-2 text-[11px] text-muted-foreground/70">
+                  Live market price · updates every 30s
                 </p>
               )}
-              <p className="mt-2 text-[11px] text-muted-foreground/70">
-                Live market price · updates every 30s
-              </p>
             </Panel>
 
             {stats.length > 0 && (
               <div className={cn("grid gap-3", stats.length === 1 ? "grid-cols-1" : stats.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
                 {stats.map((s) => <StatCell key={s.label} label={s.label} value={s.value} />)}
               </div>
+            )}
+
+            {isCreatorCoin && (
+              <Panel className="p-5">
+                <CoinGuarantees
+                  data={guarantees}
+                  isLoading={guaranteesLoading}
+                  decimals={coin.decimals ?? 18}
+                  maxTeamAllocationPercent={MAX_TEAM_ALLOCATION_PERCENT}
+                  contractUrl={`${EXPLORER_URL}/contract/${contract}`}
+                  liquidityUrl={`${EXPLORER_URL}/contract/${contract}`}
+                  blockUrl={guarantees?.launchedAtBlock != null ? `${EXPLORER_URL}/block/${guarantees.launchedAtBlock}` : undefined}
+                />
+              </Panel>
             )}
 
             {coin.description && (
