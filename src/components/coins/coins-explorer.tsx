@@ -1,17 +1,9 @@
 "use client";
 
-import { CoinsExplorer as UICoinsExplorer, type CoinFilter, type CoinSort, type CoinCollectionLike } from "@medialane/ui";
+import { CoinsExplorer as UICoinsExplorer, type CoinFilter, type CoinSort } from "@medialane/ui";
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
-import { useCoinPrice } from "@/hooks/use-coin-price";
-import { useUsdPrices, usdPriceFor } from "@/hooks/use-usd-prices";
+import { useCoinPriceAdapter } from "./use-coin-price-adapter";
 import { coinHref as buildCoinHref } from "@/lib/routes";
-
-function usePrice(coin: CoinCollectionLike) {
-  const { price, isLoading } = useCoinPrice(coin.contractAddress);
-  const usdPrices = useUsdPrices();
-  const quoteUsdRate = price?.quoteSymbol ? usdPriceFor(usdPrices, price.quoteSymbol) : undefined;
-  return { price: price ? { ...price, quoteUsdRate } : price, isLoading };
-}
 
 function useCoins({ filter }: { filter: CoinFilter; sort: CoinSort }) {
 
@@ -29,7 +21,7 @@ export function CoinsExplorer({ heading = true }: { heading?: boolean }) {
   return (
     <UICoinsExplorer
       useCoins={useCoins}
-      usePrice={usePrice}
+      usePrice={useCoinPriceAdapter}
       coinHref={(c) => buildCoinHref("STARKNET", c.contractAddress)}
       heading={heading}
     />

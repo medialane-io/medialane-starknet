@@ -2,7 +2,9 @@
 
 import { useWallet } from "@/hooks/use-wallet";
 import { useCoinsByCreator } from "@/hooks/use-coins";
-import { CoinCard, CoinCardSkeleton } from "@/components/shared/coin-card";
+import { CoinRow, CoinRowSkeleton } from "@/components/shared/coin-row";
+import { COIN_GRID } from "@medialane/ui";
+import { cn } from "@/lib/utils";
 import { EmptyOrError } from "@/components/ui/empty-or-error";
 import { Coins } from "lucide-react";
 import type { CoinCollectionLike } from "@medialane/ui";
@@ -43,11 +45,15 @@ export default function PortfolioCoinsPage() {
         emptyCta={{ label: "Launch a coin", href: "/launchpad" }}
         emptyIcon={<Coins className="h-7 w-7 text-muted-foreground" />}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div>
+          <div className={cn(COIN_GRID, "border-b border-border px-2 pb-2 text-2xs font-medium uppercase tracking-wide text-muted-foreground")}>
+            <span>Token</span>
+            <span className="text-right">Price</span>
+          </div>
           {isLoading
-            ? Array.from({ length: 4 }).map((_, i) => <CoinCardSkeleton key={i} />)
+            ? Array.from({ length: 4 }).map((_, i) => <CoinRowSkeleton key={i} />)
             : coins.map((coin) => (
-                <CoinCard
+                <CoinRow
                   key={coin.contractAddress}
                   collection={toCoinLike(coin)}
                   href={`/portfolio/coins/${coin.contractAddress}/settings`}
