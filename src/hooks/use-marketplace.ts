@@ -230,7 +230,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         return withProcessing("checkoutCart", async () => {
             const checkoutRes = await client.api.createCheckoutIntent({
                 fulfiller: signer.address,
-                orderHashes: items.map((i) => i.orderHash),
+                items: items.map((i) => ({ orderHash: i.orderHash, quantity: i.quantity })),
             });
             const failed = checkoutRes.data.filter((r) => r.error);
             if (failed.length > 0) {
