@@ -12,15 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ShareButton } from "@/components/shared/share-button";
 import { CreatorChip } from "@/components/shared/creator-chip";
+import { formatCoinPrice } from "@medialane/ui";
 import { ipfsToHttp, cn } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
-
-function formatPrice(n: number): string {
-  if (n === 0) return "0";
-  if (n < 0.000001) return n.toExponential(2);
-  if (n < 1) return n.toPrecision(3);
-  return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
-}
 
 function formatCompact(n: number): string {
   return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(n);
@@ -28,7 +22,7 @@ function formatCompact(n: number): string {
 
 export function CoinPageClient({ coin }: { coin: ApiCoin }) {
   const contract = coin.contractAddress;
-  const { price, isLoading: priceLoading } = useCoinPrice(contract);
+  const { price, status, isLoading: priceLoading } = useCoinPrice(contract);
 
   const bannerSource = coin.image;
   const bannerUrl = bannerSource ? ipfsToHttp(bannerSource) : null;
@@ -104,20 +98,24 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
               ) : price ? (
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold tabular-nums text-brand-orange">
-                    {formatPrice(price.quotePerCoin)}
+                    {formatCoinPrice(price.quotePerCoin)}
                   </span>
                   <span className="text-sm text-muted-foreground">
                     {price.quoteSymbol ?? "quote"} / {coin.symbol ?? "coin"}
                   </span>
                 </div>
-              ) : (
+              ) : status === "pre-launch" ? (
                 <p className="text-sm text-muted-foreground">
-                  Not trading yet — no market price available.
+                  Not trading yet. Liquidity has not been launched for this coin.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Price unavailable right now.</p>
+              )}
+              {price && (
+                <p className="mt-2 text-[11px] text-muted-foreground/70">
+                  Live market price · updates every 30s
                 </p>
               )}
-              <p className="mt-2 text-[11px] text-muted-foreground/70">
-                Live market price · updates every 30s
-              </p>
             </Panel>
 
             {stats.length > 0 && (

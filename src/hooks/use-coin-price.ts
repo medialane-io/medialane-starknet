@@ -1,20 +1,22 @@
 "use client";
 
 import useSWR from "swr";
-import { getCreatorCoinPrice, type CreatorCoinPrice } from "@medialane/sdk/starknet";
+import { getCreatorCoinMarket, type CreatorCoinMarket, type CreatorCoinPrice } from "@medialane/sdk/starknet";
+import type { CoinMarketStatus } from "@medialane/ui";
 import { starknetProvider } from "@/lib/starknet";
 
 export interface UseCoinPriceReturn {
   price: CreatorCoinPrice | null;
+  status: CoinMarketStatus;
   isLoading: boolean;
   error: unknown;
   mutate: () => void;
 }
 
 export function useCoinPrice(coinAddress?: string | null): UseCoinPriceReturn {
-  const { data, error, isLoading, mutate } = useSWR<CreatorCoinPrice | null>(
-    coinAddress ? `coin-price-${coinAddress}` : null,
-    () => getCreatorCoinPrice(coinAddress as string, starknetProvider),
+  const { data, error, isLoading, mutate } = useSWR<CreatorCoinMarket>(
+    coinAddress ? `coin-market-${coinAddress}` : null,
+    () => getCreatorCoinMarket(coinAddress as string, starknetProvider),
     {
       revalidateOnFocus: false,
       refreshInterval: 30_000,
@@ -22,5 +24,17 @@ export function useCoinPrice(coinAddress?: string | null): UseCoinPriceReturn {
     }
   );
 
-  return { price: data ?? null, isLoading, error, mutate };
+  const status: CoinMarketStatus = data?.status === "live"
+    ? "live"
+    : data?.status === "pre-launch"
+      ? "pre-launch"
+      : "unavailable";
+
+  return {
+    price: data?.status === "live" ? data.price : null,
+    status,
+    isLoading,
+    error,
+    mutate,
+  };
 }

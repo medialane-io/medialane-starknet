@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CoinRow, CoinRowSkeleton, COIN_GRID, coinKind, type CoinCollectionLike } from "@medialane/ui";
+import { CoinRow, CoinRowSkeleton, COIN_GRID, coinKind, coinServiceIds, type CoinCollectionLike } from "@medialane/ui";
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
 import { useCoinPriceAdapter } from "./use-coin-price-adapter";
 import { cn } from "@/lib/utils";
@@ -18,26 +18,20 @@ const FILTERS: [CoinFilter, string][] = [
 export function CoinsScanList({ query }: { query: string }) {
   const [filter, setFilter] = useState<CoinFilter>("all");
 
-  const service =
-    filter === "creator" ? "creator-coin" :
-    filter === "memecoin" ? "external-erc20" : undefined;
+  const service = filter === "all" ? undefined : coinServiceIds(filter)[0];
 
   const { coins, isLoading } = useCoinsData({ service });
 
-  const normalized: CoinCollectionLike[] = useMemo(
-    () => coins.map((c) => ({ ...c, totalSupply: c.totalSupply != null ? Number(c.totalSupply) : null })),
-    [coins]
-  );
-
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const normalized: CoinCollectionLike[] = coins;
     if (!q) return normalized;
     return normalized.filter(
       (c) =>
         (c.name ?? "").toLowerCase().includes(q) ||
         (c.symbol ?? "").toLowerCase().includes(q)
     );
-  }, [normalized, query]);
+  }, [coins, query]);
 
   const showKind = useMemo(() => new Set(items.map((c) => coinKind(c.service))).size > 1, [items]);
 

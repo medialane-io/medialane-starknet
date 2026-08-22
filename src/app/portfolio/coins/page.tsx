@@ -18,7 +18,8 @@ function toCoinLike(coin: ApiCoin): CoinCollectionLike {
     symbol: coin.symbol,
     image: coin.image,
     service: coin.service,
-    totalSupply: coin.totalSupply != null ? Number(coin.totalSupply) : null,
+    totalSupply: coin.totalSupply,
+    decimals: coin.decimals,
   };
 }
 
