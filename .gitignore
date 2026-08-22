@@ -42,3 +42,6 @@ next-env.d.ts
 /*_class.json
 /payload*.json
 package-lock.json
+
+# Internal planning/spec documents must never be committed to a public repo.
+docs/
