@@ -14,7 +14,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { executePrebuiltIntent } from "@/lib/intent-tx";
-import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
+import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
@@ -53,7 +53,7 @@ function PendingProposalsPanel({
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
 
       const feeCall = decision === "accept"
-        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig)
+        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, feeConfig)
         : null;
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
       await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });

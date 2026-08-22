@@ -13,7 +13,7 @@ import { ipfsToHttp } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder, Chain } from "@medialane/sdk";
 import { getService } from "@medialane/sdk";
-import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
+import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import { useComments } from "@/hooks/use-comments";
 import { EXPLORER_URL } from "@/lib/constants";
 import { useWallet } from "@/hooks/use-wallet";

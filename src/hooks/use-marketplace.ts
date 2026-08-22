@@ -5,7 +5,7 @@ import { getTokenBySymbol } from "@medialane/sdk";
 import { toast } from "sonner";
 import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
-import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
+import { feeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { signAndExecuteIntent, executePrebuiltIntent } from "@/lib/intent-tx";
@@ -244,7 +244,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 tokenTotals.set(item.considerationToken, (tokenTotals.get(item.considerationToken) || 0n) + amt);
             });
             const feeCalls = Array.from(tokenTotals.entries())
-                .map(([token, grossAmount]) => buildFeeCall({ surface: "marketplace", token, grossAmount }, dappFeeConfig))
+                .map(([token, grossAmount]) => buildFeeCall({ surface: "marketplace", token, grossAmount }, feeConfig))
                 .filter((c): c is NonNullable<typeof c> => c !== null);
 
             toast.info("Executing Purchase", { description: "Approve the final transaction to sweep the cart." });

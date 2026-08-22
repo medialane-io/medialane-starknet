@@ -11,7 +11,7 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import { submitRemixOffer } from "@/hooks/use-remix-offers";
 import { getListableTokens, getTokenBySymbol, getService, normalizeAddress } from "@medialane/sdk";
 import { LICENSE_TYPES } from "@/types/ip";
-import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
+import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import { assetHref } from "@/lib/routes";
 import { ipfsToHttp } from "@/lib/utils";
 import { ToggleGroup, Section } from "@/components/create/create-form-primitives";

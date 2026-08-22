@@ -38,7 +38,7 @@ import {
   Shield, Percent, Boxes, Plus, Info, Loader2,
 } from "lucide-react";
 import { ToggleGroup, Section } from "@/components/create/create-form-primitives";
-import { resolveRemixPolicy, getDerivativesTerm } from "@/lib/remix-policy";
+import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import { toast } from "sonner";
 import type { Call } from "starknet";
 

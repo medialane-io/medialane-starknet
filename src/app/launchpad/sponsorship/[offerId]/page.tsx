@@ -14,7 +14,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { executePrebuiltIntent } from "@/lib/intent-tx";
-import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
+import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { useToken } from "@/hooks/use-tokens";
 import { rewardToast } from "@/lib/reward-toast";
@@ -82,7 +82,7 @@ export default function SponsorshipOfferPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
 
-      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig);
+      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, feeConfig);
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
       await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
       toast.success("Bid accepted — license minted to the sponsor");

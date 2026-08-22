@@ -11,7 +11,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { executePrebuiltIntent } from "@/lib/intent-tx";
-import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
+import { feeConfig, buildFeeCall } from "@/lib/fee";
 import {
   useSponsorshipProposals, useSponsorshipOffers, useSponsorshipBids, useSponsorshipLicenses,
   type SponsorshipOffer,
@@ -32,7 +32,7 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
     try {
       const intentRes = await client.api.acceptSponsorshipBidIntent({ author: walletAddress, offerId: offer.offerId, sponsor });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig);
+      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, feeConfig);
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
       await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
       await mutate();
@@ -77,7 +77,7 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
         : await client.api.rejectSponsorshipProposalIntent({ owner: walletAddress, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
       const feeCall = decision === "accept"
-        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, dappFeeConfig)
+        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, feeConfig)
         : null;
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
       await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
 import { orderTotal, type CheckoutItem } from "@/lib/checkout";
-import { dappFeeConfig } from "@/lib/fee";
+import { feeConfig } from "@/lib/fee";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,8 +94,8 @@ function PriceBreakdown({ order, quantity }: { order: ApiOrder; quantity: number
   if (!order.price?.formatted) return null;
   const unitPrice = parseFloat(order.price.formatted);
   const totalPrice = unitPrice * quantity;
-  const bps = dappFeeConfig.marketplaceBps;
-  if (!dappFeeConfig.enabled || !dappFeeConfig.fundAddress || bps <= 0) return null;
+  const bps = feeConfig.marketplaceBps;
+  if (!feeConfig.enabled || !feeConfig.fundAddress || bps <= 0) return null;
   const feeAmount = (totalPrice * bps) / 10000;
   const grandTotal = totalPrice + feeAmount;
   const decimals = order.price.decimals <= 6 ? 2 : 4;

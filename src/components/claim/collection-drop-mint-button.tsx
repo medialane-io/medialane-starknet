@@ -9,7 +9,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
 import { getListableTokens, normalizeAddress } from "@medialane/sdk";
-import { dappFeeConfig, buildFeeCall } from "@/lib/fee";
+import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
 
@@ -86,7 +86,7 @@ export function CollectionDropMintButton({
       if (isPaid && conditions && conditions.paymentToken !== "0x0") {
         const feeCall = buildFeeCall(
           { surface: "launchpad", token: conditions.paymentToken, grossAmount: price },
-          dappFeeConfig
+          feeConfig
         );
         if (feeCall) {
           calls.push({
