@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createRpcProxyHandler } from "@medialane/sdk";
 import { RPC_MAIN_URL, RPC_FALLBACK_URL, MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-import { createRateLimiter } from "@/lib/rate-limit";
+import { createRateLimiter } from "@/lib/api-route-guard";
 
 const RPC_URLS = Array.from(new Set(
   [RPC_MAIN_URL, RPC_FALLBACK_URL].filter((url): url is string => Boolean(url)),

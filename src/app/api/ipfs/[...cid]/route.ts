@@ -4,7 +4,7 @@ import {
   resolveSafeImageContentType,
   MAX_IPFS_GATEWAY_RESPONSE_BYTES,
 } from "@medialane/sdk";
-import { createRateLimiter } from "@/lib/rate-limit";
+import { createRateLimiter } from "@/lib/api-route-guard";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
 const checkRateLimit = createRateLimiter(60_000, 120);
