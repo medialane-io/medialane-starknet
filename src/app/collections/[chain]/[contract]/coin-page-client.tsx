@@ -12,7 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { ShareButton } from "@/components/shared/share-button";
 import { CreatorChip } from "@/components/shared/creator-chip";
-import { formatCoinPrice } from "@medialane/ui";
+import { formatCoinPrice, CoinGuarantees } from "@medialane/ui";
+import { MAX_TEAM_ALLOCATION_PERCENT } from "@medialane/sdk/starknet";
+import { useCoinGuarantees } from "@/hooks/use-coin-guarantees";
 import { ipfsToHttp, cn } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
 
@@ -27,7 +29,11 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
   const bannerSource = coin.image;
   const bannerUrl = bannerSource ? ipfsToHttp(bannerSource) : null;
 
-  const serviceLabel = getService(coin.service)?.displayName ?? "Creator Coin";
+  const service = getService(coin.service);
+  const serviceLabel = service?.displayName ?? "Creator Coin";
+
+  const isCreatorCoin = service?.provenance === "MEDIALANE";
+  const { guarantees, isLoading: guaranteesLoading } = useCoinGuarantees(contract, isCreatorCoin);
 
   const { supply } = useCoinSupply(contract, coin.decimals ?? 18);
   const marketCap = price && supply != null && supply > 0 ? price.quotePerCoin * supply : null;
@@ -122,6 +128,20 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
               <div className={cn("grid gap-3", stats.length === 1 ? "grid-cols-1" : stats.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
                 {stats.map((s) => <StatCell key={s.label} label={s.label} value={s.value} />)}
               </div>
+            )}
+
+            {isCreatorCoin && (
+              <Panel className="p-5">
+                <CoinGuarantees
+                  data={guarantees}
+                  isLoading={guaranteesLoading}
+                  decimals={coin.decimals ?? 18}
+                  maxTeamAllocationPercent={MAX_TEAM_ALLOCATION_PERCENT}
+                  contractUrl={`${EXPLORER_URL}/contract/${contract}`}
+                  liquidityUrl={`${EXPLORER_URL}/contract/${contract}`}
+                  blockUrl={guarantees?.launchedAtBlock != null ? `${EXPLORER_URL}/block/${guarantees.launchedAtBlock}` : undefined}
+                />
+              </Panel>
             )}
 
             {coin.description && (
