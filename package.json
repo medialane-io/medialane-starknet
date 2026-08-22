@@ -12,10 +12,9 @@
     "audit:dead-code": "npx knip"
   },
   "dependencies": {
-    "@avnu/avnu-sdk": "4.2.0",
     "@cartridge/connector": "^0.13.16",
     "@hookform/resolvers": "^3",
-    "@medialane/sdk": "0.86.0",
+    "@medialane/sdk": "0.87.0",
     "@medialane/ui": "0.128.7",
     "@radix-ui/react-dialog": "^1.1.15",
     "@starknet-react/chains": "^5.0.3",
