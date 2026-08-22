@@ -1,10 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  isValidIpfsCidPath,
-  resolveSafeImageContentType,
-  MAX_IPFS_GATEWAY_RESPONSE_BYTES,
-} from "@medialane/sdk";
-import { createRateLimiter } from "@/lib/api-route-guard";
+import { isValidIpfsCidPath, resolveSafeImageContentType, MAX_IPFS_GATEWAY_RESPONSE_BYTES, createRateLimiter } from "@medialane/sdk";
 import { readBodyWithCap } from "@/lib/proxy-body";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 

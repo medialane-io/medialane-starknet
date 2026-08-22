@@ -1,21 +1,14 @@
 import { RpcProvider } from "starknet";
-import { createFailoverFetch } from "@medialane/sdk";
-import { RPC_MAIN_URL, RPC_FALLBACK_URL, RPC_PROXY_PATH } from "./constants";
-
-const RPC_PRIMARY = typeof window === "undefined"
-  ? (RPC_MAIN_URL || RPC_FALLBACK_URL)
-  : RPC_PROXY_PATH;
-
-const RPC_URLS = Array.from(new Set([RPC_PRIMARY, RPC_FALLBACK_URL].filter(Boolean)));
-
-export const RPC_PRIMARY_URL = RPC_URLS[0];
-
-export const failoverFetch = createFailoverFetch(RPC_URLS);
+import { RPC_PROXY_PATH, MEDIALANE_BACKEND_URL } from "./constants";
 
 export const RPC_BLOCK_IDENTIFIER = "latest" as const;
 
+export const RPC_PRIMARY_URL =
+  typeof window === "undefined"
+    ? `${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/rpc`
+    : RPC_PROXY_PATH;
+
 export const starknetProvider = new RpcProvider({
   nodeUrl: RPC_PRIMARY_URL,
-  baseFetch: failoverFetch,
   blockIdentifier: RPC_BLOCK_IDENTIFIER,
 });

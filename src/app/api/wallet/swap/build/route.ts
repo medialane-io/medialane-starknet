@@ -1,9 +1,8 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { getQuotes, quoteToCalls } from "@avnu/avnu-sdk";
-import { getTokenBySymbol, stringifyBigInts } from "@medialane/sdk";
+import { getTokenBySymbol, stringifyBigInts, createRateLimiter, isSameOrigin, requestIp } from "@medialane/sdk";
 import { billSwapCall } from "@/lib/swap-billing";
-import { createRateLimiter, isSameOrigin, requestIp } from "@/lib/api-route-guard";
 
 export const runtime = "nodejs";
 

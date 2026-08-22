@@ -4,7 +4,7 @@ import { mainnet } from "@starknet-react/chains";
 import { ConnectorNotConnectedError, StarknetConfig, voyager } from "@starknet-react/core";
 import { walletConnectors } from "@/lib/wallet-connectors";
 import { RpcProvider } from "starknet";
-import { failoverFetch, RPC_PRIMARY_URL, RPC_BLOCK_IDENTIFIER } from "@/lib/starknet";
+import { RPC_PRIMARY_URL, RPC_BLOCK_IDENTIFIER } from "@/lib/starknet";
 import { QueryClient } from "@tanstack/react-query";
 
 function useSuppressStaleAutoConnectRejection(): void {
@@ -73,7 +73,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
 
   const providerFactory = useCallback(
     (_chain: unknown) =>
-      new RpcProvider({ nodeUrl: RPC_PRIMARY_URL, baseFetch: failoverFetch, blockIdentifier: RPC_BLOCK_IDENTIFIER }),
+      new RpcProvider({ nodeUrl: RPC_PRIMARY_URL, blockIdentifier: RPC_BLOCK_IDENTIFIER }),
     [],
   );
   return (

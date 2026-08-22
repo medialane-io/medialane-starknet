@@ -6,18 +6,13 @@ import {
   STARKNET_MARKETPLACE_721_CONTRACT,
   MEDIALANE_API_KEY,
   MEDIALANE_BACKEND_URL,
-  RPC_MAIN_URL,
-  RPC_FALLBACK_URL,
-  RPC_PROXY_PATH,
 } from "./constants";
+import { RPC_PRIMARY_URL } from "./starknet";
 
 let _client: MedialaneClient | null = null;
 
 export function medialaneConfig() {
-  const rpcUrl =
-    typeof window === "undefined"
-      ? RPC_MAIN_URL || RPC_FALLBACK_URL
-      : `${window.location.origin}${RPC_PROXY_PATH}`;
+  const rpcUrl = RPC_PRIMARY_URL;
   return {
     backendUrl: MEDIALANE_BACKEND_URL,
     apiKey: MEDIALANE_API_KEY || undefined,

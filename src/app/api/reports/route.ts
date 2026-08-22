@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRateLimiter } from "@/lib/api-route-guard";
+import { createRateLimiter } from "@medialane/sdk";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL!;
 const API_KEY = process.env.MEDIALANE_API_KEY!;

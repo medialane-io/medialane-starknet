@@ -1,4 +1,4 @@
-import { readOptionalAddressEnv, readUrlEnv } from "./env";
+import { readOptionalAddressEnv } from "./env";
 
 export {
   SUPPORTED_TOKENS,
@@ -9,12 +9,6 @@ export {
   STARKNET_NFTCOMMENTS_CONTRACT,
 } from "@medialane/sdk";
 
-export const RPC_MAIN_URL = readUrlEnv(
-  process.env.ALCHEMY_RPC_URL,
-  process.env.STARKNET_RPC_URL,
-);
-export const RPC_FALLBACK_URL =
-  process.env.STARKNET_RPC_FALLBACK_URL || "https://rpc.starknet.lava.build";
 export const RPC_PROXY_PATH = "/api/rpc";
 
 const isServer = typeof window === "undefined";

@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { createRateLimiter } from "@/lib/api-route-guard";
+import { createRateLimiter } from "@medialane/sdk";
 
 test("allows up to the configured max requests per IP within the window", () => {
   const check = createRateLimiter(60_000, 5);

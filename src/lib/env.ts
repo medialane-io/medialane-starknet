@@ -12,19 +12,4 @@ export function readOptionalAddressEnv(value: string | undefined, name: string):
   return value;
 }
 
-export function isHttpUrl(value: string | undefined): value is string {
-  if (!value) return false;
-  try {
-    const { protocol } = new URL(value);
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
-export function readUrlEnv(...candidates: (string | undefined)[]): string {
-  for (const candidate of candidates) {
-    if (isHttpUrl(candidate)) return candidate;
-  }
-  return "";
-}
