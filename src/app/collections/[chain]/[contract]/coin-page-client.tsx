@@ -24,7 +24,7 @@ function formatCompact(n: number): string {
 
 export function CoinPageClient({ coin }: { coin: ApiCoin }) {
   const contract = coin.contractAddress;
-  const { price, status, isLoading: priceLoading } = useCoinPrice(contract);
+  const { price, status, isLoading: priceLoading } = useCoinPrice(coin);
 
   const bannerSource = coin.image;
   const bannerUrl = bannerSource ? ipfsToHttp(bannerSource) : null;
