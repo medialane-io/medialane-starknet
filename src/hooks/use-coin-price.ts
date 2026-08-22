@@ -1,40 +1,57 @@
 "use client";
 
 import useSWR from "swr";
-import { getCreatorCoinMarket, type CreatorCoinMarket, type CreatorCoinPrice } from "@medialane/sdk/starknet";
-import type { CoinMarketStatus } from "@medialane/ui";
-import { starknetProvider } from "@/lib/starknet";
+import { getTokenBySymbol, type ApiCoinPrices } from "@medialane/sdk";
+import type { CoinMarketStatus, CoinCollectionLike, CoinPriceLike } from "@medialane/ui";
+import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { normalizeAddress } from "@medialane/sdk";
 
-export interface UseCoinPriceReturn {
-  price: CreatorCoinPrice | null;
-  status: CoinMarketStatus;
-  isLoading: boolean;
-  error: unknown;
-  mutate: () => void;
+const REFRESH_MS = 60_000;
+
+function useAllCoinPrices() {
+  const { data, isLoading } = useSWR<ApiCoinPrices>(
+    "coin-prices",
+    async () => {
+      const headers: Record<string, string> = {};
+      if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
+      const res = await fetch(`${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/coins/prices`, { headers });
+      if (!res.ok) throw new Error(`Coin prices failed: ${res.status}`);
+      return ((await res.json()) as { data: ApiCoinPrices }).data;
+    },
+    { revalidateOnFocus: false, refreshInterval: REFRESH_MS, shouldRetryOnError: false }
+  );
+  return { prices: data ?? null, isLoading };
 }
 
-export function useCoinPrice(coinAddress?: string | null): UseCoinPriceReturn {
-  const { data, error, isLoading, mutate } = useSWR<CreatorCoinMarket>(
-    coinAddress ? `coin-market-${coinAddress}` : null,
-    () => getCreatorCoinMarket(coinAddress as string, starknetProvider),
-    {
-      revalidateOnFocus: false,
-      refreshInterval: 30_000,
-      shouldRetryOnError: false,
-    }
-  );
+export function useCoinPrice(coin: CoinCollectionLike): {
+  price: CoinPriceLike | null;
+  status: CoinMarketStatus;
+  isLoading: boolean;
+} {
+  const { prices, isLoading } = useAllCoinPrices();
 
-  const status: CoinMarketStatus = data?.status === "live"
-    ? "live"
-    : data?.status === "pre-launch"
-      ? "pre-launch"
-      : "unavailable";
+  if (isLoading || !prices) return { price: null, status: "unavailable", isLoading };
+
+  const usdc = prices[normalizeAddress("STARKNET", coin.contractAddress)]?.usdc ?? null;
+
+  if (usdc == null) {
+    return {
+      price: null,
+      status: coin.isLaunched === false ? "pre-launch" : "unavailable",
+      isLoading: false,
+    };
+  }
+
+  const strk = getTokenBySymbol("STRK");
+  const strkUsdc = strk ? (prices[normalizeAddress("STARKNET", strk.address)]?.usdc ?? null) : null;
 
   return {
-    price: data?.status === "live" ? data.price : null,
-    status,
-    isLoading,
-    error,
-    mutate,
+    price: {
+      quotePerCoin: strkUsdc ? usdc / strkUsdc : usdc,
+      quoteSymbol: strkUsdc ? "STRK" : "USDC",
+      quoteUsdRate: strkUsdc ?? 1,
+    },
+    status: "live",
+    isLoading: false,
   };
 }
