@@ -32,8 +32,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
   const service = getService(coin.service);
   const serviceLabel = service?.displayName ?? "Creator Coin";
 
-  const isCreatorCoin = service?.provenance === "MEDIALANE";
-  const { guarantees, isLoading: guaranteesLoading } = useCoinGuarantees(contract, isCreatorCoin);
+  const { guarantees, isLoading: guaranteesLoading } = useCoinGuarantees(contract);
 
   const { supply } = useCoinSupply(contract, coin.decimals ?? 18);
   const marketCap = price && supply != null && supply > 0 ? price.quotePerCoin * supply : null;
@@ -130,7 +129,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
               </div>
             )}
 
-            {isCreatorCoin && (
+            {(guarantees || guaranteesLoading) && (
               <Panel className="p-5">
                 <CoinGuarantees
                   data={guarantees}
