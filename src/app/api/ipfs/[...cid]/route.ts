@@ -5,6 +5,7 @@ import {
   MAX_IPFS_GATEWAY_RESPONSE_BYTES,
 } from "@medialane/sdk";
 import { createRateLimiter } from "@/lib/api-route-guard";
+import { readBodyWithCap } from "@/lib/proxy-body";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 
 const checkRateLimit = createRateLimiter(60_000, 120);
@@ -43,35 +44,13 @@ export async function GET(
   }
 
   const upstreamContentType = upstream.headers.get("content-type") ?? "";
-  const upstreamContentLength = Number(upstream.headers.get("content-length") ?? 0);
-  if (upstreamContentLength > MAX_IPFS_GATEWAY_RESPONSE_BYTES) {
-    return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
-  }
-
   const safeContentType = resolveSafeImageContentType(upstreamContentType);
 
-  if (!upstream.body) {
-    return NextResponse.json({ error: "IPFS gateway returned no body" }, { status: 502 });
+  const capped = await readBodyWithCap(upstream, MAX_IPFS_GATEWAY_RESPONSE_BYTES);
+  if (!capped.ok) {
+    return NextResponse.json({ error: capped.error }, { status: capped.status });
   }
-  const reader = upstream.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > MAX_IPFS_GATEWAY_RESPONSE_BYTES) {
-      await reader.cancel();
-      return NextResponse.json({ error: "IPFS content too large" }, { status: 413 });
-    }
-    chunks.push(value);
-  }
-  const body = new Uint8Array(total) as Uint8Array<ArrayBuffer>;
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
+  const body = capped.body;
 
   return new NextResponse(body, {
     status: 200,
