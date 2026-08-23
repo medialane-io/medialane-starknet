@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
+import { useSiwsToken } from "@/hooks/use-siws-token";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +18,14 @@ type Step = "input" | "verifying" | "success" | "manual" | "pending";
 const isValidAddress = (a: string) => /^0x[0-9a-fA-F]{40,64}$/.test(a.trim());
 
 const DEFAULT_HELPER_TEXT =
-  "Paste the Starknet contract address you own — an NFT collection or a coin. Coins are reviewed by our team before they go live.";
+  "Paste the Starknet contract address you own, an NFT collection or a coin.";
 
-export function ClaimCollectionPanel({ helperText }: { helperText?: string } = {}) {
+export function ClaimCollectionPanel({
+  helperText,
+  kind = "collection",
+}: { helperText?: string; kind?: "collection" | "coin" } = {}) {
   const { address: walletAddress } = useWallet();
+  const { getValidToken, signIn } = useSiwsToken();
   const [contractAddress, setContractAddress] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -39,16 +44,21 @@ export function ClaimCollectionPanel({ helperText }: { helperText?: string } = {
     setStep("verifying");
     try {
 
-      const result = await getMedialaneClient().api.claimCollection(
-        contractAddress.trim(),
-        walletAddress,
-        ""
-      );
+      const token = (await getValidToken()) ?? (await signIn());
+      if (!token) throw new Error("Not authenticated");
+
+      const api = getMedialaneClient().api;
+      const result =
+        kind === "coin"
+          ? await api.claimCoin(contractAddress.trim(), token)
+          : await api.claimCollection(contractAddress.trim(), walletAddress, token);
+
       if (result.verified) {
-        setClaimedCollection(result.collection ?? { contractAddress: contractAddress.trim() });
+        const claimed = kind === "coin" ? (result as { coin?: { contractAddress: string; name?: string | null } }).coin : (result as { collection?: { contractAddress: string; name?: string | null } }).collection;
+        setClaimedCollection(claimed ?? { contractAddress: contractAddress.trim() });
         setStep("success");
       } else {
-        setVerifyError(result.reason ?? "Could not verify onchain ownership");
+        setVerifyError(("reason" in result && result.reason) || "Could not verify onchain ownership");
         setStep("manual");
       }
     } catch {
