@@ -8,9 +8,9 @@ import { coinHref as buildCoinHref } from "@/lib/routes";
 function useCoins({ filter }: { filter: CoinFilter; sort: CoinSort }) {
 
   const service = filter === "all" ? undefined : coinServiceIds(filter)[0];
-  const { coins, isLoading } = useCoinsData({ service });
+  const { coins, isLoading, meta } = useCoinsData({ service });
 
-  return { collections: coins, isLoading };
+  return { collections: coins, isLoading, counts: meta?.counts };
 }
 
 export function CoinsExplorer({ heading = true }: { heading?: boolean }) {
