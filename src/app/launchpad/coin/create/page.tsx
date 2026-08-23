@@ -5,13 +5,14 @@ import { rewardToast } from "@/lib/reward-toast";
 import { coinHref } from "@/lib/routes";
 import { useRouter } from "next/navigation";
 import { Coins, TrendingUp, ArrowRight, Lock, Sparkles, ImagePlus, X, Loader2 } from "lucide-react";
-import { getTokenBySymbol, formatAmount } from "@medialane/sdk";
+import { getTokenBySymbol, formatAmount, SUPPORTED_TOKENS } from "@medialane/sdk";
 import {
   validateCoinName as validateName,
   validateCoinSymbol as validateSymbol,
   validateCoinSupply as validateSupply,
   coinToRaw as toRaw,
   teamCoinsRaw, buybackQuoteRaw, fdvHuman,
+  SUGGESTED_DEFAULT_PRICE, validatePrice,
 } from "@medialane/sdk/starknet";
 import { PageContainer } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
@@ -33,7 +34,7 @@ import { CreateCoinAside } from "@/components/claim/create-coin-aside";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const QUOTE_OPTIONS = ["STRK", "ETH"] as const;
+const QUOTE_OPTIONS = SUPPORTED_TOKENS.map((t) => t.symbol);
 type Quote = (typeof QUOTE_OPTIONS)[number];
 
 const SUPPLY_PRESETS = [
@@ -56,6 +57,7 @@ export default function CoinCreatePage() {
   const [description, setDescription] = useState("");
   const [supply, setSupply] = useState("");
   const [quote, setQuote] = useState<Quote>("STRK");
+  const [price, setPrice] = useState(String(SUGGESTED_DEFAULT_PRICE));
   const [teamPct, setTeamPct] = useState(5);
   const [coinAddress, setCoinAddress] = useState<string | null>(null);
   const [profileStatus, setProfileStatus] = useState<ProfileStatus>("idle");
@@ -71,11 +73,13 @@ export default function CoinCreatePage() {
   const quoteToken = getTokenBySymbol(quote)!;
   const { raw: quoteBalanceRaw } = useTokenBalance(quote, isConnected ? (address ?? undefined) : undefined);
 
+  const priceNum = Number(price);
   const nameErr = name ? validateName(name) : null;
   const symErr = symbol ? validateSymbol(symbol) : null;
   const supplyErr = supply ? validateSupply(supply) : null;
+  const priceErr = price ? validatePrice(quoteToken.decimals, priceNum) : "Price is required";
   const identityValid = !validateName(name) && !validateSymbol(symbol);
-  const economicsValid = !validateSupply(supply);
+  const economicsValid = !validateSupply(supply) && !priceErr;
 
   const handleNameChange = (v: string) => {
     setName(v);
@@ -87,22 +91,22 @@ export default function CoinCreatePage() {
   };
 
   const preview = useMemo(() => {
-    if (validateSupply(supply)) return null;
+    if (validateSupply(supply) || validatePrice(quoteToken.decimals, priceNum)) return null;
     const supplyHuman = Number(supply);
     const supplyRaw = toRaw(BigInt(supply));
     const teamRaw = teamCoinsRaw(supplyRaw, teamPct);
-    const buybackRaw = buybackQuoteRaw(teamRaw, quoteToken.decimals);
+    const buybackRaw = buybackQuoteRaw(teamRaw, priceNum, quoteToken.decimals);
     return {
-      fdv: fdvHuman(supplyHuman),
+      fdv: fdvHuman(supplyHuman, priceNum),
       teamCoins: supplyHuman * (teamPct / 100),
       buybackRaw,
       buybackHuman: formatAmount(buybackRaw.toString(), quoteToken.decimals),
     };
-  }, [supply, teamPct, quoteToken.decimals]);
+  }, [supply, priceNum, teamPct, quoteToken.decimals]);
 
   const insufficient = preview != null && quoteBalanceRaw != null && quoteBalanceRaw < preview.buybackRaw;
   const busy = status === "deploying" || status === "launching" || status === "indexing";
-  const canLaunch = isConnected && identityValid && economicsValid && preview != null && !insufficient && !imageUploading && !busy;
+  const canLaunch = isConnected && identityValid && economicsValid && preview != null && teamPct > 0 && !insufficient && !imageUploading && !busy;
 
   const previewData: CoinPreviewData = {
     name,
@@ -140,7 +144,7 @@ export default function CoinCreatePage() {
   async function handleLaunch() {
     if (!canLaunch) return;
     try {
-      const input: LaunchCoinInput = { name, symbol, supplyHuman: supply, quoteSymbol: quote, teamPct };
+      const input: LaunchCoinInput = { name, symbol, supplyHuman: supply, quoteSymbol: quote, price: priceNum, teamPct };
       const { coinAddress: addr } = await launch(input);
       setCoinAddress(addr);
       void saveCoinProfile(addr);
@@ -155,7 +159,7 @@ export default function CoinCreatePage() {
     setCoinAddress(null);
     setProfileStatus("idle");
     setName(""); setSymbol(""); setAutoSymbol(""); setDescription("");
-    setSupply(""); setTeamPct(5);
+    setSupply(""); setPrice(String(SUGGESTED_DEFAULT_PRICE)); setTeamPct(5);
     clearImage();
   };
 
@@ -298,7 +302,7 @@ export default function CoinCreatePage() {
           <section className="space-y-4">
             <div>
               <h3 className="text-lg font-bold">Set the numbers</h3>
-              <p className="text-sm text-muted-foreground">The price is fixed at launch — your supply sets the market cap.</p>
+              <p className="text-sm text-muted-foreground">You set the price and pair — supply and price together set the market cap.</p>
             </div>
               <div className="space-y-1.5">
                 <Label htmlFor="supply">Total supply</Label>
@@ -326,14 +330,14 @@ export default function CoinCreatePage() {
                 {preview && (
                   <p className="text-xs text-muted-foreground">
                     Your coin starts at a <span className="font-semibold text-foreground">{preview.fdv.toLocaleString()} {quote}</span> market cap
-                    (price is fixed at 0.01 {quote}/coin — supply sets the cap).
+                    (supply × price sets the cap).
                   </p>
                 )}
               </div>
 
               <div className="space-y-1.5">
                 <Label>Quote token</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {QUOTE_OPTIONS.map((q) => (
                     <button
                       key={q}
@@ -353,20 +357,36 @@ export default function CoinCreatePage() {
               </div>
 
               <div className="space-y-1.5">
+                <Label htmlFor="price">Launch price ({quote} per coin)</Label>
+                <Input
+                  id="price" inputMode="decimal" value={price}
+                  onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))}
+                  placeholder={String(SUGGESTED_DEFAULT_PRICE)} disabled={busy}
+                />
+                {priceErr && price && <p className="text-xs text-destructive">{priceErr}</p>}
+                <p className="text-xs text-muted-foreground">
+                  Set this to what you can afford to fund — a lower price means a smaller
+                  amount required to buy your allocation, and a smaller starting market cap.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
                 <Label htmlFor="alloc">Your allocation: {teamPct}%</Label>
                 <input
-                  id="alloc" type="range" min={0} max={10} step={1}
+                  id="alloc" type="range" min={1} max={10} step={1}
                   value={teamPct} onChange={(e) => setTeamPct(Number(e.target.value))}
                   disabled={busy} className="w-full accent-[hsl(var(--brand-rose))]"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Up to 10% goes straight to your wallet at launch — you fund it
-                  {preview ? <> (<span className="font-semibold text-foreground">{preview.buybackHuman} {quote}</span>)</> : null}.
-                  The rest belongs to the market.
+                  You buy this allocation back from the pool at your own launch price — that
+                  purchase is what gives your coin its starting liquidity, so it isn&apos;t
+                  optional.
+                  {preview ? <> Right now that&apos;s <span className="font-semibold text-foreground">{preview.buybackHuman} {quote}</span>.</> : null}
                 </p>
                 {insufficient && (
                   <p className="text-xs text-destructive">
-                    You need {preview?.buybackHuman} {quote} in your wallet for this allocation — lower it or top up.
+                    Your wallet has less than {preview?.buybackHuman} {quote}. Lower the
+                    allocation, lower the price, or add funds.
                   </p>
                 )}
               </div>

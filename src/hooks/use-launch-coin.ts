@@ -8,6 +8,7 @@ import {
   coinToRaw as toRaw,
   teamCoinsRaw,
   buybackQuoteRaw,
+  validatePrice,
   type CreatorCoinReceiptLike,
 } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
@@ -20,7 +21,8 @@ export interface LaunchCoinInput {
   name: string;
   symbol: string;
   supplyHuman: string;
-  quoteSymbol: "STRK" | "ETH";
+  quoteSymbol: string;
+  price: number;
   teamPct: number;
 }
 
@@ -42,9 +44,12 @@ export function useLaunchCoin() {
       const quote = getTokenBySymbol(input.quoteSymbol);
       if (!quote) throw new Error(`Unsupported quote token: ${input.quoteSymbol}`);
 
+      const priceError = validatePrice(quote.decimals, input.price);
+      if (priceError) throw new Error(priceError);
+
       const supplyRaw = toRaw(BigInt(input.supplyHuman));
       const teamRaw = teamCoinsRaw(supplyRaw, input.teamPct);
-      const buybackRaw = buybackQuoteRaw(teamRaw, quote.decimals);
+      const buybackRaw = buybackQuoteRaw(teamRaw, input.price, quote.decimals);
       const ownerAddr = normalizeAddress("STARKNET", owner);
       const client = getMedialaneClient();
 
@@ -67,6 +72,7 @@ export function useLaunchCoin() {
           owner: ownerAddr,
           creatorCoin: coinAddress,
           quoteToken: quote.address,
+          price: input.price,
           initialHolders: input.teamPct > 0 ? [ownerAddr] : [],
           initialHoldersAmounts: input.teamPct > 0 ? [teamRaw.toString()] : [],
           transferRestrictionDelay: 0,
