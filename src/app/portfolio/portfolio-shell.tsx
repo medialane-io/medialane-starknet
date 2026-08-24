@@ -17,7 +17,6 @@ import {
 } from "@medialane/ui";
 
 const PORTFOLIO_SECTIONS: { key: string; label: string; href: string }[] = [
-  { key: "overview",    label: "Overview",      href: "/portfolio" },
   { key: "assets",      label: "Assets",         href: "/portfolio/assets" },
   { key: "collections", label: "Collections",     href: "/portfolio/collections" },
   { key: "coins",       label: "Coins",           href: "/portfolio/coins" },
