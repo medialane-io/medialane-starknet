@@ -11,6 +11,7 @@ import { useUserOrders } from "@/hooks/use-orders";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { useRewards } from "@/hooks/use-rewards";
 import { AssetPicker, ServiceFormShell, LevelBadge, type OwnedAsset } from "@medialane/ui";
+import { FastMint } from "@/components/launchpad/fast-mint";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@/components/ui/button";
@@ -271,6 +272,7 @@ export default function SettingsContent() {
   }));
   const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType !== "ERC20");
   const [saving, setSaving] = useState(false);
+  const [fastMintOpen, setFastMintOpen] = useState(false);
   const [claimInput, setClaimInput] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [checkState, setCheckState] = useState<CheckState>("idle");
@@ -576,15 +578,8 @@ export default function SettingsContent() {
                 isLoading={assetsLoading}
                 selected={ownedAssets.find((a) => a.image === form.avatarImage) ?? null}
                 onSelect={(asset) => setForm((f) => ({ ...f, avatarImage: asset.image ?? "" }))}
-                emptyStateHref="/launchpad/single-editions"
-                emptyStateLabel="Mint one"
+                onMintClick={() => setFastMintOpen(true)}
               />
-              <Link
-                href="/launchpad/single-editions"
-                className="inline-block text-xs font-medium text-foreground underline underline-offset-2"
-              >
-                Mint a new NFT to use as your theme
-              </Link>
             </div>
           </div>
         </div>
@@ -608,6 +603,17 @@ export default function SettingsContent() {
           </Button>
         </div>
       </div>
+
+      <FastMint
+        presentation="dialog"
+        open={fastMintOpen}
+        onClose={() => setFastMintOpen(false)}
+        mediaKindLock="image"
+        onMinted={(asset) => {
+          setForm((f) => ({ ...f, avatarImage: asset.image ?? "" }));
+          setFastMintOpen(false);
+        }}
+      />
     </ServiceFormShell>
   );
 }
