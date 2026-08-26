@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { MintContent } from "./mint-content";
 
 const OG_IMAGE =
-  "https://crimson-improved-unicorn-113.mypinata.cloud/ipfs/bafybeiglhfpl3ilyaiulzfjxspolmudih2d3t7lr27imy327fjag2s5zrq";
+  "https://gateway.pinata.cloud/ipfs/bafybeiglhfpl3ilyaiulzfjxspolmudih2d3t7lr27imy327fjag2s5zrq";
 
 export const metadata: Metadata = {
   title: "Creator's Airdrop — Medialane",
