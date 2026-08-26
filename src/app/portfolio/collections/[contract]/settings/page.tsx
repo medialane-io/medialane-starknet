@@ -223,11 +223,11 @@ export default function CollectionSettingsPage({ params }: Props) {
         discordUrl: form.discordUrl || null,
         telegramUrl: form.telegramUrl || null,
         gatedContentTitle: form.gatedEnabled ? (form.gatedContentTitle || null) : null,
-
         gatedContentUrl: form.gatedEnabled ? (form.gatedContentUrl || null) : null,
-        gatedContentType: form.gatedEnabled ? (form.gatedContentType || null) : null,
-
-      } as any;
+        gatedContentType: form.gatedEnabled
+          ? ((form.gatedContentType || null) as "VIDEO" | "STREAM" | "AUDIO" | "DOCUMENT" | "LINK" | null)
+          : null,
+      };
       await getMedialaneClient().api.updateCollectionProfile(contract, payload, "");
       await mutate();
       toast.success("Collection profile updated");

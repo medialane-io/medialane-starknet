@@ -15,7 +15,6 @@ import { useDropInfo, useOnChainDropState, getDropStatus } from "@/hooks/use-dro
 import { useWallet } from "@/hooks/use-wallet";
 import { ipfsToHttp } from "@/lib/utils";
 import { normalizeAddress } from "@medialane/sdk";
-import { cn } from "@/lib/utils";
 
 function formatTs(ts: number): string {
   return new Date(ts * 1000).toLocaleString(undefined, {
