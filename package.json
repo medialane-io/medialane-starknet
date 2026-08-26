@@ -14,8 +14,8 @@
   "dependencies": {
     "@cartridge/connector": "^0.13.16",
     "@hookform/resolvers": "^3",
-    "@medialane/sdk": "0.102.0",
-    "@medialane/ui": "0.145.1",
+    "@medialane/sdk": "0.103.0",
+    "@medialane/ui": "0.146.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@starknet-react/chains": "^5.0.3",
     "@starknet-react/core": "^5.0.3",
