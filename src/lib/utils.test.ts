@@ -1,9 +1,9 @@
 import { test, expect } from "bun:test";
 import { ipfsToHttp } from "./utils";
 
-test("ipfsToHttp routes known IPFS gateway URLs through the authenticated proxy", () => {
+test("ipfsToHttp routes known IPFS gateway URLs to Pinata's public gateway directly", () => {
   const result = ipfsToHttp("https://gateway.pinata.cloud/ipfs/abc123");
-  expect(result).toBe("/api/ipfs/abc123");
+  expect(result).toBe("https://gateway.pinata.cloud/ipfs/abc123");
 });
 
 test("ipfsToHttp routes unrecognized https URLs through the generic image proxy", () => {
@@ -28,6 +28,6 @@ test("ipfsToHttp rejects blob: URIs", () => {
   expect(ipfsToHttp("blob:https://evil.example/abc")).toBe("/placeholder.svg");
 });
 
-test("ipfsToHttp still proxies ipfs:// URIs through /api/ipfs", () => {
-  expect(ipfsToHttp("ipfs://QmXxx")).toBe("/api/ipfs/QmXxx");
+test("ipfsToHttp resolves ipfs:// URIs to Pinata's public gateway directly, no app-server hop", () => {
+  expect(ipfsToHttp("ipfs://QmXxx")).toBe("https://gateway.pinata.cloud/ipfs/QmXxx");
 });

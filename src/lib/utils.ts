@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { formatDistanceToNow } from "date-fns";
 import { normalizeAddress } from "@medialane/sdk";
-import { ipfsToHttp as sharedIpfsToHttp } from "@medialane/ui";
+import { ipfsToHttp as sharedIpfsToHttp, PINATA_PUBLIC_GATEWAY } from "@medialane/ui";
 import { SUPPORTED_TOKENS } from "./constants";
 import { FEATURED_COLLECTIONS } from "./featured-collections";
 import type { UsdPrices } from "@/hooks/use-usd-prices";
@@ -84,14 +84,13 @@ export function usdValueFor(
   return fmtUsd(amount * rate);
 }
 
-export function ipfsToHttp(uri: string | null | undefined, width?: number): string {
+export function ipfsToHttp(uri: string | null | undefined): string {
   if (!uri) return "/placeholder.svg";
   if (uri.startsWith("data:image/")) return uri;
 
   const resolved = sharedIpfsToHttp(uri);
-  if (resolved.startsWith("/api/ipfs/")) {
-    return width ? `${resolved}?w=${width}` : resolved;
-  }
+  if (resolved.startsWith(PINATA_PUBLIC_GATEWAY)) return resolved;
+
   if (uri.startsWith("https://") || uri.startsWith("http://")) {
     return `/api/img?url=${encodeURIComponent(uri)}`;
   }
