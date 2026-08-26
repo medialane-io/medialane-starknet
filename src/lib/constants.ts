@@ -1,5 +1,3 @@
-import { readOptionalAddressEnv } from "./env";
-
 export {
   SUPPORTED_TOKENS,
   STARKNET_MARKETPLACE_721_CONTRACT,
@@ -7,6 +5,7 @@ export {
   STARKNET_COLLECTION_721_CONTRACT,
   STARKNET_COLLECTION_1155_CONTRACT,
   STARKNET_NFTCOMMENTS_CONTRACT,
+  STARKNET_GENESIS_MINT_GLOBAL_CONTRACT as MINT_CONTRACT,
 } from "@medialane/sdk";
 
 export const RPC_PROXY_PATH = "/api/rpc";
@@ -32,26 +31,11 @@ if (!isServer && MEDIALANE_API_KEY) {
 export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://voyager.online";
 
-export const MINT_CONTRACT =
-  readOptionalAddressEnv(process.env.NEXT_PUBLIC_MINT_CONTRACT, "NEXT_PUBLIC_MINT_CONTRACT");
-
-export const LAUNCH_MINT_CONTRACT =
-  readOptionalAddressEnv(
-    process.env.NEXT_PUBLIC_LAUNCH_MINT_CONTRACT,
-    "NEXT_PUBLIC_LAUNCH_MINT_CONTRACT"
-  );
-
 export const GENESIS_NFT_URI =
   process.env.NEXT_PUBLIC_GENESIS_NFT_URI || "";
 
 export const GENESIS_NFT_IMAGE_URL =
   process.env.NEXT_PUBLIC_GENESIS_NFT_IMAGE_URL || "";
-
-export const BR_MINT_CONTRACT =
-  readOptionalAddressEnv(process.env.NEXT_PUBLIC_BR_MINT_CONTRACT, "NEXT_PUBLIC_BR_MINT_CONTRACT");
-
-export const BR_NFT_URI =
-  process.env.NEXT_PUBLIC_BR_NFT_URI || "";
 
 export const INDEXER_REVALIDATION_DELAY_MS = 10_000;
 
