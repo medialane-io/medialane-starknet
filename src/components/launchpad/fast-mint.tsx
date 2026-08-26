@@ -11,7 +11,7 @@ import { normalizeAddress, getService, buildAssetMetadata } from "@medialane/sdk
 import {
   ImagePlus, Music, Video, FileText, Loader2, Upload,
   Layers, ImagePlus as SingleIcon, CheckCircle2, ChevronDown, Boxes, Plus, Check,
-  ShieldCheck, Tag, ArrowRightLeft, GitBranch, Eye, X,
+  ShieldCheck, Tag, ArrowRightLeft, GitBranch, Eye, X, Wallet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { MedialaneCollectionCard, ActionDialog } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
+import { useConnectDialog } from "@/components/connect-dialog";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
@@ -237,6 +238,7 @@ export interface FastMintProps {
 
 export function FastMint({ presentation = "inline", open = true, onClose, mediaKindLock, onMinted }: FastMintProps = {}) {
   const { isConnected, address: walletAddress, execute } = useWallet();
+  const { open: openConnectDialog } = useConnectDialog();
   const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
   const { collections, mutate: refetchCollections } = useCollectionsByOwner(walletAddress ?? null);
@@ -653,15 +655,19 @@ export function FastMint({ presentation = "inline", open = true, onClose, mediaK
   }
 
   if (!mediaFile) {
+    const openMediaPicker = () => {
+      if (!isConnected) { openConnectDialog(); return; }
+      mediaInputRef.current?.click();
+    };
     return wrap(
       <section
         role="button"
         tabIndex={0}
-        aria-label="Upload media"
-        onClick={() => mediaInputRef.current?.click()}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); mediaInputRef.current?.click(); } }}
+        aria-label={isConnected ? "Upload media" : "Connect wallet to upload media"}
+        onClick={openMediaPicker}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openMediaPicker(); } }}
         onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleMediaSelect(f); }}
+        onDrop={(e) => { e.preventDefault(); if (!isConnected) { openConnectDialog(); return; } const f = e.dataTransfer.files?.[0]; if (f) handleMediaSelect(f); }}
         className={cn(
           "relative flex flex-col items-center justify-center gap-4 cursor-pointer transition-colors text-center rounded-3xl border-[3px] border-dashed border-brand-blue/40 hover:border-brand-blue/70 hover:bg-brand-blue/[0.04] p-6",
           presentation === "dialog" ? "min-h-[16rem] sm:min-h-[18rem]" : "min-h-[20rem] sm:min-h-[24rem]"
@@ -672,20 +678,33 @@ export function FastMint({ presentation = "inline", open = true, onClose, mediaK
         </div>
         <div className="space-y-1.5 px-6">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            {mediaKindLock ? `Drop or upload an ${mediaKindLock}` : "Drop or upload your media"}
+            {isConnected
+              ? (mediaKindLock ? `Drop or upload an ${mediaKindLock}` : "Drop or upload your media")
+              : "Drop or upload your media"}
           </h2>
           <p className="text-base text-muted-foreground max-w-sm mx-auto">
-            {mediaKindLock === "image" ? "It becomes your avatar and app theme." : "Protect your creation and start earning from it worldwide."}
+            {isConnected
+              ? (mediaKindLock === "image" ? "It becomes your avatar and app theme." : "Protect your creation and start earning from it worldwide.")
+              : "Connect your wallet to protect your creation and start earning from it worldwide."}
           </p>
         </div>
         <Button
           type="button"
           variant="outline"
           className="rounded-full mt-1 bg-card"
-          onClick={(e) => { e.stopPropagation(); mediaInputRef.current?.click(); }}
+          onClick={(e) => { e.stopPropagation(); openMediaPicker(); }}
         >
-          <Upload className="h-3.5 w-3.5 mr-1.5" />
-          Browse files
+          {isConnected ? (
+            <>
+              <Upload className="h-3.5 w-3.5 mr-1.5" />
+              Browse files
+            </>
+          ) : (
+            <>
+              <Wallet className="h-3.5 w-3.5 mr-1.5" />
+              Connect wallet
+            </>
+          )}
         </Button>
         <p className="text-2xs text-muted-foreground/70">
           {mediaKindLock === "image" ? "JPG, PNG, GIF, WebP, or SVG up to 100 MB" : "Images, audio, video, and PDFs up to 100 MB; other documents up to 20 MB"}

@@ -14,7 +14,6 @@ import {
   type ServiceOverrides,
 } from "@medialane/ui";
 import { FastMint } from "@/components/launchpad/fast-mint";
-import { ConnectGate } from "@/components/connect-gate";
 
 export function LaunchpadContent() {
   const { isConnected, address: walletAddress } = useWallet();
@@ -37,12 +36,7 @@ export function LaunchpadContent() {
           <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">Creator Launchpad</h1>
         </FadeIn>
         <FadeIn delay={0.06}>
-          <ConnectGate
-            title="Connect to start creating"
-            subtitle="Connect your wallet to upload media and mint it as an NFT."
-          >
-            <FastMint />
-          </ConnectGate>
+          <FastMint />
         </FadeIn>
       </section>
 
