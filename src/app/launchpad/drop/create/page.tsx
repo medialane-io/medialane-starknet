@@ -14,7 +14,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard } from "@medialane/ui";
+import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem } from "@medialane/ui";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
@@ -24,9 +24,6 @@ import { getDefaultDropSchedule, suggestLaunchpadSymbol } from "@/lib/launchpad-
 import { makeUploadDocument } from "@/lib/upload-document";
 import { buildDropSet } from "@/lib/drop-build-set";
 import { parseAddresses, batchAllowlistCalldata } from "../drop-allowlist";
-import { DropCreateForm, type PaymentTokenOption } from "../drop-create-form";
-import { dropCreateSchema, type DropCreateFormValues } from "../drop-create-schema";
-import type { DraftItem } from "../drop-item-list";
 import type { MetadataField } from "@/components/create/ip-type-fields";
 
 const PAYMENT_TOKENS = getListableTokens().map((t) => ({ symbol: t.symbol, address: t.address }));
@@ -42,7 +39,6 @@ export default function CreateDropPage() {
   const handleMetadataFields = useCallback((fields: MetadataField[]) => {
     metadataFieldsRef.current = fields;
   }, []);
-  const [ipTypeOpen, setIpTypeOpen] = useState(false);
   const [priceFree, setPriceFree] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
   const [tokenDropdownOpen, setTokenDropdownOpen] = useState(false);
@@ -70,6 +66,7 @@ export default function CreateDropPage() {
       startDate: "", startTime: "00:00", endDate: "", endTime: "23:59",
       maxPerWallet: "1",
       whitelistEnabled: false, allowlistAddresses: "",
+      gatedEnabled: false, gatedContentTitle: "", gatedContentUrl: "", gatedContentType: "",
     },
   });
   const collectionName = form.watch("name");
@@ -113,8 +110,9 @@ export default function CreateDropPage() {
       priceAmount: "", paymentToken: PAYMENT_TOKENS[0].address,
       startDate: d.startDate, startTime: d.startTime, endDate: d.endDate, endTime: d.endTime,
       maxPerWallet: "1", whitelistEnabled: false, allowlistAddresses: "",
+      gatedEnabled: false, gatedContentTitle: "", gatedContentUrl: "", gatedContentType: "",
     });
-    clearImage(); metadataFieldsRef.current = []; setIpTypeOpen(false);
+    clearImage(); metadataFieldsRef.current = [];
     setPriceFree(true); setIsPublic(true); setSelectedToken(PAYMENT_TOKENS[0]); setTokenDropdownOpen(false); setAutoSymbol("");
   };
 
@@ -194,6 +192,21 @@ export default function CreateDropPage() {
           } catch {  }
         }
       }
+
+      if (values.gatedEnabled) {
+        const dropAddress = await addressFromReceipt(txHash);
+        if (dropAddress) {
+          try {
+            await client.api.updateCollectionProfile(dropAddress, {
+              gatedContentTitle: values.gatedContentTitle || null,
+              gatedContentUrl: values.gatedContentUrl || null,
+              gatedContentType: (values.gatedContentType || null) as "VIDEO" | "STREAM" | "AUDIO" | "DOCUMENT" | "LINK" | null,
+            }, token);
+          } catch {
+            toast.error("Drop launched, but exclusive content couldn't be saved — set it up from Manage.");
+          }
+        }
+      }
       setDone(true);
       rewardToast("launch_launchpad");
     } catch (err) {
@@ -239,12 +252,27 @@ export default function CreateDropPage() {
       subtitle="Release a limited set of unique pieces with a timed mint window — free to launch, and it's yours."
       aside={
         <>
-          <MedialaneCollectionCard
-            image={imagePreview}
+          <DropPreviewCard
+            coverImage={imagePreview}
             name={form.watch("name")}
-            collection={form.watch("symbol") || "Drop"}
-            creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
+            symbol={form.watch("symbol")}
+            creatorAddress={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
             creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
+            itemCount={items.length}
+            conditions={{
+              maxSupply: String(items.length),
+              price: priceFree ? "0" : String(Math.round(parseFloat(form.watch("priceAmount") || "0") * 1e18)),
+              paymentToken: priceFree ? "0x0" : selectedToken.address,
+              startTime: form.watch("startDate") && form.watch("startTime")
+                ? Math.floor(new Date(`${form.watch("startDate")}T${form.watch("startTime")}:00`).getTime() / 1000)
+                : 0,
+              endTime: form.watch("endDate") && form.watch("endTime")
+                ? Math.floor(new Date(`${form.watch("endDate")}T${form.watch("endTime")}:00`).getTime() / 1000)
+                : 0,
+              maxPerWallet: form.watch("maxPerWallet") || "1",
+            }}
+            whitelistEnabled={form.watch("whitelistEnabled")}
+            gatedContentEnabled={form.watch("gatedEnabled")}
           />
           <CreateDropAside />
         </>
@@ -255,7 +283,6 @@ export default function CreateDropPage() {
           <DropCreateForm
             form={form}
             imagePreview={imagePreview}
-            imageUri={imageUri}
             imageUploading={imageUploading}
             isSubmitting={isSubmitting}
             priceFree={priceFree}
@@ -265,9 +292,7 @@ export default function CreateDropPage() {
             tokenDropdownOpen={tokenDropdownOpen}
             fileInputRef={fileInputRef}
             items={items}
-            ipTypeOpen={ipTypeOpen}
             onImageSelect={handleImageSelect}
-            onClearImage={clearImage}
             onSetPriceFree={setPriceFree}
             onSetTokenDropdownOpen={setTokenDropdownOpen}
             onSelectToken={(token) => { setSelectedToken(token); form.setValue("paymentToken", token.address); setTokenDropdownOpen(false); }}
@@ -276,7 +301,6 @@ export default function CreateDropPage() {
             onRemoveItem={removeItem}
             onEditItem={editItem}
             onMetadataFieldsChange={handleMetadataFields}
-            onSetIpTypeOpen={setIpTypeOpen}
             uploadDocument={uploadDocument}
           />
           {uploadError && <p className="text-xs text-destructive mt-1">{uploadError}</p>}
