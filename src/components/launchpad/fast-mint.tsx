@@ -678,14 +678,10 @@ export function FastMint({ presentation = "inline", open = true, onClose, mediaK
         </div>
         <div className="space-y-1.5 px-6">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            {isConnected
-              ? (mediaKindLock ? `Drop or upload an ${mediaKindLock}` : "Drop or upload your media")
-              : "Drop or upload your media"}
+            {mediaKindLock ? `Drop or upload an ${mediaKindLock}` : "Drop or upload your media"}
           </h2>
           <p className="text-base text-muted-foreground max-w-sm mx-auto">
-            {isConnected
-              ? (mediaKindLock === "image" ? "It becomes your avatar and app theme." : "Protect your creation and start earning from it worldwide.")
-              : "Connect your wallet to protect your creation and start earning from it worldwide."}
+            {mediaKindLock === "image" ? "It becomes your avatar and app theme." : "Protect your creation and monetize it worldwide."}
           </p>
         </div>
         <Button
