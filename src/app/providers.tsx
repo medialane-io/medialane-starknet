@@ -102,6 +102,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <SWRConfig
         value={{
           onError: (err: unknown) => {
+            const status =
+              err && typeof err === "object" && "status" in err && typeof (err as { status: unknown }).status === "number"
+                ? (err as { status: number }).status
+                : null;
+
+            // A missing resource is a state the page renders (pending, empty),
+            // never something to interrupt the user with. Toasting it turned a
+            // freshly minted asset the chain had already accepted into a red
+            // "Token not found" error.
+            if (status === 404) return;
+
             const msg = err instanceof Error ? err.message : "Something went wrong";
             if (
               msg.includes("401") || msg.includes("403") ||
