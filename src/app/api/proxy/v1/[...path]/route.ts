@@ -1,5 +1,6 @@
 
 import { type NextRequest, NextResponse } from "next/server";
+import { createRateLimiter, isSameOrigin, requestIp } from "@medialane/sdk";
 import { hasTraversalSegment, isPathAllowed } from "./allowlist";
 
 const BACKEND_URL =
@@ -30,10 +31,29 @@ const CACHEABLE_GET_PATHS = [
 ];
 const EDGE_CACHE_CONTROL = "public, s-maxage=30, stale-while-revalidate=120";
 
+// Every proxied request injects the first-party MEDIALANE_API_KEY (metered
+// credits), so this must not be an open proxy. Three guards bound credit-drain
+// abuse: the per-method path allowlist in ./allowlist.ts, the same-origin
+// check, and the per-IP rate limit. The rate limit is the only one that holds
+// against a non-browser client — isSameOrigin passes a request with no Origin
+// header at all.
+const checkRateLimit = createRateLimiter(60_000, 600);
+
 async function handle(
   req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> },
 ): Promise<NextResponse> {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json(
+      { error: "Cross-origin requests are not allowed" },
+      { status: 403 },
+    );
+  }
+
+  if (!checkRateLimit(requestIp(req))) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const apiKey = process.env.MEDIALANE_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
