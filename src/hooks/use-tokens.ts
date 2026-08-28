@@ -53,7 +53,12 @@ export function useTokensByOwner(address: string | null, page = 1, limit = 20) {
   const client = useMedialaneClient();
 
   const { data, error, isLoading, mutate } = useSWR(
-    address ? `tokens-owned-${address}-${page}` : null,
+    // limit belongs in the key: it changes the response, and several places
+    // read this address and page with different page sizes at the same time —
+    // the account panel asks for 1 to show a count while the portfolio grid
+    // asks for 20 to render them. Sharing one cache entry let whichever
+    // fetched first decide what the other one saw.
+    address ? `tokens-owned-${address}-${page}-${limit}` : null,
     () => client.api.getTokensByOwner(address!, page, limit),
     { revalidateOnFocus: false, refreshInterval: 30_000, revalidateOnMount: true }
   );
