@@ -76,7 +76,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
 
   const { identity, name } = profileIdentity({
     username: creator.username,
-    displayName: creator.displayName,
+    name: creator.name,
     walletAddress: creator.walletAddress,
   });
   const showSocials = Boolean(creator.websiteUrl || creator.twitterUrl);

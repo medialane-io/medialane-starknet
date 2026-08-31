@@ -31,7 +31,7 @@ import { addressPalette } from "@/lib/creator-utils";
 type CheckState = "idle" | "checking" | "available" | "taken";
 
 type ProfileForm = {
-  displayName: string;
+  name: string;
   bio: string;
   avatarImage: string;
   websiteUrl: string;
@@ -108,7 +108,7 @@ function ProfileLivePreview({
 }) {
   const avatarUrl = resolveTokenImage(form.avatarImage);
   const { h1 } = addressPalette(walletAddress ?? "0x0");
-  const displayName = form.displayName || "Your name";
+  const profileName = form.name || "Your name";
   const { data: rewards } = useRewards(walletAddress);
 
   return (
@@ -123,7 +123,7 @@ function ProfileLivePreview({
               className="h-full w-full flex items-center justify-center text-3xl font-bold text-white"
               style={{ backgroundColor: `hsl(${h1}, 55%, 42%)` }}
             >
-              {displayName.slice(0, 1).toUpperCase()}
+              {profileName.slice(0, 1).toUpperCase()}
             </div>
           )}
           {rewards && rewards.totalXp > 0 && (
@@ -136,7 +136,7 @@ function ProfileLivePreview({
 
       <div className="px-5 pb-5 pt-3 space-y-3">
         <div className="min-w-0">
-          <p className="truncate text-[18px] font-bold leading-snug text-foreground">{displayName}</p>
+          <p className="truncate text-[18px] font-bold leading-snug text-foreground">{profileName}</p>
           <div className="mt-1 flex items-center gap-1.5 flex-wrap">
             <span className="pill-badge text-[10px]">Creator</span>
             {approvedUsername && (
@@ -278,13 +278,13 @@ export default function SettingsContent() {
   const [checkState, setCheckState] = useState<CheckState>("idle");
   const [checkReason, setCheckReason] = useState<string | undefined>();
   const [form, setForm] = useState<ProfileForm>({
-    displayName: "", bio: "", avatarImage: "",
+    name: "", bio: "", avatarImage: "",
     websiteUrl: "", twitterUrl: "", discordUrl: "", telegramUrl: "",
   });
 
   useEffect(() => {
     if (profile) setForm({
-      displayName: profile.displayName ?? "",
+      name: profile.name ?? "",
       bio: profile.bio ?? "",
       avatarImage: profile.avatarImage ?? "",
       websiteUrl: profile.websiteUrl ?? "",
@@ -548,7 +548,7 @@ export default function SettingsContent() {
             <p className="text-xs text-muted-foreground mt-0.5">Your public profile</p>
           </div>
           <div className="border-t border-border pt-4 space-y-4">
-            {field("displayName", "Name", "Your name")}
+            {field("name", "Name", "Your name")}
             <div className="space-y-1.5">
               <Label htmlFor="bio">Bio</Label>
               <Textarea

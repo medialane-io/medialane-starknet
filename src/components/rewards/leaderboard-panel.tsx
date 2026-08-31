@@ -26,7 +26,7 @@ function CreatorIdentity({ address }: { address: string }) {
   const avatarUrl = resolveTokenImage(profile?.avatarImage);
   const { identity: name } = profileIdentity({
     username: profile?.username,
-    displayName: profile?.displayName,
+    name: profile?.name,
     walletAddress: address,
   });
 

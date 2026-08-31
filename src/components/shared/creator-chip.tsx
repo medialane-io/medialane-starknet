@@ -22,7 +22,7 @@ export function CreatorChip({ address, label = "by", className }: CreatorChipPro
   const avatarUrl = profile?.avatarImage ? ipfsToHttp(profile.avatarImage) : null;
   const { identity: name } = profileIdentity({
     username: profile?.username,
-    displayName: profile?.displayName,
+    name: profile?.name,
     walletAddress: address,
   });
   const initial = (profile?.username || address.slice(2)).charAt(0).toUpperCase();
