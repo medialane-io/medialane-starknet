@@ -1,1 +1,1 @@
-export { PriceHistoryChart } from "@medialane/ui";
+export { PriceHistoryChart } from "@medialane/ui/price-history-chart";
