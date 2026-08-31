@@ -78,7 +78,7 @@ export function ClaimPageClient() {
       <section className="space-y-8">
         <SectionDivider label="Claim your creator page" />
         <div>
-          <h2 className="text-xl font-bold mb-1">Creator Username</h2>
+          <h2 className="text-xl font-bold mb-1">Username</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Reserve your creator URL at{" "}
             <span className="tabular-nums text-foreground">medialane.io/creator/yourname</span>.

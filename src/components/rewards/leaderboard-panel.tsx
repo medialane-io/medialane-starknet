@@ -11,6 +11,7 @@ import { useLeaderboard } from "@/hooks/use-rewards";
 import { useCreatorProfile } from "@/hooks/use-profiles";
 import { resolveTokenImage } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { profileIdentity } from "@medialane/ui";
 
 export interface LeaderboardPanelProps {
   myAddress?: string | null;
@@ -23,7 +24,11 @@ export interface LeaderboardPanelProps {
 function CreatorIdentity({ address }: { address: string }) {
   const { profile } = useCreatorProfile(address);
   const avatarUrl = resolveTokenImage(profile?.avatarImage);
-  const name = profile?.displayName || profile?.username;
+  const { identity: name } = profileIdentity({
+    username: profile?.username,
+    displayName: profile?.displayName,
+    walletAddress: address,
+  });
 
   return (
     <span className="inline-flex min-w-0 items-center gap-2.5">

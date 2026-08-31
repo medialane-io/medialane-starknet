@@ -14,10 +14,15 @@ import { ipfsToHttp } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import { AtSign, Search, Users, Palette, Globe, Twitter, X } from "lucide-react";
 import type { ApiCreatorProfile } from "@medialane/sdk";
+import { profileIdentity } from "@medialane/ui";
 
 function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
   const avatarUrl = creator.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
-  const displayName = creator.displayName || `@${creator.username}`;
+  const { identity, name } = profileIdentity({
+    username: creator.username,
+    displayName: creator.displayName,
+    walletAddress: creator.walletAddress,
+  });
 
   const hue = (creator.username ?? "a").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
   const hue2 = (hue + 60) % 360;
@@ -72,21 +77,18 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
           style={!resolvedImage ? { background: fallbackGradient } : {}}
         >
           {resolvedImage ? (
-            <Image src={resolvedImage} alt={displayName} width={44} height={44} className="h-full w-full object-cover" unoptimized />
+            <Image src={resolvedImage} alt={identity} width={44} height={44} className="h-full w-full object-cover" unoptimized />
           ) : (
             <span className="text-base font-black text-white select-none">
-              {displayName.charAt(0).toUpperCase()}
+              {identity.replace("@", "").charAt(0).toUpperCase()}
             </span>
           )}
         </div>
 
         <div>
-          <p className="font-bold text-white text-base leading-snug truncate">{displayName}</p>
-          {creator.displayName && (
-            <p className="text-xs text-white/55 flex items-center gap-0.5 mt-0.5">
-              <AtSign className="h-2.5 w-2.5 shrink-0" />
-              <span className="truncate">{creator.username}</span>
-            </p>
+          <p className="font-bold text-white text-base leading-snug truncate">{identity}</p>
+          {name && (
+            <p className="text-xs text-white/55 mt-0.5 truncate">{name}</p>
           )}
         </div>
 
