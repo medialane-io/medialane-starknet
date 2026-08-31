@@ -13,6 +13,7 @@ import { Search, Layers, ImageIcon, Users, AtSign, X } from "lucide-react";
 import type { ApiSearchResult, ApiSearchCreatorResult } from "@medialane/sdk";
 import { PageContainer } from "@medialane/ui";
 import { assetHref, collectionHref } from "@/lib/routes";
+import { profileIdentity } from "@medialane/ui";
 
 function TokenCard({ token }: { token: NonNullable<ApiSearchResult["tokens"]>[number] }) {
   const [imgError, setImgError] = useState(false);
@@ -90,7 +91,11 @@ function CollectionCard({ col }: { col: NonNullable<ApiSearchResult["collections
 
 function CreatorCard({ creator }: { creator: ApiSearchCreatorResult }) {
   const avatarUrl = creator.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
-  const displayName = creator.displayName || `@${creator.username}`;
+  const { identity, name } = profileIdentity({
+    username: creator.username,
+    displayName: creator.displayName,
+    walletAddress: creator.walletAddress,
+  });
   return (
     <Link
       href={`/creator/${creator.username}`}
@@ -98,16 +103,14 @@ function CreatorCard({ creator }: { creator: ApiSearchCreatorResult }) {
     >
       <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center shrink-0 overflow-hidden">
         {avatarUrl ? (
-          <Image src={avatarUrl} alt={displayName} width={36} height={36} className="h-full w-full object-cover" unoptimized />
+          <Image src={avatarUrl} alt={identity} width={36} height={36} className="h-full w-full object-cover" unoptimized />
         ) : (
-          <span className="text-sm font-bold text-primary-foreground">{displayName.charAt(0).toUpperCase()}</span>
+          <span className="text-sm font-bold text-primary-foreground">{identity.replace("@", "").charAt(0).toUpperCase()}</span>
         )}
       </div>
       <div className="min-w-0">
-        <p className="font-semibold text-sm truncate">{displayName}</p>
-        <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
-          <AtSign className="h-3 w-3" /><span>{creator.username}</span>
-        </div>
+        <p className="font-semibold text-sm truncate">{identity}</p>
+        {name && <p className="text-xs text-muted-foreground truncate">{name}</p>}
       </div>
     </Link>
   );

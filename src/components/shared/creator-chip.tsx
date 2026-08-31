@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCreatorProfile } from "@/hooks/use-profiles";
 import { ipfsToHttp, cn } from "@/lib/utils";
+import { profileIdentity } from "@medialane/ui";
 
 interface CreatorChipProps {
   address?: string | null;
@@ -19,9 +20,12 @@ export function CreatorChip({ address, label = "by", className }: CreatorChipPro
 
   const href = `/creator/${profile?.username || address}`;
   const avatarUrl = profile?.avatarImage ? ipfsToHttp(profile.avatarImage) : null;
-  const short = `${address.slice(0, 6)}…${address.slice(-4)}`;
-  const name = profile?.displayName || (profile?.username ? `@${profile.username}` : short);
-  const initial = (profile?.username || profile?.displayName || address.slice(2)).charAt(0).toUpperCase();
+  const { identity: name } = profileIdentity({
+    username: profile?.username,
+    displayName: profile?.displayName,
+    walletAddress: address,
+  });
+  const initial = (profile?.username || address.slice(2)).charAt(0).toUpperCase();
 
   return (
     <Link href={href} className={cn("group inline-flex items-center gap-2 min-w-0", className)}>

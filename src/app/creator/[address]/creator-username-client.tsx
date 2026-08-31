@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActivityRow } from "@/components/creator/activity-row";
+import { profileIdentity } from "@medialane/ui";
 
 const TABS = [
   { id: "collections", label: "Collections", Icon: LayoutList },
@@ -73,7 +74,11 @@ export default function CreatorUsernamePageClient({ username }: Props) {
     );
   }
 
-  const displayName = creator.displayName || `@${creator.username}`;
+  const { identity, name } = profileIdentity({
+    username: creator.username,
+    displayName: creator.displayName,
+    walletAddress: creator.walletAddress,
+  });
   const showSocials = Boolean(creator.websiteUrl || creator.twitterUrl);
 
   return (
@@ -81,7 +86,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
 
       <CollectionHeroBanner
         bannerUrl={avatarUrl}
-        name={displayName}
+        name={identity}
         eyebrowSlot={
           <span className="text-[11px] font-semibold text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
             Creator
@@ -101,7 +106,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             <p className="text-sm text-muted-foreground tabular-nums">@{creator.username}</p>
             <div className="flex items-center gap-2">
               <ShareButton
-                title={displayName}
+                title={identity}
                 variant="ghost"
                 size="icon"
                 className="min-h-0 min-w-0 h-auto w-auto p-0 hover:bg-transparent text-muted-foreground/40 hover:text-muted-foreground"
