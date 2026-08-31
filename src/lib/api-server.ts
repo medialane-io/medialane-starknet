@@ -1,7 +1,7 @@
 
 
 import type { ApiCollection, ApiOrder } from "@medialane/sdk";
-import { APP_URL } from "@/lib/seo";
+import { ipfsToHttp as sharedIpfsToHttp } from "@medialane/ui/utils/ipfs";
 
 const BASE = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ?? "";
 const KEY  = process.env.MEDIALANE_API_KEY ?? "";
@@ -24,8 +24,7 @@ async function apiFetch<T>(path: string): Promise<T | null> {
 
 export function ipfsToHttpServer(uri: string | null | undefined): string {
   if (!uri) return "";
-  if (uri.startsWith("ipfs://")) return `${APP_URL}/api/ipfs/${uri.slice(7)}`;
-  return uri;
+  return sharedIpfsToHttp(uri) || "";
 }
 
 export async function fetchTokenMeta(contract: string, tokenId: string) {
