@@ -1,7 +1,6 @@
 
 
 import type { ApiCollection, ApiOrder } from "@medialane/sdk";
-import { ipfsToHttp as sharedIpfsToHttp } from "@medialane/ui/utils/ipfs";
 
 const BASE = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ?? "";
 const KEY  = process.env.MEDIALANE_API_KEY ?? "";
@@ -22,10 +21,7 @@ async function apiFetch<T>(path: string): Promise<T | null> {
   }
 }
 
-export function ipfsToHttpServer(uri: string | null | undefined): string {
-  if (!uri) return "";
-  return sharedIpfsToHttp(uri) || "";
-}
+export { toAbsoluteImageUrl as ipfsToHttpServer } from "@medialane/ui/utils/ipfs";
 
 export async function fetchTokenMeta(contract: string, tokenId: string) {
   return apiFetch<{ name?: string; description?: string; image?: string; metadata?: { name?: string; description?: string; image?: string } }>(

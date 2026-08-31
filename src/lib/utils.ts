@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { formatDistanceToNow } from "date-fns";
 import { normalizeAddress } from "@medialane/sdk";
-import { ipfsToHttp as sharedIpfsToHttp, PINATA_PUBLIC_GATEWAY } from "@medialane/ui";
+import { toDisplayUrl, toDisplayUrlOrNull, PINATA_PUBLIC_GATEWAY } from "@medialane/ui";
 import { IPFS_GATEWAY } from "./constants";
 import { SUPPORTED_TOKENS } from "./constants";
 import { FEATURED_COLLECTIONS } from "./featured-collections";
@@ -85,26 +85,14 @@ export function usdValueFor(
   return fmtUsd(amount * rate);
 }
 
+const displayOptions = { gateway: IPFS_GATEWAY ?? PINATA_PUBLIC_GATEWAY };
+
 export function ipfsToHttp(uri: string | null | undefined): string {
-  if (!uri) return "/placeholder.svg";
-  if (uri.startsWith("data:image/")) return uri;
-
-  const gateway = IPFS_GATEWAY ?? PINATA_PUBLIC_GATEWAY;
-  const resolved = sharedIpfsToHttp(uri, { gateway });
-  if (resolved.startsWith(gateway)) return resolved;
-
-  if (uri.startsWith("https://") || uri.startsWith("http://")) {
-    return `/api/img?url=${encodeURIComponent(uri)}`;
-  }
-
-  return "/placeholder.svg";
+  return toDisplayUrl(uri, displayOptions);
 }
 
 export function resolveTokenImage(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-
-  if (raw.startsWith("/")) return raw;
-  return ipfsToHttp(raw);
+  return toDisplayUrlOrNull(raw, displayOptions);
 }
 
 export function timeAgo(dateStr: string): string {
