@@ -91,7 +91,6 @@
   h1, h2, h3, h4 { @apply tracking-tight; }
 }
 
-/* Scrollbars */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
@@ -100,7 +99,6 @@
 .scrollbar-hide { scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-/* Glass */
 .glass {
   background: rgba(10, 14, 30, 0.60);
   backdrop-filter: blur(16px);
@@ -114,7 +112,6 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-/* Typography gradients */
 .gradient-text {
   background: linear-gradient(135deg, #8a5cf6 0%, #5b4ce6 40%, #3b7bff 100%);
   -webkit-background-clip: text;
@@ -140,14 +137,12 @@
   background-clip: text;
 }
 
-/* Price */
 .price-value {
   color: hsl(var(--price));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-/* Section label */
 .section-label {
   font-size: 0.625rem;
   font-weight: 700;
@@ -156,7 +151,6 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* Pill badge */
 .pill-badge {
   display: inline-flex;
   align-items: center;
@@ -172,7 +166,6 @@
   color: hsl(var(--primary));
 }
 
-/* Card base */
 .card-base {
   border-radius: calc(var(--radius) * 1.25);
   border: 1px solid hsl(var(--border));
@@ -181,7 +174,6 @@
   will-change: transform;
 }
 
-/* Bento cell */
 .bento-cell {
   border-radius: calc(var(--radius) * 1.25);
   border: 1px solid hsl(var(--border));
@@ -190,7 +182,6 @@
   position: relative;
 }
 
-/* Background grid */
 .bg-grid {
   background-image:
     linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
@@ -198,11 +189,9 @@
   background-size: 48px 48px;
 }
 
-/* Snap scroll */
 .snap-x-mandatory { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
 .snap-start { scroll-snap-align: start; }
 
-/* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
@@ -260,7 +249,6 @@
   }
 }
 
-/* Hide browser number input spinners */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -270,7 +258,6 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Animated gradient border for marketplace action buttons */
 @keyframes border-flow {
   0%, 100% { background-position: 0% 50%; }
   50%       { background-position: 100% 50%; }
@@ -281,7 +268,6 @@ input[type="number"] {
   animation: border-flow 5s ease infinite;
 }
 
-/* Wrapper that adds a 2px animated gradient border around a card */
 .card-exclusive-wrapper {
   padding: 2px;
   border-radius: calc(var(--radius) * 1.25 + 2px);
