@@ -1,18 +1,5 @@
 import { test, expect } from "bun:test";
 
-// @starknet-react/core and starknetkit both declare a peer range on starknet
-// that is narrower than the version this app installs. The range is
-// conservative rather than a real incompatibility — the APIs they call
-// (Contract's options constructor, WalletAccount.connect) are identical across
-// it — but "conservative" is a claim that has to keep being true.
-//
-// These tests drive the wallet stack's runtime paths: module init, provider
-// factories, and construction of every connector the app ships. They fail if a
-// starknet upgrade moves an API the stack depends on, which a typecheck against
-// its published types would not catch.
-//
-// What they cannot cover: an actual wallet handshake needs a browser and an
-// installed extension. Treat a green run as necessary, not sufficient.
 test("starknet-react loads and builds providers against starknet v10", async () => {
   const core = await import("@starknet-react/core");
   const { RpcProvider, Contract, WalletAccount } = await import("starknet");
@@ -20,12 +7,10 @@ test("starknet-react loads and builds providers against starknet v10", async () 
   expect(typeof core.StarknetConfig).toBe("function");
   expect(typeof core.jsonRpcProvider).toBe("function");
 
-  // The provider factory starknet-react calls internally.
   const factory = core.jsonRpcProvider({ rpc: () => ({ nodeUrl: "https://example.invalid" }) });
   const provider = factory({ id: 1n, name: "x", network: "mainnet" } as never);
   expect(provider).toBeInstanceOf(RpcProvider);
 
-  // The two APIs whose shape actually matters.
   expect(typeof (WalletAccount as unknown as { connect: unknown }).connect).toBe("function");
   const abi = [
     { type: "interface", name: "I", items: [
@@ -49,8 +34,6 @@ test("the dapp's own starknet usage still resolves under v10", async () => {
   expect(validateAndParseAddress("0x1")).toContain("0x");
 });
 
-// The dapp's real connector set. Each of these wraps starknet APIs, so loading
-// and constructing them is what would surface a v10 mismatch outside a browser.
 test("every wallet connector constructs against starknet v10", async () => {
   const { ArgentX } = await import("starknetkit/argentX");
   const { Braavos } = await import("starknetkit/braavos");
@@ -62,7 +45,7 @@ test("every wallet connector constructs against starknet v10", async () => {
   for (const [name, Ctor] of Object.entries({ ArgentX, Braavos, MetaMask, Keplr, Fordefi, Xverse })) {
     const connector = new (Ctor as new () => { id: string; available: () => boolean })();
     expect(`${name}:${typeof connector.id}`).toBe(`${name}:string`);
-    // available() reads the injected wallet object; in Node it must say no, not throw.
+
     expect(`${name}:${typeof connector.available}`).toBe(`${name}:function`);
   }
 });

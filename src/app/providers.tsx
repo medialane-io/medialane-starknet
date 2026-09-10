@@ -107,10 +107,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 ? (err as { status: number }).status
                 : null;
 
-            // A missing resource is a state the page renders (pending, empty),
-            // never something to interrupt the user with. Toasting it turned a
-            // freshly minted asset the chain had already accepted into a red
-            // "Token not found" error.
             if (status === 404) return;
 
             const msg = err instanceof Error ? err.message : "Something went wrong";

@@ -1,4 +1,3 @@
-
 import { type NextRequest, NextResponse } from "next/server";
 import { createRateLimiter, isSameOrigin } from "@medialane/sdk";
 import { TRUSTED_APP_IP_HEADER, isSpoofableForwardingHeader, trustedClientIp } from "@/lib/client-ip";
@@ -32,12 +31,6 @@ const CACHEABLE_GET_PATHS = [
 ];
 const EDGE_CACHE_CONTROL = "public, s-maxage=30, stale-while-revalidate=120";
 
-// Every proxied request injects the first-party MEDIALANE_API_KEY (metered
-// credits), so this must not be an open proxy. Three guards bound credit-drain
-// abuse: the per-method path allowlist in ./allowlist.ts, the same-origin
-// check, and the per-IP rate limit. The rate limit is the only one that holds
-// against a non-browser client — isSameOrigin passes a request with no Origin
-// header at all.
 const checkRateLimit = createRateLimiter(60_000, 600);
 
 async function handle(

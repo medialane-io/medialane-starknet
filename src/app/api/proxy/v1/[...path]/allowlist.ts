@@ -1,11 +1,5 @@
-
 const ALLOWED_ROUTES: Record<string, RegExp[]> = {
 
-  // Explicit allowlist — every path here is a public/self-scoped read the dapp
-  // actually calls through @medialane/sdk, @medialane/ui's shared hooks, or its
-  // own hooks. Anything not listed (e.g. /v1/portal/*, /v1/business/provisioning)
-  // is internal/self-service tenant data and must stay unreachable from this
-  // public proxy.
   GET: [
     /^orders$/,
     /^orders\/[^/]+$/,
