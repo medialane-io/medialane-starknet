@@ -20,12 +20,7 @@ const config: Config = {
 				],
 			},
 
-			/* ═══════════════════════════════════════════
-			   M3 Color Roles
-			   All reference CSS variables from globals.css
-			   ═══════════════════════════════════════════ */
 			colors: {
-				// ── Brand palette (matches medialane-io) ──
 				brand: {
 					blue:   "hsl(var(--brand-blue))",
 					navy:   "hsl(var(--brand-navy))",
@@ -34,31 +29,26 @@ const config: Config = {
 					orange: "hsl(var(--brand-orange))",
 				},
 
-				// ── M3 Primary ──
 				"m3-primary": "hsl(var(--m3-primary))",
 				"m3-on-primary": "hsl(var(--m3-on-primary))",
 				"m3-primary-container": "hsl(var(--m3-primary-container))",
 				"m3-on-primary-container": "hsl(var(--m3-on-primary-container))",
 
-				// ── M3 Secondary ──
 				"m3-secondary": "hsl(var(--m3-secondary))",
 				"m3-on-secondary": "hsl(var(--m3-on-secondary))",
 				"m3-secondary-container": "hsl(var(--m3-secondary-container))",
 				"m3-on-secondary-container": "hsl(var(--m3-on-secondary-container))",
 
-				// ── M3 Tertiary ──
 				"m3-tertiary": "hsl(var(--m3-tertiary))",
 				"m3-on-tertiary": "hsl(var(--m3-on-tertiary))",
 				"m3-tertiary-container": "hsl(var(--m3-tertiary-container))",
 				"m3-on-tertiary-container": "hsl(var(--m3-on-tertiary-container))",
 
-				// ── M3 Error ──
 				"m3-error": "hsl(var(--m3-error))",
 				"m3-on-error": "hsl(var(--m3-on-error))",
 				"m3-error-container": "hsl(var(--m3-error-container))",
 				"m3-on-error-container": "hsl(var(--m3-on-error-container))",
 
-				// ── M3 Surfaces ──
 				"m3-surface": "hsl(var(--m3-surface))",
 				"m3-on-surface": "hsl(var(--m3-on-surface))",
 				"m3-surface-variant": "hsl(var(--m3-surface-variant))",
@@ -71,19 +61,15 @@ const config: Config = {
 				"m3-surface-dim": "hsl(var(--m3-surface-dim))",
 				"m3-surface-bright": "hsl(var(--m3-surface-bright))",
 
-				// ── M3 Outline ──
 				"m3-outline": "hsl(var(--m3-outline))",
 				"m3-outline-variant": "hsl(var(--m3-outline-variant))",
 
-				// ── M3 Inverse ──
 				"m3-inverse-surface": "hsl(var(--m3-inverse-surface))",
 				"m3-inverse-on-surface": "hsl(var(--m3-inverse-on-surface))",
 				"m3-inverse-primary": "hsl(var(--m3-inverse-primary))",
 
-				// ── M3 Scrim ──
 				"m3-scrim": "hsl(var(--m3-scrim))",
 
-				// ── Legacy shadcn/ui compat ──
 				background: "hsl(var(--background))",
 				foreground: "hsl(var(--foreground))",
 				primary: {
@@ -129,26 +115,18 @@ const config: Config = {
 				},
 			},
 
-			/* ═══════════════════════════════════════════
-			   M3 Elevation Shadows
-			   Tinted with brand hues (Blue & Mauve) for vibrant depth
-			   ═══════════════════════════════════════════ */
 			boxShadow: {
 				"m3-1": "0 1px 3px 1px rgba(37,99,235,0.06), 0 1px 2px 0 rgba(147,86,193,0.04)",
 				"m3-2": "0 2px 6px 2px rgba(37,99,235,0.08), 0 1px 2px 0 rgba(147,86,193,0.05)",
 				"m3-3": "0 4px 8px 3px rgba(37,99,235,0.10), 0 1px 3px 0 rgba(147,86,193,0.06)",
 				"m3-4": "0 6px 10px 4px rgba(37,99,235,0.12), 0 2px 3px 0 rgba(147,86,193,0.08)",
 				"m3-5": "0 8px 12px 6px rgba(37,99,235,0.14), 0 4px 4px 0 rgba(147,86,193,0.10)",
-				// Vivid Glows
 				"glow-blue": "0 0 15px rgba(37,99,235,0.25), 0 0 45px rgba(37,99,235,0.10)",
 				"glow-mauve": "0 0 15px rgba(147,86,193,0.25), 0 0 45px rgba(147,86,193,0.10)",
 				"glow-orange": "0 0 15px rgba(249,115,22,0.25), 0 0 45px rgba(249,115,22,0.10)",
 				"glow-mixed": "0 4px 20px rgba(37,99,235,0.15), 0 8px 40px rgba(147,86,193,0.10), 0 2px 10px rgba(249,115,22,0.05)",
 			},
 
-			/* ═══════════════════════════════════════════
-			   M3 Shape Tokens
-			   ═══════════════════════════════════════════ */
 			borderRadius: {
 				"m3-xs": "4px",
 				"m3-sm": "8px",
@@ -157,15 +135,11 @@ const config: Config = {
 				"m3-xl": "28px",
 				"m3-2xl": "32px",
 				"m3-full": "9999px",
-				// Legacy shadcn
 				lg: "var(--radius)",
 				md: "calc(var(--radius) - 2px)",
 				sm: "calc(var(--radius) - 4px)",
 			},
 
-			/* ═══════════════════════════════════════════
-			   M3 Motion (CSS-level)
-			   ═══════════════════════════════════════════ */
 			transitionTimingFunction: {
 				"m3-standard": "cubic-bezier(0.2, 0, 0, 1)",
 				"m3-decelerate": "cubic-bezier(0, 0, 0, 1)",
@@ -177,9 +151,6 @@ const config: Config = {
 				"m3-long": "500ms",
 			},
 
-			/* ═══════════════════════════════════════════
-			   Keyframes
-			   ═══════════════════════════════════════════ */
 			keyframes: {
 				"accordion-down": {
 					from: { height: "0" },

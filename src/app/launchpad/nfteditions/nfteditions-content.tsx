@@ -196,7 +196,7 @@ export function NFTEditionsContent() {
               <div>
                 <p className="font-semibold">No editions collections yet</p>
                 <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                  Create your first editions collection to start minting.
+                  Editions live in a collection. Make one here and it is ready to mint into.
                 </p>
               </div>
               <Link
@@ -204,7 +204,7 @@ export function NFTEditionsContent() {
                 className="flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold text-white bg-brand-purple hover:brightness-110 transition-all"
               >
                 <Plus className="h-4 w-4" />
-                Create your first collection
+                Create a collection
               </Link>
             </div>
           </FadeIn>

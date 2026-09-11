@@ -114,7 +114,7 @@ export default function PortfolioRemixOffersPage() {
           </div>
         ) : outgoing.length === 0 ? (
           <div className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
-            You haven&apos;t submitted any remix requests yet.
+            Remix requests you send appear here.
           </div>
         ) : (
           <div className="rounded-xl border border-border divide-y divide-border">

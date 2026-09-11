@@ -107,7 +107,7 @@ export default function MyDropsPage() {
         <FadeIn>
           <div className="bento-cell border-dashed p-16 text-center space-y-3">
             <Package className="h-10 w-10 text-muted-foreground/20 mx-auto" />
-            <p className="text-sm text-muted-foreground">You haven&apos;t launched any drops yet.</p>
+            <p className="text-sm text-muted-foreground">Launch a drop and it appears here.</p>
             <Button asChild size="sm" className="bg-brand-orange hover:brightness-110 text-white gap-1.5">
               <Link href="/launchpad/drop/create">
                 <Plus className="h-3.5 w-3.5" />

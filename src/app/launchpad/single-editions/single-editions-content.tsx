@@ -179,14 +179,14 @@ function CollectionPicker({
     return (
       <div className="rounded-xl border border-dashed border-border p-5 text-center space-y-3">
         <p className="text-sm text-muted-foreground">
-          You don&apos;t have a collection yet — every work needs one to live in.
+          Every work lives in a collection. Make one here and it is ready to mint into.
         </p>
         <Link
           href="/launchpad/single-editions/collection"
           className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-semibold text-white bg-brand-blue hover:brightness-110 transition-all"
         >
           <Plus className="h-3.5 w-3.5" />
-          Create your first collection
+          Create a collection
         </Link>
       </div>
     );
