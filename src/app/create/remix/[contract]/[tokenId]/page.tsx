@@ -41,6 +41,7 @@ import { ToggleGroup, Section } from "@/components/create/create-form-primitives
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import { toast } from "sonner";
 import type { Call } from "starknet";
+import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 
 const TOKENS = getListableTokens();
 
@@ -186,19 +187,8 @@ export default function CreateRemixPage() {
 
         const formData = new FormData();
 
-        const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(siwsToken, { method: "POST" }));
-        const signedData = await signedRes.json();
-        if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
-        const imgFormData = new FormData();
-        imgFormData.append("file", imageFile, imageFile.name);
-        imgFormData.append("network", "public");
-        imgFormData.append("name", imageFile.name);
-        const imgRes = await fetch(signedData.url, { method: "POST", body: imgFormData });
-        if (!imgRes.ok) throw new Error("Image upload to IPFS failed");
-        const imgJson = await imgRes.json();
-        const imgCid = imgJson.data?.cid;
-        if (!imgCid) throw new Error("Image upload returned no CID");
-        formData.set("imageUri", `ipfs://${imgCid}`);
+        const uploaded = await uploadFileToIpfs(imageFile);
+        formData.set("imageUri", uploaded.uri);
         formData.set("name", metadata.name);
         formData.set("description", metadata.description);
         formData.set("creator", walletAddress);
@@ -218,14 +208,8 @@ export default function CreateRemixPage() {
         tokenUri = uploadData.uri;
       } else {
 
-        const pinRes = await fetch("/api/pinata/json", withSiwsAuth(siwsToken, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(metadata),
-        }));
-        const pinData = await pinRes.json();
-        if (!pinRes.ok || !pinData.uri) throw new Error(pinData.error ?? "Metadata upload failed");
-        tokenUri = pinData.uri;
+        const pinnedUri = await uploadJsonToIpfs(metadata);
+        tokenUri = pinnedUri;
       }
 
       setMintStep("processing");

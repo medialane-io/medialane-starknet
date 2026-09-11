@@ -40,6 +40,7 @@ import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 
@@ -127,18 +128,8 @@ export default function CreateNFTEditionsCollectionPage() {
     setImageUploading(true);
     try {
       const token = await getValidToken();
-      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
-      const signedData = await signedRes.json();
-      if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
-      const fd = new FormData();
-      fd.append("file", file, file.name);
-      fd.append("network", "public");
-      fd.append("name", file.name);
-      const uploadRes = await fetch(signedData.url, { method: "POST", body: fd });
-      if (!uploadRes.ok) throw new Error("Upload failed");
-      const { data } = await uploadRes.json();
-      if (!data?.cid) throw new Error("No CID returned");
-      setImageUri(`ipfs://${data.cid}`);
+      const uploaded = await uploadFileToIpfs(file);
+      setImageUri(uploaded.uri);
       toast.success("Image uploaded to IPFS");
     } catch (err) {
       const t = uploadFailureToast(err);
@@ -181,20 +172,12 @@ export default function CreateNFTEditionsCollectionPage() {
 
       let collectionMetaUri: string | undefined;
       if (imageUri) {
-        const token = await getValidToken();
-        const r = await fetch("/api/pinata/json", withSiwsAuth(token, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: values.name,
-            description: values.description || "",
-            image: imageUri,
-            external_link: values.external_link || "",
-          }),
-        }));
-        const d = await r.json();
-        if (!r.ok || !d.uri) throw new Error("Failed to pin metadata to IPFS");
-        collectionMetaUri = d.uri;
+        collectionMetaUri = await uploadJsonToIpfs({
+          name: values.name,
+          description: values.description || "",
+          image: imageUri,
+          external_link: values.external_link || "",
+        });
       }
 
       setDialogTxStatus("submitting");

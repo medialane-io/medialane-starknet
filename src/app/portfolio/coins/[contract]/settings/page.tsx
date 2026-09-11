@@ -55,7 +55,7 @@ export default function CoinSettingsPage({ params }: Props) {
     try {
       const token = await getValidToken();
       if (!token) throw new Error("Wallet sign-in required");
-      const { uri } = await uploadFileToIpfs(file, token, "image");
+      const { uri } = await uploadFileToIpfs(file, "image");
       setImage(uri);
     } catch (err) {
       const t = uploadFailureToast(err);

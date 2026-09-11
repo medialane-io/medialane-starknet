@@ -25,6 +25,7 @@ import { INDEXER_REVALIDATION_DELAY_MS, EXPLORER_URL } from "@/lib/constants";
 import { MarketplaceSuccessState } from "@medialane/ui";
 import { fireConfetti } from "@/lib/confetti";
 import { assetHref } from "@/lib/routes";
+import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 
 interface Props {
   offer: RemixOffer | null;
@@ -116,19 +117,13 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
           { trait_type: "Creator", value: walletAddress },
         ],
       };
-      const pinRes = await fetch("/api/pinata/json", withSiwsAuth(token, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(metadata),
-      }));
-      const pinData = await pinRes.json().catch(() => ({}));
-      if (!pinRes.ok || !pinData.uri) throw new Error(pinData.error ?? "Metadata upload failed");
+      const pinnedUri = await uploadJsonToIpfs(metadata);
 
       const intentRes = await client.api.createMintIntent({
         owner: walletAddress,
         collectionId: effectiveCollectionId,
         recipient: walletAddress,
-        tokenUri: pinData.uri,
+        tokenUri: pinnedUri,
         royaltyBps: 0,
       });
       const mintCalls = (intentRes.data as any)?.calls as Call[];

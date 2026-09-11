@@ -38,6 +38,7 @@ import { normalizeAddress } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 import { useMyClubCollections } from "@/hooks/use-club";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 
 const CLUB_DEPLOYED_SELECTOR = hash.getSelectorFromName("ClubDeployed");
 
@@ -121,18 +122,8 @@ export default function CreateClubPage() {
     setImageUploading(true);
     try {
       const token = await getValidToken();
-      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
-      const signedData = await signedRes.json();
-      if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
-      const fd = new FormData();
-      fd.append("file", file, file.name);
-      fd.append("network", "public");
-      fd.append("name", file.name);
-      const uploadRes = await fetch(signedData.url, { method: "POST", body: fd });
-      if (!uploadRes.ok) throw new Error("Upload failed");
-      const { data } = await uploadRes.json();
-      if (!data?.cid) throw new Error("No CID returned");
-      setImageUri(`ipfs://${data.cid}`);
+      const uploaded = await uploadFileToIpfs(file);
+      setImageUri(uploaded.uri);
       toast.success("Image uploaded");
     } catch (err) {
       const t = uploadFailureToast(err);
@@ -159,22 +150,11 @@ export default function CreateClubPage() {
 
       let baseUri = "";
       if (imageUri) {
-        const token = await getValidToken();
-        const res = await fetch("/api/pinata/json", withSiwsAuth(token, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: values.name,
-            description: values.description || "",
-            image: imageUri,
-          }),
-        }));
-        const pinData = await res.json();
-        if (!res.ok || !pinData?.uri) {
-          throw new Error(pinData?.error ?? "Club metadata upload failed — please try again");
-        }
-
-        baseUri = pinData.uri;
+        baseUri = await uploadJsonToIpfs({
+          name: values.name,
+          description: values.description || "",
+          image: imageUri,
+        });
       }
 
       const intentRes = await client.api.createCollectionIntent({

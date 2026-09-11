@@ -71,6 +71,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Call } from "starknet";
+import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 
 const schema = z.object({
   collectionId: z.string().min(1, "Select a collection"),
@@ -385,19 +386,8 @@ export function SingleEditionsContent() {
       const token = await getValidToken();
       if (imageFile) {
 
-        const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
-        const signedData = await signedRes.json();
-        if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
-        const imgFormData = new FormData();
-        imgFormData.append("file", imageFile, imageFile.name);
-        imgFormData.append("network", "public");
-        imgFormData.append("name", imageFile.name);
-        const uploadRes2 = await fetch(signedData.url, { method: "POST", body: imgFormData });
-        if (!uploadRes2.ok) throw new Error("Image upload failed");
-        const uploadJson = await uploadRes2.json();
-        const cid = uploadJson.data?.cid;
-        if (!cid) throw new Error("Image upload returned no CID");
-        formData.set("imageUri", `ipfs://${cid}`);
+        const uploaded = await uploadFileToIpfs(imageFile);
+        formData.set("imageUri", uploaded.uri);
       }
 
       templateFieldsRef.current.forEach(({ traitType, value }) => {

@@ -32,6 +32,7 @@ import { type PopEventType } from "@/lib/launchpad-contracts";
 import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { cn } from "@/lib/utils";
+import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 
 const EVENT_TYPES: {
   value: PopEventType;
@@ -111,16 +112,8 @@ export default function CreatePOPPage() {
     setImageUploading(true);
     try {
       const token = await getValidToken();
-      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
-      const { url: uploadUrl } = await signedRes.json();
-      const fd = new FormData();
-      fd.append("file", file, file.name);
-      fd.append("network", "public");
-      fd.append("name", file.name);
-      const up = await fetch(uploadUrl, { method: "POST", body: fd });
-      const { data } = await up.json();
-      if (!data?.cid) throw new Error("No CID");
-      setImageUri(`ipfs://${data.cid}`);
+            const uploaded = await uploadFileToIpfs(file);
+      setImageUri(uploaded.uri);
       toast.success("Badge image uploaded");
     } catch (err) {
       if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }
@@ -146,14 +139,8 @@ export default function CreatePOPPage() {
       };
       if (imageUri) metadata.image = imageUri;
       const token = await getValidToken();
-      const r = await fetch("/api/pinata/json", withSiwsAuth(token, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(metadata),
-      }));
-      const d = await r.json();
-      if (!r.ok || !d.uri) throw new Error("Failed to pin metadata to IPFS");
-      const baseUri: string = d.uri;
+      const pinnedUri = await uploadJsonToIpfs(metadata);
+      const baseUri: string = pinnedUri;
 
       const claimEndTimestamp = Math.floor(
         new Date(`${values.claimEndDate}T${values.claimEndTime}:00`).getTime() / 1000

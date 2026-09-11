@@ -68,6 +68,7 @@ import {
 import { IPTypeFields, type MetadataField } from "@/components/create/ip-type-fields";
 import { makeUploadDocument } from "@/lib/upload-document";
 import type { TxStatus } from "@/hooks/use-tx";
+import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 
 const schema = z.object({
   value: z
@@ -244,16 +245,8 @@ export default function MintNFTEditionsPage() {
     setImageUploading(true);
     try {
       const token = await getValidToken();
-      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
-      const { url: uploadUrl } = await signedRes.json();
-      const fd = new FormData();
-      fd.append("file", file, file.name);
-      fd.append("network", "public");
-      fd.append("name", file.name);
-      const up = await fetch(uploadUrl, { method: "POST", body: fd });
-      const { data } = await up.json();
-      if (!data?.cid) throw new Error("No CID");
-      setImageUri(`ipfs://${data.cid}`);
+            const uploaded = await uploadFileToIpfs(file);
+      setImageUri(uploaded.uri);
       toast.success("Image uploaded to IPFS");
     } catch (err) {
 

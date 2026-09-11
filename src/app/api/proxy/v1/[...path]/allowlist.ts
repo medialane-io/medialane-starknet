@@ -1,6 +1,7 @@
 const ALLOWED_ROUTES: Record<string, RegExp[]> = {
 
   GET: [
+    /^metadata\/(signed-url|resolve)$/,
     /^orders$/,
     /^orders\/[^/]+$/,
     /^orders\/token\/[^/]+\/[^/]+$/,
@@ -66,6 +67,7 @@ const ALLOWED_ROUTES: Record<string, RegExp[]> = {
     /^remix-offers(\/(auto|self\/confirm|[^/]+\/(confirm|reject|extend)))?$/,
     /^users\/register$/,
     /^username-claims$/,
+    /^metadata\/(upload|upload-file|upload-directory)$/,
   ],
   PATCH: [
     /^intents\/[^/]+\/(signature|confirm)$/,

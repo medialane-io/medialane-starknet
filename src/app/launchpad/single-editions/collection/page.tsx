@@ -112,7 +112,7 @@ export default function LaunchpadCreateCollectionPage() {
     try {
       const siwsToken = await getValidToken();
       if (!siwsToken) throw new Error("Please sign in with your wallet to upload images.");
-      const upload = await uploadFileToIpfs(file, siwsToken);
+      const upload = await uploadFileToIpfs(file);
       setImageUri(upload.uri);
       toast.success("Image uploaded");
     } catch (err: unknown) {
@@ -157,7 +157,7 @@ export default function LaunchpadCreateCollectionPage() {
           description: values.description || "",
           image: imageUri,
           external_link: values.external_link || "https://medialane.io",
-        }, metaToken);
+        });
       }
 
       const intentRes = await client.api.createCollectionIntent({

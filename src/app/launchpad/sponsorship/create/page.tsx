@@ -87,8 +87,8 @@ function PendingProposalsPanel({
   );
 }
 
-async function pinLicenseTerms(terms: SponsorshipTerms, siwsToken: string): Promise<string> {
-  return uploadJsonToIpfs(toLicenseMetadata(terms), siwsToken);
+async function pinLicenseTerms(terms: SponsorshipTerms): Promise<string> {
+  return uploadJsonToIpfs(toLicenseMetadata(terms));
 }
 
 export default function CreateSponsorshipPage() {
@@ -141,9 +141,7 @@ export default function CreateSponsorshipPage() {
 
     setIsSubmitting(true);
     try {
-      const siwsToken = await getValidToken();
-      if (!siwsToken) throw new Error("Sign in with your wallet to save the license terms.");
-      const licenseTermsUri = await pinLicenseTerms(terms, siwsToken);
+      const licenseTermsUri = await pinLicenseTerms(terms);
 
       const amount = BigInt(Math.round(Number(terms.amount) * 10 ** token.decimals));
       const royaltyBps = Math.round(Number(terms.royaltyPercent || "0") * 100);

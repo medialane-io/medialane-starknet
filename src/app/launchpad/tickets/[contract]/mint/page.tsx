@@ -43,6 +43,7 @@ import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
+import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 
 function dateToUnixTimestamp(dateStr: string | undefined): number | undefined {
   if (!dateStr) return undefined;
@@ -145,17 +146,8 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
     setImageUploading(true);
     try {
       const token = await getValidToken();
-      const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(token, { method: "POST" }));
-      const signedData = await signedRes.json();
-      if (!signedRes.ok || !signedData.url) throw new Error("Failed to get upload URL");
-      const fd = new FormData();
-      fd.append("file", file, file.name);
-      fd.append("network", "public");
-      fd.append("name", file.name);
-      const up = await fetch(signedData.url, { method: "POST", body: fd });
-      const { data } = await up.json();
-      if (!data?.cid) throw new Error("No CID");
-      setImageUri(`ipfs://${data.cid}`);
+      const uploaded = await uploadFileToIpfs(file);
+      setImageUri(uploaded.uri);
       toast.success("Image uploaded");
     } catch (err) {
       if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }

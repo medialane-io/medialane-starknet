@@ -1,6 +1,6 @@
 "use client";
 
-import { withSiwsAuth } from "@/lib/pinata-fetch";
+import { buildAssetMetadata, type BuildAssetMetadataInput } from "@medialane/sdk";
 
 export interface UploadedIpfsFile {
   cid: string;
@@ -9,17 +9,16 @@ export interface UploadedIpfsFile {
 
 export async function uploadFileToIpfs(
   file: File,
-  siwsToken: string,
   kind: "image" | "document" | "media" = "image",
 ): Promise<UploadedIpfsFile> {
-  const signedRes = await fetch("/api/pinata/signed-url", withSiwsAuth(siwsToken, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind }),
-  }));
-  const signedData = await signedRes.json().catch(() => ({})) as { url?: string };
-  if (!signedRes.ok || !signedData.url) {
-    throw new Error("Failed to get upload URL");
+  const signedRes = await fetch(`/api/proxy/v1/metadata/signed-url?kind=${kind}`);
+  const signed = (await signedRes.json().catch(() => ({}))) as {
+    data?: { url?: string };
+    error?: string;
+  };
+  const uploadUrl = signed.data?.url;
+  if (!signedRes.ok || !uploadUrl) {
+    throw new Error(signed.error ?? "Failed to get upload URL");
   }
 
   const formData = new FormData();
@@ -27,36 +26,54 @@ export async function uploadFileToIpfs(
   formData.append("network", "public");
   formData.append("name", file.name);
 
-  const uploadRes = await fetch(signedData.url, { method: "POST", body: formData });
-  if (!uploadRes.ok) {
-    throw new Error("Image upload to IPFS failed");
-  }
-
-  const uploadJson = await uploadRes.json().catch(() => ({})) as {
-    data?: { cid?: string };
-  };
+  const uploadRes = await fetch(uploadUrl, { method: "POST", body: formData });
+  const uploadJson = (await uploadRes.json().catch(() => ({}))) as { data?: { cid?: string } };
   const cid = uploadJson.data?.cid;
-  if (!cid) {
-    throw new Error("Image upload returned no CID");
+  if (!uploadRes.ok || !cid) {
+    throw new Error("Image upload to IPFS failed");
   }
 
   return { cid, uri: `ipfs://${cid}` };
 }
 
-export async function uploadJsonToIpfs(
-  payload: unknown,
-  siwsToken: string,
-): Promise<string> {
-  const res = await fetch("/api/pinata/json", withSiwsAuth(siwsToken, {
+export async function uploadJsonToIpfs(payload: unknown): Promise<string> {
+  const res = await fetch("/api/proxy/v1/metadata/upload", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  }));
-  const data = await res.json().catch(() => ({})) as { uri?: string; error?: string };
+  });
+  const body = (await res.json().catch(() => ({}))) as {
+    data?: { url?: string };
+    error?: string;
+  };
+  const uri = body.data?.url;
+  if (!res.ok || !uri) {
+    throw new Error(body.error ?? "Metadata upload failed");
+  }
+  return uri;
+}
 
-  if (!res.ok || !data.uri) {
-    throw new Error(data.error ?? "Metadata upload failed");
+export interface PinAssetMetadataInput extends Omit<BuildAssetMetadataInput, "registrationDate"> {
+  imageFile?: File | null;
+}
+
+export async function pinAssetMetadata(
+  input: PinAssetMetadataInput,
+): Promise<{ uri: string; imageUri: string | null }> {
+  const { imageFile, ...fields } = input;
+
+  let imageUri = fields.imageUri ?? null;
+  if (!imageUri && imageFile && imageFile.size > 0) {
+    imageUri = (await uploadFileToIpfs(imageFile)).uri;
   }
 
-  return data.uri;
+  const uri = await uploadJsonToIpfs(
+    buildAssetMetadata({
+      ...fields,
+      imageUri,
+      externalUrl: fields.externalUrl || "https://medialane.io",
+    }),
+  );
+
+  return { uri, imageUri };
 }
