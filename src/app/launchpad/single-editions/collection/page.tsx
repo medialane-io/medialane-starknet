@@ -28,7 +28,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateCollectionAside } from "@/components/claim/create-collection-aside";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
@@ -59,7 +58,6 @@ export default function LaunchpadCreateCollectionPage() {
   const { execute: executeTransaction, status, txHash } = useTx();
   const { address: walletAddress, isConnected: hasWallet } = useWallet();
   const client = useMedialaneClient();
-  const { getValidToken } = useSiwsToken();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
@@ -110,8 +108,6 @@ export default function LaunchpadCreateCollectionPage() {
     setImageUri(null);
     setImageUploading(true);
     try {
-      const siwsToken = await getValidToken();
-      if (!siwsToken) throw new Error("Please sign in with your wallet to upload images.");
       const upload = await uploadFileToIpfs(file);
       setImageUri(upload.uri);
       toast.success("Image uploaded");
@@ -150,8 +146,6 @@ export default function LaunchpadCreateCollectionPage() {
 
       let baseUri: string | undefined;
       if (imageUri) {
-        const metaToken = await getValidToken();
-        if (!metaToken) throw new Error("Please sign in with your wallet to upload collection metadata.");
         baseUri = await uploadJsonToIpfs({
           name: values.name,
           description: values.description || "",

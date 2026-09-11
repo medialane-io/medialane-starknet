@@ -181,7 +181,6 @@ export default function CreateRemixPage() {
 
       let tokenUri: string;
 
-      const siwsToken = await getValidToken();
       if (imageFile) {
 
         const pinned = await pinAssetMetadata({

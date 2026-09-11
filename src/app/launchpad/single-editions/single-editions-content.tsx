@@ -7,7 +7,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getService } from "@medialane/sdk";
 import type { ApiCollection } from "@medialane/sdk";
-import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -285,7 +284,6 @@ function CollectionPicker({
 export function SingleEditionsContent() {
   const { execute: executeTransaction, status, txHash, error: txError, statusMessage } = useTx();
   const { address: walletAddress } = useWallet();
-  const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
   const { collections: allCollections, isLoading: collectionsLoading } = useCollectionsByOwner(walletAddress ?? null);
@@ -783,7 +781,7 @@ export function SingleEditionsContent() {
                     <IPTypeFields
                       ipType={form.watch("ipType") as IPType}
                       onChange={handleTemplateFields}
-                      uploadDocument={makeUploadDocument(getValidToken)}
+                      uploadDocument={makeUploadDocument()}
                     />
                   </div>
                 </CollapsibleContent>

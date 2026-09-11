@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { rewardToast } from "@/lib/reward-toast";
-import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,7 +63,6 @@ type FormValues = z.infer<typeof schema>;
 
 export default function CreateNFTEditionsCollectionPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
-  const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
@@ -126,7 +124,6 @@ export default function CreateNFTEditionsCollectionPage() {
     setImageUri(null);
     setImageUploading(true);
     try {
-      const token = await getValidToken();
       const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
       toast.success("Image uploaded to IPFS");

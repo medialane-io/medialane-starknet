@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { rewardToast } from "@/lib/reward-toast";
-import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,7 +59,6 @@ type FormValues = z.infer<typeof schema>;
 export default function CreatePOPPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
   const [isTxLoading, setIsTxLoading] = useState(false);
-  const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
   const [eventType, setEventType] = useState<PopEventType>("Conference");
@@ -110,7 +108,6 @@ export default function CreatePOPPage() {
     setImageUri(null);
     setImageUploading(true);
     try {
-      const token = await getValidToken();
             const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
       toast.success("Badge image uploaded");
@@ -137,7 +134,6 @@ export default function CreatePOPPage() {
         ],
       };
       if (imageUri) metadata.image = imageUri;
-      const token = await getValidToken();
       const pinnedUri = await uploadJsonToIpfs(metadata);
       const baseUri: string = pinnedUri;
 

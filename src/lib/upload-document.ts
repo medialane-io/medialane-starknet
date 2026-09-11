@@ -3,11 +3,9 @@
 import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 
-export function makeUploadDocument(getValidToken: () => Promise<string | null>) {
+export function makeUploadDocument() {
   return async (file: File): Promise<string> => {
     try {
-      const token = await getValidToken();
-      if (!token) throw new Error("Connect your wallet first");
       return (await uploadFileToIpfs(file, "document")).uri;
     } catch (err) {
       const t = uploadFailureToast(err);

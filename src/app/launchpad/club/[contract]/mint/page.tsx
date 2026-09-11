@@ -29,7 +29,6 @@ import { MedialaneCollectionCard, ClaimRail } from "@medialane/ui";
 import { MintProgressDialog, type MintStep } from "@/components/marketplace/mint-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useCollection } from "@/hooks/use-collections";
 import { predictNextMembershipId } from "@/hooks/use-club";
 import { assetHref, collectionHref } from "@/lib/routes";
@@ -96,7 +95,6 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
   const contract = normalizeAddress("STARKNET", rawContract);
   const { address, isConnected, execute } = useWallet();
   const { collection, isLoading } = useCollection(contract);
-  const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
@@ -139,7 +137,6 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
     setImageUri(null);
     setImageUploading(true);
     try {
-      const token = await getValidToken();
       const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
       toast.success("Image uploaded");
@@ -164,8 +161,6 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
     setMintedTierId(null);
     setMintStep("uploading");
     try {
-      const siwsToken = await getValidToken();
-      if (!siwsToken) throw new Error("Authentication required — please sign in");
 
       const pinned = await pinAssetMetadata({
         name: values.name,

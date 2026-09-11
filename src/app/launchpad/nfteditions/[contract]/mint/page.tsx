@@ -693,7 +693,7 @@ export default function MintNFTEditionsPage() {
                         key={metadataResetKey}
                         ipType={form.watch("ipType") as IPType}
                         onChange={handleMetadataFields}
-                      uploadDocument={makeUploadDocument(getValidToken)}
+                      uploadDocument={makeUploadDocument()}
                       />
                     </div>
                   </CollapsibleContent>

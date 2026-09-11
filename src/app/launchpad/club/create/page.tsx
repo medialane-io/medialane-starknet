@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { rewardToast } from "@/lib/reward-toast";
 import { collectionHref } from "@/lib/routes";
-import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,7 +68,6 @@ async function readDeployedAddress(txHash: string): Promise<string | null> {
 
 export default function CreateClubPage() {
   const { address, isConnected, execute } = useWallet();
-  const { getValidToken } = useSiwsToken();
   const { mutate } = useMyClubCollections(address ?? null);
   const client = useMedialaneClient();
 
@@ -120,7 +118,6 @@ export default function CreateClubPage() {
     setImageUri(null);
     setImageUploading(true);
     try {
-      const token = await getValidToken();
       const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
       toast.success("Image uploaded");

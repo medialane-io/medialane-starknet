@@ -16,7 +16,6 @@ import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { executePrebuiltIntent } from "@/lib/intent-tx";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useTokensByOwner } from "@/hooks/use-tokens";
-import { useSiwsToken } from "@/hooks/use-siws-token";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -95,7 +94,6 @@ export default function CreateSponsorshipPage() {
   const signer = useVenueSigner();
   const client = useMedialaneClient();
   const { address: activeAddress } = useWallet();
-  const { getValidToken } = useSiwsToken();
 
   const [mode, setMode] = useState<Mode>("propose");
   const [selectedAsset, setSelectedAsset] = useState<OwnedAsset | null>(null);

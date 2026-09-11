@@ -52,7 +52,7 @@ export default function CreateDropPage() {
     fileInputRef, handleImageSelect, clearImage,
   } = useLaunchpadImageUpload({ successMessage: "Cover image uploaded", failureMessage: "Image upload failed" });
 
-  const uploadDocument = useMemo(() => makeUploadDocument(getValidToken), [getValidToken]);
+  const uploadDocument = useMemo(() => makeUploadDocument(), []);
 
   const form = useForm<DropCreateFormValues>({
     resolver: zodResolver(dropCreateSchema),
