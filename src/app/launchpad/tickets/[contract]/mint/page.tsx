@@ -33,7 +33,6 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useCollection } from "@/hooks/use-collections";
 import { useCollectionProfile } from "@/hooks/use-profiles";
 import { predictNextTicketId } from "@/hooks/use-tickets";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { rewardToast } from "@/lib/reward-toast";
@@ -43,7 +42,7 @@ import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
-import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
+import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 
 function dateToUnixTimestamp(dateStr: string | undefined): number | undefined {
   if (!dateStr) return undefined;
@@ -173,28 +172,29 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
       const siwsToken = await getValidToken();
       if (!siwsToken) throw new Error("Authentication required — please sign in");
 
-      const metadataForm = new FormData();
-      metadataForm.set("name", values.name);
-      metadataForm.set("description", values.description ?? "");
-      metadataForm.set("imageUri", imageUri);
-      if (values.external_url) metadataForm.set("external_url", values.external_url);
-      metadataForm.set("ipType", "NFT");
-      metadataForm.set("licenseType", values.licenseType);
-      metadataForm.set("commercialUse", values.commercialUse);
-      metadataForm.set("derivatives", values.derivatives);
-      metadataForm.set("attribution", values.attribution);
-      metadataForm.set("geographicScope", values.geographicScope);
-      metadataForm.set("aiPolicy", values.aiPolicy);
-      metadataForm.set("royalty", String(values.royalty));
-      metadataForm.append("tmpl_Type", "IP Ticket");
-      metadataForm.append("tmpl_Token Standard", "ERC-1155");
-      metadataForm.append("tmpl_Max Supply", values.maxSupply);
-      metadataForm.append("tmpl_Collection Contract", contract);
+      const pinned = await pinAssetMetadata({
+        name: values.name,
+        description: values.description ?? "",
+        imageUri: imageUri,
+        externalUrl: values.external_url,
+        ipType: "NFT",
+        licenseType: values.licenseType,
+        commercialUse: values.commercialUse,
+        derivatives: values.derivatives,
+        attribution: values.attribution,
+        geographicScope: values.geographicScope,
+        aiPolicy: values.aiPolicy,
+        royalty: String(values.royalty),
+        creator: address,
+        templateTraits: [
+          { traitType: "Type", value: "IP Ticket" },
+          { traitType: "Token Standard", value: "ERC-1155" },
+          { traitType: "Max Supply", value: values.maxSupply },
+          { traitType: "Collection Contract", value: contract },
+        ],
+      });
 
-      const uploadRes = await fetch("/api/pinata", withSiwsAuth(siwsToken, { method: "POST", body: metadataForm }));
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || uploadData.error || !uploadData.uri) throw new Error(uploadData.error ?? "Metadata upload failed");
-      const metadataUri: string = uploadData.uri;
+      const metadataUri: string = pinned.uri;
 
       setMintStep("processing");
       setDialogTxStatus("submitting");

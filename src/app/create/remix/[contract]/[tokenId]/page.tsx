@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { assetHref } from "@/lib/routes";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -41,7 +40,7 @@ import { ToggleGroup, Section } from "@/components/create/create-form-primitives
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import { toast } from "sonner";
 import type { Call } from "starknet";
-import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { uploadFileToIpfs, uploadJsonToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 
 const TOKENS = getListableTokens();
 
@@ -185,27 +184,25 @@ export default function CreateRemixPage() {
       const siwsToken = await getValidToken();
       if (imageFile) {
 
-        const formData = new FormData();
-
-        const uploaded = await uploadFileToIpfs(imageFile);
-        formData.set("imageUri", uploaded.uri);
-        formData.set("name", metadata.name);
-        formData.set("description", metadata.description);
-        formData.set("creator", walletAddress);
-        formData.set("ipType", ipType);
-        formData.set("licenseType", licenseType);
-        formData.set("commercialUse", commercial ? "Yes" : "No");
-        formData.set("derivatives", derivatives ? "Allowed" : "Not Allowed");
-        formData.set("attribution", "Required");
-        formData.set("geographicScope", "Worldwide");
-        formData.set("aiPolicy", "Not Allowed");
-        formData.set("royalty", royalty || "0");
-        formData.append("tmpl_Parent Contract", contract);
-        formData.append("tmpl_Parent Token ID", tokenId);
-        const uploadRes = await fetch("/api/pinata", withSiwsAuth(siwsToken, { method: "POST", body: formData }));
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok || !uploadData.uri) throw new Error(uploadData.error ?? "Upload failed");
-        tokenUri = uploadData.uri;
+        const pinned = await pinAssetMetadata({
+          imageFile,
+          name: metadata.name,
+          description: metadata.description,
+          creator: walletAddress,
+          ipType,
+          licenseType,
+          commercialUse: commercial ? "Yes" : "No",
+          derivatives: derivatives ? "Allowed" : "Not Allowed",
+          attribution: "Required",
+          geographicScope: "Worldwide",
+          aiPolicy: "Not Allowed",
+          royalty: royalty || "0",
+          templateTraits: [
+            { traitType: "Parent Contract", value: contract },
+            { traitType: "Parent Token ID", value: tokenId },
+          ],
+        });
+        tokenUri = pinned.uri;
       } else {
 
         const pinnedUri = await uploadJsonToIpfs(metadata);

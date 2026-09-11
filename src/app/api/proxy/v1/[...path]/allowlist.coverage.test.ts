@@ -16,7 +16,6 @@ const EXCLUDED_DIRS = [join(REPO_ROOT, "src/app/api")];
 const EXCLUDED_FILES = new Set([
 
   join(REPO_ROOT, "src/lib/api-server.ts"),
-  join(REPO_ROOT, "src/lib/backend-metadata.ts"),
 
   join(REPO_ROOT, "src/app/collection/[slug]/page.tsx"),
 ]);

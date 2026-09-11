@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { rewardToast } from "@/lib/reward-toast";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";

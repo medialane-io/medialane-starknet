@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { rewardToast } from "@/lib/reward-toast";
 import { assetHref, collectionHref } from "@/lib/routes";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useParams } from "next/navigation";
@@ -68,7 +67,7 @@ import {
 import { IPTypeFields, type MetadataField } from "@/components/create/ip-type-fields";
 import { makeUploadDocument } from "@/lib/upload-document";
 import type { TxStatus } from "@/hooks/use-tx";
-import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
+import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 
 const schema = z.object({
   value: z
@@ -269,29 +268,15 @@ export default function MintNFTEditionsPage() {
     setTxHash(null);
 
     try {
-      const token = await getValidToken();
-      const metadataForm = new FormData();
-      metadataForm.set("name", values.name);
-      metadataForm.set("description", values.description ?? "");
-      metadataForm.set("imageUri", imageUri);
-      if (values.external_url) metadataForm.set("external_url", values.external_url);
-      metadataForm.set("ipType", values.ipType);
-      metadataForm.set("licenseType", values.licenseType);
-      metadataForm.set("commercialUse", values.commercialUse);
-      metadataForm.set("derivatives", values.derivatives);
-      metadataForm.set("attribution", values.attribution);
-      metadataForm.set("geographicScope", values.geographicScope);
-      metadataForm.set("aiPolicy", values.aiPolicy);
-      metadataForm.set("royalty", String(values.royalty));
-
       const seenTraits = new Set<string>();
+      const templateTraits: { traitType: string; value: string }[] = [];
       const appendTrait = (traitType: string, value: string) => {
         const cleanTrait = traitType.trim();
         const cleanValue = value.trim();
         const key = cleanTrait.toLowerCase();
         if (!cleanTrait || !cleanValue || seenTraits.has(key)) return;
         seenTraits.add(key);
-        metadataForm.append(`tmpl_${cleanTrait}`, cleanValue);
+        templateTraits.push({ traitType: cleanTrait, value: cleanValue });
       };
 
       metadataFieldsRef.current.forEach(({ traitType, value }) => appendTrait(traitType, value));
@@ -299,12 +284,23 @@ export default function MintNFTEditionsPage() {
       appendTrait("Editions", values.value);
       appendTrait("Collection Contract", collectionAddress);
 
-      const uploadRes = await fetch("/api/pinata", withSiwsAuth(token, { method: "POST", body: metadataForm }));
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || uploadData.error || !uploadData.uri) {
-        throw new Error(uploadData.error ?? "Metadata upload failed");
-      }
-      const tokenUri: string = uploadData.uri;
+      const pinned = await pinAssetMetadata({
+        name: values.name,
+        description: values.description ?? "",
+        imageUri: imageUri,
+        externalUrl: values.external_url,
+        ipType: values.ipType,
+        licenseType: values.licenseType,
+        commercialUse: values.commercialUse,
+        derivatives: values.derivatives,
+        attribution: values.attribution,
+        geographicScope: values.geographicScope,
+        aiPolicy: values.aiPolicy,
+        royalty: String(values.royalty),
+        creator: walletAddress,
+        templateTraits,
+      });
+      const tokenUri: string = pinned.uri;
 
       setMintStep("processing");
       setTxStatus("submitting");

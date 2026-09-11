@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 
 interface UseLaunchpadImageUploadOptions {
   allowedTypes?: string[];
@@ -71,21 +72,9 @@ export function useLaunchpadImageUpload({
     setImageUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file, file.name);
+      const uploaded = await uploadFileToIpfs(file);
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 60_000);
-      let uploadRes: Response;
-      try {
-        uploadRes = await fetch("/api/pinata/image", { method: "POST", body: formData, signal: controller.signal });
-      } finally {
-        clearTimeout(timeout);
-      }
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || !uploadData?.imageUri) throw new Error(uploadData?.error || "Upload failed");
-
-      setImageUri(uploadData.imageUri);
+      setImageUri(uploaded.uri);
       setUploadSuccess(successMessage);
     } catch (error) {
       setImageUri(null);

@@ -7,7 +7,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getService } from "@medialane/sdk";
 import type { ApiCollection } from "@medialane/sdk";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,7 +70,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Call } from "starknet";
-import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
+import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 
 const schema = z.object({
   collectionId: z.string().min(1, "Select a collection"),
@@ -370,36 +369,25 @@ export function SingleEditionsContent() {
 
     try {
 
-      const formData = new FormData();
-      formData.set("name", values.name);
-      formData.set("description", values.description ?? "");
-      if (values.external_url) formData.set("external_url", values.external_url);
-      formData.set("creator", walletAddress);
-      formData.set("ipType", values.ipType);
-      formData.set("licenseType", values.licenseType);
-      formData.set("commercialUse", values.commercialUse);
-      formData.set("derivatives", values.derivatives);
-      formData.set("attribution", values.attribution);
-      formData.set("geographicScope", values.geographicScope);
-      formData.set("aiPolicy", values.aiPolicy);
-      formData.set("royalty", String(values.royalty));
-      const token = await getValidToken();
-      if (imageFile) {
-
-        const uploaded = await uploadFileToIpfs(imageFile);
-        formData.set("imageUri", uploaded.uri);
-      }
-
-      templateFieldsRef.current.forEach(({ traitType, value }) => {
-        if (traitType.trim() && value.trim()) formData.append(`tmpl_${traitType.trim()}`, value.trim());
+      const pinned = await pinAssetMetadata({
+        name: values.name,
+        description: values.description ?? "",
+        externalUrl: values.external_url,
+        creator: walletAddress,
+        ipType: values.ipType,
+        licenseType: values.licenseType,
+        commercialUse: values.commercialUse,
+        derivatives: values.derivatives,
+        attribution: values.attribution,
+        geographicScope: values.geographicScope,
+        aiPolicy: values.aiPolicy,
+        royalty: String(values.royalty),
+        imageFile,
+        templateTraits: templateFieldsRef.current
+          .filter(({ traitType, value }) => traitType.trim() && value.trim())
+          .map(({ traitType, value }) => ({ traitType: traitType.trim(), value: value.trim() })),
       });
-
-      const uploadRes = await fetch("/api/pinata", withSiwsAuth(token, { method: "POST", body: formData }));
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || uploadData.error) {
-        throw new Error(uploadData.error ?? "Image upload failed");
-      }
-      const tokenUri: string = uploadData.uri;
+      const tokenUri: string = pinned.uri;
       if (!tokenUri) throw new Error("Image upload failed — please try again");
 
       setMintStep("processing");

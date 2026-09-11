@@ -151,7 +151,7 @@ export default function CreateDropPage() {
           templateTraits: metadataFieldsRef.current,
         },
         { name: values.name, description: values.descriptionTemplate, image: imageUri },
-        token
+        walletAddress
       );
       const maxSupply = BigInt(count);
 

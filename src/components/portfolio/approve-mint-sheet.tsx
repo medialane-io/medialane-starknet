@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { withSiwsAuth } from "@/lib/pinata-fetch";
 import { useWallet } from "@/hooks/use-wallet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
