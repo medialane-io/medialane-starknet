@@ -30,7 +30,7 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
+import { ClaimRail, MedialaneCollectionCard, syncTransaction } from "@medialane/ui";
 import { toast } from "sonner";
 import { hash, type Call } from "starknet";
 import { normalizeAddress } from "@medialane/sdk";
@@ -167,6 +167,7 @@ export default function CreateTicketCollectionPage() {
       setDialogTxStatus("submitting");
       const txH = await execute(intentRes.data.calls as Call[]);
       if (!txH) throw new Error("Transaction failed");
+      void syncTransaction(txH);
 
       setDialogTxStatus("confirming");
 

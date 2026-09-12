@@ -30,10 +30,10 @@ import { CreateCollectionAside } from "@/components/claim/create-collection-asid
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Call } from "starknet";
+import { syncTransaction } from "@medialane/ui";
 
 const schema = z.object({
   name: z.string().min(1, "Name required").max(100),
@@ -176,18 +176,7 @@ export default function LaunchpadCreateCollectionPage() {
         throw new Error("Collection transaction reverted on chain");
       }
 
-      try {
-        await Promise.race([
-          fetch(`${MEDIALANE_BACKEND_URL}/v1/collections/sync-tx`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", ...(MEDIALANE_API_KEY ? { "x-api-key": MEDIALANE_API_KEY } : {}) },
-            body: JSON.stringify({ txHash: result }),
-          }),
-          new Promise<never>((_, reject) => setTimeout(() => reject(), 6000)),
-        ]);
-      } catch {
-
-      }
+      await syncTransaction(result);
 
       setCollectionStep("success");
       rewardToast("create_collection");

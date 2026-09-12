@@ -28,7 +28,7 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard } from "@medialane/ui";
+import { MedialaneCollectionCard, syncTransaction } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { toast } from "sonner";
 import { normalizeAddress } from "@medialane/sdk";
@@ -187,6 +187,7 @@ export default function CreateNFTEditionsCollectionPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       const txHash = await execute(intentRes.data.calls as Call[]);
+      void syncTransaction(txHash);
 
       if (!txHash) throw new Error("Transaction failed — no hash returned");
       setDialogTxStatus("confirming");

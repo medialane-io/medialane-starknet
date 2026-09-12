@@ -14,7 +14,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem } from "@medialane/ui";
+import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem, syncTransaction } from "@medialane/ui";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
@@ -179,6 +179,7 @@ export default function CreateDropPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       const txHash = await execute(intentRes.data.calls as Call[]);
+      void syncTransaction(txHash);
 
       const whitelist = values.whitelistEnabled ? parseAddresses(values.allowlistAddresses) : [];
       if (whitelist.length > 0) {

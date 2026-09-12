@@ -68,6 +68,7 @@ const ALLOWED_ROUTES: Record<string, RegExp[]> = {
     /^users\/register$/,
     /^username-claims$/,
     /^metadata\/(upload|upload-file|upload-directory)$/,
+    /^tx\/sync$/,
   ],
   PATCH: [
     /^intents\/[^/]+\/(signature|confirm)$/,

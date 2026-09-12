@@ -45,7 +45,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard } from "@medialane/ui";
+import { MedialaneCollectionCard, syncTransaction } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
 import { hash, type Call } from "starknet";
@@ -319,6 +319,7 @@ export default function MintNFTEditionsPage() {
 
       const txHashResult = await execute(intentRes.data.calls as Call[]);
       if (!txHashResult) throw new Error("Mint transaction failed");
+      void syncTransaction(txHashResult);
 
       await confirmIntentBestEffort(client, intentRes.data.id, txHashResult);
 

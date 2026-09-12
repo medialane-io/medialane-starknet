@@ -25,7 +25,7 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard, ClaimRail } from "@medialane/ui";
+import { MedialaneCollectionCard, ClaimRail, syncTransaction } from "@medialane/ui";
 import { MintProgressDialog, type MintStep } from "@/components/marketplace/mint-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
@@ -227,6 +227,7 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
       const allCalls = [...(tierRes.data.calls as Call[]), ...(mintRes.data.calls as Call[])];
       const txHash = await execute(allCalls);
       if (!txHash) throw new Error("Failed to mint tickets");
+      void syncTransaction(txHash);
 
       setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");
