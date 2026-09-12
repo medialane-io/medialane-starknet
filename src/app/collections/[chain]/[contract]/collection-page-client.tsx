@@ -10,7 +10,7 @@ import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listi
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddressDisplay } from "@/components/shared/address-display";
-import { Flag, Inbox, Sparkles, Lock, Settings } from "lucide-react";
+import { Flag, Inbox, Plus, Sparkles, Lock, Settings } from "lucide-react";
 import { LoadMoreSentinel, HiddenContentBanner, CollectionHeroBanner, ClubOwnerActions, OrderSortControl, sortOrders, type OrderSort } from "@medialane/ui";
 import { ReportDialog } from "@/components/report-dialog";
 import { useCollectionProfile } from "@/hooks/use-profiles";
@@ -134,10 +134,21 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
   }
 
   if (allTokens.length === 0) {
+    const isCollectionOwner =
+      !!walletAddress &&
+      !!collection?.owner &&
+      normalizeAddress("STARKNET", walletAddress) === normalizeAddress("STARKNET", collection.owner);
+    const mintHref = isCollectionOwner ? mintHrefFor(collection?.service, contract) : null;
+
     return (
       <EmptyState
-        title="No items yet"
-        body="Tokens in this collection will appear here once indexed."
+        title={mintHref ? "Ready for your first work" : "No items yet"}
+        body={
+          mintHref
+            ? "Mint into this collection and it appears here."
+            : "Tokens in this collection will appear here once indexed."
+        }
+        action={mintHref ? { href: mintHref, label: "Mint your first work" } : undefined}
       />
     );
   }
@@ -563,12 +574,44 @@ export default function CollectionPageClient() {
   );
 }
 
-function EmptyState({ title, body }: { title: string; body: string }) {
+function EmptyState({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: string;
+  action?: { href: string; label: string };
+}) {
   return (
     <div className="py-20 flex flex-col items-center gap-3 text-center">
       <Inbox className="h-10 w-10 text-muted-foreground/40" />
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
       <p className="text-xs text-muted-foreground/70 max-w-xs">{body}</p>
+      {action ? (
+        <Link
+          href={action.href}
+          className="mt-2 inline-flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-semibold text-white bg-brand-blue hover:brightness-110 transition-all"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {action.label}
+        </Link>
+      ) : null}
     </div>
   );
+}
+
+function mintHrefFor(service: string | null | undefined, contract: string): string | null {
+  switch (service) {
+    case "mip-erc721":
+      return "/launchpad/single-editions";
+    case "mip-erc1155":
+      return `/launchpad/nfteditions/${contract}/mint`;
+    case "ip-tickets":
+      return `/launchpad/tickets/${contract}/mint`;
+    case "ip-club":
+      return `/launchpad/club/${contract}/mint`;
+    default:
+      return null;
+  }
 }
