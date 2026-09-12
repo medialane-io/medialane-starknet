@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { ipfsToHttp } from "./utils";
+import { ipfsToHttp, isCollectionOwner } from "./utils";
 
 test("ipfsToHttp routes known IPFS gateway URLs to Pinata's public gateway directly", () => {
   const result = ipfsToHttp("https://gateway.pinata.cloud/ipfs/abc123");
@@ -30,4 +30,20 @@ test("ipfsToHttp rejects blob: URIs", () => {
 
 test("ipfsToHttp resolves ipfs:// URIs to Pinata's public gateway directly, no app-server hop", () => {
   expect(ipfsToHttp("ipfs://QmXxx").startsWith("https://gateway.pinata.cloud/ipfs/QmXxx")).toBe(true);
+});
+
+test("a collection belongs to the wallet that owns it, whatever the padding", () => {
+  const collection = { owner: "0x00c9c29971b48b8e485fbbf4f2d5f0bd2dfbf6a5369e08e2d9" };
+  expect(isCollectionOwner(collection, "0xc9c29971b48b8e485fbbf4f2d5f0bd2dfbf6a5369e08e2d9")).toBe(true);
+});
+
+test("a different wallet does not own it", () => {
+  expect(isCollectionOwner({ owner: "0x01" }, "0x02")).toBe(false);
+});
+
+test("an unknown owner or a disconnected wallet owns nothing", () => {
+  expect(isCollectionOwner({ owner: null }, "0x01")).toBe(false);
+  expect(isCollectionOwner({ owner: "0x01" }, null)).toBe(false);
+  expect(isCollectionOwner(null, "0x01")).toBe(false);
+  expect(isCollectionOwner(undefined, undefined)).toBe(false);
 });

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiCollectionProfile } from "@medialane/sdk";
+import { isCollectionOwner } from "@/lib/utils";
 
 const CONTENT_TYPES = [
   { value: "VIDEO",    label: "Video",       icon: Video,    hint: "YouTube, Vimeo, or any video URL" },
@@ -199,8 +200,7 @@ export default function CollectionSettingsPage({ params }: Props) {
     }
   }, [profile]);
 
-  const isOwner = walletAddress && collection?.owner &&
-    normalizeAddress("STARKNET", walletAddress) === normalizeAddress("STARKNET", collection.owner);
+  const isOwner = isCollectionOwner(collection, walletAddress);
 
   if (!collectionLoading && collection && !isOwner) {
     return (

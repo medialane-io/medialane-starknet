@@ -14,6 +14,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCollection } from "@/hooks/use-collections";
 import { toast } from "sonner";
+import { isCollectionOwner } from "@/lib/utils";
 
 function parseAddresses(raw: string): string[] {
   return raw
@@ -125,10 +126,7 @@ export default function PopManagePage({
   const { collection, isLoading } = useCollection(contract);
   const [isTxLoading, setIsTxLoading] = useState(false);
 
-  const isOwner =
-    address &&
-    collection?.owner &&
-    normalizeAddress("STARKNET", address) === normalizeAddress("STARKNET", collection.owner);
+  const isOwner = isCollectionOwner(collection, address);
 
   const runTx = async (
     calls: Array<{ contractAddress: string; entrypoint: string; calldata: string[] }>,

@@ -24,7 +24,7 @@ import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
 import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
 import { CollectionTraitsTab } from "@/components/collection/collection-traits-tab";
-import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner, usdValueFor } from "@/lib/utils";
+import { ipfsToHttp, formatDisplayPrice, cn, checkIsOwner, usdValueFor, isCollectionOwner } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
@@ -134,11 +134,9 @@ function CollectionItems({ contract, activeListings }: { contract: string; activ
   }
 
   if (allTokens.length === 0) {
-    const isCollectionOwner =
-      !!walletAddress &&
-      !!collection?.owner &&
-      normalizeAddress("STARKNET", walletAddress) === normalizeAddress("STARKNET", collection.owner);
-    const mintHref = isCollectionOwner ? mintHrefFor(collection?.service, contract) : null;
+    const mintHref = isCollectionOwner(collection, walletAddress)
+      ? mintHrefFor(collection?.service, contract)
+      : null;
 
     return (
       <EmptyState
@@ -320,7 +318,7 @@ export default function CollectionPageClient() {
       {!colLoading && collection && (
         <div className="px-4 sm:px-6 pt-4 pb-2 space-y-3">
 
-          {walletAddress && collection.owner && normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
+          {isCollectionOwner(collection, walletAddress) && (
             <div className="flex items-center justify-end gap-2">
               {getService(collection.service)?.id === "ip-tickets" && (
                 <TicketOwnerActions
@@ -545,8 +543,7 @@ export default function CollectionPageClient() {
         </Tabs>
       </div>
 
-      {!colLoading && collection && walletAddress && collection.owner &&
-        normalizeAddress("STARKNET", collection.owner) === normalizeAddress("STARKNET", walletAddress) && (
+      {!colLoading && collection && isCollectionOwner(collection, walletAddress) && (
         <>
           <OwnerSetupPanel
             contract={contract}

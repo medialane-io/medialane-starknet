@@ -37,7 +37,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
-import { cn } from "@/lib/utils";
+import { cn, isCollectionOwner } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
@@ -126,7 +126,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
     if (!form.getValues("external_url")) form.setValue("external_url", suggested);
   }, [contract, form]);
 
-  const isOwner = !!address && !!collection?.owner && normalizeAddress("STARKNET", address) === normalizeAddress("STARKNET", collection.owner);
+  const isOwner = isCollectionOwner(collection, address);
 
   const handleImageSelect = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }

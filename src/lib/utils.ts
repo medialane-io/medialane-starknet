@@ -166,6 +166,17 @@ export function checkIsOwner(
   return normalizeAddress("STARKNET", token.owner) === normalizedWallet;
 }
 
+export function isCollectionOwner(
+  collection: { owner?: string | null } | null | undefined,
+  walletAddress: string | null | undefined
+): boolean {
+  if (!collection?.owner || !walletAddress) return false;
+  return (
+    normalizeAddress("STARKNET", collection.owner) ===
+    normalizeAddress("STARKNET", walletAddress)
+  );
+}
+
 export function formatOrderExpiry(endTime: string | bigint): {
   label: string;
   urgent: boolean;
