@@ -48,7 +48,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
-import { hash, type Call } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
@@ -68,7 +67,7 @@ import { makeUploadDocument } from "@/lib/upload-document";
 import type { TxStatus } from "@/hooks/use-tx";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { executeIntent } from "@medialane/sdk/starknet";
+import { executeIntent, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
 
 const schema = z.object({
   value: z
@@ -97,23 +96,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-async function readAssignedEditionId(txHash: string, collection: string): Promise<string> {
-  const receipt = await starknetProvider.getTransactionReceipt(txHash);
-  const selector = hash.getSelectorFromName("IPMinted");
-  const events = (receipt as unknown as { events?: Array<{ from_address: string; keys: string[] }> }).events ?? [];
-  const ev = events.find(
-    (e) =>
-      BigInt(e.from_address) === BigInt(collection) &&
-      e.keys?.[0] != null &&
-      BigInt(e.keys[0]) === BigInt(selector),
-  );
-  if (!ev) throw new Error("Minted, but could not read the assigned token id from the receipt");
-
-  const low = BigInt(ev.keys[1] ?? 0);
-  const high = BigInt(ev.keys[2] ?? 0);
-  return (low + (high << 128n)).toString();
-}
 
 function ToggleGroup({
   value,
@@ -320,9 +302,11 @@ export default function MintNFTEditionsPage() {
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt mint intent");
 
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { txHash: txHashResult } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+      const { txHash: txHashResult, receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
 
-      setMintedTokenId(await readAssignedEditionId(txHashResult, collectionAddress));
+      const editionId = mintedTokenIdFromReceipt(receipt, collectionAddress);
+      if (!editionId) throw new Error("Minted, but could not read the assigned token id from the receipt");
+      setMintedTokenId(editionId);
 
       setTxHash(txHashResult);
       setTxStatus("confirmed");

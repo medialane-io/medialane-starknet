@@ -5,8 +5,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { hash, type Call } from "starknet";
-import { normalizeAddress, getListableTokens } from "@medialane/sdk";
+import { getListableTokens } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 import { Package, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ import { buildDropSet } from "@/lib/drop-build-set";
 import { parseAddresses, batchAllowlistCalldata } from "../drop-allowlist";
 import type { MetadataField } from "@/components/create/ip-type-fields";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { executeIntent } from "@medialane/sdk/starknet";
+import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 
 const PAYMENT_TOKENS = getListableTokens().map((t) => ({ symbol: t.symbol, address: t.address }));
 
@@ -119,19 +118,6 @@ export default function CreateDropPage() {
     setPriceFree(true); setIsPublic(true); setSelectedToken(PAYMENT_TOKENS[0]); setTokenDropdownOpen(false); setAutoSymbol("");
   };
 
-  const addressFromReceipt = async (txHash: string): Promise<string | null> => {
-    try {
-      const selector = hash.getSelectorFromName("DropCreated");
-      let receipt: any = null;
-      for (let attempt = 0; attempt < 4 && !receipt; attempt++) {
-        if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
-        try { receipt = await starknetProvider.getTransactionReceipt(txHash); } catch {  }
-      }
-      const ev = (receipt?.events ?? []).find((e: any) => e.keys?.[0] && BigInt(e.keys[0]) === BigInt(selector));
-      return ev?.data?.[0] ? normalizeAddress("STARKNET", ev.data[0]) : null;
-    } catch { return null; }
-  };
-
   const onSubmit = async (values: DropCreateFormValues) => {
     if (!isConnected || !walletAddress) { toast.error("Connect your wallet first"); return; }
     if (items.length === 0) { toast.error("Add at least one item"); return; }
@@ -182,11 +168,11 @@ export default function CreateDropPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { txHash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+      const { receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
 
       const whitelist = values.whitelistEnabled ? parseAddresses(values.allowlistAddresses) : [];
       if (whitelist.length > 0) {
-        const dropAddress = await addressFromReceipt(txHash);
+        const dropAddress = deployedCollectionFromReceipt(receipt, "drop-collection");
         if (dropAddress) {
           try {
             await execute([
@@ -198,7 +184,7 @@ export default function CreateDropPage() {
       }
 
       if (values.gatedEnabled) {
-        const dropAddress = await addressFromReceipt(txHash);
+        const dropAddress = deployedCollectionFromReceipt(receipt, "drop-collection");
         if (dropAddress) {
           try {
             await client.api.updateCollectionProfile(dropAddress, {

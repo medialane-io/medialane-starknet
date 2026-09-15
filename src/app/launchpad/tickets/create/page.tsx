@@ -32,16 +32,13 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
 import { toast } from "sonner";
-import { hash, type Call } from "starknet";
-import { normalizeAddress } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { executeIntent } from "@medialane/sdk/starknet";
+import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 
-const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
@@ -55,19 +52,6 @@ const schema = z.object({
   description: z.string().max(500).optional(),
 });
 type FormValues = z.infer<typeof schema>;
-
-async function readDeployedAddress(txHash: string): Promise<string | null> {
-  try {
-    const receipt = await starknetProvider.getTransactionReceipt(txHash);
-    const events = (receipt as any).events ?? [];
-    for (const ev of events) {
-      if (ev.keys?.[0] === COLLECTION_DEPLOYED_SELECTOR) {
-        return ev.keys?.[1] ? normalizeAddress("STARKNET", ev.keys[1]) : null;
-      }
-    }
-  } catch {}
-  return null;
-}
 
 export default function CreateTicketCollectionPage() {
   const { address, isConnected } = useWallet();
@@ -169,11 +153,11 @@ export default function CreateTicketCollectionPage() {
 
       setDialogTxStatus("submitting");
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { txHash: txH } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+      const { receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
 
       setDialogTxStatus("confirming");
 
-      const addr = await readDeployedAddress(txH);
+      const addr = deployedCollectionFromReceipt(receipt, "ip-tickets");
 
       void mutate();
       setDeployedAddress(addr);

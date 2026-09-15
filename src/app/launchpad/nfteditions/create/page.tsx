@@ -31,8 +31,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { toast } from "sonner";
-import { normalizeAddress } from "@medialane/sdk";
-import { hash, type Call } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
@@ -40,9 +38,8 @@ import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { executeIntent } from "@medialane/sdk/starknet";
+import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 
-const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 
 const schema = z.object({
   name: z.string().min(1, "Name required").max(100),
@@ -190,24 +187,10 @@ export default function CreateNFTEditionsCollectionPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { txHash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+      const { receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
       setDialogTxStatus("confirming");
 
-      let addr: string | null = null;
-      try {
-        let receipt: any = null;
-        for (let attempt = 0; attempt < 2 && !receipt; attempt++) {
-          try {
-            if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
-            receipt = await starknetProvider.getTransactionReceipt(txHash);
-          } catch {  }
-        }
-        const events = receipt?.events ?? [];
-        const deployEvent = events.find((e: any) =>
-          e.keys?.[0] && BigInt(e.keys[0]) === BigInt(COLLECTION_DEPLOYED_SELECTOR)
-        );
-        if (deployEvent?.keys?.[1]) addr = normalizeAddress("STARKNET", deployEvent.keys[1]);
-      } catch {  }
+      const addr = deployedCollectionFromReceipt(receipt, "mip-erc1155");
 
       if (addr) {
         try {
