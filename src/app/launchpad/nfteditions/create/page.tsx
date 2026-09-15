@@ -28,7 +28,7 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard, syncTransaction } from "@medialane/ui";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { toast } from "sonner";
 import { normalizeAddress } from "@medialane/sdk";
@@ -39,6 +39,8 @@ import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { executeIntent } from "@medialane/sdk/starknet";
 
 const COLLECTION_DEPLOYED_SELECTOR = hash.getSelectorFromName("CollectionDeployed");
 
@@ -62,7 +64,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CreateNFTEditionsCollectionPage() {
-  const { isConnected, address: walletAddress, execute } = useWallet();
+  const { isConnected, address: walletAddress } = useWallet();
+  const signer = useVenueSigner();
   const client = useMedialaneClient();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
@@ -186,10 +189,8 @@ export default function CreateNFTEditionsCollectionPage() {
         service: "mip-erc1155",
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
-      const txHash = await execute(intentRes.data.calls as Call[]);
-      void syncTransaction(txHash);
-
-      if (!txHash) throw new Error("Transaction failed — no hash returned");
+      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const { txHash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
       setDialogTxStatus("confirming");
 
       let addr: string | null = null;

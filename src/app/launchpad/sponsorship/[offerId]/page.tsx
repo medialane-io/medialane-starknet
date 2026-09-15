@@ -13,7 +13,7 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import { executePrebuiltIntent } from "@/lib/intent-tx";
+import { executeIntent } from "@medialane/sdk/starknet";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { useToken } from "@/hooks/use-tokens";
@@ -21,6 +21,8 @@ import { rewardToast } from "@/lib/reward-toast";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
 import { toast } from "sonner";
+import type { IntentCall } from "@medialane/sdk";
+import { starknetProvider } from "@/lib/starknet";
 
 export default function SponsorshipOfferPage() {
   const params = useParams();
@@ -56,10 +58,7 @@ export default function SponsorshipOfferPage() {
         paymentToken: offer.paymentToken,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid intent");
-      await executePrebuiltIntent(signer, client, {
-        id: intentRes.data.id,
-        calls: intentRes.data.calls as Call[],
-      });
+      await executeIntent(starknetProvider, signer, client, intentRes.data);
       toast.success("Bid placed");
       rewardToast("place_sponsorship_bid");
       setBidAmount("");
@@ -84,7 +83,7 @@ export default function SponsorshipOfferPage() {
 
       const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, feeConfig);
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
+      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
       toast.success("Bid accepted — license minted to the sponsor");
       await Promise.all([mutateOffer(), mutateBids()]);
     } catch (err) {

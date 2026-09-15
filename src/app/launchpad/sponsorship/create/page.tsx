@@ -13,7 +13,7 @@ import { AssetPicker, AssetSearchPicker, LicenseTermsBuilder, EMPTY_SPONSORSHIP_
 import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import { executePrebuiltIntent } from "@/lib/intent-tx";
+import { executeIntent } from "@medialane/sdk/starknet";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
@@ -25,6 +25,8 @@ import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
+import type { IntentCall } from "@medialane/sdk";
+import { starknetProvider } from "@/lib/starknet";
 
 const LISTABLE_TOKENS = SUPPORTED_TOKENS.filter((t) => t.listable);
 const TOKEN_SYMBOLS = LISTABLE_TOKENS.map((t) => t.symbol);
@@ -55,7 +57,7 @@ function PendingProposalsPanel({
         ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, feeConfig)
         : null;
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
+      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to respond to proposal");
@@ -156,10 +158,7 @@ export default function CreateSponsorshipPage() {
             transferable: terms.transferable, royaltyBps,
           });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship intent");
-      await executePrebuiltIntent(signer, client, {
-        id: intentRes.data.id,
-        calls: intentRes.data.calls as Call[],
-      });
+      await executeIntent(starknetProvider, signer, client, intentRes.data);
       if (mode === "offer") rewardToast("create_sponsorship_offer");
 
       setDone(true);

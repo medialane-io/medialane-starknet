@@ -45,7 +45,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard, syncTransaction } from "@medialane/ui";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
 import { hash, type Call } from "starknet";
@@ -55,7 +55,6 @@ import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import { confirmIntentBestEffort } from "@/lib/intent-tx";
 import {
   IP_TYPES,
   LICENSE_TYPES,
@@ -68,6 +67,8 @@ import { IPTypeFields, type MetadataField } from "@/components/create/ip-type-fi
 import { makeUploadDocument } from "@/lib/upload-document";
 import type { TxStatus } from "@/hooks/use-tx";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { executeIntent } from "@medialane/sdk/starknet";
 
 const schema = z.object({
   value: z
@@ -149,7 +150,8 @@ export default function MintNFTEditionsPage() {
   const { contract: rawContract } = useParams<{ contract: string }>();
   const collectionAddress = normalizeAddress("STARKNET", rawContract ?? "");
 
-  const { isConnected, address: walletAddress, execute } = useWallet();
+  const { isConnected, address: walletAddress } = useWallet();
+  const signer = useVenueSigner();
   const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
@@ -317,11 +319,8 @@ export default function MintNFTEditionsPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt mint intent");
 
-      const txHashResult = await execute(intentRes.data.calls as Call[]);
-      if (!txHashResult) throw new Error("Mint transaction failed");
-      await syncTransaction(txHashResult);
-
-      await confirmIntentBestEffort(client, intentRes.data.id, txHashResult);
+      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const { txHash: txHashResult } = await executeIntent(starknetProvider, signer, client, intentRes.data);
 
       setMintedTokenId(await readAssignedEditionId(txHashResult, collectionAddress));
 

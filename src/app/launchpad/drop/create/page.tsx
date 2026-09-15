@@ -14,7 +14,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem, syncTransaction } from "@medialane/ui";
+import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem } from "@medialane/ui";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
@@ -25,11 +25,14 @@ import { makeUploadDocument } from "@/lib/upload-document";
 import { buildDropSet } from "@/lib/drop-build-set";
 import { parseAddresses, batchAllowlistCalldata } from "../drop-allowlist";
 import type { MetadataField } from "@/components/create/ip-type-fields";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { executeIntent } from "@medialane/sdk/starknet";
 
 const PAYMENT_TOKENS = getListableTokens().map((t) => ({ symbol: t.symbol, address: t.address }));
 
 export default function CreateDropPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
+  const signer = useVenueSigner();
   const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
@@ -178,8 +181,8 @@ export default function CreateDropPage() {
         conditions,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
-      const txHash = await execute(intentRes.data.calls as Call[]);
-      void syncTransaction(txHash);
+      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const { txHash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
 
       const whitelist = values.whitelistEnabled ? parseAddresses(values.allowlistAddresses) : [];
       if (whitelist.length > 0) {
