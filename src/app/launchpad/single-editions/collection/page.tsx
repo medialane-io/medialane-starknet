@@ -33,7 +33,7 @@ import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Call } from "starknet";
-import { syncTransaction } from "@medialane/ui";
+import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 
 const schema = z.object({
   name: z.string().min(1, "Name required").max(100),
@@ -176,7 +176,7 @@ export default function LaunchpadCreateCollectionPage() {
         throw new Error("Collection transaction reverted on chain");
       }
 
-      await syncTransaction(result);
+      await syncTransactionBestEffort(client, result);
 
       setCollectionStep("success");
       rewardToast("create_collection");

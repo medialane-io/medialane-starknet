@@ -29,16 +29,15 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { ClaimRail, MedialaneCollectionCard, syncTransaction } from "@medialane/ui";
+import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
 import { toast } from "sonner";
-import { hash, type Call } from "starknet";
-import { normalizeAddress } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 import { useMyClubCollections } from "@/hooks/use-club";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 
-const CLUB_DEPLOYED_SELECTOR = hash.getSelectorFromName("ClubDeployed");
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
@@ -53,21 +52,9 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-async function readDeployedAddress(txHash: string): Promise<string | null> {
-  try {
-    const receipt = await starknetProvider.getTransactionReceipt(txHash);
-    const events = (receipt as any).events ?? [];
-    for (const ev of events) {
-      if (ev.keys?.[0] === CLUB_DEPLOYED_SELECTOR) {
-        return ev.keys?.[1] ? normalizeAddress("STARKNET", ev.keys[1]) : null;
-      }
-    }
-  } catch {}
-  return null;
-}
-
 export default function CreateClubPage() {
-  const { address, isConnected, execute } = useWallet();
+  const { address, isConnected } = useWallet();
+  const signer = useVenueSigner();
   const { mutate } = useMyClubCollections(address ?? null);
   const client = useMedialaneClient();
 
@@ -163,12 +150,11 @@ export default function CreateClubPage() {
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
 
       setDialogTxStatus("submitting");
-      const txH = await execute(intentRes.data.calls as Call[]);
-      if (!txH) throw new Error("Transaction failed");
-      void syncTransaction(txH);
+      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const { receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
       setDialogTxStatus("confirming");
 
-      const addr = await readDeployedAddress(txH);
+      const addr = deployedCollectionFromReceipt(receipt, "ip-club");
 
       void mutate();
       setDeployedAddress(addr);

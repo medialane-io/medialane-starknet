@@ -5,8 +5,7 @@ import { rewardToast } from "@/lib/reward-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { hash, type Call } from "starknet";
-import { normalizeAddress, getListableTokens } from "@medialane/sdk";
+import { getListableTokens } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 import { Package, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem, syncTransaction } from "@medialane/ui";
+import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem } from "@medialane/ui";
 import { CreateDropAside } from "@/components/claim/create-drop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
@@ -25,11 +24,14 @@ import { makeUploadDocument } from "@/lib/upload-document";
 import { buildDropSet } from "@/lib/drop-build-set";
 import { parseAddresses, batchAllowlistCalldata } from "../drop-allowlist";
 import type { MetadataField } from "@/components/create/ip-type-fields";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 
 const PAYMENT_TOKENS = getListableTokens().map((t) => ({ symbol: t.symbol, address: t.address }));
 
 export default function CreateDropPage() {
   const { isConnected, address: walletAddress, execute } = useWallet();
+  const signer = useVenueSigner();
   const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
@@ -116,19 +118,6 @@ export default function CreateDropPage() {
     setPriceFree(true); setIsPublic(true); setSelectedToken(PAYMENT_TOKENS[0]); setTokenDropdownOpen(false); setAutoSymbol("");
   };
 
-  const addressFromReceipt = async (txHash: string): Promise<string | null> => {
-    try {
-      const selector = hash.getSelectorFromName("DropCreated");
-      let receipt: any = null;
-      for (let attempt = 0; attempt < 4 && !receipt; attempt++) {
-        if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
-        try { receipt = await starknetProvider.getTransactionReceipt(txHash); } catch {  }
-      }
-      const ev = (receipt?.events ?? []).find((e: any) => e.keys?.[0] && BigInt(e.keys[0]) === BigInt(selector));
-      return ev?.data?.[0] ? normalizeAddress("STARKNET", ev.data[0]) : null;
-    } catch { return null; }
-  };
-
   const onSubmit = async (values: DropCreateFormValues) => {
     if (!isConnected || !walletAddress) { toast.error("Connect your wallet first"); return; }
     if (items.length === 0) { toast.error("Add at least one item"); return; }
@@ -178,12 +167,12 @@ export default function CreateDropPage() {
         conditions,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
-      const txHash = await execute(intentRes.data.calls as Call[]);
-      void syncTransaction(txHash);
+      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const { receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
 
       const whitelist = values.whitelistEnabled ? parseAddresses(values.allowlistAddresses) : [];
       if (whitelist.length > 0) {
-        const dropAddress = await addressFromReceipt(txHash);
+        const dropAddress = deployedCollectionFromReceipt(receipt, "drop-collection");
         if (dropAddress) {
           try {
             await execute([
@@ -195,7 +184,7 @@ export default function CreateDropPage() {
       }
 
       if (values.gatedEnabled) {
-        const dropAddress = await addressFromReceipt(txHash);
+        const dropAddress = deployedCollectionFromReceipt(receipt, "drop-collection");
         if (dropAddress) {
           try {
             await client.api.updateCollectionProfile(dropAddress, {

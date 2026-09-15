@@ -70,6 +70,7 @@ import {
 import { toast } from "sonner";
 import type { Call } from "starknet";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
+import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 
 const schema = z.object({
   collectionId: z.string().min(1, "Select a collection"),
@@ -409,6 +410,8 @@ export function SingleEditionsContent() {
       if (result === null) {
         throw new Error("Mint transaction reverted on chain");
       }
+
+      await syncTransactionBestEffort(client, result);
 
       setMintStep("success");
       rewardToast("mint_asset");

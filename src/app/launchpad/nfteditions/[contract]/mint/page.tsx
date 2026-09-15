@@ -45,17 +45,15 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard, syncTransaction } from "@medialane/ui";
+import { MedialaneCollectionCard } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
-import { hash, type Call } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import { confirmIntentBestEffort } from "@/lib/intent-tx";
 import {
   IP_TYPES,
   LICENSE_TYPES,
@@ -68,6 +66,8 @@ import { IPTypeFields, type MetadataField } from "@/components/create/ip-type-fi
 import { makeUploadDocument } from "@/lib/upload-document";
 import type { TxStatus } from "@/hooks/use-tx";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { executeIntent, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
 
 const schema = z.object({
   value: z
@@ -96,23 +96,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-async function readAssignedEditionId(txHash: string, collection: string): Promise<string> {
-  const receipt = await starknetProvider.getTransactionReceipt(txHash);
-  const selector = hash.getSelectorFromName("IPMinted");
-  const events = (receipt as unknown as { events?: Array<{ from_address: string; keys: string[] }> }).events ?? [];
-  const ev = events.find(
-    (e) =>
-      BigInt(e.from_address) === BigInt(collection) &&
-      e.keys?.[0] != null &&
-      BigInt(e.keys[0]) === BigInt(selector),
-  );
-  if (!ev) throw new Error("Minted, but could not read the assigned token id from the receipt");
-
-  const low = BigInt(ev.keys[1] ?? 0);
-  const high = BigInt(ev.keys[2] ?? 0);
-  return (low + (high << 128n)).toString();
-}
 
 function ToggleGroup({
   value,
@@ -149,7 +132,8 @@ export default function MintNFTEditionsPage() {
   const { contract: rawContract } = useParams<{ contract: string }>();
   const collectionAddress = normalizeAddress("STARKNET", rawContract ?? "");
 
-  const { isConnected, address: walletAddress, execute } = useWallet();
+  const { isConnected, address: walletAddress } = useWallet();
+  const signer = useVenueSigner();
   const { getValidToken } = useSiwsToken();
   const client = useMedialaneClient();
 
@@ -317,13 +301,12 @@ export default function MintNFTEditionsPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt mint intent");
 
-      const txHashResult = await execute(intentRes.data.calls as Call[]);
-      if (!txHashResult) throw new Error("Mint transaction failed");
-      await syncTransaction(txHashResult);
+      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const { txHash: txHashResult, receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
 
-      await confirmIntentBestEffort(client, intentRes.data.id, txHashResult);
-
-      setMintedTokenId(await readAssignedEditionId(txHashResult, collectionAddress));
+      const editionId = mintedTokenIdFromReceipt(receipt, collectionAddress);
+      if (!editionId) throw new Error("Minted, but could not read the assigned token id from the receipt");
+      setMintedTokenId(editionId);
 
       setTxHash(txHashResult);
       setTxStatus("confirmed");

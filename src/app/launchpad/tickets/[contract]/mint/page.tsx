@@ -25,7 +25,7 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard, ClaimRail, syncTransaction } from "@medialane/ui";
+import { MedialaneCollectionCard, ClaimRail } from "@medialane/ui";
 import { MintProgressDialog, type MintStep } from "@/components/marketplace/mint-progress-dialog";
 import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
@@ -42,6 +42,9 @@ import { cn, isCollectionOwner } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { executeIntents } from "@medialane/sdk/starknet";
+import { starknetProvider } from "@/lib/starknet";
 
 function dateToUnixTimestamp(dateStr: string | undefined): number | undefined {
   if (!dateStr) return undefined;
@@ -94,7 +97,8 @@ type FormValues = z.infer<typeof schema>;
 export default function MintTicketPage({ params }: { params: Promise<{ contract: string }> }) {
   const { contract: rawContract } = use(params);
   const contract = normalizeAddress("STARKNET", rawContract);
-  const { address, isConnected, execute } = useWallet();
+  const { address, isConnected } = useWallet();
+  const signer = useVenueSigner();
   const { collection, isLoading } = useCollection(contract);
   const { profile, isLoading: profileLoading } = useCollectionProfile(contract);
   const client = useMedialaneClient();
@@ -224,10 +228,8 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
         throw new Error("Expected prebuilt create-tier and mint intents");
       }
 
-      const allCalls = [...(tierRes.data.calls as Call[]), ...(mintRes.data.calls as Call[])];
-      const txHash = await execute(allCalls);
-      if (!txHash) throw new Error("Failed to mint tickets");
-      await syncTransaction(txHash);
+      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      await executeIntents(starknetProvider, signer, client, [tierRes.data, mintRes.data]);
 
       setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");

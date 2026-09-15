@@ -8,10 +8,11 @@ import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { signAndExecuteIntent, executePrebuiltIntent } from "@/lib/intent-tx";
+import { executeIntent } from "@medialane/sdk/starknet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
 import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
+import { starknetProvider } from "@/lib/starknet";
 
 interface WriteOpts {
     silent?: boolean;
@@ -157,10 +158,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 amount: is1155 ? (amount ?? "1") : undefined,
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required listing intent");
-            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
-                id: intentRes.data.id,
-                typedData: intentRes.data.typedData as TypedData,
-            });
+            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             refreshMarketplaceCaches();
             if (!opts?.silent) {
@@ -203,10 +201,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 tokenStandard,
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required offer intent");
-            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
-                id: intentRes.data.id,
-                typedData: intentRes.data.typedData as TypedData,
-            });
+            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             refreshMarketplaceCaches();
             if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
@@ -278,10 +273,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 tokenStandard,
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required cancel intent");
-            const { txHash: hash } = await signAndExecuteIntent(signer, client, {
-                id: intentRes.data.id,
-                typedData: intentRes.data.typedData as TypedData,
-            });
+            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             refreshMarketplaceCaches();
             if (!opts?.silent) {
@@ -312,10 +304,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 tokenStandard,
             });
             if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
-            const { txHash: hash } = await executePrebuiltIntent(signer, client, {
-                id: intentRes.data.id,
-                calls: intentRes.data.calls as Call[],
-            });
+            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             refreshMarketplaceCaches();
             rewardToast("offer_accepted_seller");

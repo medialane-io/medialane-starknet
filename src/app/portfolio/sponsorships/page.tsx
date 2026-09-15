@@ -10,7 +10,7 @@ import { AddressDisplay } from "@/components/shared/address-display";
 import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import { executePrebuiltIntent } from "@/lib/intent-tx";
+import { executeIntent } from "@medialane/sdk/starknet";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import {
   useSponsorshipProposals, useSponsorshipOffers, useSponsorshipBids, useSponsorshipLicenses,
@@ -18,6 +18,8 @@ import {
 } from "@/hooks/use-sponsorship";
 import { assetHref } from "@/lib/routes";
 import { toast } from "sonner";
+import type { IntentCall } from "@medialane/sdk";
+import { starknetProvider } from "@/lib/starknet";
 
 function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
   const { bids, isLoading, mutate } = useSponsorshipBids(offer.offerId);
@@ -34,7 +36,7 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
       const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, feeConfig);
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
+      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to accept bid");
@@ -80,7 +82,7 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
         ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, feeConfig)
         : null;
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls });
+      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to respond to proposal");
@@ -130,7 +132,7 @@ function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
     try {
       const intentRes = await client.api.withdrawSponsorshipProposalIntent({ proposer: walletAddress, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal-withdraw intent");
-      await executePrebuiltIntent(signer, client, { id: intentRes.data.id, calls: intentRes.data.calls as Call[] });
+      await executeIntent(starknetProvider, signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to withdraw proposal");
