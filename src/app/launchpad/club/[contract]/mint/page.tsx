@@ -222,7 +222,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
       const allCalls = [...(tierRes.data.calls as Call[]), ...(mintRes.data.calls as Call[])];
       const txHash = await execute(allCalls);
       if (!txHash) throw new Error("Failed to create membership");
-      void syncTransaction(txHash);
+      await syncTransaction(txHash);
 
       setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");
