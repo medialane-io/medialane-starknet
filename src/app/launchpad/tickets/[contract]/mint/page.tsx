@@ -227,7 +227,7 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
       const allCalls = [...(tierRes.data.calls as Call[]), ...(mintRes.data.calls as Call[])];
       const txHash = await execute(allCalls);
       if (!txHash) throw new Error("Failed to mint tickets");
-      void syncTransaction(txHash);
+      await syncTransaction(txHash);
 
       setDialogTxStatus("confirmed");
       rewardToast("launch_launchpad");

@@ -127,7 +127,7 @@ export function AssetPageDrop() {
   const router = useRouter();
   const { isConnected: isSignedIn, address: walletAddress } = useWallet();
   const { collection } = useCollection(contract);
-  const { token: rawToken, isLoading } = useToken(contract, tokenId);
+  const { token: rawToken, isLoading, isIndexing } = useToken(contract, tokenId);
   const token = rawToken as AssetToken | null;
   const { state: dropState } = useOnChainDropState(contract);
   const { listings, mutate: mutateListings, isLoading: listingsLoading } = useTokenListings(contract, tokenId);
@@ -186,7 +186,10 @@ export function AssetPageDrop() {
   if (!token) {
     return (
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 text-center">
-        <p className="text-2xl font-bold">Asset not found</p>
+        <p className="text-2xl font-bold">{isIndexing ? "Preparing this asset" : "Asset not found"}</p>
+        <p className="text-muted-foreground mt-2">
+          {isIndexing ? "It is live onchain and will appear here in a moment." : "Check the collection address and token ID."}
+        </p>
       </div>
     );
   }

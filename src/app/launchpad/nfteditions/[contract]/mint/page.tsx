@@ -319,7 +319,7 @@ export default function MintNFTEditionsPage() {
 
       const txHashResult = await execute(intentRes.data.calls as Call[]);
       if (!txHashResult) throw new Error("Mint transaction failed");
-      void syncTransaction(txHashResult);
+      await syncTransaction(txHashResult);
 
       await confirmIntentBestEffort(client, intentRes.data.id, txHashResult);
 
