@@ -23,6 +23,7 @@ const ALLOWED_ROUTES: Record<string, RegExp[]> = {
     /^intents\/[^/]+$/,
     /^creators$/,
     /^creators\/[^/]+\/profile$/,
+    /^creators\/[^/]+\/hidden$/,
     /^creators\/by-username\/[^/]+$/,
     /^collection-slug-claims\/check\/[^/]+$/,
     /^collection-slug-claims\/me$/,
