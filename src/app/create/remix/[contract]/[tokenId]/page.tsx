@@ -227,18 +227,12 @@ export default function CreateRemixPage() {
       const result = await executeTransaction(calls);
       if (result === null) throw new Error("Mint reverted");
 
-      let remixTokenId: string | undefined;
-      const deadline = Date.now() + 10_000;
-      while (Date.now() < deadline) {
-        await new Promise((r) => setTimeout(r, 2000));
-        try {
-          const res = await client.api.getTokensByOwner(walletAddress, 1, 5);
-          const newest = res.data?.find(
-            (t) => normalizeAddress("STARKNET", t.contractAddress) === normalizeAddress("STARKNET", selectedCollection.contractAddress)
-          );
-          if (newest) { remixTokenId = newest.tokenId; break; }
-        } catch {  }
-      }
+      await syncTransactionBestEffort(client, (result as any).txHash ?? "");
+
+      const owned = await client.api.getTokensByOwner(walletAddress, 1, 5);
+      const remixTokenId = owned.data?.find(
+        (t) => normalizeAddress("STARKNET", t.contractAddress) === normalizeAddress("STARKNET", selectedCollection.contractAddress)
+      )?.tokenId;
       if (!remixTokenId) throw new Error("Could not determine remix token ID — check portfolio shortly");
 
       await registerRemix(
@@ -256,7 +250,6 @@ export default function CreateRemixPage() {
       );
 
       setMintStep("success");
-      await syncTransactionBestEffort(client, (result as any).txHash ?? "");
       router.push(assetHref("STARKNET", selectedCollection.contractAddress, remixTokenId));
     } catch (err: unknown) {
       setMintError(err instanceof Error ? err.message : "Something went wrong");

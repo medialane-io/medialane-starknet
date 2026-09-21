@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useMarketplace } from "@/hooks/use-marketplace";
@@ -132,19 +133,12 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       if (mintResult === null) throw new Error("Mint reverted");
       setMintHash(mintResult);
 
-      let remixTokenId: string | undefined;
-      const mintDeadline = Date.now() + 10_000;
-      while (Date.now() < mintDeadline) {
-        await new Promise((r) => setTimeout(r, 2000));
-        try {
-          const tokensRes = await client.api.getTokensByOwner(walletAddress, 1, 5);
-          const newest = tokensRes.data?.find((t) => t.contractAddress === selectedCollection.contractAddress);
-          if (newest) {
-            remixTokenId = newest.tokenId;
-            break;
-          }
-        } catch {  }
-      }
+      await syncTransactionBestEffort(client, mintResult);
+
+      const tokensRes = await client.api.getTokensByOwner(walletAddress, 1, 5);
+      const remixTokenId = tokensRes.data?.find(
+        (t) => t.contractAddress === selectedCollection.contractAddress
+      )?.tokenId;
       if (!remixTokenId) throw new Error("Could not determine remix token ID");
 
       const currencySymbol = currencyToken?.symbol ?? "STRK";
