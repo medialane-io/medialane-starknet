@@ -9,9 +9,9 @@ import { feeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent } from "@medialane/sdk/starknet";
+import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
-import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 import { starknetProvider } from "@/lib/starknet";
 
 interface WriteOpts {
@@ -91,10 +91,10 @@ export function useMarketplace(): UseMarketplaceReturn {
         );
     }, [mutate]);
 
-    const refreshMarketplaceCaches = useCallback(() => {
+    const refreshMarketplaceCaches = useCallback(async (txHash?: string) => {
+        if (txHash) await syncTransactionBestEffort(client, txHash);
         invalidateMarketplaceCaches();
-        window.setTimeout(invalidateMarketplaceCaches, INDEXER_REVALIDATION_DELAY_MS);
-    }, [invalidateMarketplaceCaches]);
+    }, [invalidateMarketplaceCaches, client]);
 
     const withProcessing = useCallback(async <T>(
         op: string,
@@ -160,7 +160,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required listing intent");
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
-            refreshMarketplaceCaches();
+            await refreshMarketplaceCaches(hash);
             if (!opts?.silent) {
                 toast.success("Listing Created", {
                     description: is1155 ? "Your edition has been listed successfully." : "Your asset has been listed successfully.",
@@ -203,7 +203,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required offer intent");
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
-            refreshMarketplaceCaches();
+            await refreshMarketplaceCaches(hash);
             if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             rewardToast("make_offer");
             return hash;
@@ -254,7 +254,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 checkoutRes.data.map((r) => (r.id ? client.api.confirmIntent(r.id, hash).catch(() => {}) : Promise.resolve()))
             );
             setTxHash(hash);
-            refreshMarketplaceCaches();
+            await refreshMarketplaceCaches(hash);
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             rewardToast("buy_asset");
             return hash;
@@ -275,7 +275,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required cancel intent");
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
-            refreshMarketplaceCaches();
+            await refreshMarketplaceCaches(hash);
             if (!opts?.silent) {
                 toast.success(
                     kind === "offer" ? "Offer Cancelled" : "Listing Cancelled",
@@ -306,7 +306,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
-            refreshMarketplaceCaches();
+            await refreshMarketplaceCaches(hash);
             rewardToast("offer_accepted_seller");
             return hash;
         }, opts);

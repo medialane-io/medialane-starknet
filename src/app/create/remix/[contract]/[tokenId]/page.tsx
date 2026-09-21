@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useToken } from "@/hooks/use-tokens";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { MintProgressDialog } from "@/components/marketplace/mint-progress-dialog";
@@ -30,7 +31,6 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@/types/ip";
 import { ipfsToHttp } from "@/lib/utils";
-import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
   GitBranch, ChevronDown, ChevronLeft, ImagePlus, Upload,
@@ -256,9 +256,8 @@ export default function CreateRemixPage() {
       );
 
       setMintStep("success");
-      setTimeout(() => {
-        router.push(assetHref("STARKNET", selectedCollection.contractAddress, remixTokenId));
-      }, INDEXER_REVALIDATION_DELAY_MS);
+      await syncTransactionBestEffort(client, (result as any).txHash ?? "");
+      router.push(assetHref("STARKNET", selectedCollection.contractAddress, remixTokenId));
     } catch (err: unknown) {
       setMintError(err instanceof Error ? err.message : "Something went wrong");
       setMintStep("error");

@@ -5,7 +5,8 @@ import { useSWRConfig } from "swr";
 import { toast } from "sonner";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useWallet } from "@/hooks/use-wallet";
-import { INDEXER_REVALIDATION_DELAY_MS } from "@/lib/constants";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import type { Call } from "starknet";
 
 export interface TransferInput {
@@ -30,6 +31,7 @@ export function encodeTokenId(tokenId: string): [string, string] {
 }
 
 export function useTransfer() {
+  const client = useMedialaneClient();
   const { address, isConnected, execute } = useWallet();
   const { mutate } = useSWRConfig();
 
@@ -90,8 +92,8 @@ export function useTransfer() {
         setTxHash(hash);
         setTxStatus("confirmed");
 
+        await syncTransactionBestEffort(client, hash);
         invalidate();
-        setTimeout(() => invalidate(), INDEXER_REVALIDATION_DELAY_MS);
         return hash;
       } catch (err: unknown) {
         const friendly = getFriendlyWalletError(err);

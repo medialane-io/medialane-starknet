@@ -20,7 +20,7 @@ import { getTokenByAddress, getService } from "@medialane/sdk";
 import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";
 import type { Call } from "starknet";
-import { INDEXER_REVALIDATION_DELAY_MS, EXPLORER_URL } from "@/lib/constants";
+import { EXPLORER_URL } from "@/lib/constants";
 import { MarketplaceSuccessState } from "@medialane/ui";
 import { fireConfetti } from "@/lib/confetti";
 import { assetHref } from "@/lib/routes";
@@ -192,7 +192,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
       setNewAssetLink(assetHref("STARKNET", selectedCollection.contractAddress, remixTokenId));
       setDone(true);
-      setTimeout(() => onSuccess?.(), INDEXER_REVALIDATION_DELAY_MS);
+      onSuccess?.();
     } catch (err: unknown) {
       const friendly = getFriendlyWalletError(err);
       if (friendly.isUserRejection) {
