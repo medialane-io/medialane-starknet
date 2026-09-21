@@ -52,6 +52,7 @@ test("known public GET reads used by the dapp are allowed", () => {
   expect(isPathAllowed("GET", "activities/0xabc")).toBe(true);
   expect(isPathAllowed("GET", "search")).toBe(true);
   expect(isPathAllowed("GET", "creators/0xabc/profile")).toBe(true);
+  expect(isPathAllowed("GET", "creators/0xabc/hidden")).toBe(true);
   expect(isPathAllowed("GET", "creators/by-username/alice")).toBe(true);
   expect(isPathAllowed("GET", "collection-slug-claims/check/alice")).toBe(true);
   expect(isPathAllowed("GET", "collection-slug-claims/me")).toBe(true);
