@@ -8,6 +8,8 @@ import { CallData } from "starknet";
 import { normalizeAddress } from "@medialane/sdk";
 import { encodeTokenId } from "@/hooks/use-transfer";
 import { useWallet } from "@/hooks/use-wallet";
+import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useComments } from "@/hooks/use-comments";
 import { useTx } from "@/hooks/use-tx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -50,6 +52,7 @@ interface CommentsSectionProps {
 
 export function CommentsSection({ contract, tokenId, className }: CommentsSectionProps) {
   const { isConnected: isSignedIn, address: walletAddress } = useWallet();
+  const client = useMedialaneClient();
   const hasWallet = !!walletAddress;
   const { comments, total, isLoading, mutate } = useComments(contract, tokenId);
   const { execute: executeTransaction } = useTx();
@@ -118,7 +121,8 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
         rewardToast("comment");
         setText("");
         if (composeRef.current) composeRef.current.style.height = "auto";
-        setTimeout(() => mutate(), 30_000);
+        await syncTransactionBestEffort(client, result);
+        mutate();
       } else {
         setPostStep("error");
         setPostError("Transaction reverted");

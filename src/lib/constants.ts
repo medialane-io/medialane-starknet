@@ -44,7 +44,6 @@ export const GENESIS_NFT_URI =
 export const GENESIS_NFT_IMAGE_URL =
   process.env.NEXT_PUBLIC_GENESIS_NFT_IMAGE_URL || "";
 
-export const INDEXER_REVALIDATION_DELAY_MS = 10_000;
 
 export const REGISTRY_START_BLOCK = Number(
   process.env.NEXT_PUBLIC_COLLECTION_721_START_BLOCK || 0
