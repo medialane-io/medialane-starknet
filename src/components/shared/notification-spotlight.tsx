@@ -122,7 +122,7 @@ function SpotlightCard({
 
 export function NotificationSpotlight() {
   const { address, isConnected } = useWallet();
-  const { notifications, markRead } = useNotifications(isConnected ? address : null);
+  const { notifications, isLoading, markRead } = useNotifications(isConnected ? address : null);
 
   const [queue, setQueue] = useState<Notification[]>([]);
   const [index, setIndex] = useState(0);
@@ -132,7 +132,7 @@ export function NotificationSpotlight() {
   const confettiFiredRef = useRef(false);
 
   useEffect(() => {
-    if (!isConnected || !address || notifications.length === 0) return;
+    if (!isConnected || !address || isLoading) return;
     if (shownForRef.current === address) return;
 
     const spotlights = notifications.filter(
@@ -148,7 +148,7 @@ export function NotificationSpotlight() {
     setQueue(spotlights);
     setIndex(0);
     setOpen(true);
-  }, [isConnected, address, notifications]);
+  }, [isConnected, address, isLoading, notifications]);
 
   useEffect(() => {
     if (open && queue.length > 0 && !confettiFiredRef.current) {

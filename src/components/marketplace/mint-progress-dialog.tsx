@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Image from "next/image";
 import { fireConfetti } from "@/lib/confetti";
 import {
@@ -52,6 +52,7 @@ interface MintProgressDialogProps {
   successSubtitle?: string;
 
   uploadStepLabel?: string;
+  successFooter?: ReactNode;
 }
 
 const MINT_STEPS_DEFAULT = [
@@ -94,6 +95,7 @@ export function MintProgressDialog({
   processingTitle,
   successTitle,
   successSubtitle,
+  successFooter,
   uploadStepLabel = "Upload to IPFS",
 }: MintProgressDialogProps) {
   const router = useRouter();
@@ -301,6 +303,7 @@ export function MintProgressDialog({
                 {primaryActionLabel}
               </Button>
             </div>
+            {successFooter}
           </div>
         )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -198,7 +198,6 @@ export default function CreateDropPage() {
         }
       }
       setDone(true);
-      rewardToast("launch_launchpad");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create drop");
     } finally {
@@ -222,6 +221,7 @@ export default function CreateDropPage() {
             Your Collection Drop is live on Starknet. Each item is a unique, licensed asset. It will appear in the launchpad within a minute once indexed.
           </p>
         </div>
+        <RewardEarned actionType="launch_launchpad" />
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild variant="outline"><Link href="/launchpad/drop">Back to Drops</Link></Button>
           <Button onClick={resetAll} className="bg-brand-orange hover:brightness-110 text-white">Launch another</Button>

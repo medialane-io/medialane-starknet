@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { CallData } from "starknet";
@@ -118,7 +118,6 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
       setPostTxHash(result);
       if (result !== null) {
         setPostStep("success");
-        rewardToast("comment");
         setText("");
         if (composeRef.current) composeRef.current.style.height = "auto";
         await syncTransactionBestEffort(client, result);
@@ -388,6 +387,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                 <p className="text-sm text-center text-muted-foreground">
                   Your comment is onchain and will appear here once indexed (~30s).
                 </p>
+                <RewardEarned actionType="comment" />
                 {postTxHash && (
                   <a
                     href={`${EXPLORER_URL}/tx/${postTxHash}`}

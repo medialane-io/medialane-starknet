@@ -33,7 +33,7 @@ import { useCollection } from "@/hooks/use-collections";
 import { predictNextMembershipId } from "@/hooks/use-club";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
@@ -227,7 +227,6 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
       await executeIntents(starknetProvider, signer, client, [tierRes.data, mintRes.data]);
 
       setDialogTxStatus("confirmed");
-      rewardToast("launch_launchpad");
       setMintStep("success");
       invalidatePortfolioCache(address);
     } catch (err: any) {
@@ -483,6 +482,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
       </ClaimRouteShell>
 
       <MintProgressDialog
+        successFooter={<RewardEarned actionType="launch_launchpad" />}
         open={mintStep !== "idle"}
         mintStep={mintStep}
         txStatus={dialogTxStatus}

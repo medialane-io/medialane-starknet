@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
@@ -160,7 +160,6 @@ export default function CreateClubPage() {
       setDeployedAddress(addr);
       setDialogTxStatus("confirmed");
       setCollectionStep("success");
-      rewardToast("create_club");
     } catch (err: any) {
       setCollectionError(err?.message ?? "Something went wrong");
       setDialogTxStatus("idle");
@@ -182,6 +181,7 @@ export default function CreateClubPage() {
   return (
     <>
       <CollectionProgressDialog
+        successFooter={<RewardEarned actionType="create_club" />}
         open={collectionStep !== "idle"}
         collectionStep={collectionStep}
         txStatus={dialogTxStatus}

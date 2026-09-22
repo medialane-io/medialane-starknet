@@ -1,5 +1,7 @@
 "use client";
 
+import { RewardEarned } from "@/lib/reward-earned";
+
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -113,6 +115,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
             explorerUrl={EXPLORER_URL}
             tokenImage={tokenImage}
             name={name}
+            footer={<RewardEarned actionType="list_asset" />}
             onDone={() => { onOpenChange(false); onSuccess?.(); }}
           />
         ) : isTerminalError ? (

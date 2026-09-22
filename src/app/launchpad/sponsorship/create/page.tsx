@@ -19,7 +19,7 @@ import { useTokensByOwner } from "@/hooks/use-tokens";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
@@ -159,7 +159,6 @@ export default function CreateSponsorshipPage() {
           });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship intent");
       await executeIntent(starknetProvider, signer, client, intentRes.data);
-      if (mode === "offer") rewardToast("create_sponsorship_offer");
 
       setDone(true);
     } catch (err) {
@@ -273,6 +272,7 @@ export default function CreateSponsorshipPage() {
                     : "The asset's owner can now accept or decline your proposal."}
                 </DialogDescription>
               </div>
+              {mode === "offer" && <RewardEarned actionType="create_sponsorship_offer" />}
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button asChild variant="outline" className="flex-1">
                   <Link href="/launchpad/sponsorship">Back to Sponsorship</Link>

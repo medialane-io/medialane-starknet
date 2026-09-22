@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -213,7 +213,6 @@ export default function CreateNFTEditionsCollectionPage() {
       setDeployedAddress(addr);
       setDialogTxStatus("confirmed");
       setCollectionStep("success");
-      rewardToast("create_collection");
     } catch (err) {
       setCollectionError(err instanceof Error ? err.message : "Something went wrong");
       setDialogTxStatus("idle");
@@ -224,6 +223,7 @@ export default function CreateNFTEditionsCollectionPage() {
   return (
     <>
       <CollectionProgressDialog
+        successFooter={<RewardEarned actionType="create_collection" />}
         open={collectionStep !== "idle"}
         collectionStep={collectionStep}
         txStatus={dialogTxStatus}

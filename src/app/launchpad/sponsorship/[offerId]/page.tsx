@@ -17,7 +17,7 @@ import { executeIntent } from "@medialane/sdk/starknet";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { useToken } from "@/hooks/use-tokens";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ export default function SponsorshipOfferPage() {
 
   const [bidAmount, setBidAmount] = useState("");
   const [isPlacingBid, setIsPlacingBid] = useState(false);
+  const [bidPlaced, setBidPlaced] = useState(false);
   const [acceptingSponsor, setAcceptingSponsor] = useState<string | null>(null);
 
   const isOwner = !!activeAddress && !!offer && normalizeAddress("STARKNET", activeAddress) === normalizeAddress("STARKNET", offer.author);
@@ -47,6 +48,7 @@ export default function SponsorshipOfferPage() {
   const onPlaceBid = async () => {
     if (!signer || !activeAddress || !offer) { toast.error("Connect a wallet first"); return; }
     if (!bidAmount || Number(bidAmount) <= 0) { toast.error("Enter a bid amount"); return; }
+    setBidPlaced(false);
     if (!paymentToken) { toast.error("Unsupported payment token"); return; }
     setIsPlacingBid(true);
     try {
@@ -59,8 +61,7 @@ export default function SponsorshipOfferPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid intent");
       await executeIntent(starknetProvider, signer, client, intentRes.data);
-      toast.success("Bid placed");
-      rewardToast("place_sponsorship_bid");
+      setBidPlaced(true);
       setBidAmount("");
       await mutateBids();
     } catch (err) {
@@ -206,6 +207,12 @@ export default function SponsorshipOfferPage() {
                   {isPlacingBid ? <Loader2 className="h-4 w-4 animate-spin" /> : "Place bid"}
                 </Button>
               </div>
+              {bidPlaced && (
+                <div className="space-y-2">
+                  <p className="text-sm text-emerald-500">Your bid is on chain.</p>
+                  <RewardEarned actionType="place_sponsorship_bid" />
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">
                 Placing a bid approves the offer&apos;s payment token — no funds move until the owner accepts.
               </p>

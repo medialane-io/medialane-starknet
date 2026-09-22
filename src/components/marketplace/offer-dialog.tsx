@@ -1,5 +1,7 @@
 "use client";
 
+import { RewardEarned } from "@/lib/reward-earned";
+
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,6 +105,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
             explorerUrl={EXPLORER_URL}
             tokenImage={tokenImage}
             name={name}
+            footer={<RewardEarned actionType="make_offer" />}
             onDone={() => { onOpenChange(false); onSuccess?.(); }}
           />
         ) : isTerminalError ? (

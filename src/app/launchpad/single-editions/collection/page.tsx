@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -179,7 +179,6 @@ export default function LaunchpadCreateCollectionPage() {
       await syncTransactionBestEffort(client, result);
 
       setCollectionStep("success");
-      rewardToast("create_collection");
       invalidatePortfolioCache(walletAddress);
     } catch (err: unknown) {
       setCollectionError(err instanceof Error ? err.message : "Something went wrong");
@@ -197,6 +196,7 @@ export default function LaunchpadCreateCollectionPage() {
   return (
     <>
       <CollectionProgressDialog
+        successFooter={<RewardEarned actionType="create_collection" />}
         open={collectionStep !== "idle"}
         collectionStep={collectionStep}
         txStatus={status}

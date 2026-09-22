@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -156,7 +156,6 @@ export default function CreatePOPPage() {
       await execute(intentRes.data.calls as Call[]);
 
       setDone(true);
-      rewardToast("launch_launchpad");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create event");
     } finally {
@@ -179,6 +178,7 @@ export default function CreatePOPPage() {
             within a minute once indexed.
           </p>
         </div>
+        <RewardEarned actionType="launch_launchpad" />
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild variant="outline">
             <Link href="/launchpad/pop">Back to POP launchpad</Link>
