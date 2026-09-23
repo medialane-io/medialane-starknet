@@ -3,7 +3,6 @@ import type { Call, TypedData } from "starknet";
 import { useSWRConfig } from "swr";
 import { getTokenBySymbol } from "@medialane/sdk";
 import { toast } from "sonner";
-import { rewardToast } from "@/lib/reward-toast";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
@@ -166,7 +165,6 @@ export function useMarketplace(): UseMarketplaceReturn {
                     description: is1155 ? "Your edition has been listed successfully." : "Your asset has been listed successfully.",
                 });
             }
-            rewardToast("list_asset");
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
@@ -205,7 +203,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
-            rewardToast("make_offer");
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
@@ -256,7 +253,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
-            rewardToast("buy_asset");
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
@@ -307,7 +303,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
-            rewardToast("offer_accepted_seller");
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);

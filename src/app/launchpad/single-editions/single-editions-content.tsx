@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { collectionHref } from "@/lib/routes";
 import Image from "next/image";
 import Link from "next/link";
@@ -414,7 +414,6 @@ export function SingleEditionsContent() {
       await syncTransactionBestEffort(client, result);
 
       setMintStep("success");
-      rewardToast("mint_asset");
       invalidatePortfolioCache(walletAddress);
     } catch (err: unknown) {
       setMintError(err instanceof Error ? err.message : "Something went wrong");
@@ -447,6 +446,7 @@ export function SingleEditionsContent() {
   return (
     <>
       <MintProgressDialog
+        successFooter={<RewardEarned actionType="mint_asset" />}
         open={mintStep !== "idle"}
         mintStep={mintStep}
         txStatus={status}

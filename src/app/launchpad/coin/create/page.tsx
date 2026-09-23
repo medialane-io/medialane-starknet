@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { coinHref } from "@/lib/routes";
 import { useRouter } from "next/navigation";
 import { Coins, ArrowRight, ImagePlus, X, Loader2 } from "lucide-react";
@@ -150,7 +150,6 @@ export default function CoinCreatePage() {
       setCoinAddress(addr);
       void saveCoinProfile(addr);
       toast.success("Creator Coin launched");
-      rewardToast("launch_coin");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Launch failed");
     }
@@ -178,6 +177,7 @@ export default function CoinCreatePage() {
             Deployed and launched with permanently-locked liquidity. Trading is open.
           </p>
         </div>
+        <RewardEarned actionType="launch_coin" />
         <div className="max-w-sm mx-auto space-y-4 text-left">
           <CoinLaunchPreview data={previewData} />
           {profileStatus === "saving" && (

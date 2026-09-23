@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -311,7 +311,6 @@ export default function MintNFTEditionsPage() {
       setTxHash(txHashResult);
       setTxStatus("confirmed");
       setMintStep("success");
-      rewardToast("mint_asset");
       if (walletAddress) invalidatePortfolioCache(walletAddress);
     } catch (err) {
       setMintError(err instanceof Error ? err.message : "Failed to mint token");
@@ -728,6 +727,7 @@ export default function MintNFTEditionsPage() {
       </ClaimRouteShell>
 
       <MintProgressDialog
+        successFooter={<RewardEarned actionType="mint_asset" />}
         open={mintStep !== "idle"}
         mintStep={mintStep}
         txStatus={txStatus}

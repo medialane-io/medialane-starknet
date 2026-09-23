@@ -7,7 +7,7 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { rewardToast } from "@/lib/reward-toast";
+import { RewardEarned } from "@/lib/reward-earned";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { starknetProvider } from "@/lib/starknet";
 
@@ -30,12 +30,12 @@ export function FastMint({ presentation = "inline", open = true, onClose, mediaK
 
   return (
     <SharedFastMint
+      successFooter={<RewardEarned actionType="mint_asset" />}
       presentation={presentation}
       open={open}
       onClose={onClose}
       mediaKindLock={mediaKindLock}
       onMinted={(asset) => {
-        rewardToast("mint_asset");
         if (walletAddress) invalidatePortfolioCache(walletAddress);
         onMinted?.(asset);
       }}

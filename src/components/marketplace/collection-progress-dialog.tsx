@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Image from "next/image";
 import { fireConfetti } from "@/lib/confetti";
 import {
@@ -44,6 +44,7 @@ interface CollectionProgressDialogProps {
   mintLabel?: string;
 
   deployedAddress?: string | null;
+  successFooter?: ReactNode;
 }
 
 const makeSteps = (firstStepLabel: string) => [
@@ -78,6 +79,7 @@ export function CollectionProgressDialog({
   firstStepLabel = "Create collection intent",
   mintHref,
   mintLabel,
+  successFooter,
   deployedAddress,
 }: CollectionProgressDialogProps) {
   const router = useRouter();
@@ -245,6 +247,7 @@ export function CollectionProgressDialog({
                 </Button>
               </div>
             </div>
+            {successFooter}
           </div>
         )}
 
