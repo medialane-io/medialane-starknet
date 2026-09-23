@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
 import {
   AlertCircle, CheckCircle2, ExternalLink, Minus, Plus,
   RefreshCw, ShieldCheck, ShoppingCart, Zap,
@@ -208,6 +207,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     !!address &&
     normalizeAddress("STARKNET", order.offerer) === normalizeAddress("STARKNET", address);
   const [step, setStep] = useState<Step>("details");
+  const [buyError, setBuyError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
   const [paymentSymbol, setPaymentSymbol] = useState<string | null>(null);
@@ -236,12 +236,10 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   }, [open]);
 
   const handleBuy = async () => {
-    if (!isConnected) {
-      toast.error("Connect your wallet first");
-      return;
-    }
+    setBuyError(null);
+    if (!isConnected) return;
     if (isOwnOrder) {
-      toast.error("This is your own listing — you can't buy it.");
+      setBuyError("This is your own listing, so you cannot buy it.");
       return;
     }
     if (needsSwap && !paymentSymbol) return;
@@ -261,7 +259,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           swapCalls = built.calls;
         } catch {
           setStep("details");
-          toast.error("Price moved before the swap could be prepared — please try again.");
+          setBuyError("The price moved before the swap could be prepared. Please try again.");
           return;
         }
       }
@@ -286,7 +284,8 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
       }
     } catch (e) {
       setStep("details");
-      toast.error(e instanceof Error ? e.message : "Purchase failed");
+      console.error("purchase failed", e);
+      setBuyError("Your purchase could not be completed. Please try again.");
     }
   };
 
@@ -409,6 +408,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 </div>
               ) : isConnected ? (
                 <div className="space-y-3">
+                  {buyError && <p role="alert" className="text-sm text-destructive">{buyError}</p>}
                   <div className={`btn-border-animated p-[1px] rounded-xl ${!canBuy ? "opacity-50 pointer-events-none" : ""}`}>
                     <Button
                       className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30"

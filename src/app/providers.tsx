@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
-import { Toaster, toast } from "sonner";
 import Link from "next/link";
 import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
@@ -109,14 +108,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
             if (status === 404) return;
 
-            const msg = err instanceof Error ? err.message : "Something went wrong";
-            if (
-              msg.includes("401") || msg.includes("403") ||
-              msg.includes("Missing") ||
-              msg.includes("Failed to fetch") || msg.includes("Load failed") ||
-              msg.includes("NetworkError") || msg.includes("network")
-            ) return;
-            toast.error(msg);
+            console.error("request failed", err);
           },
         }}
       >
@@ -125,21 +117,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <UserRegistration />
             {isStandalone ? children : <Shell>{children}</Shell>}
             {!isStandalone && <NotificationSpotlight />}
-            <Toaster
-              richColors
-              position="bottom-center"
-              duration={3500}
-              gap={4}
-              toastOptions={{
-                classNames: {
-                  toast: "rounded-xl shadow-lg border border-border/50 font-sans text-[13px] px-4 py-3",
-                  title: "font-medium",
-                  description: "text-xs opacity-70 mt-0.5",
-                  actionButton: "rounded-lg text-xs font-medium",
-                  cancelButton: "rounded-lg text-xs",
-                },
-              }}
-            />
           </WalletProvider>
         </StarknetProvider>
       </SWRConfig>

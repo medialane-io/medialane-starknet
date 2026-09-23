@@ -17,7 +17,6 @@ import {
   type SponsorshipOffer,
 } from "@/hooks/use-sponsorship";
 import { assetHref } from "@/lib/routes";
-import { toast } from "sonner";
 import type { IntentCall } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 
@@ -27,9 +26,10 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
   const signer = useVenueSigner();
   const client = useMedialaneClient();
   const [activeSponsor, setActiveSponsor] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const acceptBid = async (sponsor: string, amount: string) => {
-    if (!signer || !walletAddress) { toast.error("Connect a wallet first"); return; }
+    if (!signer || !walletAddress) { setActionError("Connect your wallet to continue."); return; }
     setActiveSponsor(sponsor);
     try {
       const intentRes = await client.api.acceptSponsorshipBidIntent({ author: walletAddress, offerId: offer.offerId, sponsor });
@@ -39,7 +39,8 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
       await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
       await mutate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to accept bid");
+      console.error("accept bid failed", err);
+      setActionError("That bid could not be accepted. Please try again.");
     } finally {
       setActiveSponsor(null);
     }
@@ -60,6 +61,7 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
           </Button>
         </div>
       ))}
+      {actionError && <p role="alert" className="text-xs text-destructive">{actionError}</p>}
     </div>
   );
 }
@@ -69,9 +71,10 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
   const signer = useVenueSigner();
   const client = useMedialaneClient();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const respond = async (proposalId: string, decision: "accept" | "reject", paymentToken: string, amount: string) => {
-    if (!signer) { toast.error("Connect a wallet first"); return; }
+    if (!signer) { setActionError("Connect your wallet to continue."); return; }
     setActiveId(proposalId);
     try {
       const intentRes = decision === "accept"
@@ -85,7 +88,8 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
       await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
       await mutate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to respond to proposal");
+      console.error("respond to proposal failed", err);
+      setActionError("That response could not be completed. Please try again.");
     } finally {
       setActiveId(null);
     }
@@ -116,6 +120,7 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
           </div>
         </div>
       ))}
+      {actionError && <p role="alert" className="text-xs text-destructive">{actionError}</p>}
     </div>
   );
 }
@@ -125,9 +130,10 @@ function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
   const signer = useVenueSigner();
   const client = useMedialaneClient();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const withdraw = async (proposalId: string) => {
-    if (!signer) { toast.error("Connect a wallet first"); return; }
+    if (!signer) { setActionError("Connect your wallet to continue."); return; }
     setActiveId(proposalId);
     try {
       const intentRes = await client.api.withdrawSponsorshipProposalIntent({ proposer: walletAddress, proposalId });
@@ -135,7 +141,8 @@ function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
       await executeIntent(starknetProvider, signer, client, intentRes.data);
       await mutate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to withdraw proposal");
+      console.error("withdraw proposal failed", err);
+      setActionError("That proposal could not be withdrawn. Please try again.");
     } finally {
       setActiveId(null);
     }
@@ -160,6 +167,7 @@ function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
           </Button>
         </div>
       ))}
+      {actionError && <p role="alert" className="text-xs text-destructive">{actionError}</p>}
     </div>
   );
 }

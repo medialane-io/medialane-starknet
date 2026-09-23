@@ -7,7 +7,6 @@ import { usdValueFor } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, ArrowLeftRight } from "lucide-react";
-import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -63,12 +62,13 @@ export function CounterOfferDialog({
   const usdEquivalent = usdValueFor(watchedPrice || undefined, currencySymbol, usdPrices);
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { toast.error("Connect your wallet first"); return; }
+    if (!isConnected) return;
     try {
       await makeOffer(nftContract, tokenId, values.price, currencySymbol, values.durationSeconds, undefined, { silent: true });
       setDone(true);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Counter-offer failed");
+      console.error("counter-offer failed", e);
+      form.setError("root", { message: "Your counter-offer could not be sent. Please try again." });
     }
   };
 
@@ -120,6 +120,9 @@ export function CounterOfferDialog({
                   </FormItem>
                 )} />
                 {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+                {form.formState.errors.root && (
+                  <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+                )}
                 <Button type="submit" className="w-full h-11" disabled={isProcessing || !isConnected}>
                   <ArrowLeftRight className="h-4 w-4 mr-2" />Submit counter-offer
                 </Button>

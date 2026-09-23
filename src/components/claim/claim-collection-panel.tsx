@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 type Step = "input" | "verifying" | "success" | "manual" | "pending";
@@ -31,6 +30,7 @@ export function ClaimCollectionPanel({
   const [notes, setNotes] = useState("");
   const [step, setStep] = useState<Step>("input");
   const [verifyError, setVerifyError] = useState("");
+  const [panelError, setPanelError] = useState<string | null>(null);
   const [claimedCollection, setClaimedCollection] = useState<{
     contractAddress: string;
     name?: string | null;
@@ -38,7 +38,7 @@ export function ClaimCollectionPanel({
 
   async function handleAutoClaim() {
     if (!contractAddress.trim() || !walletAddress) {
-      toast.error("Connect your wallet first");
+      setPanelError("Connect your wallet to continue.");
       return;
     }
     setStep("verifying");
@@ -68,7 +68,8 @@ export function ClaimCollectionPanel({
   }
 
   async function handleManualRequest() {
-    if (!email.trim()) { toast.error("Email is required"); return; }
+    if (!email.trim()) { setPanelError("Add your email so we can reply."); return; }
+    setPanelError(null);
     try {
       await getMedialaneClient().api.requestCollectionClaim({
         contractAddress: contractAddress.trim(),
@@ -77,8 +78,9 @@ export function ClaimCollectionPanel({
         notes: notes.trim() || undefined,
       });
       setStep("pending");
-    } catch {
-      toast.error("Failed to submit request");
+    } catch (err) {
+      console.error("collection claim request failed", err);
+      setPanelError("We could not send your request. Please try again.");
     }
   }
 
@@ -143,6 +145,7 @@ export function ClaimCollectionPanel({
               <p className="text-xs text-muted-foreground">{helperText ?? DEFAULT_HELPER_TEXT}</p>
             )}
           </div>
+          {panelError && <p role="alert" className="text-sm text-destructive">{panelError}</p>}
           {!walletAddress ? (
             <ConnectWallet label="Connect wallet to claim" className="w-full" />
           ) : (
@@ -178,6 +181,7 @@ export function ClaimCollectionPanel({
               <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="e.g. I deployed this contract on Starknet mainnet…" />
             </div>
             <div className="flex gap-3">
+              {panelError && <p role="alert" className="text-sm text-destructive">{panelError}</p>}
               <Button onClick={handleManualRequest} className="flex-1">Submit Request</Button>
               <Button variant="outline" onClick={() => setStep("input")}>Back</Button>
             </div>

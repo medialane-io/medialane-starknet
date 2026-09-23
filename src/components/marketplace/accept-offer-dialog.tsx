@@ -5,7 +5,6 @@ import { RewardEarned } from "@/lib/reward-earned";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { CheckCircle2, DollarSign } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";

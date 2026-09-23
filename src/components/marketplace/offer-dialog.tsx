@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, HandCoins, Layers, ShieldCheck, Zap } from "lucide-react";
-import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -72,7 +71,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
   const usdEquivalent = usdValueFor(watchedPrice || undefined, watchedCurrency, usdPrices);
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { toast.error("Connect your wallet first"); return; }
+    if (!isConnected) return;
     const hash = await makeOffer(assetContract, tokenId, values.price, values.currency, values.durationSeconds, tokenStandard, { silent: true });
     if (hash) setTxStatus("confirmed");
   };

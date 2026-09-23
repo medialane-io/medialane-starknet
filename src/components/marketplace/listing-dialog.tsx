@@ -4,7 +4,6 @@ import { RewardEarned } from "@/lib/reward-earned";
 
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, Layers, ShieldCheck, Tag, Zap } from "lucide-react";
@@ -66,7 +65,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
   });
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { toast.error("Connect your wallet first"); return; }
+    if (!isConnected) return;
     if (is1155) {
       const qty = parseInt(values.amount ?? "", 10);
       if (!values.amount || Number.isNaN(qty) || qty < 1) {

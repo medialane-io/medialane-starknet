@@ -30,7 +30,6 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
-import { toast } from "sonner";
 import { starknetProvider } from "@/lib/starknet";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
@@ -67,6 +66,7 @@ export default function CreateNFTEditionsCollectionPage() {
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
   const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
   const [autoSymbol, setAutoSymbol] = useState("");
@@ -109,11 +109,11 @@ export default function CreateNFTEditionsCollectionPage() {
 
   const handleImageSelect = async (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Unsupported format", { description: "Please upload a JPG, PNG, GIF, SVG, or WebP image." });
+      setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image too large", { description: `Max 10 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB.` });
+      setImageError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please choose one under 10 MB.`);
       return;
     }
     setImageFile(file);
@@ -126,10 +126,10 @@ export default function CreateNFTEditionsCollectionPage() {
     try {
       const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
-      toast.success("Image uploaded to IPFS");
     } catch (err) {
+      console.error("image upload failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
+      setImageError(t.description ?? t.title);
       setImageUri(null);
     } finally {
       setImageUploading(false);
@@ -154,9 +154,9 @@ export default function CreateNFTEditionsCollectionPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { toast.error("Connect your wallet first"); return; }
+    if (!isConnected) { form.setError("root", { message: "Connect your wallet to continue." }); return; }
     if (imageFile && !imageUri && !imageUploading) {
-      toast.error("Image upload failed", { description: "Please re-upload your collection image." });
+      setImageError("That image did not finish uploading. Please add it again.");
       return;
     }
 
@@ -318,6 +318,7 @@ export default function CreateNFTEditionsCollectionPage() {
                     JPG, PNG, GIF, SVG or WebP · max 10 MB
                     {imageUri && <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>}
                   </p>
+                  {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                 </div>
               </div>
             </div>
@@ -364,6 +365,13 @@ export default function CreateNFTEditionsCollectionPage() {
                 <FormMessage />
               </FormItem>
             )} />
+
+            {form.formState.errors.root && (
+
+              <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+
+            )}
+
 
             <button
               type="submit"

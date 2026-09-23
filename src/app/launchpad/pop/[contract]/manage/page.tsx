@@ -13,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCollection } from "@/hooks/use-collections";
-import { toast } from "sonner";
 import { isCollectionOwner } from "@/lib/utils";
 
 function parseAddresses(raw: string): string[] {
@@ -125,6 +124,7 @@ export default function PopManagePage({
   const { address, isConnected, execute } = useWallet();
   const { collection, isLoading } = useCollection(contract);
   const [isTxLoading, setIsTxLoading] = useState(false);
+  const [txMessage, setTxMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
 
   const isOwner = isCollectionOwner(collection, address);
 
@@ -133,11 +133,13 @@ export default function PopManagePage({
     successMsg: string
   ) => {
     setIsTxLoading(true);
+    setTxMessage(null);
     try {
       await execute(calls);
-      toast.success(successMsg);
+      setTxMessage({ tone: "success", text: successMsg });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Transaction failed");
+      console.error("manage action failed", err);
+      setTxMessage({ tone: "error", text: "That change could not be completed. Please try again." });
     } finally {
       setIsTxLoading(false);
     }
@@ -207,6 +209,14 @@ export default function PopManagePage({
 
   return (
     <div className="max-w-xl mx-auto px-4 pt-10 pb-16 space-y-6">
+      {txMessage && (
+        <p
+          role={txMessage.tone === "error" ? "alert" : "status"}
+          className={txMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
+        >
+          {txMessage.text}
+        </p>
+      )}
       <FadeIn>
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/launchpad/pop">

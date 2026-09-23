@@ -38,7 +38,6 @@ import {
 } from "lucide-react";
 import { ToggleGroup, Section } from "@/components/create/create-form-primitives";
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
-import { toast } from "sonner";
 import type { Call } from "starknet";
 import { uploadFileToIpfs, uploadJsonToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 
@@ -94,6 +93,7 @@ export default function CreateRemixPage() {
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
   const [mintError, setMintError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -127,13 +127,14 @@ export default function CreateRemixPage() {
 
   const handleImageChange = (file: File) => {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast.error("Unsupported format", { description: "Please upload a JPG, PNG, GIF, SVG, or WebP image." });
+      setFormError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      toast.error("File too large", { description: `Max size is 10 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB.` });
+      setFormError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please choose one under 10 MB.`);
       return;
     }
+    setFormError(null);
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     const url = URL.createObjectURL(file);
     previewUrlRef.current = url;
@@ -149,7 +150,8 @@ export default function CreateRemixPage() {
 
   const handleOwnerSubmit = async () => {
     const err = validate();
-    if (err) { toast.error(err); return; }
+    if (err) { setFormError(err); return; }
+    setFormError(null);
     await runOwnerMint();
   };
 
@@ -517,6 +519,8 @@ export default function CreateRemixPage() {
                 </CollapsibleContent>
               </Collapsible>
             </Section>
+
+            {formError && <p role="alert" className="text-sm text-destructive">{formError}</p>}
 
             <div className="btn-border-animated p-[1px] rounded-xl">
               <button

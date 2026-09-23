@@ -32,7 +32,6 @@ import { ServiceFormShell, GradientButton, CurrencyIcon, CurrencyAmount } from "
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { CreateCoinAside } from "@/components/claim/create-coin-aside";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 const QUOTE_OPTIONS = SUPPORTED_TOKENS.map((t) => t.symbol);
 type Quote = (typeof QUOTE_OPTIONS)[number];
@@ -55,6 +54,7 @@ export default function CoinCreatePage() {
   const [symbol, setSymbol] = useState("");
   const [autoSymbol, setAutoSymbol] = useState("");
   const [description, setDescription] = useState("");
+  const [launchError, setLaunchError] = useState<string | null>(null);
   const [supply, setSupply] = useState("");
   const [quote, setQuote] = useState<Quote>("STRK");
   const [price, setPrice] = useState(String(SUGGESTED_DEFAULT_PRICE));
@@ -149,9 +149,9 @@ export default function CoinCreatePage() {
       const { coinAddress: addr } = await launch(input);
       setCoinAddress(addr);
       void saveCoinProfile(addr);
-      toast.success("Creator Coin launched");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Launch failed");
+      console.error("coin launch failed", e);
+      setLaunchError("Your coin could not be launched. Please try again.");
     }
   }
 
@@ -403,6 +403,7 @@ export default function CoinCreatePage() {
           <div className="h-px bg-border/60" />
 
           <section className="space-y-4">
+              {launchError && <p role="alert" className="text-sm text-destructive">{launchError}</p>}
               <GradientButton
                 big
                 onClick={handleLaunch}

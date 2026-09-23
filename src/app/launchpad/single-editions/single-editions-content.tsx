@@ -67,7 +67,6 @@ import {
   Layers,
   Check,
 } from "lucide-react";
-import { toast } from "sonner";
 import type { Call } from "starknet";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -358,9 +357,10 @@ export function SingleEditionsContent() {
 
   const onSubmit = async (values: FormValues) => {
     if (!hasWallet) {
-      toast.error("Connect your wallet first");
+      form.setError("root", { message: "Connect your wallet to continue." });
       return;
     }
+    form.clearErrors("root");
     if (!walletAddress) return;
 
     setMintError(null);
@@ -530,12 +530,12 @@ export function SingleEditionsContent() {
                     if (!file) return;
                     const ALLOWED = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
                     if (file.size > 10 * 1024 * 1024) {
-                      toast.error("File too large", { description: "Maximum file size is 10 MB." });
+                      form.setError("image", { message: "That image is over 10 MB. Please choose a smaller one." });
                       e.target.value = "";
                       return;
                     }
                     if (!ALLOWED.includes(file.type)) {
-                      toast.error("Unsupported format", { description: "Please upload a JPG, PNG, GIF, SVG, or WebP image." });
+                      form.setError("image", { message: "Please choose a JPG, PNG, GIF, SVG or WebP image." });
                       e.target.value = "";
                       return;
                     }
@@ -790,6 +790,10 @@ export function SingleEditionsContent() {
                 </CollapsibleContent>
               </div>
             </Collapsible>
+
+            {form.formState.errors.root && (
+              <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+            )}
 
             <button
               type="submit"

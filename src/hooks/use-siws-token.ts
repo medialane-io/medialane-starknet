@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSigner } from "@/hooks/use-signer";
 import {
@@ -40,17 +39,14 @@ export function useSiwsToken() {
     setIsSigningIn(true);
     setError(null);
 
-    const signToast = toast.loading("Check your wallet to sign in and continue.");
     try {
       const newToken = await requestSiwsToken({ walletAddress: activeAddress, signer });
-      toast.dismiss(signToast);
       setToken(newToken);
       return newToken;
     } catch (err) {
 
       console.error("[siws] error:", err);
       const message = getFriendlyWalletError(err).message;
-      toast.dismiss(signToast);
       setError(message);
       throw new Error(message);
     } finally {

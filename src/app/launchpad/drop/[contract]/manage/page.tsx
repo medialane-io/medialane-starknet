@@ -13,7 +13,6 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWallet } from "@/hooks/use-wallet";
 import { useDropInfo, useOnChainDropState } from "@/hooks/use-drops";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 function parseAddresses(raw: string): string[] {
@@ -187,6 +186,7 @@ export default function DropManagePage({
   const { state: dropState, isLoading: dropStateLoading, mutate: mutateDropState } = useOnChainDropState(contract);
   const allowlistEnabled = dropState?.allowlistEnabled;
   const [isProcessing, setIsProcessing] = useState(false);
+  const [txMessage, setTxMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
 
   const isOwner =
     walletAddress &&
@@ -200,12 +200,14 @@ export default function DropManagePage({
     successMsg: string
   ) => {
     setIsProcessing(true);
+    setTxMessage(null);
     try {
       await walletExecute(calls);
-      toast.success(successMsg);
+      setTxMessage({ tone: "success", text: successMsg });
       mutateDropState();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Transaction failed");
+      console.error("manage action failed", err);
+      setTxMessage({ tone: "error", text: "That change could not be completed. Please try again." });
     } finally {
       setIsProcessing(false);
     }
@@ -281,6 +283,14 @@ export default function DropManagePage({
 
   return (
     <div className="max-w-xl mx-auto px-4 pt-10 pb-16 space-y-6">
+      {txMessage && (
+        <p
+          role={txMessage.tone === "error" ? "alert" : "status"}
+          className={txMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
+        >
+          {txMessage.text}
+        </p>
+      )}
       <FadeIn>
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href={`/launchpad/drop/${contract}`}>

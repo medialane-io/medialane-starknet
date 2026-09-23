@@ -8,10 +8,11 @@ import { useSiwsToken } from "@/hooks/use-siws-token";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { AtSign, CheckCircle, Clock, XCircle, ArrowRight, Loader2 } from "lucide-react";
 
 type CheckState = "idle" | "checking" | "available" | "taken";
+
+type InlineMessage = { tone: "error" | "success"; text: string } | null;
 
 function UsernameInput({ value, onChange, onCheck, onSubmit, checkState, checkReason, loading, disabled }: {
   value: string; onChange: (v: string) => void;
@@ -67,6 +68,7 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
   const [claiming, setClaiming] = useState(false);
   const [checkState, setCheckState] = useState<CheckState>("idle");
   const [checkReason, setCheckReason] = useState<string | undefined>();
+  const [claimMessage, setClaimMessage] = useState<InlineMessage>(null);
 
   async function handleCheck() {
     if (!claimInput.trim()) return;
@@ -78,7 +80,7 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
       if (!result.available) setCheckReason(result.reason);
     } catch {
       setCheckState("idle");
-      toast.error("Could not check username availability");
+      setClaimMessage({ tone: "error", text: "We could not check that username just now. Please try again." });
     }
   }
 
@@ -88,16 +90,17 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
     try {
       const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), await getValidToken(), undefined);
       if (result.error) {
-        toast.error(result.error);
+        setClaimMessage({ tone: "error", text: result.error });
       } else {
-        toast.success("Username claim submitted — the Medialane DAO team will review it shortly.");
+        setClaimMessage({ tone: "success", text: "Username claim submitted. The Medialane DAO team will review it shortly." });
         setClaimInput("");
         setCheckState("idle");
         setCheckReason(undefined);
         await mutateClaim();
       }
-    } catch {
-      toast.error("Failed to submit claim");
+    } catch (err) {
+      console.error("username claim failed", err);
+      setClaimMessage({ tone: "error", text: "That claim could not be submitted. Please try again." });
     } finally {
       setClaiming(false);
     }
@@ -214,6 +217,14 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
         loading={claiming}
         disabled={!walletAddress}
       />
+      {claimMessage && (
+        <p
+          role={claimMessage.tone === "error" ? "alert" : "status"}
+          className={claimMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
+        >
+          {claimMessage.text}
+        </p>
+      )}
     </div>
   );
 }

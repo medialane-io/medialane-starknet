@@ -20,7 +20,6 @@ import { useToken } from "@/hooks/use-tokens";
 import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
-import { toast } from "sonner";
 import type { IntentCall } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 
@@ -40,16 +39,19 @@ export default function SponsorshipOfferPage() {
   const [isPlacingBid, setIsPlacingBid] = useState(false);
   const [bidPlaced, setBidPlaced] = useState(false);
   const [acceptingSponsor, setAcceptingSponsor] = useState<string | null>(null);
+  const [bidError, setBidError] = useState<string | null>(null);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
+  const [acceptMessage, setAcceptMessage] = useState<string | null>(null);
 
   const isOwner = !!activeAddress && !!offer && normalizeAddress("STARKNET", activeAddress) === normalizeAddress("STARKNET", offer.author);
   const paymentToken = offer ? getTokenByAddress(offer.paymentToken) : null;
   const durationDays = offer ? Math.round(offer.duration / 86400) : 0;
 
   const onPlaceBid = async () => {
-    if (!signer || !activeAddress || !offer) { toast.error("Connect a wallet first"); return; }
-    if (!bidAmount || Number(bidAmount) <= 0) { toast.error("Enter a bid amount"); return; }
+    if (!signer || !activeAddress || !offer) { setBidError("Connect your wallet to continue."); return; }
+    if (!bidAmount || Number(bidAmount) <= 0) { setBidError("Enter a bid amount."); return; }
     setBidPlaced(false);
-    if (!paymentToken) { toast.error("Unsupported payment token"); return; }
+    if (!paymentToken) { setBidError("This offer uses a currency the app does not support yet."); return; }
     setIsPlacingBid(true);
     try {
       const amount = BigInt(Math.round(Number(bidAmount) * 10 ** paymentToken.decimals));
@@ -65,14 +67,15 @@ export default function SponsorshipOfferPage() {
       setBidAmount("");
       await mutateBids();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to place bid");
+      console.error("place bid failed", err);
+      setBidError("Your bid could not be placed. Please try again.");
     } finally {
       setIsPlacingBid(false);
     }
   };
 
   const onAcceptBid = async (sponsor: string, amount: string) => {
-    if (!signer || !activeAddress || !offer) { toast.error("Connect a wallet first"); return; }
+    if (!signer || !activeAddress || !offer) { setAcceptError("Connect your wallet to continue."); return; }
     setAcceptingSponsor(sponsor);
     try {
       const intentRes = await client.api.acceptSponsorshipBidIntent({
@@ -85,10 +88,11 @@ export default function SponsorshipOfferPage() {
       const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, feeConfig);
       const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
       await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
-      toast.success("Bid accepted — license minted to the sponsor");
+      setAcceptMessage("Bid accepted. The license is minted to the sponsor.");
       await Promise.all([mutateOffer(), mutateBids()]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to accept bid");
+      console.error("accept bid failed", err);
+      setAcceptError("That bid could not be accepted. Please try again.");
     } finally {
       setAcceptingSponsor(null);
     }
@@ -181,6 +185,8 @@ export default function SponsorshipOfferPage() {
                       </Button>
                     </div>
                   ))}
+                  {acceptError && <p role="alert" className="text-xs text-destructive">{acceptError}</p>}
+                  {acceptMessage && <p role="status" className="text-xs text-emerald-500">{acceptMessage}</p>}
                 </div>
               )}
             </div>
@@ -207,6 +213,7 @@ export default function SponsorshipOfferPage() {
                   {isPlacingBid ? <Loader2 className="h-4 w-4 animate-spin" /> : "Place bid"}
                 </Button>
               </div>
+              {bidError && <p role="alert" className="text-sm text-destructive">{bidError}</p>}
               {bidPlaced && (
                 <div className="space-y-2">
                   <p className="text-sm text-emerald-500">Your bid is on chain.</p>

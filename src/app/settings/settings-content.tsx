@@ -20,7 +20,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import {
   AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon,
   Globe, Twitter, ArrowUpRight, Gem, Tag, LayoutGrid, Trophy,
@@ -29,6 +28,20 @@ import { cn, resolveTokenImage } from "@/lib/utils";
 import { addressPalette } from "@/lib/creator-utils";
 
 type CheckState = "idle" | "checking" | "available" | "taken";
+
+type InlineMessage = { tone: "error" | "success"; text: string } | null;
+
+function InlineNote({ message }: { message: InlineMessage }) {
+  if (!message) return null;
+  return (
+    <p
+      role={message.tone === "error" ? "alert" : "status"}
+      className={message.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
+    >
+      {message.text}
+    </p>
+  );
+}
 
 type ProfileForm = {
   name: string;
@@ -276,6 +289,8 @@ export default function SettingsContent() {
   const [claimInput, setClaimInput] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [checkState, setCheckState] = useState<CheckState>("idle");
+  const [claimMessage, setClaimMessage] = useState<InlineMessage>(null);
+  const [saveMessage, setSaveMessage] = useState<InlineMessage>(null);
   const [checkReason, setCheckReason] = useState<string | undefined>();
   const [form, setForm] = useState<ProfileForm>({
     name: "", bio: "", avatarImage: "",
@@ -304,7 +319,7 @@ export default function SettingsContent() {
       if (!result.available) setCheckReason(result.reason);
     } catch {
       setCheckState("idle");
-      toast.error("Could not check username availability");
+      setClaimMessage({ tone: "error", text: "We could not check that username just now. Please try again." });
     }
   }
 
@@ -314,16 +329,17 @@ export default function SettingsContent() {
     try {
       const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), await getValidToken(), undefined);
       if (result.error) {
-        toast.error(result.error);
+        setClaimMessage({ tone: "error", text: result.error });
       } else {
-        toast.success("Username claim submitted — the Medialane DAO team will review it shortly.");
+        setClaimMessage({ tone: "success", text: "Username claim submitted. The Medialane DAO team will review it shortly." });
         setClaimInput("");
         setCheckState("idle");
         setCheckReason(undefined);
         await mutateClaim();
       }
-    } catch {
-      toast.error("Failed to submit claim");
+    } catch (err) {
+      console.error("username claim failed", err);
+      setClaimMessage({ tone: "error", text: "That claim could not be submitted. Please try again." });
     } finally {
       setClaiming(false);
     }
@@ -334,7 +350,7 @@ export default function SettingsContent() {
     const urlFields = ["websiteUrl", "twitterUrl", "discordUrl", "telegramUrl"] as const;
     const hasInvalidUrl = urlFields.some((k) => !isValidUrl(form[k]));
     if (hasInvalidUrl) {
-      toast.error("All URL fields must start with http://, https://, or ipfs://");
+      setSaveMessage({ tone: "error", text: "Every link must start with http://, https:// or ipfs://" });
       return;
     }
     setSaving(true);
@@ -346,9 +362,10 @@ export default function SettingsContent() {
         throw new Error(result?.error ?? "Save failed — please try again");
       }
       await mutate(undefined, { revalidate: true });
-      toast.success("Profile updated");
+      setSaveMessage({ tone: "success", text: "Profile updated." });
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save changes");
+      console.error("profile save failed", e);
+      setSaveMessage({ tone: "error", text: "Your changes could not be saved. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -517,6 +534,7 @@ export default function SettingsContent() {
                   loading={claiming}
                   disabled={!walletAddress}
                 />
+                <InlineNote message={claimMessage} />
               </div>
             )}
 
@@ -537,6 +555,7 @@ export default function SettingsContent() {
                   loading={claiming}
                   disabled={!walletAddress}
                 />
+                <InlineNote message={claimMessage} />
               </div>
             )}
           </div>
@@ -601,6 +620,7 @@ export default function SettingsContent() {
           <Button onClick={handleSave} disabled={saving || !walletAddress || profileLoading} className="w-full sm:w-auto">
             {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save changes"}
           </Button>
+          <div className="mt-2"><InlineNote message={saveMessage} /></div>
         </div>
       </div>
 

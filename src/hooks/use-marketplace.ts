@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import type { Call, TypedData } from "starknet";
 import { useSWRConfig } from "swr";
 import { getTokenBySymbol } from "@medialane/sdk";
-import { toast } from "sonner";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
@@ -112,13 +111,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             console.error("[marketplace] error:", getMarketplaceDebugText({ error: err }));
             const friendly = getFriendlyWalletError(err);
             setError(friendly.message);
-            if (!opts?.silent) {
-                if (friendly.isUserRejection) {
-                    toast.info(friendly.title, { description: friendly.description });
-                } else {
-                    toast.error(friendly.title, { description: friendly.message });
-                }
-            }
             return undefined;
         } finally {
             setIsProcessing(false);
@@ -136,13 +128,13 @@ export function useMarketplace(): UseMarketplaceReturn {
         opts?: WriteOpts
     ) => {
         if (!signer) {
-            toast.error("Connect your wallet first");
+            setError("Connect your wallet to continue.");
             return undefined;
         }
         const is1155 = tokenStandard === "ERC1155";
         const token = getTokenBySymbol(currencySymbol);
         if (!token) {
-            toast.error(`Unsupported currency: ${currencySymbol}`);
+            setError(`${currencySymbol} is not a currency this marketplace accepts.`);
             return undefined;
         }
         return withProcessing("createListing", async () => {
@@ -160,11 +152,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
-            if (!opts?.silent) {
-                toast.success("Listing Created", {
-                    description: is1155 ? "Your edition has been listed successfully." : "Your asset has been listed successfully.",
-                });
-            }
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
@@ -179,12 +166,12 @@ export function useMarketplace(): UseMarketplaceReturn {
         opts?: WriteOpts
     ) => {
         if (!signer) {
-            toast.error("Connect your wallet first");
+            setError("Connect your wallet to continue.");
             return undefined;
         }
         const token = getTokenBySymbol(currencySymbol);
         if (!token) {
-            toast.error(`Unsupported currency: ${currencySymbol}`);
+            setError(`${currencySymbol} is not a currency this marketplace accepts.`);
             return undefined;
         }
         return withProcessing("makeOffer", async () => {
@@ -202,20 +189,17 @@ export function useMarketplace(): UseMarketplaceReturn {
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
-            if (!opts?.silent) toast.success("Offer Placed", { description: "Your offer has been submitted and is now live." });
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[], opts?: WriteOpts) => {
         if (!signer) {
-            toast.error("Connect your wallet first");
+            setError("Connect your wallet to continue.");
             return undefined;
         }
         if (items.length === 0) {
-            const msg = "Cart empty";
-            setError(msg);
-            toast.error(msg);
+            setError("Your cart is empty.");
             return undefined;
         }
 
@@ -239,8 +223,6 @@ export function useMarketplace(): UseMarketplaceReturn {
                 .map(([token, grossAmount]) => buildFeeCall({ surface: "marketplace", token, grossAmount }, feeConfig))
                 .filter((c): c is NonNullable<typeof c> => c !== null);
 
-            toast.info("Executing Purchase", { description: "Approve the final transaction to sweep the cart." });
-
             const { txHash: hash } = await signer.execute([
                 ...(opts?.swapCalls ?? []),
                 ...fulfillCalls,
@@ -252,14 +234,13 @@ export function useMarketplace(): UseMarketplaceReturn {
             );
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
-            if (!opts?.silent) toast.success("Purchase Successful", { description: `Successfully purchased ${items.length} item(s).` });
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
 
     const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string, kind: "listing" | "offer" = "listing", opts?: WriteOpts) => {
         if (!signer) {
-            toast.error("Connect your wallet first");
+            setError("Connect your wallet to continue.");
             return undefined;
         }
         return withProcessing("cancelOrder", async () => {
@@ -272,12 +253,6 @@ export function useMarketplace(): UseMarketplaceReturn {
             const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
-            if (!opts?.silent) {
-                toast.success(
-                    kind === "offer" ? "Offer Cancelled" : "Listing Cancelled",
-                    { description: `The ${kind} has been successfully cancelled on-chain.` }
-                );
-            }
             return hash;
         }, opts);
     }, [signer, client, withProcessing, refreshMarketplaceCaches]);
@@ -290,7 +265,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         opts?: WriteOpts
     ) => {
         if (!signer) {
-            toast.error("Connect your wallet first");
+            setError("Connect your wallet to continue.");
             return undefined;
         }
         return withProcessing("acceptOffer", async () => {

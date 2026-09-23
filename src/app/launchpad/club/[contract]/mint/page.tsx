@@ -9,7 +9,6 @@ import Link from "next/link";
 import {
   Users, Loader2, ImagePlus, X, ShieldCheck, ChevronDown, AlertCircle,
 } from "lucide-react";
-import { toast } from "sonner";
 import type { Call } from "starknet";
 import { normalizeAddress } from "@medialane/sdk";
 
@@ -110,6 +109,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(null);
@@ -133,7 +133,8 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
   const isOwner = isCollectionOwner(collection, address);
 
   const handleImageSelect = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
+    if (file.size > 10 * 1024 * 1024) { setImageError("That image is over 10 MB. Please choose a smaller one."); return; }
+    setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
     previewRef.current = url;
@@ -143,12 +144,12 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
     try {
       const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
-      toast.success("Image uploaded");
     } catch (err) {
       if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }
       setImagePreview(null);
+      console.error("image upload failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
+      setImageError(t.description ?? t.title);
     } finally {
       setImageUploading(false);
     }
@@ -157,8 +158,8 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
   const handleImageClear = () => { setImagePreview(null); setImageUri(null); };
 
   async function onSubmit(values: FormValues) {
-    if (!isConnected || !address) { toast.error("Connect your wallet first"); return; }
-    if (!imageUri) { toast.error("Upload a membership image first"); return; }
+    if (!isConnected || !address) { form.setError("root", { message: "Connect your wallet to continue." }); return; }
+    if (!imageUri) { setImageError("Add an image before continuing."); return; }
 
     setMintError(null);
     setDialogTxStatus("idle");
@@ -341,6 +342,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
                       </button>
                     )}
                     <p className="text-xs text-muted-foreground">{imageUri ? <span className="text-brand-purple">✓ Uploaded</span> : "JPG, PNG, SVG or WebP · max 10 MB"}</p>
+                    {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                   </div>
                 </div>
               </div>
@@ -471,6 +473,13 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
                   </FormItem>
                 )} />
               </div>
+
+              {form.formState.errors.root && (
+
+                <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+
+              )}
+
 
               <Button type="submit" size="lg" className="w-full rounded-xl mt-2" disabled={imageUploading || mintStep !== "idle"}>
                 <Users className="h-4 w-4 mr-2" />

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
@@ -58,6 +57,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
   const [done, setDone] = useState(false);
   const [newAssetLink, setNewAssetLink] = useState<string | null>(null);
   const [mintHash, setMintHash] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (done) fireConfetti();
@@ -87,9 +87,10 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
   const handleApprove = () => {
     if (!effectiveCollectionId || !selectedCollection) {
-      toast.error("No eligible collection");
+      setApproveError("Choose a collection to mint into.");
       return;
     }
+    setApproveError(null);
     setPinOpen(true);
   };
 
@@ -188,12 +189,8 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       setDone(true);
       onSuccess?.();
     } catch (err: unknown) {
-      const friendly = getFriendlyWalletError(err);
-      if (friendly.isUserRejection) {
-        toast.info(friendly.title, { description: friendly.description });
-      } else {
-        toast.error(friendly.title, { description: friendly.message });
-      }
+      console.error("approve and mint failed", err);
+      setApproveError(getFriendlyWalletError(err).message);
     } finally {
       setLoading(false);
     }
@@ -268,6 +265,8 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
                   </Select>
                 )}
               </div>
+
+              {approveError && <p role="alert" className="text-sm text-destructive">{approveError}</p>}
 
               <Button
                 className="w-full"
