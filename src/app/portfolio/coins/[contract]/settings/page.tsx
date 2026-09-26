@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ipfsToHttp } from "@/lib/utils";
 import { Loader2, Upload } from "lucide-react";
-import { toast } from "sonner";
 
 interface Props { params: Promise<{ contract: string }> }
 
@@ -27,6 +26,7 @@ export default function CoinSettingsPage({ params }: Props) {
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,8 +58,9 @@ export default function CoinSettingsPage({ params }: Props) {
       const { uri } = await uploadFileToIpfs(file, "image");
       setImage(uri);
     } catch (err) {
+      console.error("coin image upload failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
+      setSaveMessage({ tone: "error", text: t.description ?? t.title });
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -68,14 +69,16 @@ export default function CoinSettingsPage({ params }: Props) {
 
   async function handleSave() {
     setSaving(true);
+    setSaveMessage(null);
     try {
       const token = await getValidToken();
       if (!token) throw new Error("Wallet sign-in required");
       await updateCoinProfile(contract, { image, description: description || null }, token);
       await mutate();
-      toast.success("Coin profile updated");
+      setSaveMessage({ tone: "success", text: "Coin profile updated." });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save changes");
+      console.error("coin profile save failed", err);
+      setSaveMessage({ tone: "error", text: "Your changes could not be saved. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -133,6 +136,14 @@ export default function CoinSettingsPage({ params }: Props) {
         </div>
       </div>
 
+      {saveMessage && (
+        <p
+          role={saveMessage.tone === "error" ? "alert" : "status"}
+          className={saveMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
+        >
+          {saveMessage.text}
+        </p>
+      )}
       <Button onClick={handleSave} disabled={saving || uploading || isLoading}>
         {saving ? "Saving…" : "Save Changes"}
       </Button>

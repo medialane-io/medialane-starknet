@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from "react";
 import { RewardEarned } from "@/lib/reward-earned";
-import { toast } from "sonner";
 import { Loader2, CheckCircle2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/use-wallet";
@@ -58,11 +57,14 @@ export function CollectionDropMintButton({
     ? `${Number(price * 10000n / BigInt(10 ** paymentToken.decimals)) / 10000} ${paymentToken.symbol}`
     : null;
 
+  const [gateError, setGateError] = useState<string | null>(null);
+
   const handleMint = async () => {
     if (!isConnected) {
-      toast.error("Connect your wallet first");
+      setGateError("Connect your wallet to continue.");
       return;
     }
+    setGateError(null);
 
     setIsProcessing(true);
     try {
@@ -144,6 +146,7 @@ export function CollectionDropMintButton({
   } else {
     content = (
       <>
+        {gateError && <p role="alert" className="text-xs text-destructive">{gateError}</p>}
         <Button
           size="lg"
           className="w-full gap-1.5 bg-brand-orange hover:brightness-110 text-white"

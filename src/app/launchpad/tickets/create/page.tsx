@@ -31,7 +31,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
-import { toast } from "sonner";
 import { starknetProvider } from "@/lib/starknet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
@@ -62,6 +61,7 @@ export default function CreateTicketCollectionPage() {
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
   const [dialogTxStatus, setDialogTxStatus] = useState<TxStatus>("idle");
 
@@ -93,11 +93,11 @@ export default function CreateTicketCollectionPage() {
 
   const handleImageSelect = async (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Unsupported format", { description: "Please upload a JPG, PNG, GIF, SVG, or WebP image." });
+      setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image too large", { description: `Max 10 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB.` });
+      setImageError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please choose one under 10 MB.`);
       return;
     }
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -109,10 +109,10 @@ export default function CreateTicketCollectionPage() {
     try {
       const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
-      toast.success("Image uploaded");
     } catch (err) {
+      console.error("image upload failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
+      setImageError(t.description ?? t.title);
       setImagePreview(null);
       setImageUri(null);
     } finally {
@@ -121,9 +121,9 @@ export default function CreateTicketCollectionPage() {
   };
 
   async function onSubmit(values: FormValues) {
-    if (!isConnected || !address) { toast.error("Connect your wallet first"); return; }
+    if (!isConnected || !address) { form.setError("root", { message: "Connect your wallet to continue." }); return; }
     if (imagePreview && !imageUri && !imageUploading) {
-      toast.error("Image upload failed", { description: "Please re-upload your collection image." });
+      setImageError("That image did not finish uploading. Please add it again.");
       return;
     }
 
@@ -283,6 +283,7 @@ export default function CreateTicketCollectionPage() {
                     JPG, PNG, GIF, SVG or WebP · max 10 MB
                     {imageUri && <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>}
                   </p>
+                  {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                 </div>
               </div>
             </div>
@@ -339,6 +340,13 @@ export default function CreateTicketCollectionPage() {
                 </FormItem>
               )}
             />
+
+            {form.formState.errors.root && (
+
+              <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+
+            )}
+
 
             <button
               type="submit"

@@ -42,7 +42,6 @@ import {
 } from "@/components/marketplace/mint-progress-dialog";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
@@ -157,6 +156,7 @@ export default function MintNFTEditionsPage() {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(null);
@@ -219,7 +219,8 @@ export default function MintNFTEditionsPage() {
   };
 
   const handleImageSelect = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
+    if (file.size > 10 * 1024 * 1024) { setImageError("That image is over 10 MB. Please choose a smaller one."); return; }
+    setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
     previewRef.current = url;
@@ -230,21 +231,21 @@ export default function MintNFTEditionsPage() {
       const token = await getValidToken();
             const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
-      toast.success("Image uploaded to IPFS");
     } catch (err) {
 
       if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }
       setImagePreview(null);
+      console.error("image upload failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
+      setImageError(t.description ?? t.title);
     } finally {
       setImageUploading(false);
     }
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!isConnected) { toast.error("Connect your wallet first"); return; }
-    if (!imageUri) { toast.error("Upload an image first"); return; }
+    if (!isConnected) { form.setError("root", { message: "Connect your wallet to continue." }); return; }
+    if (!imageUri) { setImageError("Add an image before continuing."); return; }
 
     setMintStep("uploading");
     setMintError(null);
@@ -444,6 +445,7 @@ export default function MintNFTEditionsPage() {
                         ? <span className="text-brand-purple">✓ Uploaded to IPFS</span>
                         : "JPG, PNG, SVG or WebP · max 10 MB"}
                     </p>
+                    {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                   </div>
                 </div>
               </div>
@@ -711,6 +713,9 @@ export default function MintNFTEditionsPage() {
             </FadeIn>
 
             <FadeIn delay={0.2}>
+              {form.formState.errors.root && (
+                <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+              )}
               <Button
                 type="submit"
                 size="lg"

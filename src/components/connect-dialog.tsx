@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Wallet, ExternalLink, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { useWallet } from "@/hooks/use-wallet";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { WALLET_INSTALL_URLS, getConnectorIconSrc } from "@/lib/wallet-connectors";
@@ -33,6 +32,7 @@ export function ConnectDialog() {
   const { isConnected, isConnecting: sessionConnecting, connect } = useWallet();
   const [open, setOpen] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -56,11 +56,11 @@ export function ConnectDialog() {
     } catch (err) {
       console.error("Failed to connect wallet", err);
       const friendly = getFriendlyWalletError(err);
-      if (friendly.isUserRejection) {
-        toast.info("Wallet didn't connect", { description: "You may have declined it, or your wallet may need extra verification first." });
-      } else {
-        toast.error("Wallet connection failed", { description: friendly.message, duration: 8000 });
-      }
+      setConnectError(
+        friendly.isUserRejection
+          ? "Your wallet did not connect. You may have declined it, or it may need extra verification first."
+          : friendly.message,
+      );
       setOpen(true);
     } finally {
       setConnectingId(null);
@@ -133,6 +133,7 @@ export function ConnectDialog() {
                   No browser wallets detected. Install Ready or Braavos to continue.
                 </p>
               )}
+              {connectError && <p role="alert" className="text-sm text-destructive">{connectError}</p>}
             </div>
           </section>
         </div>

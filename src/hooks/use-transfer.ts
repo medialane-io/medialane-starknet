@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useSWRConfig } from "swr";
-import { toast } from "sonner";
 import { getFriendlyWalletError } from "@/lib/wallet-error";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
@@ -99,11 +98,7 @@ export function useTransfer() {
         const friendly = getFriendlyWalletError(err);
         setError(friendly.message);
         setTxStatus("failed");
-        if (friendly.isUserRejection) {
-          toast.info(friendly.title, { description: friendly.description });
-        } else {
-          toast.error(friendly.title, { description: friendly.message });
-        }
+        console.error("transfer failed", err);
       } finally {
         setIsProcessing(false);
       }

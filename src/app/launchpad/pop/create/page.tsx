@@ -24,7 +24,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreatePopAside } from "@/components/claim/create-pop-aside";
 import { useWallet } from "@/hooks/use-wallet";
-import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import { type PopEventType } from "@/lib/launchpad-contracts";
 import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
@@ -68,6 +67,8 @@ export default function CreatePOPPage() {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(null);
@@ -100,7 +101,8 @@ export default function CreatePOPPage() {
   }, [autoSymbol, eventName, form]);
 
   const handleImageSelect = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
+    if (file.size > 10 * 1024 * 1024) { setImageError("That image is over 10 MB. Please choose a smaller one."); return; }
+    setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
     previewRef.current = url;
@@ -110,14 +112,12 @@ export default function CreatePOPPage() {
     try {
             const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
-      toast.success("Badge image uploaded");
     } catch (err) {
       if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; }
       setImagePreview(null);
+      console.error("badge image upload failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, {
-        description: t.description ?? "You can still create the event without an image.",
-      });
+      setImageError(t.description ?? "That image could not be uploaded. You can still create the event without one.");
     } finally {
       setImageUploading(false);
     }
@@ -157,7 +157,8 @@ export default function CreatePOPPage() {
 
       setDone(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create event");
+      console.error("pop event creation failed", err);
+      setFormError("Your event could not be created. Please try again.");
     } finally {
       setIsTxLoading(false);
     }
@@ -314,6 +315,7 @@ export default function CreatePOPPage() {
                       ? <span className="text-green-500">✓ Uploaded</span>
                       : "JPG, PNG, SVG or WebP · max 10 MB"}
                   </p>
+                  {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                 </div>
               </div>
             </div>
@@ -398,6 +400,8 @@ export default function CreatePOPPage() {
               </button>
             </div>
           </FadeIn>
+
+          {formError && <p role="alert" className="text-sm text-destructive">{formError}</p>}
 
           <FadeIn delay={0.2}>
             <Button

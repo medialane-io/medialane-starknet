@@ -23,7 +23,6 @@ import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import type { IntentCall } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
@@ -43,9 +42,11 @@ function PendingProposalsPanel({
 }) {
   const { proposals, isLoading, mutate } = usePendingProposalsForAsset(nftContract);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [respondError, setRespondError] = useState<string | null>(null);
 
   const respond = async (proposalId: string, decision: "accept" | "reject", paymentToken: string, amount: string) => {
-    if (!signer || !owner) { toast.error("Connect a wallet first"); return; }
+    if (!signer || !owner) { setRespondError("Connect your wallet to continue."); return; }
+    setRespondError(null);
     setActiveId(proposalId);
     try {
       const intentRes = decision === "accept"
@@ -60,7 +61,8 @@ function PendingProposalsPanel({
       await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
       await mutate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to respond to proposal");
+      console.error("sponsorship proposal response failed", err);
+      setRespondError("That response could not be completed. Please try again.");
     } finally {
       setActiveId(null);
     }
@@ -84,6 +86,7 @@ function PendingProposalsPanel({
           </div>
         </div>
       ))}
+      {respondError && <p role="alert" className="text-xs text-destructive">{respondError}</p>}
     </div>
   );
 }
@@ -93,6 +96,7 @@ async function pinLicenseTerms(terms: SponsorshipTerms): Promise<string> {
 }
 
 export default function CreateSponsorshipPage() {
+  const [formError, setFormError] = useState<string | null>(null);
   const signer = useVenueSigner();
   const client = useMedialaneClient();
   const { address: activeAddress } = useWallet();
@@ -130,14 +134,14 @@ export default function CreateSponsorshipPage() {
   const tokenId = mode === "offer" ? selectedAsset?.tokenId : proposeAsset?.tokenId;
 
   const onSubmit = async () => {
-    if (!signer || !activeAddress) { toast.error("Connect a wallet first"); return; }
-    if (!nftContract || !tokenId) { toast.error(mode === "offer" ? "Choose which asset you're offering" : "Search for the asset you want to sponsor and pick it"); return; }
-    if (!terms.amount || Number(terms.amount) <= 0) { toast.error("Add an amount before continuing"); return; }
-    if (!terms.paymentTokenSymbol) { toast.error("Pick a currency"); return; }
+    if (!signer || !activeAddress) { setFormError("Connect your wallet to continue."); return; }
+    if (!nftContract || !tokenId) { setFormError(mode === "offer" ? "Choose which asset you're offering" : "Search for the asset you want to sponsor and pick it"); return; }
+    if (!terms.amount || Number(terms.amount) <= 0) { setFormError("Add an amount before continuing."); return; }
+    if (!terms.paymentTokenSymbol) { setFormError("Pick a currency."); return; }
     const token = getTokenBySymbol(terms.paymentTokenSymbol);
-    if (!token) { toast.error("Pick a currency"); return; }
+    if (!token) { setFormError("Pick a currency."); return; }
     const durationDays = toDurationDays(terms);
-    if (!durationDays) { toast.error("How long should the license last?"); return; }
+    if (!durationDays) { setFormError("Choose how long the license should last."); return; }
 
     setIsSubmitting(true);
     try {
@@ -162,8 +166,9 @@ export default function CreateSponsorshipPage() {
 
       setDone(true);
     } catch (err) {
+      console.error("sponsorship submit failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
+      setFormError(t.description ?? t.title);
     } finally {
       setIsSubmitting(false);
     }
@@ -230,6 +235,8 @@ export default function CreateSponsorshipPage() {
                 disabled={isSubmitting}
               />
             </div>
+
+            {formError && <p role="alert" className="text-sm text-destructive">{formError}</p>}
 
             <div className="btn-border-animated p-[1px] rounded-2xl">
               <button

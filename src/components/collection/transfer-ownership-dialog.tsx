@@ -20,7 +20,6 @@ import { starknetProvider } from "@/lib/starknet";
 import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk/starknet";
 import { STARKNET_COLLECTION_721_CONTRACT } from "@/lib/constants";
 import { normalizeAddress } from "@medialane/sdk";
-import { toast } from "sonner";
 import { MarketplaceSuccessState } from "@medialane/ui";
 import { EXPLORER_URL } from "@/lib/constants";
 
@@ -39,6 +38,7 @@ export function TransferCollectionOwnershipDialog({
   const [open, setOpen] = useState(false);
   const [newOwner, setNewOwner] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [transferredTo, setTransferredTo] = useState<string>("");
@@ -50,6 +50,7 @@ export function TransferCollectionOwnershipDialog({
     isValid && normalizeAddress("STARKNET", trimmed) === normalizeAddress("STARKNET", currentOwner);
 
   const handleTransfer = async () => {
+    setTransferError(null);
     if (!isValid || wouldNoop) return;
     setSubmitting(true);
     try {
@@ -68,9 +69,8 @@ export function TransferCollectionOwnershipDialog({
       setDone(true);
       onTransferred?.();
     } catch (err) {
-      toast.error("Transfer failed", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
+      console.error("ownership transfer failed", err);
+      setTransferError("The transfer could not be completed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -135,6 +135,8 @@ export function TransferCollectionOwnershipDialog({
                 </p>
               )}
             </div>
+
+            {transferError && <p role="alert" className="text-sm text-destructive">{transferError}</p>}
 
             <DialogFooter>
               <Button

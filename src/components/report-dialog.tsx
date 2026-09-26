@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 
 export type ReportTarget =
@@ -43,6 +42,7 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
   const [categories, setCategories] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const toggleCategory = (value: string) => {
@@ -62,6 +62,7 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
 
   const handleSubmit = async () => {
     if (categories.length === 0 || loading || submitted) return;
+    setSubmitError(null);
     setLoading(true);
 
     const payload: Record<string, unknown> = {
@@ -92,22 +93,19 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
       });
 
       if (res.status === 409) {
-        toast.error("You've already reported this content");
-        onOpenChange(false);
+        setSubmitError("You have already reported this content.");
         return;
       }
       if (res.status === 429) {
-        toast.error("You're submitting too many reports. Please wait before trying again.");
-        onOpenChange(false);
+        setSubmitError("You are sending reports too quickly. Please wait a moment and try again.");
         return;
       }
       if (!res.ok) throw new Error("Unexpected error");
 
       setSubmitted(true);
-      toast.success("Report submitted — our DAO team will review it");
-      onOpenChange(false);
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("report submission failed", err);
+      setSubmitError("Your report could not be sent. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -180,6 +178,15 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
             accessible onchain and via the permissionless dapp.
           </p>
         </div>
+
+        {submitError && (
+          <p role="alert" className="text-sm text-destructive">{submitError}</p>
+        )}
+        {submitted && (
+          <p role="status" className="text-sm text-emerald-500">
+            Report submitted. The Medialane DAO team will review it.
+          </p>
+        )}
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

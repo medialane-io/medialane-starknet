@@ -31,7 +31,6 @@ import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
-import { toast } from "sonner";
 import type { Call } from "starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 
@@ -61,6 +60,7 @@ export default function LaunchpadCreateCollectionPage() {
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
   const [collectionError, setCollectionError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -91,13 +91,11 @@ export default function LaunchpadCreateCollectionPage() {
   const handleImageSelect = async (file: File) => {
     const MAX_BYTES = 10 * 1024 * 1024;
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Unsupported format", { description: "Please upload a JPG, PNG, GIF, SVG, or WebP image." });
+      setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
       return;
     }
     if (file.size > MAX_BYTES) {
-      toast.error("Image too large", {
-        description: `Max size is 10 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please compress or resize it first.`,
-      });
+      setImageError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please choose one under 10 MB.`);
       return;
     }
     setImageFile(file);
@@ -110,10 +108,10 @@ export default function LaunchpadCreateCollectionPage() {
     try {
       const upload = await uploadFileToIpfs(file);
       setImageUri(upload.uri);
-      toast.success("Image uploaded");
     } catch (err: unknown) {
+      console.error("image upload failed", err);
       const t = uploadFailureToast(err);
-      toast.error(t.title, { description: t.description });
+      setImageError(t.description ?? t.title);
       setImageUri(null);
     } finally {
       setImageUploading(false);
@@ -130,11 +128,11 @@ export default function LaunchpadCreateCollectionPage() {
   const onSubmit = async (values: FormValues) => {
 
     if (imageFile && !imageUri && !imageUploading) {
-      toast.error("Image upload failed", { description: "Please re-upload your collection image before continuing." });
+      setImageError("That image did not finish uploading. Please add it again.");
       return;
     }
     if (!hasWallet) {
-      toast.error("Connect your wallet first");
+      form.setError("root", { message: "Connect your wallet to continue." });
       return;
     }
     if (!walletAddress) return;
@@ -298,6 +296,7 @@ export default function LaunchpadCreateCollectionPage() {
                       <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>
                     )}
                   </p>
+                  {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                 </div>
               </div>
             </div>
@@ -372,6 +371,13 @@ export default function LaunchpadCreateCollectionPage() {
                 </FormItem>
               )}
             />
+
+            {form.formState.errors.root && (
+
+              <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+
+            )}
+
 
             <button
               type="submit"

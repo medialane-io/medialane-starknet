@@ -10,7 +10,6 @@ import { starknetProvider } from "@/lib/starknet";
 import { Package, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { toast } from "sonner";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { DropCreateForm, DropPreviewCard, dropCreateSchema, type PaymentTokenOption, type DropCreateFormValues, type DraftItem } from "@medialane/ui";
@@ -47,6 +46,7 @@ export default function CreateDropPage() {
   const [selectedToken, setSelectedToken] = useState<PaymentTokenOption>(PAYMENT_TOKENS[0]);
   const [building, setBuilding] = useState(false);
   const [done, setDone] = useState(false);
+  const [gatedWarning, setGatedWarning] = useState<string | null>(null);
   const [autoSymbol, setAutoSymbol] = useState("");
 
   const {
@@ -119,13 +119,14 @@ export default function CreateDropPage() {
   };
 
   const onSubmit = async (values: DropCreateFormValues) => {
-    if (!isConnected || !walletAddress) { toast.error("Connect your wallet first"); return; }
-    if (items.length === 0) { toast.error("Add at least one item"); return; }
+    if (!isConnected || !walletAddress) { form.setError("root", { message: "Connect your wallet to continue." }); return; }
+    if (items.length === 0) { form.setError("root", { message: "Add at least one item before launching." }); return; }
+    form.clearErrors("root");
 
     setBuilding(true);
     try {
       const token = await getValidToken();
-      if (!token) { toast.error("Wallet signature required to upload"); setBuilding(false); return; }
+      if (!token) { form.setError("root", { message: "Sign with your wallet to upload." }); setBuilding(false); return; }
 
       const { baseUri, count } = await buildDropSet(
         items.map((it, i) => ({
@@ -192,14 +193,16 @@ export default function CreateDropPage() {
               gatedContentUrl: values.gatedContentUrl || null,
               gatedContentType: (values.gatedContentType || null) as "VIDEO" | "STREAM" | "AUDIO" | "DOCUMENT" | "LINK" | null,
             }, token);
-          } catch {
-            toast.error("Drop launched, but exclusive content couldn't be saved — set it up from Manage.");
+          } catch (gatedErr) {
+            console.error("gated content save failed", gatedErr);
+            setGatedWarning("Your drop launched, but the exclusive content was not saved. You can add it from Manage.");
           }
         }
       }
       setDone(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create drop");
+      console.error("drop creation failed", err);
+      form.setError("root", { message: "Your drop could not be created. Please try again." });
     } finally {
       setBuilding(false);
     }
@@ -221,6 +224,7 @@ export default function CreateDropPage() {
             Your Collection Drop is live on Starknet. Each item is a unique, licensed asset. It will appear in the launchpad within a minute once indexed.
           </p>
         </div>
+        {gatedWarning && <p role="alert" className="text-sm text-destructive">{gatedWarning}</p>}
         <RewardEarned actionType="launch_launchpad" />
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild variant="outline"><Link href="/launchpad/drop">Back to Drops</Link></Button>
@@ -293,6 +297,9 @@ export default function CreateDropPage() {
             onMetadataFieldsChange={handleMetadataFields}
             uploadDocument={uploadDocument}
           />
+          {form.formState.errors.root && (
+            <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+          )}
           {uploadError && <p className="text-xs text-destructive mt-1">{uploadError}</p>}
           {uploadSuccess && <p className="text-xs text-emerald-500 mt-1">✓ {uploadSuccess}</p>}
         </form>

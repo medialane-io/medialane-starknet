@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import {
   Lock, Gem, CheckCircle2,
   Video, Music, Radio, FileText, Link2,
@@ -173,6 +172,7 @@ export default function CollectionSettingsPage({ params }: Props) {
   const { collection, isLoading: collectionLoading } = useCollection(contract);
   const { profile, isLoading: profileLoading, mutate } = useCollectionProfile(contract);
   const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
   const [form, setForm] = useState({
     displayName: "", description: "", image: "", bannerImage: "",
     websiteUrl: "", twitterUrl: "", discordUrl: "", telegramUrl: "",
@@ -212,6 +212,7 @@ export default function CollectionSettingsPage({ params }: Props) {
 
   async function handleSave() {
     setSaving(true);
+    setSaveMessage(null);
     try {
       const payload = {
         displayName: form.displayName || null,
@@ -230,9 +231,10 @@ export default function CollectionSettingsPage({ params }: Props) {
       };
       await getMedialaneClient().api.updateCollectionProfile(contract, payload, "");
       await mutate();
-      toast.success("Collection profile updated");
-    } catch {
-      toast.error("Failed to save changes");
+      setSaveMessage({ tone: "success", text: "Collection profile updated." });
+    } catch (err) {
+      console.error("collection profile save failed", err);
+      setSaveMessage({ tone: "error", text: "Your changes could not be saved. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -389,6 +391,14 @@ export default function CollectionSettingsPage({ params }: Props) {
         <CollectionSlugClaimSection contract={contract} profile={profile ?? null} />
       </div>
 
+      {saveMessage && (
+        <p
+          role={saveMessage.tone === "error" ? "alert" : "status"}
+          className={saveMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
+        >
+          {saveMessage.text}
+        </p>
+      )}
       <Button onClick={handleSave} disabled={saving || collectionLoading || profileLoading}>
         {saving ? "Saving…" : "Save Changes"}
       </Button>

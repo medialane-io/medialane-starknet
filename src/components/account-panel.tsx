@@ -1,12 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Activity as ActivityIcon, AlertCircle, ChevronRight, Copy, ExternalLink,
+  Activity as ActivityIcon, AlertCircle, Check, ChevronRight, Copy, ExternalLink,
   HandCoins, LayoutGrid, LogOut, Settings, Wallet,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useAccount } from "@starknet-react/core";
 import { Button } from "@/components/ui/button";
 import { useNetwork } from "@/components/starknet-provider";
@@ -87,6 +87,7 @@ export function AccountPanel() {
   const { networkConfig } = useNetwork();
   const { address, disconnect } = useWallet();
   const { close } = useNavAccountSheet();
+  const [copied, setCopied] = useState(false);
 
   const walletName = connector?.name ?? "Browser Wallet";
   const walletIconSrc = getConnectorIconSrc(connector?.icon);
@@ -104,7 +105,8 @@ export function AccountPanel() {
 
   const copyAddress = () => {
     navigator.clipboard.writeText(address);
-    toast.success("Address copied");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDisconnect = () => {
@@ -125,8 +127,8 @@ export function AccountPanel() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate text-base font-semibold">{truncate(address)}</h3>
-            <button onClick={copyAddress} className="text-muted-foreground transition-colors hover:text-foreground" aria-label="Copy address">
-              <Copy className="h-3.5 w-3.5" />
+            <button onClick={copyAddress} className="text-muted-foreground transition-colors hover:text-foreground" aria-label={copied ? "Address copied" : "Copy address"}>
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
