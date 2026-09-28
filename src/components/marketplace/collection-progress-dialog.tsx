@@ -131,7 +131,7 @@ export function CollectionProgressDialog({
                 {txStatus === "confirming"
                   ? "Waiting for block confirmation"
                   : txStatus === "submitting"
-                  ? "Submitting transaction"
+                  ? "Check your wallet to approve the transaction"
                   : "Creating intent onchain"}
               </p>
             </div>
@@ -166,7 +166,9 @@ export function CollectionProgressDialog({
             </div>
 
             <p className="text-xs text-muted-foreground text-center">
-              This usually takes 10–30 seconds. Do not close this window.
+              {txStatus === "submitting"
+                ? "If your wallet extension didn't pop up, click its icon in the toolbar."
+                : "This usually takes 10–30 seconds. Do not close this window."}
             </p>
           </div>
         )}
