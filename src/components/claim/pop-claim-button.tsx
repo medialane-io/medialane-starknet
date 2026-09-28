@@ -6,7 +6,7 @@ import { Loader2, CheckCircle2, Ban, Award, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 import { usePopClaimStatus } from "@/hooks/use-pop";
 import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
 
@@ -39,7 +39,7 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
       mutate();
     } catch (err) {
       console.error("[pop-claim] error:", err);
-      const friendly = getFriendlyWalletError(err);
+      const friendly = describeError(err);
       setResult({
         status: "error",
         title: friendly.title,

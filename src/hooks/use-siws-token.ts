@@ -7,7 +7,7 @@ import {
   getStoredSiwsToken,
   requestSiwsToken,
 } from "@/lib/siws-client";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 
 export function useSiwsToken() {
   const account = useSigner();
@@ -46,7 +46,7 @@ export function useSiwsToken() {
     } catch (err) {
 
       console.error("[siws] error:", err);
-      const message = getFriendlyWalletError(err).message;
+      const message = describeError(err).message;
       setError(message);
       throw new Error(message);
     } finally {

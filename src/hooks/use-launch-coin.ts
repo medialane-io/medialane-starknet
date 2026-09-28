@@ -15,7 +15,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useSigner } from "@/hooks/use-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { starknetProvider } from "@/lib/starknet";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 
 export interface LaunchCoinInput {
   name: string;
@@ -93,7 +93,7 @@ export function useLaunchCoin() {
       } catch (e) {
         console.error("[launch-coin] error:", e);
         setStatus("error");
-        const friendly = getFriendlyWalletError(e);
+        const friendly = describeError(e);
         setError(friendly.message);
         throw new Error(friendly.message);
       }

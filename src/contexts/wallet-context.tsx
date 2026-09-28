@@ -5,7 +5,7 @@ import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
 import type { AccountInterface, Call } from "starknet";
 import { waitForReceipt } from "@/lib/wait-for-receipt";
-import { assertCorrectNetwork } from "@/lib/wallet-error";
+import { assertCorrectNetwork } from "@medialane/ui";
 import { useNetwork } from "@/components/starknet-provider";
 import type { ActiveWallet, WalletType } from "@/lib/wallet-types";
 

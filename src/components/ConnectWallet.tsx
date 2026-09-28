@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Wallet, Loader2 } from "lucide-react";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
-import { isWrongNetwork as computeIsWrongNetwork } from "@/lib/wallet-error";
+import { isWrongNetwork as computeIsWrongNetwork } from "@medialane/ui";
 import { useNavAccountSheet } from "@medialane/ui";
 import { useConnectDialog } from "@/components/connect-dialog";
 

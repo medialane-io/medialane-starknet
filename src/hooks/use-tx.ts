@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import type { Call } from "starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { useSigner } from "@/hooks/use-signer";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 
 export type TxStatus =
   | "idle"
@@ -68,7 +68,7 @@ export function useTx() {
       }
     } catch (err) {
       console.error("[useTx] error:", err);
-      const msg = getFriendlyWalletError(err).message;
+      const msg = describeError(err).message;
       setError(msg);
       setStatus("error");
       setStatusMessage(msg);

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Wallet, ExternalLink, Loader2 } from "lucide-react";
 import { useWallet } from "@/hooks/use-wallet";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 import { WALLET_INSTALL_URLS, getConnectorIconSrc } from "@/lib/wallet-connectors";
 
 const CONNECT_OPEN = "ml:connect-open";
@@ -55,7 +55,7 @@ export function ConnectDialog() {
       await connect(connector);
     } catch (err) {
       console.error("Failed to connect wallet", err);
-      const friendly = getFriendlyWalletError(err);
+      const friendly = describeError(err);
       setConnectError(
         friendly.isUserRejection
           ? "Your wallet did not connect. You may have declined it, or it may need extra verification first."
