@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createRateLimiter, isSameOrigin } from "@medialane/sdk";
-import { TRUSTED_APP_IP_HEADER, isSpoofableForwardingHeader, trustedClientIp } from "@/lib/client-ip";
+import {
+  createRateLimiter,
+  isSameOrigin,
+  TRUSTED_APP_IP_HEADER,
+  isSpoofableForwardingHeader,
+  trustedClientIp,
+} from "@medialane/sdk";
 import { hasTraversalSegment, isPathAllowed } from "./allowlist";
 
 const BACKEND_URL =
