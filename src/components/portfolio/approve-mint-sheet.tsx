@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { confirmRemixOffer } from "@/hooks/use-remix-offers";
@@ -190,7 +190,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       onSuccess?.();
     } catch (err: unknown) {
       console.error("approve and mint failed", err);
-      setApproveError(getFriendlyWalletError(err).message);
+      setApproveError(describeError(err).message);
     } finally {
       setLoading(false);
     }

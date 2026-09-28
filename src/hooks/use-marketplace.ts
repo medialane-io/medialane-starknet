@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import type { Call, TypedData } from "starknet";
 import { useSWRConfig } from "swr";
 import { getTokenBySymbol } from "@medialane/sdk";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
 import type { CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
@@ -109,7 +109,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         } catch (err) {
             markMarketplaceDebug(`${op}: threw`);
             console.error("[marketplace] error:", getMarketplaceDebugText({ error: err }));
-            const friendly = getFriendlyWalletError(err);
+            const friendly = describeError(err);
             setError(friendly.message);
             return undefined;
         } finally {

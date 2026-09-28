@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useSWRConfig } from "swr";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -95,7 +95,7 @@ export function useTransfer() {
         invalidate();
         return hash;
       } catch (err: unknown) {
-        const friendly = getFriendlyWalletError(err);
+        const friendly = describeError(err);
         setError(friendly.message);
         setTxStatus("failed");
         console.error("transfer failed", err);

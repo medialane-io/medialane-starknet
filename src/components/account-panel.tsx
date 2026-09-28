@@ -15,7 +15,7 @@ import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useReceivedOffers } from "@/hooks/use-orders";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { getConnectorIconSrc } from "@/lib/wallet-connectors";
-import { isWrongNetwork as computeIsWrongNetwork } from "@/lib/wallet-error";
+import { isWrongNetwork as computeIsWrongNetwork } from "@medialane/ui";
 import { timeAgo } from "@/lib/utils";
 import { useNavAccountSheet, NavThemeToggle } from "@medialane/ui";
 import type { ApiActivity } from "@medialane/sdk";

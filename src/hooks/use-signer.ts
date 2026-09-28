@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useAccount } from "@starknet-react/core";
 import type { AccountInterface } from "starknet";
 import { useNetwork } from "@/components/starknet-provider";
-import { assertCorrectNetwork } from "@/lib/wallet-error";
+import { assertCorrectNetwork } from "@medialane/ui";
 
 export function useSigner(): AccountInterface | undefined {
   const { account, chainId } = useAccount();

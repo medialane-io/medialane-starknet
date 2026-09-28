@@ -5,7 +5,7 @@ import { RewardEarned } from "@/lib/reward-earned";
 import { Loader2, CheckCircle2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/use-wallet";
-import { getFriendlyWalletError } from "@/lib/wallet-error";
+import { describeError } from "@medialane/ui";
 import { useDropMintStatus, type DropConditions } from "@/hooks/use-drops";
 import { getListableTokens, normalizeAddress } from "@medialane/sdk";
 import { feeConfig, buildFeeCall } from "@/lib/fee";
@@ -110,7 +110,7 @@ export function CollectionDropMintButton({
       mutate();
     } catch (err) {
       console.error("[drop-mint] error:", err);
-      const friendly = getFriendlyWalletError(err);
+      const friendly = describeError(err);
       setResult({
         status: "error",
         title: friendly.title,
