@@ -22,15 +22,13 @@ export function useRegisterUser(
       .api.registerUser({
         walletAddress: address,
         walletType: walletType ?? undefined,
-        appSource: "MEDIALANE_STARKNET",
         chain: "STARKNET",
       })
       .then(() => sessionStorage.setItem(sessionKey, "1"))
       .catch((error: unknown) => {
 
         console.error("[ml-register] failed", {
-          appSource: "MEDIALANE_STARKNET",
-          walletType: walletType ?? "unknown",
+            walletType: walletType ?? "unknown",
           error: error instanceof Error ? error.message : String(error),
         });
       });
