@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRateLimiter } from "@medialane/sdk";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL!;
 const API_KEY = process.env.MEDIALANE_API_KEY!;
-
-const checkRateLimit = createRateLimiter(60_000, 5);
 
 function normalizeAddress(addr: string): string {
   const hex = addr.toLowerCase().replace(/^0x/, "");
@@ -12,11 +9,6 @@ function normalizeAddress(addr: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
-
   let body: {
     targetType: "TOKEN" | "COLLECTION" | "CREATOR" | "COMMENT";
     targetContract?: string;

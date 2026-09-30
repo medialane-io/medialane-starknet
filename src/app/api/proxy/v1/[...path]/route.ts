@@ -1,11 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  createRateLimiter,
-  isSameOrigin,
-  TRUSTED_APP_IP_HEADER,
-  isSpoofableForwardingHeader,
-  trustedClientIp,
-} from "@medialane/sdk";
+import { isSameOrigin } from "@medialane/sdk";
 import { hasTraversalSegment, isPathAllowed } from "./allowlist";
 
 const BACKEND_URL =
@@ -36,8 +30,6 @@ const CACHEABLE_GET_PATHS = [
 ];
 const EDGE_CACHE_CONTROL = "public, s-maxage=30, stale-while-revalidate=120";
 
-const checkRateLimit = createRateLimiter(60_000, 600);
-
 async function handle(
   req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> },
@@ -47,11 +39,6 @@ async function handle(
       { error: "Cross-origin requests are not allowed" },
       { status: 403 },
     );
-  }
-
-  const callerIp = trustedClientIp(req);
-  if (!checkRateLimit(callerIp)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const apiKey = process.env.MEDIALANE_API_KEY;
@@ -88,11 +75,9 @@ async function handle(
   for (const [k, v] of req.headers.entries()) {
     const key = k.toLowerCase();
     if (HOP_BY_HOP_HEADERS.has(key) || key === "x-api-key") continue;
-    if (isSpoofableForwardingHeader(key)) continue;
     fwdHeaders.set(k, v);
   }
   fwdHeaders.set("x-api-key", apiKey);
-  fwdHeaders.set(TRUSTED_APP_IP_HEADER, callerIp);
 
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
   const body = hasBody ? await req.arrayBuffer() : undefined;
