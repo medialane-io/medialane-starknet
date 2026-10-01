@@ -9,18 +9,8 @@ import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives"
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ipfsToHttp } from "@/lib/utils";
-import { getMedialaneClient } from "@/lib/medialane-client";
-import useSWR from "swr";
+import { useMyDrops } from "@/hooks/use-drops";
 import type { ApiCollection } from "@medialane/sdk";
-
-function useMyDrops(ownerAddress: string | null) {
-  return useSWR<ApiCollection[]>(
-    ownerAddress ? `my-drops-${ownerAddress}` : null,
-    async () =>
-      (await getMedialaneClient().api.listCollections({ service: "drop-collection", owner: ownerAddress!, limit: 50 })).data ?? [],
-    { revalidateOnFocus: false }
-  );
-}
 
 function MyDropCard({ collection }: { collection: ApiCollection }) {
   const imageUrl = collection.image ? ipfsToHttp(collection.image) : null;
@@ -58,7 +48,7 @@ function MyDropCard({ collection }: { collection: ApiCollection }) {
 
 export default function MyDropsPage() {
   const { address: walletAddress } = useWallet();
-  const { data: collections, isLoading } = useMyDrops(walletAddress ?? null);
+  const { drops: collections, isLoading } = useMyDrops(walletAddress ?? null);
 
   return (
     <ConnectGate

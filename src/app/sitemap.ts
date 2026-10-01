@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { IP_TYPE_CONFIG } from "@/lib/ip-type-config";
 import { APP_URL } from "@/lib/seo";
 import { assetHref, collectionHref } from "@/lib/routes";
+import { collectSitemapData } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
 
 const BASE_URL = APP_URL;
@@ -28,34 +29,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const api = getMedialaneClient().api;
-  const [collectionsData, tokensData, creatorsData] = await Promise.all([
-    api.listCollections({ limit: 500 }).catch(() => null),
-    api.getTokens({ limit: 2000 }).catch(() => null),
-    api.getCreators({ limit: 500 }).catch(() => null),
-  ]);
+  const { collections, tokens, creatorUsernames } = await collectSitemapData(getMedialaneClient().api);
 
-  const collectionRoutes: MetadataRoute.Sitemap = (collectionsData?.data ?? []).map((c) => ({
+  const collectionRoutes: MetadataRoute.Sitemap = collections.map((c) => ({
     url: `${BASE_URL}${collectionHref("STARKNET", c.contractAddress)}`,
     changeFrequency: "daily" as const,
     priority: 0.7,
     lastModified: c.updatedAt ? new Date(c.updatedAt) : undefined,
   }));
 
-  const tokenRoutes: MetadataRoute.Sitemap = (tokensData?.data ?? []).map((t) => ({
+  const tokenRoutes: MetadataRoute.Sitemap = tokens.map((t) => ({
     url: `${BASE_URL}${assetHref("STARKNET", t.contractAddress, t.tokenId)}`,
     changeFrequency: "weekly" as const,
     priority: 0.5,
     lastModified: t.updatedAt ? new Date(t.updatedAt) : undefined,
   }));
 
-  const creatorRoutes: MetadataRoute.Sitemap = (creatorsData?.creators ?? [])
-    .filter((c) => c.username)
-    .map((c) => ({
-      url: `${BASE_URL}/creator/${c.username}`,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    }));
+  const creatorRoutes: MetadataRoute.Sitemap = creatorUsernames.map((username) => ({
+    url: `${BASE_URL}/creator/${username}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
 
   return [...staticRoutes, ...ipTypeRoutes, ...collectionRoutes, ...tokenRoutes, ...creatorRoutes];
 }
