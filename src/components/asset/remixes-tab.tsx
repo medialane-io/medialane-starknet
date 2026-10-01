@@ -1,12 +1,10 @@
 "use client";
 
 import { RemixesTab as RemixesTabBase } from "@medialane/ui";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-
-const apiConfig = { baseUrl: MEDIALANE_BACKEND_URL, apiKey: MEDIALANE_API_KEY };
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 export function RemixesTab({ contractAddress, tokenId }: { contractAddress: string; tokenId: string }) {
-  return <RemixesTabBase apiConfig={apiConfig} contractAddress={contractAddress} tokenId={tokenId} />;
+  return <RemixesTabBase getClient={getMedialaneClient} contractAddress={contractAddress} tokenId={tokenId} />;
 }
 
 export { ParentAttributionBanner } from "@medialane/ui/parent-attribution-banner";

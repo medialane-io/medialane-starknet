@@ -2,7 +2,8 @@
 
 import useSWR from "swr";
 import { useWallet } from "@/hooks/use-wallet";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { useSiwsToken } from "@/hooks/use-siws-token";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 export interface GatedContent {
   title: string | null;
@@ -19,20 +20,15 @@ export type GatedContentState =
 
 export function useGatedContent(contract: string | undefined): GatedContentState {
   const { address, isConnected } = useWallet();
+  const { getValidToken } = useSiwsToken();
 
   const { data, error, isLoading } = useSWR<GatedContent | "not_holder">(
     contract && isConnected && address ? ["gated-content", contract, address] : null,
     async () => {
-      const url = new URL(
-        `${MEDIALANE_BACKEND_URL}/v1/collections/${contract}/gated-content`
-      );
-      url.searchParams.set("address", address!);
-      const res = await fetch(url.toString(), {
-        headers: { "x-api-key": MEDIALANE_API_KEY },
-      });
-      if (res.status === 403) return "not_holder";
-      if (!res.ok) throw new Error(`${res.status}`);
-      return res.json();
+      const token = await getValidToken();
+      if (!token) throw new Error("Wallet sign-in is required to unlock this content");
+      const content = await getMedialaneClient().api.getGatedContent(contract!, token);
+      return content ?? "not_holder";
     },
     { shouldRetryOnError: false, revalidateOnFocus: false }
   );

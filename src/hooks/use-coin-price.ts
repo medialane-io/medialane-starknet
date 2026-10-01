@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { getTokenBySymbol, type ApiCoinPrices } from "@medialane/sdk";
 import type { CoinMarketStatus, CoinCollectionLike, CoinPriceLike } from "@medialane/ui";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { normalizeAddress } from "@medialane/sdk";
 
 const REFRESH_MS = 60_000;
@@ -11,13 +11,7 @@ const REFRESH_MS = 60_000;
 function useAllCoinPrices() {
   const { data, isLoading } = useSWR<ApiCoinPrices>(
     "coin-prices",
-    async () => {
-      const headers: Record<string, string> = {};
-      if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-      const res = await fetch(`${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/coins/prices`, { headers });
-      if (!res.ok) throw new Error(`Coin prices failed: ${res.status}`);
-      return ((await res.json()) as { data: ApiCoinPrices }).data;
-    },
+    async () => (await getMedialaneClient().api.getCoinPrices()).data,
     { revalidateOnFocus: false, refreshInterval: REFRESH_MS, shouldRetryOnError: false }
   );
   return { prices: data ?? null, isLoading };

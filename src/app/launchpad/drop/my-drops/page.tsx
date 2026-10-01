@@ -9,27 +9,15 @@ import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives"
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ipfsToHttp } from "@/lib/utils";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import useSWR from "swr";
 import type { ApiCollection } from "@medialane/sdk";
 
 function useMyDrops(ownerAddress: string | null) {
   return useSWR<ApiCollection[]>(
     ownerAddress ? `my-drops-${ownerAddress}` : null,
-    async () => {
-      const params = new URLSearchParams({
-        service: "drop-collection",
-        owner: ownerAddress!,
-        limit: "50",
-      });
-      const url = `${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/collections?${params}`;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-      const res = await fetch(url, { headers });
-      if (!res.ok) throw new Error(`My drops fetch failed: ${res.status}`);
-      const json = await res.json();
-      return json.data ?? [];
-    },
+    async () =>
+      (await getMedialaneClient().api.listCollections({ service: "drop-collection", owner: ownerAddress!, limit: 50 })).data ?? [],
     { revalidateOnFocus: false }
   );
 }

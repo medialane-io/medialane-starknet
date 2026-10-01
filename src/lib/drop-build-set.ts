@@ -1,8 +1,7 @@
 "use client";
 
-import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
+import { uploadDirectoryToIpfs, uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 import { buildAssetMetadata } from "@medialane/sdk";
-import { uploadDirectoryToIpfs } from "@medialane/ui";
 
 export interface SharedLicense {
   ipType: string;

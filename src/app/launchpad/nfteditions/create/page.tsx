@@ -32,7 +32,6 @@ import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { starknetProvider } from "@/lib/starknet";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
@@ -193,20 +192,7 @@ export default function CreateNFTEditionsCollectionPage() {
       const addr = deployedCollectionFromReceipt(receipt, "mip-erc1155");
 
       if (addr) {
-        try {
-          const headers: Record<string, string> = { "Content-Type": "application/json" };
-          if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-          await fetch(`${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/collections/register`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              contractAddress: addr,
-              startBlock: 0,
-              standard: "ERC1155",
-              source: "MEDIALANE_ERC1155",
-            }),
-          });
-        } catch {  }
+        await client.api.registerCollection(addr).catch(() => {});
       }
 
       if (walletAddress) invalidatePortfolioCache(walletAddress);

@@ -1,52 +1,36 @@
+import { unstable_cache } from "next/cache";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
+const REVALIDATE_SECONDS = 60;
+const api = () => getMedialaneClient().api;
 
-import type { ApiCollection, ApiOrder } from "@medialane/sdk";
-
-const BASE = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ?? "";
-const KEY  = process.env.MEDIALANE_API_KEY ?? "";
-
-async function apiFetch<T>(path: string): Promise<T | null> {
-  try {
-
-    const res = await fetch(`${BASE}${path}`, {
-      headers: { "x-api-key": KEY },
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data as T;
-  } catch {
-    return null;
-  }
+/** Server-side reads for page metadata: cached briefly, and null when the backend can't answer. */
+function cached<A extends (string | number)[], T>(name: string, read: (...args: A) => Promise<T>) {
+  return unstable_cache(
+    async (...args: A): Promise<T | null> => {
+      try {
+        return await read(...args);
+      } catch {
+        return null;
+      }
+    },
+    [name],
+    { revalidate: REVALIDATE_SECONDS },
+  );
 }
 
 export { toAbsoluteImageUrl as ipfsToHttpServer } from "@medialane/ui/utils/ipfs";
 
-export async function fetchTokenMeta(contract: string, tokenId: string) {
-  return apiFetch<{ name?: string; description?: string; image?: string; metadata?: { name?: string; description?: string; image?: string } }>(
-    `/v1/tokens/${contract}/${tokenId}`
-  );
-}
+export const fetchTokenMeta = cached("token-meta", async (contract: string, tokenId: string) =>
+  (await api().getToken(contract, tokenId)).data);
 
-export async function fetchCollectionMeta(contract: string) {
-  return apiFetch<{ name?: string; description?: string; image?: string; totalSupply?: number; service?: string }>(
-    `/v1/collections/${contract}`
-  );
-}
+export const fetchCollectionMeta = cached("collection-meta", async (contract: string) =>
+  (await api().getCollection(contract)).data);
 
-export async function fetchFeaturedCollections(limit: number) {
-  return apiFetch<ApiCollection[]>(
-    `/v1/collections?page=1&limit=${limit}&sort=recent&isFeatured=true&hideEmpty=true`
-  );
-}
+export const fetchFeaturedCollections = cached("featured-collections", async (limit: number) =>
+  (await api().listCollections({ page: 1, limit, sort: "recent", isFeatured: true, hideEmpty: true })).data);
 
-export async function fetchActiveOrders(limit: number) {
-  return apiFetch<ApiOrder[]>(`/v1/orders?status=ACTIVE&sort=recent&page=1&limit=${limit}`);
-}
+export const fetchActiveOrders = cached("active-orders", async (limit: number) =>
+  (await api().getOrders({ status: "ACTIVE", sort: "recent", page: 1, limit })).data);
 
-export async function fetchDropMeta(contract: string) {
-  return apiFetch<{ name?: string | null; description?: string | null; image?: string | null }>(
-    `/v1/drop/${contract}/info`
-  );
-}
+export const fetchDropMeta = cached("drop-meta", (contract: string) => api().getDropInfo(contract));

@@ -10,10 +10,8 @@ import {
   useCollectionFloorListings as useCollectionFloorListingsBase,
 } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import type { ApiOrdersQuery } from "@medialane/sdk";
 
-const apiConfig = { baseUrl: MEDIALANE_BACKEND_URL, apiKey: MEDIALANE_API_KEY };
 
 export function useOrders(query: ApiOrdersQuery = {}) {
   return useOrdersBase(getMedialaneClient, query);
@@ -36,7 +34,7 @@ export function useCounterOffers(args: { originalOrderHash?: string | null; sell
 }
 
 export function useReceivedOffers(address: string | null) {
-  return useReceivedOffersBase(apiConfig, address);
+  return useReceivedOffersBase(getMedialaneClient, address);
 }
 
 export function useCollectionFloorListings(contract: string | null, limit = 20) {

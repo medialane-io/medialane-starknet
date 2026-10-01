@@ -46,7 +46,7 @@ export default async function CoinDetailPage({ params }: Props) {
     buildProductJsonLd({
       name,
       path: coinPath,
-      description: col?.description,
+      description: col?.description ?? undefined,
       image: imageUrl,
     }),
     buildBreadcrumbJsonLd([

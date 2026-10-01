@@ -1,102 +1,23 @@
 "use client";
 
 import useSWR from "swr";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
+import type { ApiSponsorshipOffer, ApiSponsorshipBid, ApiSponsorshipProposal, ApiSponsorshipLicense, ApiResponse } from "@medialane/sdk";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
-const BASE = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
+export type {
+  ApiSponsorshipOffer as SponsorshipOffer,
+  ApiSponsorshipBid as SponsorshipBid,
+  ApiSponsorshipProposal as SponsorshipProposal,
+  ApiSponsorshipLicense as SponsorshipLicense,
+} from "@medialane/sdk";
 
-async function backendFetch<T>(url: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`Backend fetch failed: ${res.status}`);
-  return res.json();
-}
-
-export interface SponsorshipOffer {
-  id: string;
-  chain: string;
-  contractAddress: string;
-  offerId: string;
-  author: string;
-  nftContract: string;
-  tokenId: string;
-  minAmount: string;
-  duration: number;
-  paymentToken: string;
-  licenseTermsUri: string;
-  transferable: boolean;
-  royaltyBps: number;
-  specificSponsor: string | null;
-  open: boolean;
-  createdAtChain: string;
-  updatedAt: string;
-}
-
-export interface SponsorshipBid {
-  id: string;
-  chain: string;
-  contractAddress: string;
-  offerId: string;
-  sponsor: string;
-  amount: string;
-  placedAtChain: string;
-  updatedAt: string;
-}
-
-export interface SponsorshipProposal {
-  id: string;
-  chain: string;
-  contractAddress: string;
-  proposalId: string;
-  proposer: string;
-  nftContract: string;
-  tokenId: string;
-  amount: string;
-  duration: number;
-  validUntil: string | null;
-  paymentToken: string;
-  licenseTermsUri: string;
-  transferable: boolean;
-  royaltyBps: number;
-  open: boolean;
-  accepted: boolean | null;
-  createdAtChain: string;
-  closedAtChain: string | null;
-  updatedAt: string;
-}
-
-export interface SponsorshipLicense {
-  id: string;
-  chain: string;
-  contractAddress: string;
-  tokenId: string;
-  author: string;
-  recipient: string;
-  assetContract: string;
-  assetTokenId: string;
-  expiresAt: string;
-  transferable: boolean;
-  royaltyBps: number;
-  licenseTermsUri: string;
-  offerId: string | null;
-  proposalId: string | null;
-  mintedAtChain: string;
-  currentHolder?: string | null;
-}
+const api = () => getMedialaneClient().api;
 
 export function useSponsorshipOffers(params?: { nftContract?: string; author?: string; owner?: string; open?: boolean }) {
   const key = `sponsorship-offers-${JSON.stringify(params ?? {})}`;
-  const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipOffer[]; meta: unknown }>(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiSponsorshipOffer[]>>(
     key,
-    () => {
-      const q = new URLSearchParams({ limit: "50" });
-      if (params?.nftContract) q.set("nftContract", params.nftContract);
-      if (params?.author) q.set("author", params.author);
-      if (params?.owner) q.set("owner", params.owner);
-      if (params?.open !== undefined) q.set("open", String(params.open));
-      return backendFetch(`${BASE}/v1/sponsorship/offers?${q}`);
-    },
+    () => api().getSponsorshipOffers({ ...params, limit: 50 }),
     { revalidateOnFocus: false }
   );
 
@@ -104,37 +25,30 @@ export function useSponsorshipOffers(params?: { nftContract?: string; author?: s
 }
 
 export function useSponsorshipOffer(offerId: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipOffer }>(
+  const { data, error, isLoading, mutate } = useSWR<ApiSponsorshipOffer | null>(
     offerId ? `sponsorship-offer-${offerId}` : null,
-    () => backendFetch(`${BASE}/v1/sponsorship/offers/${offerId}`),
+    () => api().getSponsorshipOffer(offerId!),
     { revalidateOnFocus: false }
   );
 
-  return { offer: data?.data ?? null, isLoading, error, mutate };
+  return { offer: data ?? null, isLoading, error, mutate };
 }
 
 export function useSponsorshipBids(offerId: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipBid[] }>(
+  const { data, error, isLoading, mutate } = useSWR<ApiSponsorshipBid[]>(
     offerId ? `sponsorship-bids-${offerId}` : null,
-    () => backendFetch(`${BASE}/v1/sponsorship/offers/${offerId}/bids`),
+    () => api().getSponsorshipBids(offerId!),
     { revalidateOnFocus: false }
   );
 
-  return { bids: data?.data ?? [], isLoading, error, mutate };
+  return { bids: data ?? [], isLoading, error, mutate };
 }
 
 export function useSponsorshipProposals(params?: { nftContract?: string; proposer?: string; owner?: string; open?: boolean }) {
   const key = `sponsorship-proposals-${JSON.stringify(params ?? {})}`;
-  const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipProposal[]; meta: unknown }>(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiSponsorshipProposal[]>>(
     key,
-    () => {
-      const q = new URLSearchParams({ limit: "50" });
-      if (params?.nftContract) q.set("nftContract", params.nftContract);
-      if (params?.proposer) q.set("proposer", params.proposer);
-      if (params?.owner) q.set("owner", params.owner);
-      if (params?.open !== undefined) q.set("open", String(params.open));
-      return backendFetch(`${BASE}/v1/sponsorship/proposals?${q}`);
-    },
+    () => api().getSponsorshipProposals({ ...params, limit: 50 }),
     { revalidateOnFocus: false }
   );
 
@@ -142,13 +56,13 @@ export function useSponsorshipProposals(params?: { nftContract?: string; propose
 }
 
 export function useSponsorshipProposal(proposalId: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipProposal }>(
+  const { data, error, isLoading, mutate } = useSWR<ApiSponsorshipProposal | null>(
     proposalId ? `sponsorship-proposal-${proposalId}` : null,
-    () => backendFetch(`${BASE}/v1/sponsorship/proposals/${proposalId}`),
+    () => api().getSponsorshipProposal(proposalId!),
     { revalidateOnFocus: false }
   );
 
-  return { proposal: data?.data ?? null, isLoading, error, mutate };
+  return { proposal: data ?? null, isLoading, error, mutate };
 }
 
 export function usePendingProposalsForAsset(nftContract: string | null) {
@@ -160,14 +74,9 @@ export function usePendingProposalsForAsset(nftContract: string | null) {
 
 export function useSponsorshipLicenses(params?: { holder?: string; author?: string }) {
   const key = `sponsorship-licenses-${JSON.stringify(params ?? {})}`;
-  const { data, error, isLoading, mutate } = useSWR<{ data: SponsorshipLicense[]; meta: unknown }>(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiSponsorshipLicense[]>>(
     key,
-    () => {
-      const q = new URLSearchParams({ limit: "50" });
-      if (params?.holder) q.set("holder", params.holder);
-      if (params?.author) q.set("author", params.author);
-      return backendFetch(`${BASE}/v1/sponsorship/licenses?${q}`);
-    },
+    () => api().getSponsorshipLicenses({ ...params, limit: 50 }),
     { revalidateOnFocus: false }
   );
 

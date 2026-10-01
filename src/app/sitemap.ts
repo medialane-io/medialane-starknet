@@ -2,26 +2,10 @@ import type { MetadataRoute } from "next";
 import { IP_TYPE_CONFIG } from "@/lib/ip-type-config";
 import { APP_URL } from "@/lib/seo";
 import { assetHref, collectionHref } from "@/lib/routes";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 const BASE_URL = APP_URL;
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ||
-  "https://medialane-backend-production.up.railway.app";
-
-const API_KEY = process.env.MEDIALANE_API_KEY || "";
-
-async function fetchJson<T>(path: string): Promise<T | null> {
-  try {
-    const res = await fetch(`${BACKEND_URL}${path}`, {
-      headers: { "x-api-key": API_KEY },
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return null;
-    return res.json() as Promise<T>;
-  } catch {
-    return null;
-  }
-}
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -44,16 +28,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const api = getMedialaneClient().api;
   const [collectionsData, tokensData, creatorsData] = await Promise.all([
-    fetchJson<{ data: { contractAddress: string; updatedAt?: string }[] }>(
-      "/v1/collections?limit=500"
-    ),
-    fetchJson<{ data: { contractAddress: string; tokenId: string; updatedAt?: string }[] }>(
-      "/v1/tokens?limit=2000"
-    ),
-    fetchJson<{ data: { username?: string; walletAddress: string }[] }>(
-      "/v1/creators?limit=500"
-    ),
+    api.listCollections({ limit: 500 }).catch(() => null),
+    api.getTokens({ limit: 2000 }).catch(() => null),
+    api.getCreators({ limit: 500 }).catch(() => null),
   ]);
 
   const collectionRoutes: MetadataRoute.Sitemap = (collectionsData?.data ?? []).map((c) => ({
@@ -70,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: t.updatedAt ? new Date(t.updatedAt) : undefined,
   }));
 
-  const creatorRoutes: MetadataRoute.Sitemap = (creatorsData?.data ?? [])
+  const creatorRoutes: MetadataRoute.Sitemap = (creatorsData?.creators ?? [])
     .filter((c) => c.username)
     .map((c) => ({
       url: `${BASE_URL}/creator/${c.username}`,

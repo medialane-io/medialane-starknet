@@ -3,19 +3,10 @@
 import useSWR from "swr";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
-import { type ApiCreatorProfile } from "@medialane/sdk";
+import type { ApiCreatorProfile, ApiUsernameClaim } from "@medialane/sdk";
 import { getMedialaneClient } from "@/lib/medialane-client";
 
-export interface UsernameClaim {
-  id: string;
-  username: string;
-  walletAddress: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  adminNotes: string | null;
-  reviewedAt: string | null;
-  createdAt: string;
-}
-
+export type { ApiUsernameClaim as UsernameClaim } from "@medialane/sdk";
 export type { ApiCreatorProfile as CreatorByUsername };
 
 export function useMyUsernameClaim() {
@@ -24,41 +15,28 @@ export function useMyUsernameClaim() {
 
   const { data, error, isLoading, mutate } = useSWR(
     isConnected && address && token ? `username-claim-me-${address}` : null,
-    async () => {
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch("/api/proxy/v1/username-claims/me", { headers });
-      if (!res.ok) throw new Error("Failed to fetch username claim");
-      return res.json() as Promise<{ username: string | null; claim: UsernameClaim | null }>;
-    },
+    () => getMedialaneClient().api.getMyUsernameClaim(token!),
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
   return { username: data?.username ?? null, claim: data?.claim ?? null, isLoading, error, mutate };
 }
 
-export async function checkUsernameAvailability(
-  username: string
-): Promise<{ available: boolean; reason?: string }> {
-  const res = await fetch(`/api/proxy/v1/username-claims/check/${encodeURIComponent(username)}`);
-  return res.json();
+export function checkUsernameAvailability(username: string): Promise<{ available: boolean; reason?: string }> {
+  return getMedialaneClient().api.checkUsernameAvailability(username);
 }
 
 export async function submitUsernameClaim(
   username: string,
   siwsToken: string | null,
   notifyEmail?: string
-): Promise<{ claim?: UsernameClaim; error?: string }> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (siwsToken) headers["Authorization"] = `Bearer ${siwsToken}`;
-  const res = await fetch("/api/proxy/v1/username-claims", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ username, ...(notifyEmail ? { notifyEmail } : {}) }),
-  });
-  const json = await res.json();
-  if (!res.ok) return { error: json.error ?? "Failed to submit claim" };
-  return { claim: json.claim };
+): Promise<{ claim?: ApiUsernameClaim; error?: string }> {
+  if (!siwsToken) return { error: "Sign in with your wallet to claim a username." };
+  try {
+    return { claim: await getMedialaneClient().api.submitUsernameClaim(username, siwsToken, notifyEmail) };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to submit claim" };
+  }
 }
 
 export function useCreatorByUsername(username: string | null | undefined) {

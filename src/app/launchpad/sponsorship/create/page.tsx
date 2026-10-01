@@ -22,7 +22,6 @@ import { uploadFailureToast } from "@/lib/upload-error";
 import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import type { IntentCall } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
@@ -117,11 +116,7 @@ export default function CreateSponsorshipPage() {
   }));
 
   const searchAssets = async (query: string): Promise<OwnedAsset[]> => {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-    const res = await fetch(`${MEDIALANE_BACKEND_URL.replace(/\/$/, "")}/v1/search?q=${encodeURIComponent(query)}&limit=16`, { headers });
-    if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-    const json: { data: { tokens: { contractAddress: string; tokenId: string; name: string | null; image: string | null }[] } } = await res.json();
+    const json = await client.api.search(query, 16);
     return json.data.tokens.map((t) => ({
       contractAddress: t.contractAddress,
       tokenId: t.tokenId,

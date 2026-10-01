@@ -1,31 +1,18 @@
 import { redirect, notFound } from "next/navigation";
 import { collectionHref } from "@/lib/routes";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function CollectionSlugPage({ params }: Props) {
   const { slug } = await params;
 
-  const backendUrl = process.env.NEXT_PUBLIC_MEDIALANE_BACKEND_URL ?? "http://localhost:3001";
-  const apiKey = process.env.MEDIALANE_API_KEY ?? "";
+  const collection = await getMedialaneClient().api.getCollectionBySlug(slug).catch(() => null);
+  if (!collection?.contractAddress) notFound();
 
-  let res: Response;
-  try {
-    res = await fetch(
-      `${backendUrl}/v1/collections/by-slug/${encodeURIComponent(slug.toLowerCase().trim())}`,
-      { headers: { "x-api-key": apiKey }, cache: "no-store" }
-    );
-  } catch {
-    notFound();
-  }
-
-  if (!res.ok) notFound();
-
-  const body = await res.json();
-  const contractAddress = body?.data?.contractAddress;
-  if (!contractAddress) notFound();
-
-  redirect(collectionHref("STARKNET", contractAddress));
+  redirect(collectionHref("STARKNET", collection.contractAddress));
 }

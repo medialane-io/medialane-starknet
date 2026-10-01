@@ -1,27 +1,15 @@
 "use client";
 
 import useSWR from "swr";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-import type { ApiCollection } from "@medialane/sdk";
+import type { ApiCollection, ApiMeta, PopClaimStatus } from "@medialane/sdk";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
-const BASE = MEDIALANE_BACKEND_URL.replace(/\/$/, "");
-
-async function backendFetch<T>(url: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (MEDIALANE_API_KEY) headers["x-api-key"] = MEDIALANE_API_KEY;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`Backend fetch failed: ${res.status}`);
-  return res.json();
-}
+export type { PopClaimStatus };
 
 export function usePopCollections() {
-  const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[]; meta: unknown }>(
+  const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[]; meta?: ApiMeta }>(
     "pop-collections",
-    () => {
-      const params = new URLSearchParams({ service: "pop-protocol", hideEmpty: "false", limit: "50" });
-      const url = `${BASE}/v1/collections?${params}`;
-      return backendFetch(url);
-    },
+    () => getMedialaneClient().api.listCollections({ service: "pop-protocol", hideEmpty: false, limit: 50 }),
     { revalidateOnFocus: false }
   );
 
@@ -34,35 +22,20 @@ export function usePopCollections() {
   };
 }
 
-export interface PopClaimStatus {
-  isEligible: boolean;
-  hasClaimed: boolean;
-  tokenId: string | null;
-}
-
 export function usePopClaimStatus(collection: string | null, wallet: string | null) {
   const key = collection && wallet ? `pop-eligibility-${collection}-${wallet}` : null;
-
-  const { data, error, isLoading, mutate } = useSWR<{ data: PopClaimStatus }>(
+  const { data, error, isLoading, mutate } = useSWR<PopClaimStatus>(
     key,
-    () => {
-      const url = `${BASE}/v1/pop/eligibility/${collection}/${wallet}`;
-      return backendFetch(url);
-    },
+    () => getMedialaneClient().api.getPopEligibility(collection!, wallet!),
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
-
-  return { claimStatus: data?.data ?? null, isLoading, error, mutate };
+  return { claimStatus: data ?? null, isLoading, error, mutate };
 }
 
 export function useMyEvents(ownerAddress: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ data: ApiCollection[] }>(
     ownerAddress ? `my-pop-events-${ownerAddress}` : null,
-    () => {
-      const params = new URLSearchParams({ service: "pop-protocol", owner: ownerAddress!, limit: "50" });
-      const url = `${BASE}/v1/collections?${params}`;
-      return backendFetch(url);
-    },
+    () => getMedialaneClient().api.listCollections({ service: "pop-protocol", owner: ownerAddress!, limit: 50 }),
     { revalidateOnFocus: false }
   );
 

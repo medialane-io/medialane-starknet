@@ -1,5 +1,7 @@
 "use client";
 
+import { MedialaneApiError } from "@medialane/sdk";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { useState } from "react";
 import { Flag } from "lucide-react";
 import {
@@ -65,45 +67,34 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
     setSubmitError(null);
     setLoading(true);
 
-    const payload: Record<string, unknown> = {
-      targetType: target.type,
-      categories,
-      description: description.trim() || undefined,
-    };
-
-    if (target.type === "TOKEN") {
-      payload.targetContract = target.contract;
-      payload.targetTokenId = target.tokenId;
-    } else if (target.type === "COLLECTION") {
-      payload.targetContract = target.contract;
-    } else if (target.type === "CREATOR") {
-      payload.targetAddress = target.address;
-    } else if (target.type === "COMMENT") {
-      payload.targetId = target.commentId;
-    }
-
     try {
       const token = await getValidToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["X-Siws-Token"] = token;
-      const res = await fetch("/api/reports", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload),
-      });
-
-      if (res.status === 409) {
+      if (!token) {
+        setSubmitError("Sign in with your wallet to send a report.");
+        return;
+      }
+      await getMedialaneClient().api.submitReport(
+        {
+          targetType: target.type,
+          categories,
+          description: description.trim() || undefined,
+          ...(target.type === "TOKEN" ? { targetContract: target.contract, targetTokenId: target.tokenId } : {}),
+          ...(target.type === "COLLECTION" ? { targetContract: target.contract } : {}),
+          ...(target.type === "CREATOR" ? { targetAddress: target.address } : {}),
+          ...(target.type === "COMMENT" ? { targetId: target.commentId } : {}),
+        },
+        token,
+      );
+      setSubmitted(true);
+    } catch (err) {
+      if (err instanceof MedialaneApiError && err.status === 409) {
         setSubmitError("You have already reported this content.");
         return;
       }
-      if (res.status === 429) {
+      if (err instanceof MedialaneApiError && err.status === 429) {
         setSubmitError("You are sending reports too quickly. Please wait a moment and try again.");
         return;
       }
-      if (!res.ok) throw new Error("Unexpected error");
-
-      setSubmitted(true);
-    } catch (err) {
       console.error("report submission failed", err);
       setSubmitError("Your report could not be sent. Please try again.");
     } finally {

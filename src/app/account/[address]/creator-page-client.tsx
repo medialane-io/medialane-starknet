@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
 import useSWR from "swr";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { useParams } from "next/navigation";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { useUserOrders } from "@/hooks/use-orders";
@@ -44,8 +45,8 @@ export default function CreatorPageClient() {
   const addr = address ?? null;
 
   const { data: hiddenStatus } = useSWR<{ isHidden: boolean }>(
-    address ? `/api/proxy/v1/creators/${address}/hidden` : null,
-    (url: string) => fetch(url).then(r => (r.ok ? r.json() : { isHidden: false }))
+    address ? `creator-hidden-${address}` : null,
+    async () => ({ isHidden: await getMedialaneClient().api.isCreatorHidden(address!).catch(() => false) })
   );
 
   const { tokens,      isLoading: tokensLoading      } = useTokensByOwner(activeTab === "assets"      ? addr : null);

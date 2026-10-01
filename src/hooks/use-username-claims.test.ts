@@ -1,36 +1,42 @@
 import { describe, expect, test, mock, afterEach } from "bun:test";
 import { checkUsernameAvailability, submitUsernameClaim } from "./use-username-claims";
 
-describe("use-username-claims — routes through /api/proxy, never the backend origin", () => {
+const original = globalThis.fetch;
+
+describe("use-username-claims goes through the SDK client", () => {
   afterEach(() => {
-    (globalThis.fetch as any).mockRestore?.();
+    globalThis.fetch = original;
   });
 
-  test("checkUsernameAvailability calls /api/proxy/v1/username-claims/check/:username", async () => {
+  test("checkUsernameAvailability asks the username-claims check route", async () => {
     const fetchMock = mock(async (url: string) => {
-      expect(url).toBe("/api/proxy/v1/username-claims/check/alice");
-      expect(url).not.toContain("http");
+      expect(new URL(url).pathname.endsWith("/v1/username-claims/check/alice")).toBe(true);
       return new Response(JSON.stringify({ available: true }), { status: 200 });
     });
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    const result = await checkUsernameAvailability("alice");
-    expect(result).toEqual({ available: true });
+    expect(await checkUsernameAvailability("alice")).toEqual({ available: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  test("submitUsernameClaim POSTs to /api/proxy/v1/username-claims", async () => {
+  test("submitUsernameClaim posts the claim with the caller's sign-in token", async () => {
     const fetchMock = mock(async (url: string, init?: RequestInit) => {
-      expect(url).toBe("/api/proxy/v1/username-claims");
+      expect(new URL(url).pathname.endsWith("/v1/username-claims")).toBe(true);
       expect(init?.method).toBe("POST");
-      const headers = init?.headers as Record<string, string>;
-      expect(headers["x-api-key"]).toBeUndefined();
+      expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer siws-token-123");
       return new Response(JSON.stringify({ claim: { id: "1", username: "alice" } }), { status: 200 });
     });
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await submitUsernameClaim("alice", "siws-token-123");
-    expect(result.claim).toBeDefined();
+    expect(result.claim?.id).toBe("1");
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("submitUsernameClaim without a sign-in token sends nothing", async () => {
+    const fetchMock = mock(async () => new Response("{}"));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    expect((await submitUsernameClaim("alice", null)).error).toBeDefined();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 });

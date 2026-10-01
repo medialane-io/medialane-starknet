@@ -16,7 +16,7 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { confirmRemixOffer } from "@/hooks/use-remix-offers";
 import { useSiwsToken } from "@/hooks/use-siws-token";
 import { formatDisplayPrice } from "@/lib/utils";
-import { getTokenByAddress, getService } from "@medialane/sdk";
+import { getService } from "@medialane/sdk";
 import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";
 import type { Call } from "starknet";
@@ -66,11 +66,9 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
   const effectiveCollectionId = selectedCollectionId ?? defaultCollectionId;
   const selectedCollection = eligibleCollections.find((c) => c.collectionId === effectiveCollectionId);
 
-  const currencyToken = offer?.proposedCurrency ? getTokenByAddress(offer.proposedCurrency) : null;
-  const priceDisplay =
-    offer?.proposedPrice && currencyToken
-      ? `${formatDisplayPrice((Number(BigInt(offer.proposedPrice)) / 10 ** currencyToken.decimals).toString())} ${currencyToken.symbol}`
-      : "—";
+  const priceDisplay = offer?.price
+    ? `${formatDisplayPrice(offer.price.formatted)} ${offer.price.currency}`
+    : "—";
 
   const handleOpenChange = (v: boolean) => {
     if (!v) {
@@ -142,12 +140,11 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       )?.tokenId;
       if (!remixTokenId) throw new Error("Could not determine remix token ID");
 
-      const currencySymbol = currencyToken?.symbol ?? "STRK";
       await createListing(
         selectedCollection.contractAddress,
         remixTokenId,
-        offer.proposedPrice ?? "0",
-        currencySymbol,
+        offer.price?.raw ?? "0",
+        offer.price?.currency ?? "STRK",
         30 * 24 * 60 * 60,
         undefined,
         undefined,

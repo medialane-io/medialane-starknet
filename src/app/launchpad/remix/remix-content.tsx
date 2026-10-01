@@ -9,7 +9,7 @@ import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives"
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { resolveTokenImage } from "@/lib/utils";
-import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import type { ApiToken } from "@medialane/sdk";
 import { GitBranch, ImageIcon, Inbox } from "lucide-react";
 
@@ -25,12 +25,11 @@ function useRemixableTokens() {
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    fetch(`${MEDIALANE_BACKEND_URL}/v1/tokens?derivatives=allowed&limit=${PAGE_SIZE}&page=${page}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((json: { data: ApiToken[]; meta: { total: number } }) => {
+    getMedialaneClient().api.getTokens({ derivatives: "allowed", limit: PAGE_SIZE, page })
+      .then((json) => {
         if (cancelled) return;
         setTokens((prev) => (page === 1 ? json.data : [...prev, ...json.data]));
-        setHasMore(page * PAGE_SIZE < json.meta.total);
+        setHasMore(page * PAGE_SIZE < (json.meta?.total ?? 0));
       })
       .catch(() => { if (!cancelled) setError(true); })
       .finally(() => { if (!cancelled) setIsLoading(false); });

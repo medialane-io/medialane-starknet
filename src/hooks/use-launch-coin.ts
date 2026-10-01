@@ -82,11 +82,7 @@ export function useLaunchCoin() {
         await signer.execute(launchIntent.data.calls as Call[]);
 
         setStatus("indexing");
-        await fetch("/api/proxy/v1/coins/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ coinAddress, owner: ownerAddr }),
-        }).catch(() => {  });
+        await client.api.syncCoin(coinAddress, ownerAddr).catch(() => {});
 
         setStatus("done");
         return { coinAddress };

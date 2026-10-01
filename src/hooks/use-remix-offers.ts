@@ -1,31 +1,15 @@
 "use client";
 
 import useSWR from "swr";
+import type { ApiRemixOffer, ApiResponse, ConfirmRemixOfferParams, ConfirmSelfRemixParams, CreateRemixOfferParams } from "@medialane/sdk";
 import { useTokenRemixes as useTokenRemixesBase } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSiwsToken } from "@/hooks/use-siws-token";
-import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
-import type { RemixOffer, RemixOfferListResponse } from "@/types/remix-offers";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
-const apiConfig = { baseUrl: MEDIALANE_BACKEND_URL, apiKey: MEDIALANE_API_KEY };
-
-async function apiFetch(
-  url: string,
-  apiKey: string,
-  siwsToken: string | null,
-  options?: RequestInit,
-): Promise<unknown> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "x-api-key": apiKey,
-  };
-  if (siwsToken) headers["Authorization"] = `Bearer ${siwsToken}`;
-  const res = await fetch(url, { ...options, headers: { ...headers, ...(options?.headers as Record<string, string> ?? {}) } });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { error?: string }).error ?? `Request failed: ${res.status}`);
-  }
-  return res.json();
+function requireToken(siwsToken: string | null): string {
+  if (!siwsToken) throw new Error("Sign in with your wallet to continue.");
+  return siwsToken;
 }
 
 export function useRemixOffers(role: "creator" | "requester", status?: string) {
@@ -34,16 +18,9 @@ export function useRemixOffers(role: "creator" | "requester", status?: string) {
 
   const key = walletAddress && token ? `remix-offers-${role}-${status ?? "all"}-${walletAddress}` : null;
 
-  const { data, error, isLoading, mutate } = useSWR<RemixOfferListResponse>(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiRemixOffer[]>>(
     key,
-    async () => {
-      const params = new URLSearchParams({ role, ...(status ? { status } : {}) });
-      return apiFetch(
-        `${MEDIALANE_BACKEND_URL}/v1/remix-offers?${params}`,
-        MEDIALANE_API_KEY,
-        token,
-      ) as Promise<RemixOfferListResponse>;
-    },
+    () => getMedialaneClient().api.getRemixOffers({ role, status }, token!),
     {
       refreshInterval: 30000,
       revalidateOnFocus: false,
@@ -54,68 +31,25 @@ export function useRemixOffers(role: "creator" | "requester", status?: string) {
     }
   );
 
-  return { offers: data?.data ?? [], total: data?.meta.total ?? 0, isLoading, error, mutate };
+  return { offers: data?.data ?? [], total: data?.meta?.total ?? 0, isLoading, error, mutate };
 }
 
 export function useTokenRemixes(contract: string | null, tokenId: string | null) {
-  return useTokenRemixesBase(apiConfig, contract, tokenId);
+  return useTokenRemixesBase(getMedialaneClient, contract, tokenId);
 }
 
-async function authedFetch(url: string, token: string | null, options?: RequestInit): Promise<unknown> {
-  return apiFetch(url, MEDIALANE_API_KEY, token, options);
+export async function submitRemixOffer(body: CreateRemixOfferParams, siwsToken: string | null): Promise<ApiRemixOffer> {
+  return (await getMedialaneClient().api.submitRemixOffer(body, requireToken(siwsToken))).data;
 }
 
-export async function submitRemixOffer(
-  body: {
-    originalContract: string;
-    originalTokenId: string;
-    proposedPrice: string;
-    proposedCurrency: string;
-    licenseType: string;
-    commercial: boolean;
-    derivatives: boolean;
-    royaltyPct?: number;
-    message?: string;
-    expiresInDays?: number;
-  },
-  siwsToken: string | null
-): Promise<RemixOffer> {
-  const res = await authedFetch(`${MEDIALANE_BACKEND_URL}/v1/remix-offers`, siwsToken, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  return (res as { data: RemixOffer }).data;
-}
-
-export async function registerRemix(
-  body: {
-    originalContract: string;
-    originalTokenId: string;
-    remixContract: string;
-    remixTokenId: string;
-    txHash: string;
-    licenseType: string;
-    commercial: boolean;
-    derivatives: boolean;
-    royaltyPct?: number;
-  },
-  siwsToken: string | null
-): Promise<RemixOffer> {
-  const res = await authedFetch(`${MEDIALANE_BACKEND_URL}/v1/remix-offers/self/confirm`, siwsToken, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  return (res as { data: RemixOffer }).data;
+export async function registerRemix(body: ConfirmSelfRemixParams, siwsToken: string | null): Promise<ApiRemixOffer> {
+  return (await getMedialaneClient().api.confirmSelfRemix(body, requireToken(siwsToken))).data;
 }
 
 export async function confirmRemixOffer(
   id: string,
-  body: { remixContract: string; remixTokenId: string; approvedCollection: string; orderHash: string },
+  body: ConfirmRemixOfferParams,
   siwsToken: string | null
-): Promise<RemixOffer> {
-  const res = await authedFetch(`${MEDIALANE_BACKEND_URL}/v1/remix-offers/${id}/confirm`, siwsToken, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  return (res as { data: RemixOffer }).data;
+): Promise<ApiRemixOffer> {
+  return (await getMedialaneClient().api.confirmRemixOffer(id, body, requireToken(siwsToken))).data;
 }

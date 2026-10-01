@@ -1,6 +1,8 @@
 "use client";
 
 import useSWR from "swr";
+import type { ApiTierOnchain } from "@medialane/sdk";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { useMedialaneClient } from "./use-medialane-client";
 import { starknetProvider } from "@/lib/starknet";
 import { Contract } from "starknet";
@@ -27,17 +29,18 @@ export interface TicketOnchain {
   royaltyBps: number;
 }
 
-async function readTicket(contract: string, tokenId: string): Promise<TicketOnchain> {
-  const res = await fetch(`/api/proxy/v1/tickets/${contract}/${tokenId}`);
-  if (!res.ok) throw new Error("Failed to fetch ticket");
-  const json = await res.json();
+function toTier(data: ApiTierOnchain): TicketOnchain {
   return {
-    maxSupply: BigInt(json.data.maxSupply),
-    minted: BigInt(json.data.minted),
-    startTime: json.data.startTime,
-    endTime: json.data.endTime,
-    royaltyBps: json.data.royaltyBps,
+    maxSupply: BigInt(data.maxSupply),
+    minted: BigInt(data.minted),
+    startTime: data.startTime,
+    endTime: data.endTime,
+    royaltyBps: data.royaltyBps,
   };
+}
+
+async function readTicket(contract: string, tokenId: string): Promise<TicketOnchain> {
+  return toTier(await getMedialaneClient().api.getTicket(contract, tokenId));
 }
 
 export interface TicketListItem extends TicketOnchain {
@@ -54,10 +57,7 @@ async function readTicketCount(contract: string): Promise<number> {
 }
 
 async function readTicketList(contract: string): Promise<TicketListItem[]> {
-  const countRes = await fetch(`/api/proxy/v1/tickets/${contract}/count`);
-  if (!countRes.ok) throw new Error("Failed to fetch ticket count");
-  const { data } = await countRes.json();
-  const count = data.count as number;
+  const count = await getMedialaneClient().api.getTicketCount(contract);
   const tickets: TicketListItem[] = [];
   for (let id = 1; id <= count; id++) {
     tickets.push({ id: String(id), ...(await readTicket(contract, String(id))) });

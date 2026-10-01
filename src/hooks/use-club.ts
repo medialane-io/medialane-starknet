@@ -1,6 +1,8 @@
 "use client";
 
 import useSWR from "swr";
+import type { ApiTierOnchain } from "@medialane/sdk";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { useMedialaneClient } from "./use-medialane-client";
 import { starknetProvider } from "@/lib/starknet";
 import { Contract, cairo } from "starknet";
@@ -28,15 +30,13 @@ export interface MembershipOnchain {
 }
 
 async function readMembership(contract: string, tokenId: string): Promise<MembershipOnchain> {
-  const res = await fetch(`/api/proxy/v1/club/${contract}/${tokenId}`);
-  if (!res.ok) throw new Error("Failed to fetch membership");
-  const json = await res.json();
+  const data: ApiTierOnchain = await getMedialaneClient().api.getClubMembership(contract, tokenId);
   return {
-    maxSupply: BigInt(json.data.maxSupply),
-    minted: BigInt(json.data.minted),
-    startTime: json.data.startTime,
-    endTime: json.data.endTime,
-    royaltyBps: json.data.royaltyBps,
+    maxSupply: BigInt(data.maxSupply),
+    minted: BigInt(data.minted),
+    startTime: data.startTime,
+    endTime: data.endTime,
+    royaltyBps: data.royaltyBps,
   };
 }
 
@@ -116,12 +116,7 @@ export function useIsMemberOf(
 
   const { data, error, isLoading } = useSWR<boolean>(
     key,
-    async () => {
-      const res = await fetch(`/api/proxy/v1/club/${contract}/${tokenId}/member/${wallet}`);
-      if (!res.ok) throw new Error("Failed to fetch membership status");
-      const json = await res.json();
-      return Boolean(json.data.isMember);
-    },
+    () => getMedialaneClient().api.isClubMember(contract!, tokenId!, wallet!),
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
