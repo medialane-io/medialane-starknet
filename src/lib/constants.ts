@@ -39,9 +39,6 @@ export const IPFS_GATEWAY = (() => {
 export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://voyager.online";
 
-export const GENESIS_NFT_IMAGE_URL =
-  process.env.NEXT_PUBLIC_GENESIS_NFT_IMAGE_URL || "";
-
 
 export const REGISTRY_START_BLOCK = Number(
   process.env.NEXT_PUBLIC_COLLECTION_721_START_BLOCK || 0

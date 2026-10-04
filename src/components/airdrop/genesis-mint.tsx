@@ -5,19 +5,14 @@ import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { serializeByteArray } from "@/lib/cairo-calldata";
-import { GENESIS_NFT_IMAGE_URL } from "@/lib/constants";
+import { genesisMintCall } from "@/lib/genesis-mint-call";
 
 export function AirdropEventCard() {
-
-  const sources = [GENESIS_NFT_IMAGE_URL, "/genesis.jpg"].filter(Boolean) as string[];
-  const [srcIndex, setSrcIndex] = useState(0);
   const [errored, setErrored] = useState(false);
-  const src = sources[srcIndex];
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-border/40 shadow-xl shadow-black/10 aspect-square w-full">
-      {errored || !src ? (
+      {errored ? (
         <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-purple-500/10 flex flex-col items-center justify-center gap-3">
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
             <ImageIcon className="h-7 w-7 text-primary/40" />
@@ -27,17 +22,10 @@ export function AirdropEventCard() {
       ) : (
 
         <img
-          key={src}
-          src={src}
+          src="/genesis.jpg"
           alt="Medialane Creator's Airdrop"
           className="w-full h-full object-cover"
-          onError={() => {
-            if (srcIndex + 1 < sources.length) {
-              setSrcIndex(srcIndex + 1);
-            } else {
-              setErrored(true);
-            }
-          }}
+          onError={() => setErrored(true)}
         />
       )}
     </div>
@@ -45,8 +33,6 @@ export function AirdropEventCard() {
 }
 
 interface GenesisMintProps {
-  contract: string;
-  nftUri: string;
   storageKey: string;
   locale?: "en" | "br";
 }
@@ -60,7 +46,6 @@ const COPY = {
     minting: "Claiming…",
     success: "You're in!",
     retry: "Try again",
-    noContract: "Mint not started yet",
   },
   br: {
     connect: "Participar do airdrop",
@@ -68,13 +53,10 @@ const COPY = {
     minting: "Ativando…",
     success: "Participação confirmada!",
     retry: "Tentar novamente",
-    noContract: "Distribuição não iniciada ainda",
   },
 };
 
 export function GenesisMint({
-  contract,
-  nftUri,
   storageKey,
   locale = "en",
 }: GenesisMintProps) {
@@ -106,15 +88,11 @@ export function GenesisMint({
   }, [isConnected]);
 
   const handleMint = useCallback(async () => {
-    if (!contract || !address) return;
+    if (!address) return;
     setPhase("minting");
     setError(null);
     try {
-
-      const calldata = [address, ...serializeByteArray(nftUri)];
-      const hash = await execute([
-        { contractAddress: contract, entrypoint: "mint_item", calldata },
-      ]);
+      const hash = await execute([genesisMintCall(address)]);
       if (!hash) throw new Error("Transaction not confirmed");
       setTxHash(hash);
       setPhase("success");
@@ -123,7 +101,7 @@ export function GenesisMint({
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
       setPhase("error");
     }
-  }, [contract, address, nftUri, execute, lsKey]);
+  }, [address, execute, lsKey]);
 
   const card = "rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-5 space-y-4 shadow-lg shadow-black/5";
 
@@ -151,16 +129,6 @@ export function GenesisMint({
             className="w-full h-12 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
           />
         </div>
-      </div>
-    );
-  }
-
-  if (!contract) {
-    return (
-      <div className={card}>
-        <Button disabled size="lg" className="w-full h-12 font-bold">
-          {copy.noContract}
-        </Button>
       </div>
     );
   }

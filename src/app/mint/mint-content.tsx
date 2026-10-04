@@ -19,28 +19,13 @@ import {
 } from "lucide-react";
 import { AirdropClaim } from "@/components/airdrop/airdrop-claim";
 import { MedialaneLogo } from "@/components/brand/medialane-logo";
-import { ipfsToHttp } from "@/lib/utils";
-import { GENESIS_NFT_IMAGE_URL } from "@/lib/constants";
-
-function resolveImageSrc(value: string, fallback: string): string {
-  if (!value) return fallback;
-  if (value.startsWith("http") || value.startsWith("/")) return value;
-  return ipfsToHttp(value.startsWith("ipfs://") || value.startsWith("ar://") ? value : `ipfs://${value}`);
-}
 
 function EventCard() {
-
-  const sources = [
-    GENESIS_NFT_IMAGE_URL ? resolveImageSrc(GENESIS_NFT_IMAGE_URL, "") : "",
-    "/genesis.jpg",
-  ].filter(Boolean) as string[];
-  const [srcIndex, setSrcIndex] = useState(0);
   const [errored, setErrored] = useState(false);
-  const src = sources[srcIndex];
 
   return (
     <div className="relative rounded-3xl overflow-hidden border border-border/40 shadow-2xl shadow-black/20 aspect-square w-full">
-      {errored || !src ? (
+      {errored ? (
         <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-purple-500/10 flex flex-col items-center justify-center gap-3">
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
             <ImageIcon className="h-8 w-8 text-primary/40" />
@@ -49,19 +34,12 @@ function EventCard() {
         </div>
       ) : (
         <Image
-          key={src}
-          src={src}
+          src="/genesis.jpg"
           alt="Medialane Creator's Airdrop"
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
           className="w-full h-full object-cover"
-          onError={() => {
-            if (srcIndex + 1 < sources.length) {
-              setSrcIndex(srcIndex + 1);
-            } else {
-              setErrored(true);
-            }
-          }}
+          onError={() => setErrored(true)}
           unoptimized
         />
       )}
