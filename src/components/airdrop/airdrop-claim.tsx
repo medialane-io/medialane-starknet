@@ -3,7 +3,7 @@
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { GenesisMint } from "@/components/airdrop/genesis-mint";
 import { useWallet } from "@/hooks/use-wallet";
-import { MINT_CONTRACT, GENESIS_NFT_URI } from "@/lib/constants";
+import { MINT_CONTRACT, GENESIS_NFT_CID } from "@/lib/constants";
 
 interface AirdropClaimProps {
   storageKey: string;
@@ -20,7 +20,7 @@ export function AirdropClaim({ storageKey, locale = "en" }: AirdropClaimProps) {
   return (
     <GenesisMint
       contract={MINT_CONTRACT}
-      nftUri={GENESIS_NFT_URI}
+      nftUri={GENESIS_NFT_CID}
       storageKey={storageKey}
       locale={locale}
     />

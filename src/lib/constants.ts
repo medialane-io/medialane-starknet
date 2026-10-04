@@ -6,6 +6,7 @@ export {
   STARKNET_COLLECTION_1155_CONTRACT,
   STARKNET_NFTCOMMENTS_CONTRACT,
   STARKNET_GENESIS_MINT_GLOBAL_CONTRACT as MINT_CONTRACT,
+  STARKNET_GENESIS_NFT_CID as GENESIS_NFT_CID,
 } from "@medialane/sdk";
 
 export const RPC_PROXY_PATH = "/api/rpc";
@@ -37,9 +38,6 @@ export const IPFS_GATEWAY = (() => {
 
 export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://voyager.online";
-
-export const GENESIS_NFT_URI =
-  process.env.NEXT_PUBLIC_GENESIS_NFT_URI || "";
 
 export const GENESIS_NFT_IMAGE_URL =
   process.env.NEXT_PUBLIC_GENESIS_NFT_IMAGE_URL || "";
