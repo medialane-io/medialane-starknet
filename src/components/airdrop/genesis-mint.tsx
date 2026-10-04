@@ -111,10 +111,7 @@ export function GenesisMint({
     setError(null);
     try {
 
-      const tokenUri =
-        nftUri.startsWith("ipfs://") || nftUri.startsWith("ar://")
-          ? nftUri
-          : `ipfs://${nftUri}`;
+      const tokenUri = nftUri.replace(/^ipfs:\/\//, "");
       const calldata = [address, ...serializeByteArray(tokenUri)];
       const hash = await execute([
         { contractAddress: contract, entrypoint: "mint_item", calldata },
