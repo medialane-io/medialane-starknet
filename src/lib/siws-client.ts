@@ -10,13 +10,13 @@ import {
   type RequestSiwsTokenArgs as SdkRequestSiwsTokenArgs,
 } from "@medialane/sdk/starknet";
 import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
+import { APP_SOURCE } from "@/lib/app-source";
 
 const STORAGE_PREFIX = "ml_siws_";
 
 export type { SiwsSigner };
 export type RequestSiwsTokenArgs = Omit<SdkRequestSiwsTokenArgs, "backendUrl" | "appSource">;
 
-const APP_SOURCE = "MEDIALANE_STARKNET";
 export { storeSiwsToken, isSiwsTokenValid, getSiwsStorageKey, normalizeSiwsSignature };
 
 export function getStoredSiwsToken(address: string): string | null {
