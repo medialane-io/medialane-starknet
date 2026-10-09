@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { decodePopClaimFragment } from "@medialane/sdk/starknet";
+import { popCalls, popClaimInfo, popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
 import { starknetProvider } from "@/lib/starknet";
-import { popClaimState } from "@/lib/pop-claim";
+import { claimProofFor } from "@/lib/pop-proof-storage";
 import { RewardEarned } from "@/lib/reward-earned";
 import { Loader2, CheckCircle2, Ban, Award, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,25 +23,33 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
   const [result, setResult] = useState<TxResult | null>(null);
   const [isTxLoading, setIsTxLoading] = useState(false);
   const [proof, setProof] = useState<string[] | null>(null);
-  const [root, setRoot] = useState<string | null>(null);
+  const [info, setInfo] = useState<PopClaimInfo | null>(null);
 
   useEffect(() => {
-    setProof(decodePopClaimFragment(window.location.hash));
-    starknetProvider
-      .callContract({ contractAddress: collectionAddress, entrypoint: "allowlist_root", calldata: [] })
-      .then(([value]) => setRoot(value ?? null))
-      .catch(() => setRoot(null));
+    let storage: Storage | null = null;
+    try {
+      storage = window.sessionStorage;
+    } catch {
+      storage = null;
+    }
+    setProof(claimProofFor(storage, collectionAddress, window.location.hash));
+    popClaimInfo(starknetProvider, collectionAddress)
+      .then(setInfo)
+      .catch(() => setInfo(null));
   }, [collectionAddress]);
 
-  const state = popClaimState({ hasClaimed, proof, root, wallet: address ?? null });
+  const state = popClaimState({
+    hasClaimed,
+    proof,
+    wallet: address ?? null,
+    info: info && { ...info, now: Math.floor(Date.now() / 1000) },
+  });
 
   const handleClaim = async () => {
     if (!proof) return;
     setIsTxLoading(true);
     try {
-      const hash = await execute([
-        { contractAddress: collectionAddress, entrypoint: "claim", calldata: [String(proof.length), ...proof] },
-      ]);
+      const hash = await execute([popCalls.claim(collectionAddress, proof)]);
       setResult({
         status: "success",
         title: "Credential claimed!",
@@ -90,6 +98,8 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
     );
   } else if (state === "closed") {
     content = <p className="text-sm text-muted-foreground">Claims for this credential are closed.</p>;
+  } else if (state === "ended") {
+    content = <p className="text-sm text-muted-foreground">The claim window for this credential has ended.</p>;
   } else if (state === "no-link") {
     content = (
       <p className="text-sm text-muted-foreground">Open the claim link you received to claim this credential.</p>
