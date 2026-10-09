@@ -150,7 +150,6 @@ export default function CreatePOPPage() {
         baseUri,
         service: "pop-protocol",
         claimEndTimestamp,
-        eventType,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       await execute(intentRes.data.calls as Call[]);

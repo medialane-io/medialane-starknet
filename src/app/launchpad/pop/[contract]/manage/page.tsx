@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { normalizeAddress } from "@medialane/sdk";
 import {
-  ArrowLeft, Users, Award, Loader2, CheckCircle2, AlertCircle, Trash2,
+  ArrowLeft, Users, Award, Loader2, CheckCircle2, AlertCircle, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,8 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCollection } from "@/hooks/use-collections";
 import { isCollectionOwner } from "@/lib/utils";
+import { buildPopAllowlist } from "@medialane/sdk/starknet";
+import { claimLinks, claimLinksCsv, type ClaimLink } from "@/lib/pop-claim";
 
 function parseAddresses(raw: string): string[] {
   return raw
@@ -22,31 +24,40 @@ function parseAddresses(raw: string): string[] {
     .filter((a) => /^0x[0-9a-fA-F]+$/.test(a));
 }
 
-function BatchAddSection({
-  onAdd,
+function downloadCsv(links: ClaimLink[]) {
+  const href = URL.createObjectURL(new Blob([claimLinksCsv(links)], { type: "text/csv" }));
+  const anchor = Object.assign(document.createElement("a"), { href, download: "claim-links.csv" });
+  anchor.click();
+  URL.revokeObjectURL(href);
+}
+
+function AllowlistSection({
+  onPublish,
   isSubmitting,
+  links,
 }: {
-  onAdd: (addresses: string[]) => void;
+  onPublish: (addresses: string[]) => void;
   isSubmitting: boolean;
+  links: ClaimLink[] | null;
 }) {
   const [raw, setRaw] = useState("");
   const parsed = parseAddresses(raw);
-  const overLimit = parsed.length > 100;
 
   return (
     <div className="bento-cell p-5 space-y-3">
       <div className="flex items-center gap-2">
         <Users className="h-4 w-4 text-green-500" />
-        <span className="font-semibold text-sm">Add participants</span>
+        <span className="font-semibold text-sm">Participants</span>
         {parsed.length > 0 && (
           <span className="ml-auto text-xs text-muted-foreground">
             {parsed.length} address{parsed.length !== 1 ? "es" : ""}
-            {overLimit && <span className="text-destructive"> (max 100)</span>}
           </span>
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        Only allowlisted addresses can claim their POP credential. Paste up to 100 per batch.
+        Paste every participant&apos;s wallet address. Publishing replaces the previous list and every link
+        sent before it — send the new links to everyone who hasn&apos;t claimed yet. The list stays in this
+        browser: download the claim links and send each participant theirs.
       </p>
       <Textarea
         placeholder={"Paste Starknet addresses, one per line:\n0x04a...\n0x06b..."}
@@ -58,59 +69,34 @@ function BatchAddSection({
       <Button
         size="sm"
         className="w-full bg-green-600 hover:bg-green-700 text-white"
-        disabled={parsed.length === 0 || overLimit || isSubmitting}
-        onClick={() => { onAdd(parsed); setRaw(""); }}
+        disabled={parsed.length === 0 || isSubmitting}
+        onClick={() => onPublish(parsed)}
       >
         {isSubmitting ? (
-          <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />Adding…</>
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            Publishing…
+          </>
         ) : (
           <>
             <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-            Add {parsed.length > 0
-              ? `${parsed.length} participant${parsed.length !== 1 ? "s" : ""}`
-              : "participants"}
+            Publish {parsed.length > 0 ? `${parsed.length} participant${parsed.length !== 1 ? "s" : ""}` : "participants"}
           </>
         )}
       </Button>
-    </div>
-  );
-}
-
-function RemoveSection({
-  onRemove,
-  isSubmitting,
-}: {
-  onRemove: (address: string) => void;
-  isSubmitting: boolean;
-}) {
-  const [addr, setAddr] = useState("");
-  const valid = /^0x[0-9a-fA-F]+$/.test(addr.trim());
-
-  return (
-    <div className="bento-cell p-5 space-y-3">
-      <div className="flex items-center gap-2">
-        <Trash2 className="h-4 w-4 text-muted-foreground" />
-        <span className="font-semibold text-sm">Remove participant</span>
-      </div>
-      <input
-        type="text"
-        placeholder="0x..."
-        value={addr}
-        onChange={(e) => setAddr(e.target.value)}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm tabular-nums placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-      />
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full text-destructive hover:text-destructive"
-        disabled={!valid || isSubmitting}
-        onClick={() => { onRemove(addr.trim()); setAddr(""); }}
-      >
-        {isSubmitting
-          ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-          : <Trash2 className="h-3.5 w-3.5 mr-1.5" />}
-        Remove address
-      </Button>
+      {links && (
+        <div className="space-y-2 pt-2">
+          <Button variant="outline" size="sm" className="w-full" onClick={() => downloadCsv(links)}>
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            Download claim links (CSV)
+          </Button>
+          <ul className="max-h-48 overflow-auto text-xs tabular-nums space-y-1 text-muted-foreground">
+            {links.map((link) => (
+              <li key={link.address} className="truncate">{link.address}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -125,41 +111,39 @@ export default function PopManagePage({
   const { collection, isLoading } = useCollection(contract);
   const [isTxLoading, setIsTxLoading] = useState(false);
   const [txMessage, setTxMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+  const [links, setLinks] = useState<ClaimLink[] | null>(null);
 
   const isOwner = isCollectionOwner(collection, address);
 
   const runTx = async (
     calls: Array<{ contractAddress: string; entrypoint: string; calldata: string[] }>,
     successMsg: string
-  ) => {
+  ): Promise<boolean> => {
     setIsTxLoading(true);
     setTxMessage(null);
     try {
       await execute(calls);
       setTxMessage({ tone: "success", text: successMsg });
+      return true;
     } catch (err) {
       console.error("manage action failed", err);
       setTxMessage({ tone: "error", text: "That change could not be completed. Please try again." });
+      return false;
     } finally {
       setIsTxLoading(false);
     }
   };
 
-  const handleBatchAdd = (addresses: string[]) =>
-    runTx(
-      [{
-        contractAddress: contract,
-        entrypoint: "batch_add_to_allowlist",
-        calldata: [addresses.length.toString(), ...addresses],
-      }],
-      `Added ${addresses.length} participant${addresses.length !== 1 ? "s" : ""} to allowlist`
-    );
-
-  const handleRemove = (addr: string) =>
-    runTx(
-      [{ contractAddress: contract, entrypoint: "remove_from_allowlist", calldata: [addr] }],
-      "Participant removed from allowlist"
-    );
+  const handlePublish = (addresses: string[]) => {
+    const list = buildPopAllowlist(addresses);
+    const count = Object.keys(list.proofs).length;
+    void runTx(
+      [{ contractAddress: contract, entrypoint: "set_allowlist_root", calldata: [list.root] }],
+      `Published ${count} participant${count !== 1 ? "s" : ""}`
+    ).then((ok) => {
+      if (ok) setLinks(claimLinks(window.location.origin, contract, list));
+    });
+  };
 
   if (!isConnected) {
     return (
@@ -241,18 +225,14 @@ export default function PopManagePage({
         <div className="bento-cell p-4 flex items-center gap-3">
           <Award className="h-4 w-4 text-green-500 shrink-0" />
           <p className="text-xs text-muted-foreground">
-            POP credentials are <strong className="text-foreground">always allowlist-gated</strong> —
-            only participants you add below can claim their soulbound credential.
+            Only participants on your <strong className="text-foreground">published list</strong> can claim,
+            with the link you send them.
           </p>
         </div>
       </FadeIn>
 
       <FadeIn delay={0.12}>
-        <BatchAddSection onAdd={handleBatchAdd} isSubmitting={isTxLoading} />
-      </FadeIn>
-
-      <FadeIn delay={0.16}>
-        <RemoveSection onRemove={handleRemove} isSubmitting={isTxLoading} />
+        <AllowlistSection onPublish={handlePublish} isSubmitting={isTxLoading} links={links} />
       </FadeIn>
     </div>
   );
