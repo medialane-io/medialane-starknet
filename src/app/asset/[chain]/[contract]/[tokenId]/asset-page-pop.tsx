@@ -10,6 +10,8 @@ import { useToken } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
 import { usePopClaimStatus } from "@/hooks/use-pop";
 import { useWallet } from "@/hooks/use-wallet";
+import { PopBurnButton } from "@/components/claim/pop-burn-button";
+import { normalizeAddress } from "@medialane/sdk";
 import { ipfsToHttp } from "@/lib/utils";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { PopClaimButton } from "@/components/claim/pop-claim-button";
@@ -24,6 +26,10 @@ export function AssetPagePop() {
   const { token } = useToken(contract, tokenId);
   const { collection } = useCollection(contract);
   const { hasClaimed } = usePopClaimStatus(contract, walletAddress ?? null);
+  const holdsThisToken =
+    !!walletAddress &&
+    !!token?.owner &&
+    normalizeAddress("STARKNET", token.owner) === normalizeAddress("STARKNET", walletAddress);
   const shouldReduce = useReducedMotion();
 
   const imageUrl = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
@@ -100,12 +106,13 @@ export function AssetPagePop() {
                     <CheckCircle2 className="h-5 w-5 shrink-0" />
                     You hold this credential
                   </div>
-                  <p className="text-xs text-muted-foreground">Permanently in your wallet</p>
+                  <p className="text-xs text-muted-foreground">In your wallet</p>
+                  {holdsThisToken && <PopBurnButton collectionAddress={contract} tokenId={tokenId} />}
                 </div>
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    This is an on-chain proof of participation. Once claimed, it lives permanently in your wallet and cannot be transferred or sold.
+                    This is an on-chain proof of participation. Once claimed, it stays in your wallet and cannot be transferred or sold.
                   </p>
                   <PopClaimButton collectionAddress={contract} />
                 </div>
