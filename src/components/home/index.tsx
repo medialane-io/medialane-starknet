@@ -20,8 +20,8 @@ export function HomePage({ initialFeatured }: { initialFeatured?: ApiCollection[
       </PageContainer>
 
       <PageContainer className="box-border max-w-full pt-0 pb-0 space-y-10 sm:space-y-16 lg:space-y-20 mt-16">
-        <TrendingCollections />
         <NewOnMarketplace />
+        <TrendingCollections />
         <RewardsSection />
         <AirdropSection />
       </PageContainer>
