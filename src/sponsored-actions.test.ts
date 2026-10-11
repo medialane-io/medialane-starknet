@@ -22,7 +22,7 @@ test("wallet transactions carry backend intent ids and no fee call is built in t
     if (source.includes("buildFeeCall")) found.push(`${rel}: buildFeeCall`);
     if (EXECUTION_PRIMITIVES.has(rel)) return found;
     source.split("\n").forEach((line, i) => {
-      if (/\bexecute\(/.test(line) && !/intentIds|function execute|const execute|executeIntent|executeWith|executeSponsored/.test(line)) {
+      if (/\b(execute|executeTransaction)\(/.test(line) && !/intentIds|function execute|const execute|executeIntent|executeWith|executeSponsored/.test(line)) {
         found.push(`${rel}:${i + 1}: execute without intent ids`);
       }
     });

@@ -400,12 +400,12 @@ export function SingleEditionsContent() {
         royaltyBps: Math.round(values.royalty * 100),
       });
 
-      const intentData = intentRes.data as { calls?: { contractAddress: string; [key: string]: unknown }[] } | undefined;
+      const intentData = intentRes.data as { id?: string; calls?: { contractAddress: string; [key: string]: unknown }[] } | undefined;
       if (!intentData?.calls?.length) {
         throw new Error("Mint intent returned no calls");
       }
 
-      const result = await executeTransaction(intentData.calls as Call[]);
+      const result = await executeTransaction(intentData.calls as Call[], { intentIds: intentData.id ? [intentData.id] : undefined });
 
       if (result === null) {
         throw new Error("Mint transaction reverted on chain");

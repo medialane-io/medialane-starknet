@@ -226,7 +226,7 @@ export default function CreateRemixPage() {
       const calls = intentData.calls as Call[];
       if (!calls?.length) throw new Error("No calls returned from mint intent");
 
-      const result = await executeTransaction(calls);
+      const result = await executeTransaction(calls, { intentIds: [intentData.id] });
       if (result === null) throw new Error("Mint reverted");
 
       await syncTransactionBestEffort(client, (result as any).txHash ?? "");

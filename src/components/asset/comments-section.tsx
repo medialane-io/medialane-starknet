@@ -4,9 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { RewardEarned } from "@/lib/reward-earned";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { CallData } from "starknet";
 import { normalizeAddress } from "@medialane/sdk";
-import { encodeTokenId } from "@/hooks/use-transfer";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -23,24 +21,11 @@ import { STARKNET_NFTCOMMENTS_CONTRACT, EXPLORER_URL } from "@/lib/constants";
 import { MessageSquare, Loader2, Send, CheckCircle, X, ExternalLink, Flag, Zap } from "lucide-react";
 import { ReportDialog, type ReportTarget } from "@/components/report-dialog";
 import { cn } from "@/lib/utils";
+import { getMedialaneClient } from "@/lib/medialane-client";
+import type { Call } from "starknet";
 
 const MAX_LEN = 1000;
 
-function byteArrayFromUtf8(str: string): { data: string[]; pending_word: string; pending_word_len: number } {
-  const bytes = new TextEncoder().encode(str);
-  const data: string[] = [];
-  let i = 0;
-  while (i + 31 <= bytes.length) {
-    let value = 0n;
-    for (let j = 0; j < 31; j++) value = (value << 8n) | BigInt(bytes[i + j]);
-    data.push("0x" + value.toString(16));
-    i += 31;
-  }
-  const remaining = bytes.slice(i);
-  let pendingWord = 0n;
-  for (const byte of remaining) pendingWord = (pendingWord << 8n) | BigInt(byte);
-  return { data, pending_word: "0x" + pendingWord.toString(16), pending_word_len: remaining.length };
-}
 
 type PostStep = "idle" | "processing" | "success" | "error";
 
@@ -107,13 +92,9 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
     setPostTxHash(null);
     setPostError(null);
     try {
-      const encoded = byteArrayFromUtf8(text.trim());
-      const [tokenIdLow, tokenIdHigh] = encodeTokenId(tokenId);
-      const calldata = CallData.compile([contract, { low: tokenIdLow, high: tokenIdHigh }, encoded]);
-
-      const result = await executeTransaction([
-        { contractAddress: STARKNET_NFTCOMMENTS_CONTRACT, entrypoint: "add_comment", calldata },
-      ]);
+      const created = await getMedialaneClient().api.createCommentIntent({ author: walletAddress!, nftContract: contract, tokenId, text: text.trim() });
+      const intent = created.data as { id: string; calls: Call[] };
+      const result = await executeTransaction(intent.calls, { intentIds: [intent.id] });
 
       setPostTxHash(result);
       if (result !== null) {
