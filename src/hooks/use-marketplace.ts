@@ -3,8 +3,7 @@ import type { Call, TypedData } from "starknet";
 import { useSWRConfig } from "swr";
 import { getTokenBySymbol } from "@medialane/sdk";
 import { describeError } from "@medialane/ui";
-import { feeConfig, buildFeeCall } from "@/lib/fee";
-import type { CheckoutItem } from "@/lib/checkout";
+import { checkoutExecution, type CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent } from "@medialane/sdk/starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -15,7 +14,7 @@ import { starknetProvider } from "@/lib/starknet";
 interface WriteOpts {
     silent?: boolean;
 
-    swapCalls?: Call[];
+    swap?: { id: string; calls: Call[] };
 }
 
 interface UseMarketplaceReturn {
@@ -212,22 +211,9 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (failed.length > 0) {
                 throw new Error(`${failed.length} item(s) could not be prepared: ${failed.map((f) => f.error).join("; ")}`);
             }
-            const fulfillCalls = checkoutRes.data.flatMap((r) => (r.calls as Call[]) ?? []);
-
-            const tokenTotals = new Map<string, bigint>();
-            items.forEach((item) => {
-                const amt = BigInt(item.considerationAmount);
-                tokenTotals.set(item.considerationToken, (tokenTotals.get(item.considerationToken) || 0n) + amt);
-            });
-            const feeCalls = Array.from(tokenTotals.entries())
-                .map(([token, grossAmount]) => buildFeeCall({ surface: "marketplace", token, grossAmount }, feeConfig))
-                .filter((c): c is NonNullable<typeof c> => c !== null);
-
-            const { txHash: hash } = await signer.execute([
-                ...(opts?.swapCalls ?? []),
-                ...fulfillCalls,
-                ...feeCalls,
-            ]);
+            const prepared = checkoutRes.data.map((r) => ({ id: r.id!, calls: (r.calls as Call[]) ?? [] }));
+            const { calls, intentIds } = checkoutExecution(prepared, opts?.swap);
+            const { txHash: hash } = await signer.execute(calls, { intentIds });
 
             await Promise.all(
                 checkoutRes.data.map((r) => (r.id ? client.api.confirmIntent(r.id, hash).catch(() => {}) : Promise.resolve()))

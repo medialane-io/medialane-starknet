@@ -29,7 +29,8 @@ import {
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { useTokenBalance } from "@/hooks/use-token-balance";
-import { buildSwapCalls } from "@/lib/swap-calls";
+import { createSwapIntent } from "@/lib/swap-calls";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { PayWithPicker } from "@/components/marketplace/pay-with-picker";
 
 interface PurchaseDialogProps {
@@ -247,16 +248,15 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     try {
       setStep("processing");
 
-      let swapCalls: Awaited<ReturnType<typeof buildSwapCalls>>["calls"] | undefined;
+      let swap: Awaited<ReturnType<typeof createSwapIntent>> | undefined;
       if (paymentSymbol && order.price?.currency && address) {
         try {
-          const built = await buildSwapCalls({
+          swap = await createSwapIntent(getMedialaneClient().api, {
             sellSymbol: paymentSymbol,
             buySymbol: order.price.currency,
             buyAmountRaw: orderTotal(order, quantity).toString(),
             takerAddress: address,
           });
-          swapCalls = built.calls;
         } catch {
           setStep("details");
           setBuyError("The price moved before the swap could be prepared. Please try again.");
@@ -273,7 +273,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         isERC1155,
         quantity: quantity.toString(),
       };
-      const hash = await checkoutCart([item], { silent: true, swapCalls });
+      const hash = await checkoutCart([item], { silent: true, swap });
       if (hash) {
         setSuccessTxHash(hash);
         setStep("success");

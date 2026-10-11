@@ -5,7 +5,8 @@ import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { genesisMintCall } from "@/lib/genesis-mint-call";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 export function AirdropEventCard() {
   const [errored, setErrored] = useState(false);
@@ -60,7 +61,8 @@ export function GenesisMint({
   storageKey,
   locale = "en",
 }: GenesisMintProps) {
-  const { address, isConnected, execute } = useWallet();
+  const { address, isConnected } = useWallet();
+  const runIntent = useIntentExecute();
   const copy = COPY[locale];
 
   const [phase, setPhase] = useState<MintPhase>("idle");
@@ -92,7 +94,7 @@ export function GenesisMint({
     setPhase("minting");
     setError(null);
     try {
-      const hash = await execute([genesisMintCall(address)]);
+      const hash = await runIntent(() => getMedialaneClient().api.createGenesisMintIntent({ owner: address, recipient: address }));
       if (!hash) throw new Error("Transaction not confirmed");
       setTxHash(hash);
       setPhase("success");
@@ -101,7 +103,7 @@ export function GenesisMint({
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
       setPhase("error");
     }
-  }, [address, execute, lsKey]);
+  }, [address, runIntent, lsKey]);
 
   const card = "rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-5 space-y-4 shadow-lg shadow-black/5";
 

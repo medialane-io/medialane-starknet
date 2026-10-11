@@ -1,25 +1,22 @@
 import type { Call } from "starknet";
+import { getTokenBySymbol, type ApiClient } from "@medialane/sdk";
 
-export interface BuiltSwap {
-  calls: Call[];
-  chainId: string;
-  quote: { quoteId: string; sellAmount: string; buyAmount: string; sellTokenAddress: string; buyTokenAddress: string };
+function tokenAddress(symbol: string): string {
+  const token = getTokenBySymbol(symbol);
+  if (!token) throw new Error(`Unsupported currency: ${symbol}`);
+  return token.address;
 }
 
-export async function buildSwapCalls(params: {
-  sellSymbol: string;
-  buySymbol: string;
-  buyAmountRaw: string;
-  takerAddress: string;
-}): Promise<BuiltSwap> {
-  const res = await fetch("/api/wallet/swap/build", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+export async function createSwapIntent(
+  api: Pick<ApiClient, "createSwapIntent">,
+  params: { sellSymbol: string; buySymbol: string; buyAmountRaw: string; takerAddress: string },
+): Promise<{ id: string; calls: Call[] }> {
+  const created = await api.createSwapIntent({
+    taker: params.takerAddress,
+    sellTokenAddress: tokenAddress(params.sellSymbol),
+    buyTokenAddress: tokenAddress(params.buySymbol),
+    buyAmountRaw: params.buyAmountRaw,
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Failed to prepare swap");
-  }
-  return res.json();
+  const intent = created.data as { id: string; calls: Call[] };
+  return { id: intent.id, calls: intent.calls };
 }

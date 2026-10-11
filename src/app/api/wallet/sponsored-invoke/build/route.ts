@@ -5,9 +5,10 @@ import { MEDIALANE_BACKEND_URL, MEDIALANE_API_KEY } from "@/lib/constants";
 export const runtime = "nodejs";
 
 const handler = createBackendProxyHandler({
-  path: "/v1/swap/build",
+  path: "/v1/paymaster/invoke/build",
   backendUrl: MEDIALANE_BACKEND_URL,
   apiKey: MEDIALANE_API_KEY,
+  forwardAuthorization: true,
 });
 
 export async function POST(req: NextRequest) {

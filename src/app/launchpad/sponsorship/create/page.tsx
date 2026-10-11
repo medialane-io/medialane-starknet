@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { Call } from "starknet";
 import type { StarknetVenueSigner, MedialaneClient } from "@medialane/sdk/starknet";
 import { Handshake, Loader2, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { executeIntent } from "@medialane/sdk/starknet";
-import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
@@ -23,7 +21,6 @@ import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { FadeIn } from "@/components/ui/motion-primitives";
-import type { IntentCall } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 
 const LISTABLE_TOKENS = SUPPORTED_TOKENS.filter((t) => t.listable);
@@ -43,7 +40,7 @@ function PendingProposalsPanel({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [respondError, setRespondError] = useState<string | null>(null);
 
-  const respond = async (proposalId: string, decision: "accept" | "reject", paymentToken: string, amount: string) => {
+  const respond = async (proposalId: string, decision: "accept" | "reject") => {
     if (!signer || !owner) { setRespondError("Connect your wallet to continue."); return; }
     setRespondError(null);
     setActiveId(proposalId);
@@ -52,12 +49,7 @@ function PendingProposalsPanel({
         ? await client.api.acceptSponsorshipProposalIntent({ owner, proposalId })
         : await client.api.rejectSponsorshipProposalIntent({ owner, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
-
-      const feeCall = decision === "accept"
-        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, feeConfig)
-        : null;
-      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
+      await executeIntent(starknetProvider, signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       console.error("sponsorship proposal response failed", err);
@@ -76,10 +68,10 @@ function PendingProposalsPanel({
         <div key={p.id} className="flex items-center justify-between gap-2 text-xs">
           <span className="truncate text-muted-foreground">{shortenAddress(p.proposer)} — {p.amount}</span>
           <div className="flex gap-1.5 shrink-0">
-            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "reject", p.paymentToken, p.amount)}>
+            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "reject")}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
             </Button>
-            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "accept", p.paymentToken, p.amount)}>
+            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "accept")}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
             </Button>
           </div>

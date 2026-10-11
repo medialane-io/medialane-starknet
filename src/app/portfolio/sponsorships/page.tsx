@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { Call } from "starknet";
 import { CheckCircle2, Handshake, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,13 +10,11 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { executeIntent } from "@medialane/sdk/starknet";
-import { feeConfig, buildFeeCall } from "@/lib/fee";
 import {
   useSponsorshipProposals, useSponsorshipOffers, useSponsorshipBids, useSponsorshipLicenses,
   type SponsorshipOffer,
 } from "@/hooks/use-sponsorship";
 import { assetHref } from "@/lib/routes";
-import type { IntentCall } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 
 function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
@@ -28,15 +25,13 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
   const [activeSponsor, setActiveSponsor] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const acceptBid = async (sponsor: string, amount: string) => {
+  const acceptBid = async (sponsor: string) => {
     if (!signer || !walletAddress) { setActionError("Connect your wallet to continue."); return; }
     setActiveSponsor(sponsor);
     try {
       const intentRes = await client.api.acceptSponsorshipBidIntent({ author: walletAddress, offerId: offer.offerId, sponsor });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, feeConfig);
-      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
+      await executeIntent(starknetProvider, signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       console.error("accept bid failed", err);
@@ -56,7 +51,7 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
       {bids.map((bid) => (
         <div key={bid.id} className="flex items-center justify-between gap-2 text-xs">
           <AddressDisplay address={bid.sponsor} chars={4} showCopy={false} className="text-muted-foreground" />
-          <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white h-7 px-2.5" disabled={activeSponsor !== null} onClick={() => acceptBid(bid.sponsor, bid.amount)}>
+          <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white h-7 px-2.5" disabled={activeSponsor !== null} onClick={() => acceptBid(bid.sponsor)}>
             {activeSponsor === bid.sponsor ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
           </Button>
         </div>
@@ -73,7 +68,7 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const respond = async (proposalId: string, decision: "accept" | "reject", paymentToken: string, amount: string) => {
+  const respond = async (proposalId: string, decision: "accept" | "reject") => {
     if (!signer) { setActionError("Connect your wallet to continue."); return; }
     setActiveId(proposalId);
     try {
@@ -81,11 +76,7 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
         ? await client.api.acceptSponsorshipProposalIntent({ owner: walletAddress, proposalId })
         : await client.api.rejectSponsorshipProposalIntent({ owner: walletAddress, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
-      const feeCall = decision === "accept"
-        ? buildFeeCall({ surface: "sponsorship", token: paymentToken, grossAmount: BigInt(amount) }, feeConfig)
-        : null;
-      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
+      await executeIntent(starknetProvider, signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       console.error("respond to proposal failed", err);
@@ -111,10 +102,10 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
             </p>
           </div>
           <div className="flex gap-1.5 shrink-0">
-            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "reject", p.paymentToken, p.amount)}>
+            <Button size="sm" variant="outline" disabled={activeId !== null} onClick={() => respond(p.proposalId, "reject")}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
             </Button>
-            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "accept", p.paymentToken, p.amount)}>
+            <Button size="sm" className="bg-brand-rose hover:brightness-110 text-white" disabled={activeId !== null} onClick={() => respond(p.proposalId, "accept")}>
               {activeId === p.proposalId ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
             </Button>
           </div>

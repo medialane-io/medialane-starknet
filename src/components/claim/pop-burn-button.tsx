@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
-import { popCalls } from "@medialane/sdk/starknet";
 import { describeError } from "@medialane/ui";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/use-wallet";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 interface PopBurnButtonProps {
   collectionAddress: string;
@@ -14,7 +15,8 @@ interface PopBurnButtonProps {
 
 /** Lets a holder permanently remove their own credential from their wallet. */
 export function PopBurnButton({ collectionAddress, tokenId }: PopBurnButtonProps) {
-  const { execute } = useWallet();
+  const runIntent = useIntentExecute();
+  const { address } = useWallet();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -35,7 +37,7 @@ export function PopBurnButton({ collectionAddress, tokenId }: PopBurnButtonProps
     setBusy(true);
     setError(null);
     try {
-      await execute([popCalls.burn(collectionAddress, tokenId)]);
+      await runIntent(() => getMedialaneClient().api.createPopBurnIntent({ owner: address!, collection: collectionAddress, tokenId: String(tokenId) }));
       setDone(true);
     } catch (err) {
       setError(describeError(err).message);
