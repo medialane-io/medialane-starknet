@@ -20,6 +20,7 @@ test("wallet transactions carry backend intent ids and no fee call is built in t
     const source = readFileSync(file, "utf8");
     const found: string[] = [];
     if (source.includes("buildFeeCall")) found.push(`${rel}: buildFeeCall`);
+    if (source.includes("NEXT_PUBLIC_FEE_")) found.push(`${rel}: app fee settings`);
     if (EXECUTION_PRIMITIVES.has(rel)) return found;
     source.split("\n").forEach((line, i) => {
       if (/\b(execute|executeTransaction)\(/.test(line) && !/intentIds|function execute|const execute|executeIntent|executeWith|executeSponsored/.test(line)) {
