@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
-import type { Call } from "starknet";
 import {
   Award, Mic2, Code2, Wrench, Zap, Users, BookOpen, Star,
   Loader2, ImagePlus, X, CheckCircle2,
@@ -30,6 +29,7 @@ import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@/lib/launchpad-d
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { cn } from "@/lib/utils";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
 
 const EVENT_TYPES: {
   value: PopEventType;
@@ -56,7 +56,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CreatePOPPage() {
-  const { isConnected, address: walletAddress, execute } = useWallet();
+  const { isConnected, address: walletAddress } = useWallet();
+  const runIntent = useIntentExecute();
   const [isTxLoading, setIsTxLoading] = useState(false);
   const client = useMedialaneClient();
 
@@ -152,7 +153,7 @@ export default function CreatePOPPage() {
         claimEndTimestamp,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
-      await execute(intentRes.data.calls as Call[]);
+      await runIntent(async () => intentRes);
 
       setDone(true);
     } catch (err) {

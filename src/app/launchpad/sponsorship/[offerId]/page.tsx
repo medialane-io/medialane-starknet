@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import type { Call } from "starknet";
 import { Handshake, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,13 +13,11 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { executeIntent } from "@medialane/sdk/starknet";
-import { feeConfig, buildFeeCall } from "@/lib/fee";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { useToken } from "@/hooks/use-tokens";
 import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
-import type { IntentCall } from "@medialane/sdk";
 import { starknetProvider } from "@/lib/starknet";
 
 export default function SponsorshipOfferPage() {
@@ -74,7 +71,7 @@ export default function SponsorshipOfferPage() {
     }
   };
 
-  const onAcceptBid = async (sponsor: string, amount: string) => {
+  const onAcceptBid = async (sponsor: string) => {
     if (!signer || !activeAddress || !offer) { setAcceptError("Connect your wallet to continue."); return; }
     setAcceptingSponsor(sponsor);
     try {
@@ -84,10 +81,7 @@ export default function SponsorshipOfferPage() {
         sponsor,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-
-      const feeCall = buildFeeCall({ surface: "sponsorship", token: offer.paymentToken, grossAmount: BigInt(amount) }, feeConfig);
-      const calls = feeCall ? [...(intentRes.data.calls as Call[]), feeCall] : (intentRes.data.calls as Call[]);
-      await executeIntent(starknetProvider, signer, client, { ...intentRes.data, calls: calls as IntentCall[] });
+      await executeIntent(starknetProvider, signer, client, intentRes.data);
       setAcceptMessage("Bid accepted. The license is minted to the sponsor.");
       await Promise.all([mutateOffer(), mutateBids()]);
     } catch (err) {
@@ -179,7 +173,7 @@ export default function SponsorshipOfferPage() {
                         size="sm"
                         className="bg-brand-rose hover:brightness-110 text-white"
                         disabled={acceptingSponsor !== null}
-                        onClick={() => onAcceptBid(bid.sponsor, bid.amount)}
+                        onClick={() => onAcceptBid(bid.sponsor)}
                       >
                         {acceptingSponsor === bid.sponsor ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Accept"}
                       </Button>

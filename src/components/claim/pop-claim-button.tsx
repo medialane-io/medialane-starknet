@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { popCalls, popClaimInfo, popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
+import { popClaimInfo, popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
 import { starknetProvider } from "@/lib/starknet";
 import { claimProofFor } from "@medialane/ui";
 import { RewardEarned } from "@/lib/reward-earned";
@@ -12,13 +12,16 @@ import { useWallet } from "@/hooks/use-wallet";
 import { describeError } from "@medialane/ui";
 import { usePopClaimStatus } from "@/hooks/use-pop";
 import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 interface PopClaimButtonProps {
   collectionAddress: string;
 }
 
 export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
-  const { address, isConnected, execute } = useWallet();
+  const { address, isConnected } = useWallet();
+  const runIntent = useIntentExecute();
   const { hasClaimed, error, mutate } = usePopClaimStatus(collectionAddress, address ?? null);
   const [result, setResult] = useState<TxResult | null>(null);
   const [isTxLoading, setIsTxLoading] = useState(false);
@@ -49,7 +52,7 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
     if (!proof) return;
     setIsTxLoading(true);
     try {
-      const hash = await execute([popCalls.claim(collectionAddress, proof)]);
+      const hash = await runIntent(() => getMedialaneClient().api.createPopClaimIntent({ claimer: address!, collection: collectionAddress, proof }));
       setResult({
         status: "success",
         title: "Credential claimed!",

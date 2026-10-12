@@ -168,7 +168,7 @@ export default function LaunchpadCreateCollectionPage() {
       const calls = intentData.calls as Call[];
       if (!calls || calls.length === 0) throw new Error("No calls returned from intent");
 
-      const result = await executeTransaction(calls);
+      const result = await executeTransaction(calls, { intentIds: [intentData.id] });
 
       if (result === null) {
         throw new Error("Collection transaction reverted on chain");

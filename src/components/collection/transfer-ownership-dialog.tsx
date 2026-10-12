@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { UserRoundCog } from "lucide-react";
-import { Contract, cairo } from "starknet";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,12 +15,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWallet } from "@/hooks/use-wallet";
-import { starknetProvider } from "@/lib/starknet";
-import { IPCollectionABI as ipCollectionAbi } from "@medialane/sdk/starknet";
-import { STARKNET_COLLECTION_721_CONTRACT } from "@/lib/constants";
 import { normalizeAddress } from "@medialane/sdk";
 import { MarketplaceSuccessState } from "@medialane/ui";
 import { EXPLORER_URL } from "@/lib/constants";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 interface TransferOwnershipDialogProps {
 
@@ -42,7 +40,8 @@ export function TransferCollectionOwnershipDialog({
   const [done, setDone] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [transferredTo, setTransferredTo] = useState<string>("");
-  const { execute } = useWallet();
+  const runIntent = useIntentExecute();
+  const { address } = useWallet();
 
   const trimmed = newOwner.trim();
   const isValid = /^0x[0-9a-fA-F]{1,64}$/.test(trimmed);
@@ -54,16 +53,9 @@ export function TransferCollectionOwnershipDialog({
     if (!isValid || wouldNoop) return;
     setSubmitting(true);
     try {
-      const contract = new Contract({
-        abi: ipCollectionAbi as any,
-        address: STARKNET_COLLECTION_721_CONTRACT,
-        providerOrAccount: starknetProvider,
-      });
-      const call = contract.populate("transfer_collection_ownership", [
-        cairo.uint256(BigInt(collectionId)),
-        trimmed,
-      ]);
-      const hash = await execute([call]);
+      const hash = await runIntent(() =>
+        getMedialaneClient().api.createTransferCollectionOwnershipIntent({ owner: address!, collectionId: String(collectionId), newOwner: trimmed }),
+      );
       setTxHash(hash);
       setTransferredTo(trimmed);
       setDone(true);

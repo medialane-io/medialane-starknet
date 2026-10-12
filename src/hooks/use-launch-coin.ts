@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Call } from "starknet";
 import { getTokenBySymbol, normalizeAddress } from "@medialane/sdk";
 import {
   parseCreatorCoinCreated,
@@ -16,6 +15,7 @@ import { useSigner } from "@/hooks/use-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { starknetProvider } from "@/lib/starknet";
 import { describeError } from "@medialane/ui";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
 
 export interface LaunchCoinInput {
   name: string;
@@ -30,6 +30,7 @@ export type LaunchStatus = "idle" | "deploying" | "launching" | "indexing" | "do
 
 export function useLaunchCoin() {
   const account = useSigner();
+  const runIntent = useIntentExecute();
   const { address: activeAddress } = useWallet();
   const [status, setStatus] = useState<LaunchStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +64,8 @@ export function useLaunchCoin() {
           initialSupply: supplyRaw.toString(),
         });
         if (createIntent.data.requiresSignature) throw new Error("Expected a prebuilt create-coin intent");
-        const createRes = await signer.execute(createIntent.data.calls as Call[]);
-        const receipt = await starknetProvider.waitForTransaction(createRes.transaction_hash);
+        const createHash = await runIntent(async () => createIntent);
+        const receipt = await starknetProvider.waitForTransaction(createHash);
         const coinAddress = parseCreatorCoinCreated(receipt as unknown as CreatorCoinReceiptLike);
 
         setStatus("launching");
@@ -79,7 +80,7 @@ export function useLaunchCoin() {
           quoteFundAmount: buybackRaw.toString(),
         });
         if (launchIntent.data.requiresSignature) throw new Error("Expected a prebuilt launch-coin intent");
-        await signer.execute(launchIntent.data.calls as Call[]);
+        await runIntent(async () => launchIntent);
 
         setStatus("indexing");
         await client.api.syncCoin(coinAddress, ownerAddr).catch(() => {});
@@ -94,7 +95,7 @@ export function useLaunchCoin() {
         throw new Error(friendly.message);
       }
     },
-    [account, activeAddress]
+    [account, activeAddress, runIntent]
   );
 
   return { launch, status, error };

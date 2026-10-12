@@ -5,11 +5,14 @@ import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSigner } from "@/hooks/use-signer";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
+import { useSiwsToken } from "@/hooks/use-siws-token";
+import { executeWithSponsorship } from "@/lib/sponsored-execute";
 
 export function useVenueSigner(): StarknetVenueSigner | null {
   const account = useSigner();
   const { address } = useWallet();
   const { provider } = useProvider();
+  const { getValidToken } = useSiwsToken();
 
   const signTypedData = useCallback(
     async (data: TypedData): Promise<string[]> => {
@@ -24,11 +27,18 @@ export function useVenueSigner(): StarknetVenueSigner | null {
   );
 
   const execute = useCallback(
-    async (calls: Call[]): Promise<{ txHash: string }> => {
-      if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
+    async (calls: Call[], opts?: { intentIds?: string[] }): Promise<{ txHash: string }> => {
+      if (!account || !address) throw new Error("Wallet not ready. Please reconnect and try again.");
       markMarketplaceDebug("execute: awaiting wallet submit", { callCount: calls.length });
-      const tx = await account.execute(calls);
-      const txHash = tx.transaction_hash;
+      const { txHash } = await executeWithSponsorship(
+        {
+          token: getValidToken,
+          fallback: async (c) => ({ txHash: (await account.execute(c)).transaction_hash }),
+        },
+        { address, signTypedData },
+        calls,
+        opts?.intentIds,
+      );
       markMarketplaceDebug("execute: wallet submitted, awaiting confirmation", { txHash });
       const receipt = await provider.waitForTransaction(txHash);
       markMarketplaceDebug("execute: confirmed", { status: receipt.statusReceipt });
@@ -37,7 +47,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       }
       return { txHash };
     },
-    [account, provider],
+    [account, address, provider, getValidToken, signTypedData],
   );
 
   if (!address) return null;

@@ -4,9 +4,9 @@ import { useState, useCallback } from "react";
 import { useSWRConfig } from "swr";
 import { describeError } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
-import type { Call } from "starknet";
 
 export interface TransferInput {
   contractAddress: string;
@@ -31,7 +31,8 @@ export function encodeTokenId(tokenId: string): [string, string] {
 
 export function useTransfer() {
   const client = useMedialaneClient();
-  const { address, isConnected, execute } = useWallet();
+  const { address, isConnected } = useWallet();
+  const runIntent = useIntentExecute();
   const { mutate } = useSWRConfig();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -72,22 +73,15 @@ export function useTransfer() {
           throw new Error("Invalid token contract address.");
         }
 
-        const [tokenIdLow, tokenIdHigh] = encodeTokenId(input.tokenId);
-
-        const isERC1155 = input.tokenStandard === "ERC1155";
-        const call: Call = isERC1155
-          ? {
-              contractAddress: input.contractAddress,
-              entrypoint: "safe_transfer_from",
-              calldata: [address, input.toAddress, tokenIdLow, tokenIdHigh, "1", "0", "0"],
-            }
-          : {
-              contractAddress: input.contractAddress,
-              entrypoint: "transfer_from",
-              calldata: [address, input.toAddress, tokenIdLow, tokenIdHigh],
-            };
-
-        const hash = await execute([call]);
+        const hash = await runIntent(() =>
+          client.api.createTransferNftIntent({
+            owner: address,
+            contractAddress: input.contractAddress,
+            tokenId: input.tokenId,
+            recipient: input.toAddress,
+            tokenStandard: input.tokenStandard === "ERC1155" ? "ERC1155" : "ERC721",
+          }),
+        );
         setTxHash(hash);
         setTxStatus("confirmed");
 
@@ -103,7 +97,7 @@ export function useTransfer() {
         setIsProcessing(false);
       }
     },
-    [address, execute, invalidate]
+    [address, runIntent, invalidate, client]
   );
 
   return {

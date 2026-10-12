@@ -14,14 +14,14 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCollection } from "@/hooks/use-collections";
 import { isCollectionOwner } from "@/lib/utils";
-import type { Call } from "starknet";
 import {
   buildPopAllowlist,
-  popCalls,
   popClaimLinks,
   popClaimLinksCsv,
   type PopClaimLink,
 } from "@medialane/sdk/starknet";
+import { useIntentExecute } from "@/hooks/use-intent-execute";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 function parseAddresses(raw: string): string[] {
   return raw
@@ -158,7 +158,8 @@ export default function PopManagePage({
   params: Promise<{ contract: string }>;
 }) {
   const { contract } = use(params);
-  const { address, isConnected, execute } = useWallet();
+  const { address, isConnected } = useWallet();
+  const runIntent = useIntentExecute();
   const { collection, isLoading } = useCollection(contract);
   const [isTxLoading, setIsTxLoading] = useState(false);
   const [txMessage, setTxMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
@@ -167,13 +168,13 @@ export default function PopManagePage({
   const isOwner = isCollectionOwner(collection, address);
 
   const runTx = async (
-    calls: Call[],
+    create: () => ReturnType<ReturnType<typeof getMedialaneClient>["api"]["createPopManageIntent"]>,
     successMsg: string
   ): Promise<boolean> => {
     setIsTxLoading(true);
     setTxMessage(null);
     try {
-      await execute(calls);
+      await runIntent(create);
       setTxMessage({ tone: "success", text: successMsg });
       return true;
     } catch (err) {
@@ -186,14 +187,14 @@ export default function PopManagePage({
   };
 
   const handleIssue = (recipient: string) => {
-    void runTx([popCalls.issue(contract, recipient)], "Credential issued");
+    void runTx(() => getMedialaneClient().api.createPopManageIntent({ owner: address!, collection: contract, action: "issue", recipient }), "Credential issued");
   };
 
   const handlePublish = (addresses: string[]) => {
     const list = buildPopAllowlist(addresses);
     const count = Object.keys(list.proofs).length;
     void runTx(
-      [popCalls.setAllowlistRoot(contract, list.root)],
+      () => getMedialaneClient().api.createPopManageIntent({ owner: address!, collection: contract, action: "set_allowlist_root", root: list.root }),
       `Published ${count} participant${count !== 1 ? "s" : ""}`
     ).then((ok) => {
       if (ok) setLinks(popClaimLinks(window.location.origin, contract, list));

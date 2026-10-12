@@ -16,3 +16,10 @@ export function orderTotal(order: ApiOrder, quantity: number): bigint {
   const isERC1155 = order.offer.itemType === "ERC1155";
   return isERC1155 ? perUnit * BigInt(quantity) : perUnit;
 }
+
+type IntentCalls = { id: string; calls: import("starknet").Call[] };
+
+export function checkoutExecution(items: IntentCalls[], swap?: IntentCalls): { calls: import("starknet").Call[]; intentIds: string[] } {
+  const all = swap ? [swap, ...items] : items;
+  return { calls: all.flatMap((i) => i.calls), intentIds: all.map((i) => i.id) };
+}

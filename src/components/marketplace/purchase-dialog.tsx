@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
 import { orderTotal, type CheckoutItem } from "@/lib/checkout";
-import { feeConfig } from "@/lib/fee";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +28,10 @@ import {
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { useTokenBalance } from "@/hooks/use-token-balance";
-import { buildSwapCalls } from "@/lib/swap-calls";
+import { createSwapIntent } from "@/lib/swap-calls";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { PayWithPicker } from "@/components/marketplace/pay-with-picker";
+import { resolveFeeConfig } from "@medialane/sdk";
 
 interface PurchaseDialogProps {
   order: ApiOrder;
@@ -93,8 +94,7 @@ function PriceBreakdown({ order, quantity }: { order: ApiOrder; quantity: number
   if (!order.price?.formatted) return null;
   const unitPrice = parseFloat(order.price.formatted);
   const totalPrice = unitPrice * quantity;
-  const bps = feeConfig.marketplaceBps;
-  if (!feeConfig.enabled || !feeConfig.fundAddress || bps <= 0) return null;
+  const bps = resolveFeeConfig({}).marketplaceBps;
   const feeAmount = (totalPrice * bps) / 10000;
   const grandTotal = totalPrice + feeAmount;
   const decimals = order.price.decimals <= 6 ? 2 : 4;
@@ -247,16 +247,15 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     try {
       setStep("processing");
 
-      let swapCalls: Awaited<ReturnType<typeof buildSwapCalls>>["calls"] | undefined;
+      let swap: Awaited<ReturnType<typeof createSwapIntent>> | undefined;
       if (paymentSymbol && order.price?.currency && address) {
         try {
-          const built = await buildSwapCalls({
+          swap = await createSwapIntent(getMedialaneClient().api, {
             sellSymbol: paymentSymbol,
             buySymbol: order.price.currency,
             buyAmountRaw: orderTotal(order, quantity).toString(),
             takerAddress: address,
           });
-          swapCalls = built.calls;
         } catch {
           setStep("details");
           setBuyError("The price moved before the swap could be prepared. Please try again.");
@@ -273,7 +272,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         isERC1155,
         quantity: quantity.toString(),
       };
-      const hash = await checkoutCart([item], { silent: true, swapCalls });
+      const hash = await checkoutCart([item], { silent: true, swap });
       if (hash) {
         setSuccessTxHash(hash);
         setStep("success");
