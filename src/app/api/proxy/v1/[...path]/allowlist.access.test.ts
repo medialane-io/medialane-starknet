@@ -11,7 +11,7 @@ const VISITOR_CALLS: Array<[string, string]> = [
   ["GET", "coins"], ["GET", `coins/${A}`], ["GET", `coins/${A}/guarantees`], ["GET", "coins/prices"],
   ["GET", "drops"], ["GET", `drops/${A}`], ["GET", `drops/${A}/state`], ["GET", `pop/${A}/claim-info`], ["GET", `ipnft/${A}/1`],
   ["GET", "rewards/config"], ["GET", "stats"], ["GET", "prices"], ["GET", "sponsorship/offers"],
-  ["POST", "auth/siws/nonce"], ["POST", "auth/siws/verify"],
+  ["POST", "auth/siws/nonce"], ["POST", "auth/siws/verify"], ["POST", "users/register"],
 ];
 
 test("every call a visitor's page makes is public", () => {
@@ -19,7 +19,7 @@ test("every call a visitor's page makes is public", () => {
 });
 
 test("uploads, intents, chain calls and swap quotes need an account", () => {
-  for (const [method, path] of [["POST", "metadata/upload-file"], ["POST", "intents/listing"], ["POST", "rpc"], ["POST", "swap/quote"], ["POST", "tx/sync"], ["POST", "users/register"]]) {
+  for (const [method, path] of [["POST", "metadata/upload-file"], ["POST", "intents/listing"], ["POST", "rpc"], ["POST", "swap/quote"], ["POST", "tx/sync"]]) {
     expect(isPublicAppRoute(method, path)).toBe(false);
   }
 });
