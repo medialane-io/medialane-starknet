@@ -8,6 +8,8 @@ import { waitForReceipt } from "@/lib/wait-for-receipt";
 import { assertCorrectNetwork } from "@medialane/ui";
 import { useNetwork } from "@/components/starknet-provider";
 import type { ActiveWallet, WalletType } from "@/lib/wallet-types";
+import { signOut } from "@/lib/wallet-session";
+import { refreshSession } from "@/hooks/use-session";
 
 function makeInjectedExecute(account: AccountInterface) {
   return async (calls: Call[]): Promise<string> => {
@@ -79,6 +81,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const disconnect = useCallback(() => {
     injectedDisconnect();
+    void signOut().then(() => refreshSession());
   }, [injectedDisconnect]);
 
   const value = useMemo<WalletContextValue>(
