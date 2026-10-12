@@ -12,8 +12,8 @@ async function fetchSession(): Promise<ApiSession | null> {
 }
 
 export function useSession(): { session: ApiSession | null; isLoading: boolean } {
-  const { data, isLoading } = useSWR(SESSION_KEY, fetchSession, { shouldRetryOnError: false });
-  return { session: data ?? null, isLoading: data === undefined && isLoading };
+  const { data, error } = useSWR(SESSION_KEY, fetchSession, { shouldRetryOnError: false });
+  return { session: data ?? null, isLoading: data === undefined && error === undefined };
 }
 
 export const refreshSession = () => mutate(SESSION_KEY);

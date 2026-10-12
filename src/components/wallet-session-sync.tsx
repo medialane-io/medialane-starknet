@@ -8,7 +8,15 @@ import { useSigner } from "@/hooks/use-signer";
 import { useSession, refreshSession } from "@/hooks/use-session";
 import { SESSION_REQUIRED } from "@/lib/account-gate";
 import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
-import { nextSessionStep, type WalletStatus } from "@/lib/wallet-session";
+import { declinedWallets, nextSessionStep, rememberDeclined, type WalletStatus } from "@/lib/wallet-session";
+
+function tabStorage(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
 
 type AccountSessionValue = {
   isSigningIn: boolean;
@@ -22,7 +30,7 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
   const { address, status } = useAccount();
   const signer = useSigner();
   const { session, isLoading } = useSession();
-  const [declined, setDeclined] = useState<string[]>([]);
+  const [declined, setDeclined] = useState<string[]>(() => declinedWallets(tabStorage()));
   const [isSigningIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +45,7 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
       return true;
     } catch (err) {
       setDeclined((d) => [...d, address]);
+      rememberDeclined(tabStorage(), address);
       setError(describeError(err).message);
       throw err;
     } finally {
@@ -54,7 +63,6 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
       signingIn: isSigningIn,
     });
     if (step === "sign-in" && signer) void signIn().catch(() => {});
-    if (step === "sign-out") void fetch("/api/session", { method: "DELETE" }).then(() => refreshSession());
   }, [status, address, session?.walletAddress, isLoading, declined, isSigningIn, signer, signIn]);
 
   return <AccountSessionContext.Provider value={{ isSigningIn, error, signIn }}>{children}</AccountSessionContext.Provider>;
