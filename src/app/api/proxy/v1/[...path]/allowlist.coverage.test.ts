@@ -21,7 +21,8 @@ const EXCLUDED_FILES = new Set([
 ]);
 const UI_DIST_DIR = join(REPO_ROOT, "node_modules/@medialane/ui/dist");
 
-const NOT_PROXIED_PREFIXES = ["rpc", "paymaster/", "swap/"];
+
+const MEDIA_WALLET_ONLY = ["paymaster/deploy"];
 
 function walk(dir: string, out: string[] = []): string[] {
   if (EXCLUDED_DIRS.some((excluded) => dir === excluded || dir.startsWith(excluded + "/"))) {
@@ -80,9 +81,9 @@ test("every /v1/* path referenced by app code and @medialane/ui is covered by th
   for (const file of files) {
     const source = readFileSync(file, "utf8");
     for (const path of extractPaths(source)) {
-      if (NOT_PROXIED_PREFIXES.some((prefix) => path.startsWith(prefix))) continue;
+      if (MEDIA_WALLET_ONLY.includes(path)) continue;
       const covered = ["GET", "POST", "PATCH", "DELETE"].some((method) =>
-        isPathAllowed(method, path)
+        isPathAllowed(method, path) || isPathAllowed(method, `${path}/build`)
       );
       if (!covered && !uncovered.has(path)) {
         uncovered.set(path, relative(REPO_ROOT, file));

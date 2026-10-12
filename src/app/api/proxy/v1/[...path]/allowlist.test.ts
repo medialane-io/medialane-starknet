@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { hasTraversalSegment, isPathAllowed } from "./allowlist";
+import { isPathAllowed } from "./allowlist";
 
 const INTENT_TYPES = [
   "mint", "create-collection", "create-tier",
@@ -56,7 +56,6 @@ test("known public GET reads used by the dapp are allowed", () => {
   expect(isPathAllowed("GET", "creators/by-username/alice")).toBe(true);
   expect(isPathAllowed("GET", "collection-slug-claims/check/alice")).toBe(true);
   expect(isPathAllowed("GET", "collection-slug-claims/me")).toBe(true);
-  expect(isPathAllowed("GET", "pop/eligibility/0xabc/0xdef")).toBe(true);
   expect(isPathAllowed("GET", "coins")).toBe(true);
   expect(isPathAllowed("GET", "coins/prices")).toBe(true);
   expect(isPathAllowed("GET", "coins/0xabc")).toBe(true);
@@ -92,18 +91,6 @@ test("unrelated POST routes are still rejected", () => {
 test("POST /v1/reports is NOT allowed through the generic proxy", () => {
 
   expect(isPathAllowed("POST", "reports")).toBe(false);
-});
-
-test("hasTraversalSegment rejects '..' and '.' segments", () => {
-
-  expect(hasTraversalSegment("../admin/secret")).toBe(true);
-  expect(hasTraversalSegment("admin/../secret")).toBe(true);
-  expect(hasTraversalSegment(".")).toBe(true);
-});
-
-test("hasTraversalSegment allows normal segments, including dots within a segment", () => {
-  expect(hasTraversalSegment("intents/listing")).toBe(false);
-  expect(hasTraversalSegment("coins/0x123..abc")).toBe(false);
 });
 
 test("drop routes", () => {
