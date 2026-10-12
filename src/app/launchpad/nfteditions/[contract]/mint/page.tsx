@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { RewardEarned } from "@/lib/reward-earned";
 import { assetHref, collectionHref } from "@/lib/routes";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -133,7 +133,7 @@ export default function MintNFTEditionsPage() {
 
   const { isConnected, address: walletAddress } = useWallet();
   const signer = useVenueSigner();
-  const { getValidToken } = useSiwsToken();
+  const { ensureSignedIn } = useAccountSession();
   const client = useMedialaneClient();
 
   const [mintStep, setMintStep] = useState<MintStep>("idle");
@@ -228,8 +228,8 @@ export default function MintNFTEditionsPage() {
     setImageUri(null);
     setImageUploading(true);
     try {
-      const token = await getValidToken();
-            const uploaded = await uploadFileToIpfs(file);
+      await ensureSignedIn();
+      const uploaded = await uploadFileToIpfs(file);
       setImageUri(uploaded.uri);
     } catch (err) {
 

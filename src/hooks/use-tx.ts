@@ -6,7 +6,7 @@ import { starknetProvider } from "@/lib/starknet";
 import { useSigner } from "@/hooks/use-signer";
 import { describeError } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { executeWithSponsorship } from "@/lib/sponsored-execute";
 
 export type TxStatus =
@@ -21,7 +21,7 @@ export type TxStatus =
 export function useTx() {
   const account = useSigner();
   const { address } = useWallet();
-  const { getValidToken } = useSiwsToken();
+  const { signedIn } = useAccountSession();
 
   const [status, setStatus] = useState<TxStatus>("idle");
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export function useTx() {
       }
       const { txHash: hash } = await executeWithSponsorship(
         {
-          token: getValidToken,
+          signedIn,
           fallback: async (c) => ({ txHash: (await account.execute(c)).transaction_hash }),
         },
         {
@@ -92,7 +92,7 @@ export function useTx() {
       setStatusMessage(msg);
       return null;
     }
-  }, [account, address, getValidToken]);
+  }, [account, address, signedIn]);
 
   const reset = useCallback(() => {
     setStatus("idle");

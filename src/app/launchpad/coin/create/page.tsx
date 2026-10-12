@@ -19,7 +19,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useLaunchCoin, type LaunchCoinInput } from "@/hooks/use-launch-coin";
 import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { CoinLaunchPreview, type CoinPreviewData } from "@/components/coin/coin-launch-preview";
@@ -48,7 +48,7 @@ export default function CoinCreatePage() {
   const router = useRouter();
   const { address, isConnected } = useWallet();
   const { launch, status, error } = useLaunchCoin();
-  const { token: siwsToken, signIn: siwsSignIn } = useSiwsToken();
+  const { signedIn } = useAccountSession();
 
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -122,17 +122,15 @@ export default function CoinCreatePage() {
   const saveCoinProfile = async (contract: string) => {
     if (!imageUri && !description) return;
     setProfileStatus("saving");
-    let token = siwsToken;
     for (let attempt = 0; attempt < 6; attempt++) {
       try {
         if (attempt > 0) await new Promise((r) => setTimeout(r, 10_000));
-        token = token ?? (await siwsSignIn());
-        if (!token) throw new Error("no session");
+        if (!(await signedIn())) throw new Error("no session");
         await getMedialaneClient().api.updateCollectionProfile(contract, {
           displayName: name,
           ...(description ? { description } : {}),
           ...(imageUri ? { image: imageUri } : {}),
-        }, token);
+        });
         setProfileStatus("saved");
         return;
       } catch {

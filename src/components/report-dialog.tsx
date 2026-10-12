@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 
 export type ReportTarget =
   | { type: "TOKEN"; contract: string; tokenId: string; name?: string }
@@ -40,7 +40,7 @@ interface ReportDialogProps {
 }
 
 export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) {
-  const { getValidToken } = useSiwsToken();
+  const { ensureSignedIn } = useAccountSession();
   const [categories, setCategories] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -68,8 +68,9 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
     setLoading(true);
 
     try {
-      const token = await getValidToken();
-      if (!token) {
+      try {
+        await ensureSignedIn();
+      } catch {
         setSubmitError("Sign in with your wallet to send a report.");
         return;
       }
@@ -83,7 +84,6 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
           ...(target.type === "CREATOR" ? { targetAddress: target.address } : {}),
           ...(target.type === "COMMENT" ? { targetId: target.commentId } : {}),
         },
-        token,
       );
       setSubmitted(true);
     } catch (err) {

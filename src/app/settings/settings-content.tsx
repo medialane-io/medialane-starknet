@@ -12,7 +12,7 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { useRewards } from "@/hooks/use-rewards";
 import { AssetPicker, ServiceFormShell, LevelBadge, type OwnedAsset } from "@medialane/ui";
 import { FastMint } from "@/components/launchpad/fast-mint";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -269,11 +269,11 @@ function RewardsSnapshot({ address }: { address?: string | null }) {
 
 export default function SettingsContent() {
   const { address: walletAddress } = useWallet();
-  const { getValidToken, token: siwsToken, isSigningIn } = useSiwsToken();
+  const { ensureSignedIn, session: accountSession, isSigningIn } = useAccountSession();
   const { profile, isLoading: profileLoading, mutate } = useCreatorProfile(walletAddress ?? undefined);
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
 
-  const usernameVerified = !!siwsToken;
+  const usernameVerified = !!accountSession;
   const { tokens: ownedTokens, isLoading: assetsLoading } = useTokensByOwner(walletAddress ?? null, 1, 100);
   const { orders } = useUserOrders(walletAddress ?? null);
   const { collections } = useCollectionsByOwner(walletAddress ?? null);
@@ -327,7 +327,7 @@ export default function SettingsContent() {
     if (!claimInput.trim()) return;
     setClaiming(true);
     try {
-      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), await getValidToken(), undefined);
+      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), undefined);
       if (result.error) {
         setClaimMessage({ tone: "error", text: result.error });
       } else {
@@ -355,9 +355,8 @@ export default function SettingsContent() {
     }
     setSaving(true);
     try {
-      const token = await getValidToken();
-      if (!token) throw new Error("Wallet sign-in required to save changes");
-      const result = await getMedialaneClient().api.updateCreatorProfile(walletAddress, form, token) as any;
+      await ensureSignedIn();
+      const result = await getMedialaneClient().api.updateCreatorProfile(walletAddress, form) as any;
       if (!result?.walletAddress) {
         throw new Error(result?.error ?? "Save failed — please try again");
       }
@@ -466,7 +465,7 @@ export default function SettingsContent() {
                     variant="outline"
                     className="mt-3"
                     disabled={isSigningIn}
-                    onClick={() => { void getValidToken().catch(() => {}); }}
+                    onClick={() => { void ensureSignedIn().catch(() => {}); }}
                   >
                     {isSigningIn ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Signing…</> : "Verify with wallet"}
                   </Button>
