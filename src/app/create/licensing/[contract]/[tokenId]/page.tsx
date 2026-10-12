@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useToken } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { submitRemixOffer } from "@/hooks/use-remix-offers";
 import { getListableTokens, getTokenBySymbol, getService, normalizeAddress } from "@medialane/sdk";
 import { LICENSE_TYPES } from "@/types/ip";
@@ -31,7 +31,7 @@ export default function CreateLicensingPage() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
   const { address: walletAddress, isConnected, isConnecting } = useWallet();
-  const { getValidToken } = useSiwsToken();
+  const { ensureSignedIn } = useAccountSession();
   const { token, isLoading: tokenLoading } = useToken(contract, tokenId);
   const { collection: parentCollection } = useCollection(contract);
 
@@ -79,10 +79,10 @@ export default function CreateLicensingPage() {
       setError("Enter a valid license fee");
       return;
     }
-    const siwsToken = await getValidToken();
     setLoading(true);
     setError(null);
     try {
+      await ensureSignedIn();
       const tokenInfo = getTokenBySymbol(currency);
       const decimals = tokenInfo?.decimals ?? 18;
       const rawPrice = BigInt(Math.round(parseFloat(price) * 10 ** decimals)).toString();
@@ -98,7 +98,6 @@ export default function CreateLicensingPage() {
           royaltyPct: royalty ? parseInt(royalty) : undefined,
           message: message.trim() || undefined,
         },
-        siwsToken,
       );
       setStep("success");
     } catch (err: unknown) {

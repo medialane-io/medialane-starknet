@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { popClaimInfo, popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
-import { starknetProvider } from "@/lib/starknet";
+import { popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
 import { claimProofFor } from "@medialane/ui";
 import { RewardEarned } from "@/lib/reward-earned";
 import { Loader2, CheckCircle2, Ban, Award, RefreshCw } from "lucide-react";
@@ -36,7 +35,7 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
       storage = null;
     }
     setProof(claimProofFor(storage, collectionAddress, window.location.hash));
-    popClaimInfo(starknetProvider, collectionAddress)
+    getMedialaneClient().api.getPopClaimInfo(collectionAddress)
       .then(setInfo)
       .catch(() => setInfo(null));
   }, [collectionAddress]);

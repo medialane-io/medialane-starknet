@@ -1,13 +1,10 @@
-import { useReadContract } from "@starknet-react/core";
-import { Abi, cairo, num } from "starknet";
-import { IPNftABI as COLLECTION_NFT_ABI } from "@medialane/sdk/starknet";
+"use client";
 
-export interface FullTokenData {
-  owner: string;
-  metadataUri: string;
-  originalCreator: string;
-  registeredAt: number;
-}
+import useSWR from "swr";
+import type { ApiIpNftTokenData } from "@medialane/sdk";
+import { getMedialaneClient } from "@/lib/medialane-client";
+
+export type { ApiIpNftTokenData as FullTokenData } from "@medialane/sdk";
 
 interface UseFullTokenDataArgs {
   ipNftAddress: string | undefined;
@@ -17,24 +14,11 @@ interface UseFullTokenDataArgs {
 export function useFullTokenData({ ipNftAddress, tokenId }: UseFullTokenDataArgs) {
   const enabled = Boolean(ipNftAddress && tokenId !== undefined);
 
-  const { data, isLoading, error, refetch } = useReadContract({
-    abi: COLLECTION_NFT_ABI as unknown as Abi,
-    functionName: "get_full_token_data",
-    address: enabled ? (ipNftAddress as `0x${string}`) : undefined,
-    args: enabled && tokenId !== undefined ? [cairo.uint256(tokenId)] : undefined,
-    watch: false,
-  });
+  const { data, error, isLoading } = useSWR<ApiIpNftTokenData | null>(
+    enabled ? ["full-token-data", ipNftAddress, tokenId!.toString()] : null,
+    () => getMedialaneClient().api.getIpNftTokenData(ipNftAddress!, tokenId!.toString()),
+    { revalidateOnFocus: false, refreshInterval: 0 }
+  );
 
-  if (!data) {
-    return { data: null as FullTokenData | null, isLoading, error, refetch };
-  }
-
-  const tuple = data as unknown as [bigint, string, bigint, bigint];
-  const parsed: FullTokenData = {
-    owner: num.toHex(tuple[0]),
-    metadataUri: tuple[1],
-    originalCreator: num.toHex(tuple[2]),
-    registeredAt: Number(tuple[3]),
-  };
-  return { data: parsed, isLoading, error, refetch };
+  return { data: data ?? null, isLoading, error };
 }

@@ -41,8 +41,7 @@ export function useCoinsByCreator(address: string | null) {
 
 export async function updateCoinProfile(
   contract: string,
-  data: { image?: string | null; description?: string | null },
-  siwsToken: string
+  data: { image?: string | null; description?: string | null }
 ): Promise<ApiCoin> {
-  return (await getMedialaneClient().api.updateCoinProfile(contract, data, siwsToken)).data;
+  return (await getMedialaneClient().api.updateCoinProfile(contract, data)).data;
 }

@@ -3,7 +3,7 @@
 import { FastMint as SharedFastMint, type FastMintProps as SharedFastMintProps } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { useVenueSigner } from "@/lib/use-venue-signer";
@@ -23,7 +23,7 @@ export interface FastMintProps {
 export function FastMint({ presentation = "inline", open = true, onClose, mediaKindLock, onMinted }: FastMintProps = {}) {
   const { isConnected, address: walletAddress } = useWallet();
   const { open: openConnectDialog } = useConnectDialog();
-  const { getValidToken } = useSiwsToken();
+  const { signedIn } = useAccountSession();
   const client = useMedialaneClient();
   const { collections, mutate } = useCollectionsByOwner(walletAddress ?? null);
   const venueSigner = useVenueSigner();
@@ -48,7 +48,7 @@ export function FastMint({ presentation = "inline", open = true, onClose, mediaK
       walletAddress={walletAddress}
       onRequireWallet={openConnectDialog}
       connectLabel="Connect wallet"
-      getUploadToken={getValidToken}
+      getUploadToken={async () => ((await signedIn()) ? "signed-in" : null)}
       getSigner={() => {
         if (!venueSigner) throw new Error("Wallet not ready. Please reconnect and try again.");
         return venueSigner;

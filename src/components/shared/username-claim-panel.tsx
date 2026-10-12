@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -60,10 +60,10 @@ function UsernameInput({ value, onChange, onCheck, onSubmit, checkState, checkRe
 export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
   const shell = bare ? "space-y-3 max-w-lg" : "bento-cell p-5 space-y-3";
   const { address: walletAddress } = useWallet();
-  const { getValidToken, token: siwsToken, isSigningIn } = useSiwsToken();
+  const { ensureSignedIn, session: accountSession, isSigningIn } = useAccountSession();
   const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
 
-  const usernameVerified = !!siwsToken;
+  const usernameVerified = !!accountSession;
   const [claimInput, setClaimInput] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [checkState, setCheckState] = useState<CheckState>("idle");
@@ -88,7 +88,7 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
     if (!claimInput.trim()) return;
     setClaiming(true);
     try {
-      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), await getValidToken(), undefined);
+      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), undefined);
       if (result.error) {
         setClaimMessage({ tone: "error", text: result.error });
       } else {
@@ -149,7 +149,7 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
           size="sm"
           variant="outline"
           disabled={isSigningIn || !walletAddress}
-          onClick={() => { void getValidToken().catch(() => {}); }}
+          onClick={() => { void ensureSignedIn().catch(() => {}); }}
         >
           {isSigningIn ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Signing…</> : "Verify with wallet"}
         </Button>

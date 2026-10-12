@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export function ClaimCollectionPanel({
   kind = "collection",
 }: { helperText?: string; kind?: "collection" | "coin" } = {}) {
   const { address: walletAddress } = useWallet();
-  const { getValidToken, signIn } = useSiwsToken();
+  const { ensureSignedIn } = useAccountSession();
   const [contractAddress, setContractAddress] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -44,14 +44,13 @@ export function ClaimCollectionPanel({
     setStep("verifying");
     try {
 
-      const token = (await getValidToken()) ?? (await signIn());
-      if (!token) throw new Error("Not authenticated");
+      await ensureSignedIn();
 
       const api = getMedialaneClient().api;
       const result =
         kind === "coin"
-          ? await api.claimCoin(contractAddress.trim(), token)
-          : await api.claimCollection(contractAddress.trim(), walletAddress, token);
+          ? await api.claimCoin(contractAddress.trim())
+          : await api.claimCollection(contractAddress.trim(), walletAddress);
 
       if (result.verified) {
         const claimed = kind === "coin" ? (result as { coin?: { contractAddress: string; name?: string | null } }).coin : (result as { collection?: { contractAddress: string; name?: string | null } }).collection;

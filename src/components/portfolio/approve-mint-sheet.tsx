@@ -14,7 +14,7 @@ import { describeError } from "@medialane/ui";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { confirmRemixOffer } from "@/hooks/use-remix-offers";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { formatDisplayPrice } from "@/lib/utils";
 import { getService } from "@medialane/sdk";
 import { GitBranch, Loader2 } from "lucide-react";
@@ -35,7 +35,7 @@ interface Props {
 
 export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props) {
   const { address: walletAddress } = useWallet();
-  const { getValidToken } = useSiwsToken();
+  const { ensureSignedIn } = useAccountSession();
   const { execute: executeTransaction } = useTx();
   const { createListing } = useMarketplace();
   const client = useMedialaneClient();
@@ -99,7 +99,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
     try {
 
-      const token = await getValidToken();
+      await ensureSignedIn();
       const royaltyStr = offer.royaltyPct != null ? `${offer.royaltyPct}%` : undefined;
       const metadata = {
         name: effectiveName,
@@ -179,7 +179,6 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
           approvedCollection: selectedCollection.contractAddress,
           orderHash,
         },
-        await getValidToken()
       );
 
       setNewAssetLink(assetHref("STARKNET", selectedCollection.contractAddress, remixTokenId));

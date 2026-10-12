@@ -4,7 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { normalizeAddress } from "@medialane/sdk";
 import { useWallet } from "@/hooks/use-wallet";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCoin, updateCoinProfile } from "@/hooks/use-coins";
 import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -19,7 +19,7 @@ interface Props { params: Promise<{ contract: string }> }
 export default function CoinSettingsPage({ params }: Props) {
   const { contract } = use(params);
   const { address: walletAddress } = useWallet();
-  const { getValidToken } = useSiwsToken();
+  const { ensureSignedIn } = useAccountSession();
   const { coin, isLoading, mutate } = useCoin(contract);
 
   const [image, setImage] = useState<string | null>(null);
@@ -53,8 +53,7 @@ export default function CoinSettingsPage({ params }: Props) {
     if (!file) return;
     setUploading(true);
     try {
-      const token = await getValidToken();
-      if (!token) throw new Error("Wallet sign-in required");
+      await ensureSignedIn();
       const { uri } = await uploadFileToIpfs(file, "image");
       setImage(uri);
     } catch (err) {
@@ -71,9 +70,8 @@ export default function CoinSettingsPage({ params }: Props) {
     setSaving(true);
     setSaveMessage(null);
     try {
-      const token = await getValidToken();
-      if (!token) throw new Error("Wallet sign-in required");
-      await updateCoinProfile(contract, { image, description: description || null }, token);
+      await ensureSignedIn();
+      await updateCoinProfile(contract, { image, description: description || null });
       await mutate();
       setSaveMessage({ tone: "success", text: "Coin profile updated." });
     } catch (err) {

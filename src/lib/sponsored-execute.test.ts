@@ -6,34 +6,34 @@ const selfPaid = async () => ({ txHash: "self" });
 
 describe("executeWithSponsorship", () => {
   test("without intent ids the wallet pays", async () => {
-    const out = await executeWithSponsorship({ token: async () => "t", fallback: selfPaid }, signer, []);
+    const out = await executeWithSponsorship({ signedIn: async () => true, fallback: selfPaid }, signer, []);
     expect(out.txHash).toBe("self");
   });
 
-  test("with intent ids it sponsors, forwarding the SIWS token", async () => {
+  test("with intent ids it sponsors through the app gateway, with the session cookie and no bearer header", async () => {
     const seen: unknown[] = [];
     const out = await executeWithSponsorship(
       {
-        token: async () => "t",
+        signedIn: async () => true,
         sponsored: async (config, _signer, request) => { seen.push({ config, request }); return { status: "sponsored", transactionHash: "0xs" }; },
         fallback: selfPaid,
       },
       signer, [], ["i1"],
     );
     expect(out.txHash).toBe("0xs");
-    expect(seen).toEqual([{ config: { proxyUrl: "/api/wallet/sponsored-invoke", headers: { authorization: "Bearer t" } }, request: { intentIds: ["i1"] } }]);
+    expect(seen).toEqual([{ config: { proxyUrl: "/api/proxy/v1/paymaster/invoke" }, request: { intentIds: ["i1"] } }]);
   });
 
   test("when sponsorship is unavailable the wallet pays", async () => {
     const out = await executeWithSponsorship(
-      { token: async () => "t", sponsored: async () => ({ status: "unavailable", reason: "x" }), fallback: selfPaid },
+      { signedIn: async () => true, sponsored: async () => ({ status: "unavailable", reason: "x" }), fallback: selfPaid },
       signer, [], ["i1"],
     );
     expect(out.txHash).toBe("self");
   });
 
-  test("without a sign-in token the wallet pays", async () => {
-    const out = await executeWithSponsorship({ token: async () => null, fallback: selfPaid }, signer, [], ["i1"]);
+  test("when the wallet is not signed in the wallet pays", async () => {
+    const out = await executeWithSponsorship({ signedIn: async () => false, fallback: selfPaid }, signer, [], ["i1"]);
     expect(out.txHash).toBe("self");
   });
 });

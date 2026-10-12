@@ -1,32 +1,31 @@
 "use client";
 
 import useSWR from "swr";
+import type { ApiSession, ApiSwapQuote } from "@medialane/sdk";
+import { getMedialaneClient } from "@/lib/medialane-client";
+import { useSession } from "@/hooks/use-session";
 
-export interface SwapQuoteSummary {
-  quoteId: string;
-  sellTokenAddress: string;
-  sellAmount: string;
-  buyTokenAddress: string;
-  buyAmount: string;
-}
+export type SwapQuoteSummary = ApiSwapQuote;
 
-async function fetchQuote(
+function fetchQuote(
   sellSymbol: string,
   buySymbol: string,
   buyAmountRaw: string,
   takerAddress: string | null
 ): Promise<SwapQuoteSummary> {
-  const res = await fetch("/api/wallet/swap/quote", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sellSymbol, buySymbol, buyAmountRaw, takerAddress: takerAddress ?? undefined }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Failed to fetch swap quote");
-  }
-  const { quote } = (await res.json()) as { quote: SwapQuoteSummary };
-  return quote;
+  return getMedialaneClient().api.getSwapQuote({ sellSymbol, buySymbol, buyAmountRaw, takerAddress: takerAddress ?? undefined });
+}
+
+export function swapQuoteKey(
+  session: ApiSession | null,
+  sellSymbol: string | null,
+  buySymbol: string | null,
+  buyAmountRaw: string | null,
+  takerAddress: string | null
+) {
+  return session && sellSymbol && buySymbol && buyAmountRaw
+    ? (["swap-quote", sellSymbol, buySymbol, buyAmountRaw, takerAddress] as const)
+    : null;
 }
 
 export function useSwapQuote(
@@ -35,11 +34,9 @@ export function useSwapQuote(
   buyAmountRaw: string | null,
   takerAddress: string | null
 ) {
-  const key = sellSymbol && buySymbol && buyAmountRaw
-    ? (["swap-quote", sellSymbol, buySymbol, buyAmountRaw, takerAddress] as const)
-    : null;
+  const { session } = useSession();
   const { data, error, isLoading } = useSWR(
-    key,
+    swapQuoteKey(session, sellSymbol, buySymbol, buyAmountRaw, takerAddress),
     ([, sell, buy, amount, taker]) => fetchQuote(sell, buy, amount, taker),
     {
       refreshInterval: 20_000,

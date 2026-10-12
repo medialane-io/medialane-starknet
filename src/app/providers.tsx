@@ -22,6 +22,7 @@ import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
+import { WalletSessionSync } from "@/components/wallet-session-sync";
 import { useWallet } from "@/hooks/use-wallet";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -114,9 +115,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <StarknetProvider>
           <WalletProvider>
-            <UserRegistration />
-            {isStandalone ? children : <Shell>{children}</Shell>}
-            {!isStandalone && <NotificationSpotlight />}
+            <WalletSessionSync>
+              <UserRegistration />
+              {isStandalone ? children : <Shell>{children}</Shell>}
+              {!isStandalone && <NotificationSpotlight />}
+            </WalletSessionSync>
           </WalletProvider>
         </StarknetProvider>
       </SWRConfig>

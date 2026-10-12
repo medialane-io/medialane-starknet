@@ -27,7 +27,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { registerRemix } from "@/hooks/use-remix-offers";
-import { useSiwsToken } from "@/hooks/use-siws-token";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@/types/ip";
 import { ipfsToHttp } from "@/lib/utils";
@@ -47,7 +47,7 @@ export default function CreateRemixPage() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
   const router = useRouter();
   const { address: walletAddress, isConnected, isConnecting } = useWallet();
-  const { getValidToken } = useSiwsToken();
+  const { ensureSignedIn } = useAccountSession();
   const { execute: executeTransaction, status: txStatus } = useTx();
   const client = useMedialaneClient();
   const { token, isLoading: tokenLoading } = useToken(contract, tokenId);
@@ -237,6 +237,7 @@ export default function CreateRemixPage() {
       )?.tokenId;
       if (!remixTokenId) throw new Error("Could not determine remix token ID — check portfolio shortly");
 
+      await ensureSignedIn();
       await registerRemix(
         {
           originalContract: contract,
@@ -248,7 +249,6 @@ export default function CreateRemixPage() {
           commercial,
           derivatives,
         },
-        await getValidToken()
       );
 
       setMintStep("success");
