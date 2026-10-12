@@ -4,8 +4,6 @@ import { formatDistanceToNow } from "date-fns";
 import { normalizeAddress } from "@medialane/sdk";
 import { toDisplayUrl, toDisplayUrlOrNull, PINATA_PUBLIC_GATEWAY } from "@medialane/ui";
 import { IPFS_GATEWAY } from "./constants";
-import { SUPPORTED_TOKENS } from "./constants";
-import { FEATURED_COLLECTIONS } from "./featured-collections";
 import type { UsdPrices } from "@/hooks/use-usd-prices";
 
 export function cn(...inputs: ClassValue[]) {
@@ -17,36 +15,12 @@ export function shortenAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
 }
 
-export function getCurrency(tokenAddress: string) {
-  if (!tokenAddress) return { symbol: "TOKEN", decimals: 18 };
-  const norm = normalizeAddress("STARKNET", tokenAddress).toLowerCase();
-  for (const token of SUPPORTED_TOKENS) {
-    if (normalizeAddress("STARKNET", token.address).toLowerCase() === norm) {
-      return { symbol: token.symbol, decimals: token.decimals };
-    }
-  }
-  return { symbol: "TOKEN", decimals: 18 };
-}
-
 function adaptiveDecimals(num: number): number {
   if (num === 0 || num >= 1) return 2;
   if (num >= 0.01) return 4;
 
   const leadingZeros = Math.floor(-Math.log10(Math.abs(num)));
   return leadingZeros + 2;
-}
-
-export function formatPrice(amount: string, decimals: number): string {
-  if (!amount) return "0";
-  try {
-    const val = BigInt(amount);
-    const num = Number(val) / Math.pow(10, decimals);
-    return num.toLocaleString(undefined, {
-      maximumFractionDigits: adaptiveDecimals(num),
-    });
-  } catch {
-    return "0";
-  }
 }
 
 export function formatDisplayPrice(price: string | number | null | undefined): string {
@@ -106,49 +80,6 @@ export function timeAgo(dateStr: string): string {
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString();
-}
-
-export async function fetchWithRateLimit<T>(
-  factories: Array<() => Promise<T>>,
-  delayMs = 500
-): Promise<T[]> {
-  const results: T[] = [];
-  for (const factory of factories) {
-    try {
-      results.push(await factory());
-    } catch (err) {
-      console.warn("[fetchWithRateLimit] fetch failed, skipping:", err);
-    }
-    if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
-  }
-  return results;
-}
-
-export function toHexString(value: bigint | string | number): string {
-  return "0x" + BigInt(value).toString(16);
-}
-
-export function isCollectionFeatured(addressOrId: string): boolean {
-  if (!addressOrId) return false;
-  const norm = normalizeAddress("STARKNET", addressOrId).toLowerCase();
-  return FEATURED_COLLECTIONS.some(
-    (c) => normalizeAddress("STARKNET", c.contractAddress).toLowerCase() === norm
-  );
-}
-
-export function timeUntil(dateStr: string | number): string {
-
-  const raw = typeof dateStr === "string" && /^\d+$/.test(dateStr.trim())
-    ? Number(dateStr)
-    : dateStr;
-  const ms = typeof raw === "number" ? raw * 1000 : new Date(raw).getTime();
-  const diff = ms - Date.now();
-  if (diff <= 0) return "Expired";
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  if (days > 0) return `${days}d ${hours}h`;
-  const mins = Math.floor((diff % 3600000) / 60000);
-  return `${hours}h ${mins}m`;
 }
 
 export function checkIsOwner(

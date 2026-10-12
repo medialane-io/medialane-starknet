@@ -18,7 +18,6 @@ export const useSponsorshipOffers = (params?: OffersQuery) => ui.useSponsorshipO
 export const useSponsorshipOffer = (offerId: string | null) => ui.useSponsorshipOffer(getMedialaneClient, offerId);
 export const useSponsorshipBids = (offerId: string | null) => ui.useSponsorshipBids(getMedialaneClient, offerId);
 export const useSponsorshipProposals = (params?: ProposalsQuery) => ui.useSponsorshipProposals(getMedialaneClient, params);
-export const useSponsorshipProposal = (proposalId: string | null) => ui.useSponsorshipProposal(getMedialaneClient, proposalId);
 export const usePendingProposalsForAsset = (nftContract: string | null) =>
   ui.usePendingProposalsForAsset(getMedialaneClient, nftContract);
 export const useSponsorshipLicenses = (params?: LicensesQuery) => ui.useSponsorshipLicenses(getMedialaneClient, params);

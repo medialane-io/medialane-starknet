@@ -22,13 +22,6 @@ function isValidStarknetAddress(addr: string): boolean {
   return addr.replace(/^0x0*/, "").length > 0;
 }
 
-export function encodeTokenId(tokenId: string): [string, string] {
-  const id = BigInt(tokenId);
-  const low = (id & BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")).toString();
-  const high = (id >> BigInt(128)).toString();
-  return [low, high];
-}
-
 export function useTransfer() {
   const client = useMedialaneClient();
   const { address, isConnected } = useWallet();

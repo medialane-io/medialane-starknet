@@ -5,8 +5,6 @@ export {
   STARKNET_COLLECTION_721_CONTRACT,
   STARKNET_COLLECTION_1155_CONTRACT,
   STARKNET_NFTCOMMENTS_CONTRACT,
-  STARKNET_GENESIS_MINT_CONTRACT as MINT_CONTRACT,
-  STARKNET_GENESIS_NFT_URI as GENESIS_NFT_URI,
 } from "@medialane/sdk";
 
 export const RPC_PROXY_PATH = "/api/rpc";
@@ -39,15 +37,6 @@ export const IPFS_GATEWAY = (() => {
 export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://voyager.online";
 
-
-export const REGISTRY_START_BLOCK = Number(
-  process.env.NEXT_PUBLIC_COLLECTION_721_START_BLOCK || 0
-);
-
-export const ALLOWED_IP_TYPES = [
-  "Audio", "Art", "Documents", "NFT", "Video",
-  "Photography", "Patents", "Posts", "Publications", "RWA",
-] as const;
 
 export const DURATION_OPTIONS = [
   { label: "1 Day", seconds: 86400 },
