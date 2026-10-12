@@ -15,13 +15,13 @@ describe("executeWithSponsorship", () => {
     const out = await executeWithSponsorship(
       {
         token: async () => "t",
-        sponsored: async (config, _signer, calls, ids) => { seen.push({ config, calls, ids }); return { status: "sponsored", transactionHash: "0xs" }; },
+        sponsored: async (config, _signer, request) => { seen.push({ config, request }); return { status: "sponsored", transactionHash: "0xs" }; },
         fallback: selfPaid,
       },
       signer, [], ["i1"],
     );
     expect(out.txHash).toBe("0xs");
-    expect(seen).toEqual([{ config: { proxyUrl: "/api/wallet/sponsored-invoke", headers: { authorization: "Bearer t" } }, calls: [], ids: ["i1"] }]);
+    expect(seen).toEqual([{ config: { proxyUrl: "/api/wallet/sponsored-invoke", headers: { authorization: "Bearer t" } }, request: { intentIds: ["i1"] } }]);
   });
 
   test("when sponsorship is unavailable the wallet pays", async () => {

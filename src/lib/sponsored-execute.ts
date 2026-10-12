@@ -1,7 +1,7 @@
 import type { Call } from "starknet";
 import { executeSponsored, type TypedDataSigner } from "@medialane/sdk/starknet";
 
-export const SPONSORED_INVOKE_PATH = "/api/wallet/sponsored-invoke";
+const SPONSORED_INVOKE_PATH = "/api/wallet/sponsored-invoke";
 
 export async function executeWithSponsorship(
   deps: {
@@ -19,8 +19,7 @@ export async function executeWithSponsorship(
   const result = await (deps.sponsored ?? executeSponsored)(
     { proxyUrl: SPONSORED_INVOKE_PATH, headers: { authorization: `Bearer ${token}` } },
     signer,
-    calls,
-    intentIds,
+    { intentIds },
   );
   return result.status === "sponsored" ? { txHash: result.transactionHash } : deps.fallback(calls);
 }
