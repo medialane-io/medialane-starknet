@@ -7,4 +7,3 @@ export function RemixesTab({ contractAddress, tokenId }: { contractAddress: stri
   return <RemixesTabBase getClient={getMedialaneClient} contractAddress={contractAddress} tokenId={tokenId} />;
 }
 
-export { ParentAttributionBanner } from "@medialane/ui/parent-attribution-banner";

@@ -2,10 +2,8 @@
 
 import {
   requestSiwsToken as sdkRequestSiwsToken,
-  storeSiwsToken,
   isSiwsTokenValid,
   getSiwsStorageKey,
-  normalizeSiwsSignature,
   type SiwsSigner,
   type RequestSiwsTokenArgs as SdkRequestSiwsTokenArgs,
 } from "@medialane/sdk/starknet";
@@ -17,7 +15,6 @@ export type { SiwsSigner };
 export type RequestSiwsTokenArgs = Omit<SdkRequestSiwsTokenArgs, "backendUrl" | "appSource">;
 
 const APP_SOURCE = "MEDIALANE_STARKNET";
-export { storeSiwsToken, isSiwsTokenValid, getSiwsStorageKey, normalizeSiwsSignature };
 
 export function getStoredSiwsToken(address: string): string | null {
   if (typeof window === "undefined") return null;
@@ -35,20 +32,6 @@ export function getStoredSiwsToken(address: string): string | null {
 
   localStorage.removeItem(key);
   if (legacyKey !== key) localStorage.removeItem(legacyKey);
-  return null;
-}
-
-export function getAnyStoredSiwsToken(): string | null {
-  if (typeof window === "undefined") return null;
-
-  for (let i = 0; i < localStorage.length; i += 1) {
-    const key = localStorage.key(i);
-    if (!key?.startsWith(STORAGE_PREFIX)) continue;
-    const token = localStorage.getItem(key);
-    if (isSiwsTokenValid(token)) return token;
-    localStorage.removeItem(key);
-  }
-
   return null;
 }
 

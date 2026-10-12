@@ -32,9 +32,3 @@ export function formatTokenAmount(raw: bigint, decimals: number): string {
   return `${whole}.${fractionStr}`;
 }
 
-export function parseTokenAmount(value: string, decimals: number): bigint {
-  if (!value || isNaN(parseFloat(value))) return 0n;
-  const [wholePart, fracPart = ""] = value.split(".");
-  const fracPadded = fracPart.slice(0, decimals).padEnd(decimals, "0");
-  return BigInt(wholePart || "0") * 10n ** BigInt(decimals) + BigInt(fracPadded || "0");
-}

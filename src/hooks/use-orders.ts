@@ -2,12 +2,10 @@
 
 import {
   useOrders as useOrdersBase,
-  useOrder as useOrderBase,
   useTokenListings as useTokenListingsBase,
   useUserOrders as useUserOrdersBase,
   useCounterOffers as useCounterOffersBase,
   useReceivedOffers as useReceivedOffersBase,
-  useCollectionFloorListings as useCollectionFloorListingsBase,
 } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import type { ApiOrdersQuery } from "@medialane/sdk";
@@ -15,10 +13,6 @@ import type { ApiOrdersQuery } from "@medialane/sdk";
 
 export function useOrders(query: ApiOrdersQuery = {}) {
   return useOrdersBase(getMedialaneClient, query);
-}
-
-export function useOrder(orderHash: string | null) {
-  return useOrderBase(getMedialaneClient, orderHash);
 }
 
 export function useTokenListings(contract: string | null, tokenId: string | null) {
@@ -37,6 +31,3 @@ export function useReceivedOffers(address: string | null) {
   return useReceivedOffersBase(getMedialaneClient, address);
 }
 
-export function useCollectionFloorListings(contract: string | null, limit = 20) {
-  return useCollectionFloorListingsBase(getMedialaneClient, contract, limit);
-}

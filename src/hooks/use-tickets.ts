@@ -7,6 +7,5 @@ export type { TierOnchain as TicketOnchain, TierListItem as TicketListItem } fro
 
 export const predictNextTicketId = (contract: string) => ui.predictNextTicketId(getMedialaneClient().api, contract);
 export const useMyTicketCollections = (owner: string | null) => ui.useMyTicketCollections(getMedialaneClient, owner);
-export const useTicketList = (contract: string | null) => ui.useTicketList(getMedialaneClient, contract);
 export const useTicketOnchain = (contract: string | null, tokenId: string | null) =>
   ui.useTicketOnchain(getMedialaneClient, contract, tokenId);
