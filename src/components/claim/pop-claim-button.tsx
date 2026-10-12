@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { popCalls, popClaimInfo, popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
 import { starknetProvider } from "@/lib/starknet";
-import { claimProofFor } from "@/lib/pop-proof-storage";
+import { claimProofFor } from "@medialane/ui";
 import { RewardEarned } from "@/lib/reward-earned";
 import { Loader2, CheckCircle2, Ban, Award, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
