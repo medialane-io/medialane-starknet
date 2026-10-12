@@ -19,7 +19,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow, AssetMediaColumn, isLivingRenderCollection, HiddenContentBanner } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow, AssetMediaColumn, isLivingRenderCollection, HiddenContentBanner, DropTokenLink } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetProvenanceTab } from "./asset-provenance-tab";
 import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
@@ -251,6 +251,7 @@ export function AssetPageStandard() {
               {ownerAddress ? (
                 <AssetOwnerRow ownerAddress={ownerAddress} ownerHref={`/creator/${ownerAddress}`} />
               ) : null}
+              {collection?.service === "drop-collection" && <DropTokenLink contract={contract} name={collection?.name ?? null} />}
               <AssetCollectionBar
                 collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
                 collectionImage={collection?.image ? ipfsToHttp(collection.image) : null}

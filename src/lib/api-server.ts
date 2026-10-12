@@ -33,4 +33,4 @@ export const fetchFeaturedCollections = cached("featured-collections", async (li
 export const fetchActiveOrders = cached("active-orders", async (limit: number) =>
   (await api().getOrders({ status: "ACTIVE", sort: "recent", page: 1, limit })).data);
 
-export const fetchDropMeta = cached("drop-meta", (contract: string) => api().getDropInfo(contract));
+export const fetchDropMeta = cached("drop-meta", (contract: string) => api().getDrop(contract));
