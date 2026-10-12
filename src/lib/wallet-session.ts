@@ -21,25 +21,3 @@ export function nextSessionStep(input: {
 export async function signOut(fetchImpl: typeof fetch = fetch): Promise<void> {
   await fetchImpl("/api/session", { method: "DELETE" });
 }
-
-type TabStorage = Pick<Storage, "getItem" | "setItem">;
-const DECLINED_KEY = "ml_wallet_sign_in_declined";
-
-export function declinedWallets(storage: TabStorage | null): string[] {
-  try {
-    const raw = storage?.getItem(DECLINED_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-export function rememberDeclined(storage: TabStorage | null, wallet: string): void {
-  try {
-    const current = declinedWallets(storage);
-    if (!current.includes(wallet)) storage?.setItem(DECLINED_KEY, JSON.stringify([...current, wallet]));
-  } catch {
-    return;
-  }
-}

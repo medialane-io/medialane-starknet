@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { declinedWallets, nextSessionStep, rememberDeclined, signOut } from "./wallet-session";
+import { nextSessionStep, signOut } from "./wallet-session";
 
 const A = "0x0" + "a".repeat(63);
 const B = "0x0" + "b".repeat(63);
@@ -44,21 +44,5 @@ describe("wallet session", () => {
       return Response.json(null);
     }) as typeof fetch);
     expect(calls).toEqual([{ url: "/api/session", method: "DELETE" }]);
-  });
-
-  test("a declined wallet is remembered for the tab, so a reload does not ask again", () => {
-    const data = new Map<string, string>();
-    const storage = { getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => void data.set(k, v) };
-    expect(declinedWallets(storage)).toEqual([]);
-    rememberDeclined(storage, A);
-    rememberDeclined(storage, A);
-    expect(declinedWallets(storage)).toEqual([A]);
-  });
-
-  test("storage that throws or is missing never breaks sign-in", () => {
-    const broken = { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } };
-    expect(declinedWallets(broken)).toEqual([]);
-    expect(() => rememberDeclined(broken, A)).not.toThrow();
-    expect(declinedWallets(null)).toEqual([]);
   });
 });
