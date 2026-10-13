@@ -30,6 +30,7 @@ import { CreateCollectionAside } from "@/components/claim/create-collection-asid
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { buildCollectionMetadata } from "@medialane/sdk";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import type { Call } from "starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -79,12 +80,6 @@ export default function LaunchpadCreateCollectionPage() {
     resolver: zodResolver(schema),
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
-
-  useEffect(() => {
-    if (walletAddress && !form.getValues("external_link")) {
-      form.setValue("external_link", `https://medialane.io/account/${walletAddress}`);
-    }
-  }, [walletAddress, form]);
 
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
@@ -142,22 +137,20 @@ export default function LaunchpadCreateCollectionPage() {
 
     try {
 
-      let baseUri: string | undefined;
-      if (imageUri) {
-        baseUri = await uploadJsonToIpfs({
+      const baseUri = await uploadJsonToIpfs(
+        buildCollectionMetadata({
           name: values.name,
-          description: values.description || "",
+          description: values.description,
           image: imageUri,
-          external_link: values.external_link || "https://medialane.io",
-        });
-      }
+          externalLink: values.external_link,
+          owner: walletAddress,
+        }),
+      );
 
       const intentRes = await client.api.createCollectionIntent({
         owner: walletAddress,
         name: values.name,
         symbol: values.symbol,
-        description: values.description || undefined,
-        image: imageUri || undefined,
         baseUri,
       });
 
@@ -365,7 +358,7 @@ export default function LaunchpadCreateCollectionPage() {
                     <Input placeholder="https://yourwebsite.com" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Your website, portfolio, or social profile — saved with your collection so it travels with it.
+                    Your website, portfolio, or social profile. Defaults to your Medialane account page.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

@@ -35,6 +35,7 @@ import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { buildCollectionMetadata } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 
@@ -86,12 +87,6 @@ export default function CreateNFTEditionsCollectionPage() {
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
   const collectionName = form.watch("name");
-
-  useEffect(() => {
-    if (walletAddress && !form.getValues("external_link")) {
-      form.setValue("external_link", `https://medialane.io/account/${walletAddress}`);
-    }
-  }, [walletAddress, form]);
 
   useEffect(() => {
     const suggestedSymbol = suggestLaunchpadSymbol(collectionName);
@@ -165,23 +160,23 @@ export default function CreateNFTEditionsCollectionPage() {
 
     try {
 
-      let collectionMetaUri: string | undefined;
-      if (imageUri) {
-        collectionMetaUri = await uploadJsonToIpfs({
+      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const collectionMetaUri = await uploadJsonToIpfs(
+        buildCollectionMetadata({
           name: values.name,
-          description: values.description || "",
+          description: values.description,
           image: imageUri,
-          external_link: values.external_link || "",
-        });
-      }
+          externalLink: values.external_link,
+          owner: walletAddress,
+        }),
+      );
 
       setDialogTxStatus("submitting");
-      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
       const intentRes = await client.api.createCollectionIntent({
         owner: walletAddress,
         name: values.name,
         symbol: values.symbol,
-        baseUri: collectionMetaUri ?? "",
+        baseUri: collectionMetaUri,
         service: "mip-erc1155",
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
@@ -347,7 +342,7 @@ export default function CreateNFTEditionsCollectionPage() {
               <FormItem>
                 <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                 <FormControl><Input placeholder="https://yourwebsite.com" {...field} /></FormControl>
-                <FormDescription>Your website, portfolio, or social profile — saved with your collection so it travels with it.</FormDescription>
+                <FormDescription>Your website, portfolio, or social profile. Defaults to your Medialane account page.</FormDescription>
                 <FormMessage />
               </FormItem>
             )} />

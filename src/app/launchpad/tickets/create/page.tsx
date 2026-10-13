@@ -35,6 +35,7 @@ import { starknetProvider } from "@/lib/starknet";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { buildCollectionMetadata } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 
@@ -49,6 +50,13 @@ const schema = z.object({
     .max(10, "Max 10 characters")
     .regex(/^[A-Z0-9]+$/, "Uppercase letters and numbers only"),
   description: z.string().max(500).optional(),
+  external_link: z
+    .string()
+    .max(500)
+    .refine((v) => !v || v.startsWith("http://") || v.startsWith("https://"), {
+      message: "Must start with http:// or https://",
+    })
+    .optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -77,7 +85,7 @@ export default function CreateTicketCollectionPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", symbol: "", description: "" },
+    defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
 
   const handleReset = () => {
@@ -133,14 +141,15 @@ export default function CreateTicketCollectionPage() {
 
     try {
 
-      let baseUri = "";
-      if (imageUri) {
-        baseUri = await uploadJsonToIpfs({
+      const baseUri = await uploadJsonToIpfs(
+        buildCollectionMetadata({
           name: values.name,
-          description: values.description || "",
+          description: values.description,
           image: imageUri,
-        });
-      }
+          externalLink: values.external_link,
+          owner: address,
+        }),
+      );
 
       const intentRes = await client.api.createCollectionIntent({
         owner: address,
@@ -336,6 +345,21 @@ export default function CreateTicketCollectionPage() {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="external_link"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://yourwebsite.com" {...field} />
+                  </FormControl>
+                  <FormDescription>Your website, portfolio, or social profile. Defaults to your Medialane account page.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

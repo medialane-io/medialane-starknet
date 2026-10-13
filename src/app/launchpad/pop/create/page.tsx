@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form, FormControl, FormField, FormItem,
   FormLabel, FormMessage, FormDescription,
@@ -29,6 +30,7 @@ import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@/lib/launchpad-d
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { cn } from "@/lib/utils";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { buildCollectionMetadata } from "@medialane/sdk";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
 
 const EVENT_TYPES: {
@@ -49,6 +51,14 @@ const EVENT_TYPES: {
 const schema = z.object({
   name:         z.string().min(1, "Event name required").max(100),
   symbol:       z.string().min(1, "Symbol required").max(10).regex(/^[A-Z0-9]+$/, "Uppercase letters and numbers only"),
+  description:  z.string().max(500).optional(),
+  external_link: z
+    .string()
+    .max(500)
+    .refine((v) => !v || v.startsWith("http://") || v.startsWith("https://"), {
+      message: "Must start with http:// or https://",
+    })
+    .optional(),
   claimEndDate: z.string().min(1, "Claim end date required"),
   claimEndTime: z.string().default("23:59"),
 });
@@ -78,7 +88,7 @@ export default function CreatePOPPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", symbol: "", claimEndDate: "", claimEndTime: "23:59" },
+    defaultValues: { name: "", symbol: "", description: "", external_link: "", claimEndDate: "", claimEndTime: "23:59" },
   });
   const eventName = form.watch("name");
 
@@ -127,22 +137,26 @@ export default function CreatePOPPage() {
   const onSubmit = async (values: FormValues) => {
     setIsTxLoading(true);
     try {
-      const metadata: Record<string, unknown> = {
-        name: values.name,
+      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
+      const metadata = {
+        ...buildCollectionMetadata({
+          name: values.name,
+          description: values.description,
+          image: imageUri,
+          externalLink: values.external_link,
+          owner: walletAddress,
+        }),
         attributes: [
           { trait_type: "Visibility", value: isPublic ? "Public" : "Private" },
           { trait_type: "Event Type", value: eventType },
         ],
       };
-      if (imageUri) metadata.image = imageUri;
       const pinnedUri = await uploadJsonToIpfs(metadata);
       const baseUri: string = pinnedUri;
 
       const claimEndTimestamp = Math.floor(
         new Date(`${values.claimEndDate}T${values.claimEndTime}:00`).getTime() / 1000
       );
-
-      if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
 
       const intentRes = await client.api.createCollectionIntent({
         owner: walletAddress,
@@ -344,6 +358,31 @@ export default function CreatePOPPage() {
                   />
                 </FormControl>
                 <FormDescription>Short ticker shown in wallets.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </FadeIn>
+
+          <FadeIn delay={0.15}>
+            <FormField control={form.control} name="description" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                <FormControl>
+                  <Textarea placeholder="What this credential recognizes" rows={3} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </FadeIn>
+
+          <FadeIn delay={0.155}>
+            <FormField control={form.control} name="external_link" render={({ field }) => (
+              <FormItem>
+                <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                <FormControl>
+                  <Input placeholder="https://yourwebsite.com" {...field} />
+                </FormControl>
+                <FormDescription>Your website, portfolio, or social profile. Defaults to your Medialane account page.</FormDescription>
                 <FormMessage />
               </FormItem>
             )} />
