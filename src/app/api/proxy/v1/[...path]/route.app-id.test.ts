@@ -11,6 +11,7 @@ let POST: Handler;
 
 beforeAll(async () => {
   process.env.MEDIALANE_API_KEY = "test-key";
+  process.env.MEDIALANE_APP_SECRET = "test-secret";
   globalThis.fetch = (async (url: unknown, init?: RequestInit) => {
     forwardedUrl = String(url);
     forwarded = new Headers(init?.headers);
@@ -34,6 +35,7 @@ test("the gateway names its app and ignores an app id sent by the browser", asyn
   expect(res.status).toBe(200);
   expect(forwarded?.get("x-app-id")).toBe("MEDIALANE_STARKNET");
   expect(forwarded?.get("x-api-key")).toBe("test-key");
+  expect(forwarded?.get("x-app-secret")).toBe("test-secret");
 });
 
 test("a signed-in request carries the session, never a bearer header", async () => {
