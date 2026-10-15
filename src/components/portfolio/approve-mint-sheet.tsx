@@ -128,7 +128,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       const mintCalls = (intentRes.data as any)?.calls as Call[];
       if (!mintCalls?.length) throw new Error("No mint calls returned");
 
-      const mintResult = await executeTransaction(mintCalls, { intentIds: [intentRes.data.id] });
+      const mintResult = await executeTransaction(mintCalls);
       if (mintResult === null) throw new Error("Mint reverted");
       setMintHash(mintResult);
 

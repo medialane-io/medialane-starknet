@@ -101,3 +101,9 @@ test("drop routes", () => {
   expect(isPathAllowed("GET", "drop/0xd409/info")).toBe(false);
   expect(isPathAllowed("POST", "drop/conditions")).toBe(false);
 });
+
+test("the dapp's gateway does not reach the paymaster; transactions go from the wallet", () => {
+  for (const path of ["paymaster/invoke/build", "paymaster/invoke/execute", "paymaster/deploy/build"]) {
+    expect(isPathAllowed("POST", path)).toBe(false);
+  }
+});

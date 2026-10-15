@@ -5,14 +5,11 @@ import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSigner } from "@/hooks/use-signer";
 import { markMarketplaceDebug } from "@/lib/marketplace-debug";
-import { useAccountSession } from "@/components/wallet-session-sync";
-import { executeWithSponsorship } from "@/lib/sponsored-execute";
 
 export function useVenueSigner(): StarknetVenueSigner | null {
   const account = useSigner();
   const { address } = useWallet();
   const { provider } = useProvider();
-  const { signedIn } = useAccountSession();
 
   const signTypedData = useCallback(
     async (data: TypedData): Promise<string[]> => {
@@ -27,18 +24,10 @@ export function useVenueSigner(): StarknetVenueSigner | null {
   );
 
   const execute = useCallback(
-    async (calls: Call[], opts?: { intentIds?: string[] }): Promise<{ txHash: string }> => {
+    async (calls: Call[]): Promise<{ txHash: string }> => {
       if (!account || !address) throw new Error("Wallet not ready. Please reconnect and try again.");
       markMarketplaceDebug("execute: awaiting wallet submit", { callCount: calls.length });
-      const { txHash } = await executeWithSponsorship(
-        {
-          signedIn,
-          fallback: async (c) => ({ txHash: (await account.execute(c)).transaction_hash }),
-        },
-        { address, signTypedData },
-        calls,
-        opts?.intentIds,
-      );
+      const txHash = (await account.execute(calls)).transaction_hash;
       markMarketplaceDebug("execute: wallet submitted, awaiting confirmation", { txHash });
       const receipt = await provider.waitForTransaction(txHash);
       markMarketplaceDebug("execute: confirmed", { status: receipt.statusReceipt });
@@ -47,7 +36,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       }
       return { txHash };
     },
-    [account, address, provider, signedIn, signTypedData],
+    [account, address, provider],
   );
 
   if (!address) return null;

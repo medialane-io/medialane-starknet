@@ -405,7 +405,7 @@ export function SingleEditionsContent() {
         throw new Error("Mint intent returned no calls");
       }
 
-      const result = await executeTransaction(intentData.calls as Call[], { intentIds: intentData.id ? [intentData.id] : undefined });
+      const result = await executeTransaction(intentData.calls as Call[]);
 
       if (result === null) {
         throw new Error("Mint transaction reverted on chain");
