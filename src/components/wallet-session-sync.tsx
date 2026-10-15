@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
+import { normalizeAddress } from "@medialane/sdk";
 import { signInWithWallet } from "@medialane/sdk/starknet";
 import { describeError, UserFacingError } from "@medialane/ui";
 import { useAccount } from "@starknet-react/core";
@@ -8,7 +9,6 @@ import { useSigner } from "@/hooks/use-signer";
 import { useSession, refreshSession } from "@/hooks/use-session";
 import { SESSION_REQUIRED } from "@/lib/account-gate";
 import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
-import { nextSessionStep, type WalletStatus } from "@/lib/wallet-session";
 
 type AccountSessionValue = {
   isSigningIn: boolean;
@@ -19,10 +19,8 @@ type AccountSessionValue = {
 const AccountSessionContext = createContext<AccountSessionValue | null>(null);
 
 export function WalletSessionSync({ children }: { children: React.ReactNode }) {
-  const { address, status } = useAccount();
+  const { address } = useAccount();
   const signer = useSigner();
-  const { session, isLoading } = useSession();
-  const [declined, setDeclined] = useState<string[]>([]);
   const [isSigningIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,11 +30,9 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       await signInWithWallet({ backendUrl: MEDIALANE_BACKEND_URL, walletAddress: address, signer, appSource: "MEDIALANE_STARKNET" });
-      setDeclined((d) => d.filter((x) => x !== address));
       await refreshSession();
       return true;
     } catch (err) {
-      setDeclined((d) => [...d, address]);
       setError(describeError(err).message);
       throw err;
     } finally {
@@ -44,24 +40,17 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
     }
   }, [address, signer]);
 
-  useEffect(() => {
-    const step = nextSessionStep({
-      status: status as WalletStatus,
-      address: address ?? null,
-      sessionWallet: session?.walletAddress ?? null,
-      sessionLoading: isLoading,
-      declined,
-      signingIn: isSigningIn,
-    });
-    if (step === "sign-in" && signer) void signIn().catch(() => {});
-  }, [status, address, session?.walletAddress, isLoading, declined, isSigningIn, signer, signIn]);
-
   return <AccountSessionContext.Provider value={{ isSigningIn, error, signIn }}>{children}</AccountSessionContext.Provider>;
 }
 
 export function useAccountSession() {
   const ctx = useContext(AccountSessionContext);
-  const { session } = useSession();
+  const { address } = useAccount();
+  const { session: current } = useSession();
+  const session =
+    current?.walletAddress && address && normalizeAddress("STARKNET", current.walletAddress) === normalizeAddress("STARKNET", address)
+      ? current
+      : null;
   const signIn = ctx?.signIn ?? (async () => false);
   return {
     session,
