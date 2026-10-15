@@ -39,7 +39,7 @@ test("the gateway names its app and ignores an app id sent by the browser", asyn
 });
 
 test("a signed-in request carries the session, never a bearer header", async () => {
-  for (const path of [["rpc"], ["paymaster", "invoke", "build"], ["swap", "quote"], ["users", "register"]]) {
+  for (const path of [["rpc"], ["swap", "quote"], ["users", "register"]]) {
     const req = new NextRequest(`http://localhost/api/proxy/v1/${path.join("/")}`, { method: "POST", body: "{}", headers: { authorization: "Bearer siws_old" } });
     req.cookies.set("ml_account_session", "s1");
     const res = await POST(req, params(...path));

@@ -22,7 +22,7 @@ const EXCLUDED_FILES = new Set([
 const UI_DIST_DIR = join(REPO_ROOT, "node_modules/@medialane/ui/dist");
 
 
-const MEDIA_WALLET_ONLY = ["paymaster/deploy"];
+const MEDIA_WALLET_ONLY = ["paymaster/deploy", "paymaster/invoke"];
 
 function walk(dir: string, out: string[] = []): string[] {
   if (EXCLUDED_DIRS.some((excluded) => dir === excluded || dir.startsWith(excluded + "/"))) {
