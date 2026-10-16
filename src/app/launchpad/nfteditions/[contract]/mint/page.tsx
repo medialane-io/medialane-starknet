@@ -47,7 +47,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress } from "@medialane/sdk";
-import { starknetProvider } from "@/lib/starknet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -303,7 +302,7 @@ export default function MintNFTEditionsPage() {
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt mint intent");
 
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { txHash: txHashResult, receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+      const { txHash: txHashResult, receipt } = await executeIntent(signer, client, intentRes.data);
 
       const editionId = mintedTokenIdFromReceipt(receipt, collectionAddress);
       if (!editionId) throw new Error("Minted, but could not read the assigned token id from the receipt");

@@ -7,8 +7,6 @@ export {
   STARKNET_NFTCOMMENTS_CONTRACT,
 } from "@medialane/sdk";
 
-export const RPC_PROXY_PATH = "/api/proxy/v1/rpc";
-
 const isServer = typeof window === "undefined";
 
 export const MEDIALANE_BACKEND_URL = isServer

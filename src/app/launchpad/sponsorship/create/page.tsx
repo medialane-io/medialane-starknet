@@ -21,7 +21,6 @@ import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { FadeIn } from "@/components/ui/motion-primitives";
-import { starknetProvider } from "@/lib/starknet";
 
 const LISTABLE_TOKENS = SUPPORTED_TOKENS.filter((t) => t.listable);
 const TOKEN_SYMBOLS = LISTABLE_TOKENS.map((t) => t.symbol);
@@ -49,7 +48,7 @@ function PendingProposalsPanel({
         ? await client.api.acceptSponsorshipProposalIntent({ owner, proposalId })
         : await client.api.rejectSponsorshipProposalIntent({ owner, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
-      await executeIntent(starknetProvider, signer, client, intentRes.data);
+      await executeIntent(signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       console.error("sponsorship proposal response failed", err);
@@ -149,7 +148,7 @@ export default function CreateSponsorshipPage() {
             transferable: terms.transferable, royaltyBps,
           });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship intent");
-      await executeIntent(starknetProvider, signer, client, intentRes.data);
+      await executeIntent(signer, client, intentRes.data);
 
       setDone(true);
     } catch (err) {

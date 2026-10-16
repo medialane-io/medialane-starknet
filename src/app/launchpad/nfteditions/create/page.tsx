@@ -30,7 +30,6 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
-import { starknetProvider } from "@/lib/starknet";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
@@ -181,7 +180,7 @@ export default function CreateNFTEditionsCollectionPage() {
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+      const { receipt } = await executeIntent(signer, client, intentRes.data);
       setDialogTxStatus("confirming");
 
       const addr = deployedCollectionFromReceipt(receipt, "mip-erc1155");

@@ -42,7 +42,6 @@ import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } fr
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntents } from "@medialane/sdk/starknet";
-import { starknetProvider } from "@/lib/starknet";
 
 function dateToUnixTimestamp(dateStr: string | undefined): number | undefined {
   if (!dateStr) return undefined;
@@ -225,7 +224,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
       }
 
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      await executeIntents(starknetProvider, signer, client, [tierRes.data, mintRes.data]);
+      await executeIntents(signer, client, [tierRes.data, mintRes.data]);
 
       setDialogTxStatus("confirmed");
       setMintStep("success");

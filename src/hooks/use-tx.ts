@@ -2,10 +2,10 @@
 
 import { useState, useCallback } from "react";
 import type { Call } from "starknet";
-import { starknetProvider } from "@/lib/starknet";
 import { useSigner } from "@/hooks/use-signer";
 import { describeError } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 export type TxStatus =
   | "idle"
@@ -40,7 +40,7 @@ export function useTx() {
       setStatusMessage("Confirming on Starknet…");
 
       try {
-        const receipt = await starknetProvider.waitForTransaction(hash, {
+        const receipt = await getMedialaneClient().provider.waitForTransaction(hash, {
           retryInterval: 3000,
         });
         if (receipt.isReverted()) {

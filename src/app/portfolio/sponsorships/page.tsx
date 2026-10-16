@@ -15,7 +15,6 @@ import {
   type SponsorshipOffer,
 } from "@/hooks/use-sponsorship";
 import { assetHref } from "@/lib/routes";
-import { starknetProvider } from "@/lib/starknet";
 
 function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
   const { bids, isLoading, mutate } = useSponsorshipBids(offer.offerId);
@@ -31,7 +30,7 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
     try {
       const intentRes = await client.api.acceptSponsorshipBidIntent({ author: walletAddress, offerId: offer.offerId, sponsor });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-      await executeIntent(starknetProvider, signer, client, intentRes.data);
+      await executeIntent(signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       console.error("accept bid failed", err);
@@ -76,7 +75,7 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
         ? await client.api.acceptSponsorshipProposalIntent({ owner: walletAddress, proposalId })
         : await client.api.rejectSponsorshipProposalIntent({ owner: walletAddress, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
-      await executeIntent(starknetProvider, signer, client, intentRes.data);
+      await executeIntent(signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       console.error("respond to proposal failed", err);
@@ -129,7 +128,7 @@ function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
     try {
       const intentRes = await client.api.withdrawSponsorshipProposalIntent({ proposer: walletAddress, proposalId });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal-withdraw intent");
-      await executeIntent(starknetProvider, signer, client, intentRes.data);
+      await executeIntent(signer, client, intentRes.data);
       await mutate();
     } catch (err) {
       console.error("withdraw proposal failed", err);

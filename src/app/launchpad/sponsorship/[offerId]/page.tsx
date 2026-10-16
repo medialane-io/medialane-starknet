@@ -18,7 +18,6 @@ import { useToken } from "@/hooks/use-tokens";
 import { RewardEarned } from "@/lib/reward-earned";
 import { resolveTokenImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
-import { starknetProvider } from "@/lib/starknet";
 
 export default function SponsorshipOfferPage() {
   const params = useParams();
@@ -59,7 +58,7 @@ export default function SponsorshipOfferPage() {
         paymentToken: offer.paymentToken,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid intent");
-      await executeIntent(starknetProvider, signer, client, intentRes.data);
+      await executeIntent(signer, client, intentRes.data);
       setBidPlaced(true);
       setBidAmount("");
       await mutateBids();
@@ -81,7 +80,7 @@ export default function SponsorshipOfferPage() {
         sponsor,
       });
       if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-      await executeIntent(starknetProvider, signer, client, intentRes.data);
+      await executeIntent(signer, client, intentRes.data);
       setAcceptMessage("Bid accepted. The license is minted to the sponsor.");
       await Promise.all([mutateOffer(), mutateBids()]);
     } catch (err) {

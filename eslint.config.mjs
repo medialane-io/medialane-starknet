@@ -40,6 +40,30 @@ const eslintConfig = [
       ],
     },
   },
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "sonner",
+              importNames: ["toast"],
+              message:
+                "Messages belong beside what they describe: validation in the zod schema so FormMessage renders it, action outcomes on the action's own state, background failures in console.error.",
+            },
+            {
+              name: "starknet",
+              importNames: ["RpcProvider"],
+              message: "Read the chain through getMedialaneClient().provider.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;
