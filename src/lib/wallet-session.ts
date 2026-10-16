@@ -2,6 +2,11 @@ import { normalizeAddress } from "@medialane/sdk";
 
 export type WalletStatus = "connected" | "disconnected" | "connecting" | "reconnecting";
 
+export function sessionBelongsTo(sessionWallet: string | null | undefined, address: string | null | undefined): boolean {
+  if (!sessionWallet || !address) return false;
+  return normalizeAddress("STARKNET", sessionWallet) === normalizeAddress("STARKNET", address);
+}
+
 export function nextSessionStep(input: {
   status: WalletStatus;
   address: string | null;
@@ -9,11 +14,12 @@ export function nextSessionStep(input: {
   sessionLoading: boolean;
   declined: string[];
   signingIn: boolean;
-}): "sign-in" | "none" {
+}): "sign-in" | "sign-out" | "none" {
   if (input.sessionLoading || input.signingIn) return "none";
   if (input.status !== "connected" || !input.address) return "none";
+  if (sessionBelongsTo(input.sessionWallet, input.address)) return "none";
+  if (input.sessionWallet) return "sign-out";
   const wallet = normalizeAddress("STARKNET", input.address);
-  if (input.sessionWallet && normalizeAddress("STARKNET", input.sessionWallet) === wallet) return "none";
   if (input.declined.some((d) => normalizeAddress("STARKNET", d) === wallet)) return "none";
   return "sign-in";
 }

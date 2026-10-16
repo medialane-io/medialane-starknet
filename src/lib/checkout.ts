@@ -1,4 +1,5 @@
-import type { ApiOrder } from "@medialane/sdk";
+import { resolveFeeConfig, type ApiOrder } from "@medialane/sdk";
+import { feeAmount } from "@medialane/sdk/starknet";
 
 export interface CheckoutItem {
   orderHash: string;
@@ -15,6 +16,11 @@ export function orderTotal(order: ApiOrder, quantity: number): bigint {
   const perUnit = BigInt(order.consideration.startAmount);
   const isERC1155 = order.offer.itemType === "ERC1155";
   return isERC1155 ? perUnit * BigInt(quantity) : perUnit;
+}
+
+export function amountDue(order: ApiOrder, quantity: number): bigint {
+  const total = orderTotal(order, quantity);
+  return total + feeAmount(total, resolveFeeConfig({}).marketplaceBps);
 }
 
 type IntentCalls = { id: string; calls: import("starknet").Call[] };
