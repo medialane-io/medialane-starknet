@@ -8,7 +8,7 @@ import { useSigner } from "@/hooks/use-signer";
 import { useSession, refreshSession } from "@/hooks/use-session";
 import { SESSION_REQUIRED } from "@/lib/account-gate";
 import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
-import { nextSessionStep, type WalletStatus } from "@/lib/wallet-session";
+import { nextSessionStep, sessionBelongsTo, signOut, type WalletStatus } from "@/lib/wallet-session";
 
 type AccountSessionValue = {
   isSigningIn: boolean;
@@ -53,6 +53,7 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
       declined,
       signingIn: isSigningIn,
     });
+    if (step === "sign-out") void signOut().then(() => refreshSession());
     if (step === "sign-in" && signer) void signIn().catch(() => {});
   }, [status, address, session?.walletAddress, isLoading, declined, isSigningIn, signer, signIn]);
 
@@ -61,7 +62,9 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
 
 export function useAccountSession() {
   const ctx = useContext(AccountSessionContext);
-  const { session } = useSession();
+  const { address } = useAccount();
+  const { session: current } = useSession();
+  const session = current && sessionBelongsTo(current.walletAddress, address) ? current : null;
   const signIn = ctx?.signIn ?? (async () => false);
   return {
     session,

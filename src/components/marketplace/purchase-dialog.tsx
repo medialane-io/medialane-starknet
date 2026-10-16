@@ -9,7 +9,7 @@ import {
   RefreshCw, ShieldCheck, ShoppingCart, Zap,
 } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
-import { orderTotal, type CheckoutItem } from "@/lib/checkout";
+import { amountDue, orderTotal, type CheckoutItem } from "@/lib/checkout";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -216,7 +216,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     ? Math.max(1, parseInt(order.remainingAmount ?? order.offer.startAmount ?? "1", 10))
     : 1;
 
-  const requiredRaw = orderTotal(order, quantity);
+  const requiredRaw = amountDue(order, quantity);
   const { raw: orderCurrencyBalance, isLoading: balanceLoading } = useTokenBalance(
     order.price?.currency ?? "",
     address ?? undefined
@@ -253,7 +253,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           swap = await createSwapIntent(getMedialaneClient().api, {
             sellSymbol: paymentSymbol,
             buySymbol: order.price.currency,
-            buyAmountRaw: orderTotal(order, quantity).toString(),
+            buyAmountRaw: amountDue(order, quantity).toString(),
             takerAddress: address,
           });
         } catch {

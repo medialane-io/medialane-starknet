@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { nextSessionStep, signOut } from "./wallet-session";
+import { nextSessionStep, sessionBelongsTo, signOut } from "./wallet-session";
 
 const A = "0x0" + "a".repeat(63);
 const B = "0x0" + "b".repeat(63);
@@ -19,8 +19,18 @@ describe("wallet session", () => {
   test("a connected wallet with its own session does nothing", () => {
     expect(nextSessionStep({ ...base, sessionWallet: "0x" + "a".repeat(63) })).toBe("none");
   });
-  test("a different wallet signs in again", () => {
-    expect(nextSessionStep({ ...base, sessionWallet: B })).toBe("sign-in");
+  test("a session for a different wallet is signed out before signing in again", () => {
+    expect(nextSessionStep({ ...base, sessionWallet: B })).toBe("sign-out");
+    expect(nextSessionStep({ ...base, sessionWallet: null })).toBe("sign-in");
+  });
+  test("a session for a different wallet is signed out even when the new wallet declined", () => {
+    expect(nextSessionStep({ ...base, sessionWallet: B, declined: [A] })).toBe("sign-out");
+  });
+  test("a session belongs only to its own wallet", () => {
+    expect(sessionBelongsTo("0x" + "a".repeat(63), A)).toBe(true);
+    expect(sessionBelongsTo(B, A)).toBe(false);
+    expect(sessionBelongsTo(null, A)).toBe(false);
+    expect(sessionBelongsTo(A, null)).toBe(false);
   });
   test("a disconnected status never signs out, because the wallet starts disconnected while it reconnects on page load", () => {
     expect(nextSessionStep({ ...base, status: "disconnected", address: null, sessionWallet: A })).toBe("none");

@@ -40,3 +40,10 @@ test("checkout runs the swap intent first, then every fulfill intent, with all t
   });
   expect(checkoutExecution(items).intentIds).toEqual(["f1", "f2"]);
 });
+
+import { amountDue } from "@/lib/checkout";
+
+test("the amount due adds the 1% platform fee the purchase transfers", () => {
+  expect(amountDue(order("ERC721"), 1)).toBe(ONE_STRK + ONE_STRK / 100n);
+  expect(amountDue(order("ERC1155"), 3)).toBe(3n * ONE_STRK + (3n * ONE_STRK) / 100n);
+});
