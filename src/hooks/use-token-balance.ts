@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getTokenBySymbol } from "@medialane/sdk";
-import { starknetProvider } from "@/lib/starknet";
+import { erc20Balance } from "@medialane/sdk/starknet";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { formatTokenAmount } from "@/utils/swap-tokens";
 
 export interface TokenBalanceResult {
@@ -16,19 +17,8 @@ export interface TokenBalanceResult {
   refresh: () => void;
 }
 
-async function readBalance(tokenAddress: string, owner: string): Promise<bigint> {
-
-  let res: string[];
-  try {
-    res = await starknetProvider.callContract({ contractAddress: tokenAddress, entrypoint: "balanceOf", calldata: [owner] });
-  } catch {
-    res = await starknetProvider.callContract({ contractAddress: tokenAddress, entrypoint: "balance_of", calldata: [owner] });
-  }
-
-  const low = BigInt(res[0] ?? "0");
-  const high = BigInt(res[1] ?? "0");
-  return low + (high << 128n);
-}
+const readBalance = (tokenAddress: string, owner: string): Promise<bigint> =>
+  erc20Balance(getMedialaneClient().provider, tokenAddress, owner);
 
 export function useTokenBalance(
   tokenSymbol: string,

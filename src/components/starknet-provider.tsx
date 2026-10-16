@@ -3,8 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo } from "reac
 import { mainnet } from "@starknet-react/chains";
 import { ConnectorNotConnectedError, StarknetConfig, voyager } from "@starknet-react/core";
 import { walletConnectors } from "@/lib/wallet-connectors";
-import { RpcProvider } from "starknet";
-import { RPC_PRIMARY_URL, RPC_BLOCK_IDENTIFIER } from "@/lib/starknet";
+import { getMedialaneClient } from "@/lib/medialane-client";
 import { QueryClient } from "@tanstack/react-query";
 
 function useSuppressStaleAutoConnectRejection(): void {
@@ -71,11 +70,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
 
   const networkConfig = networkConfigs[currentNetwork];
 
-  const providerFactory = useCallback(
-    (_chain: unknown) =>
-      new RpcProvider({ nodeUrl: RPC_PRIMARY_URL, blockIdentifier: RPC_BLOCK_IDENTIFIER }),
-    [],
-  );
+  const providerFactory = useCallback((_chain: unknown) => getMedialaneClient().provider, []);
   return (
     <NetworkContext.Provider value={{
       currentNetwork,

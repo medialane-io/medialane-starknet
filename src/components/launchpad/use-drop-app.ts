@@ -5,7 +5,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { starknetProvider } from "@/lib/starknet";
 
 /** The dapp's connected wallet and client for the shared drop screens. */
 export function useDropApp(): DropAppProps {
@@ -14,7 +13,6 @@ export function useDropApp(): DropAppProps {
   const signer = useVenueSigner();
   return {
     getClient: getMedialaneClient,
-    provider: starknetProvider,
     walletAddress: address ?? null,
     onRequireWallet: open,
     connectLabel: "Connect wallet",

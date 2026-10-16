@@ -30,7 +30,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
-import { starknetProvider } from "@/lib/starknet";
 import { useMyClubCollections } from "@/hooks/use-club";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
@@ -162,7 +161,7 @@ export default function CreateClubPage() {
 
       setDialogTxStatus("submitting");
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { receipt } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+      const { receipt } = await executeIntent(signer, client, intentRes.data);
       setDialogTxStatus("confirming");
 
       const addr = deployedCollectionFromReceipt(receipt, "ip-club");

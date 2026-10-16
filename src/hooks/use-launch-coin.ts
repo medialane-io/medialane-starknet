@@ -13,7 +13,6 @@ import {
 import { useWallet } from "@/hooks/use-wallet";
 import { useSigner } from "@/hooks/use-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { starknetProvider } from "@/lib/starknet";
 import { describeError } from "@medialane/ui";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
 
@@ -65,7 +64,7 @@ export function useLaunchCoin() {
         });
         if (createIntent.data.requiresSignature) throw new Error("Expected a prebuilt create-coin intent");
         const createHash = await runIntent(async () => createIntent);
-        const receipt = await starknetProvider.waitForTransaction(createHash);
+        const receipt = await getMedialaneClient().provider.waitForTransaction(createHash);
         const coinAddress = parseCreatorCoinCreated(receipt as unknown as CreatorCoinReceiptLike);
 
         setStatus("launching");

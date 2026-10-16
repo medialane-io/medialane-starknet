@@ -9,7 +9,6 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { RewardEarned } from "@/lib/reward-earned";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
-import { starknetProvider } from "@/lib/starknet";
 
 export interface FastMintProps {
   presentation?: "inline" | "dialog";
@@ -54,7 +53,6 @@ export function FastMint({ presentation = "inline", open = true, onClose, mediaK
         return venueSigner;
       }}
       client={client}
-      provider={starknetProvider}
     />
   );
 }

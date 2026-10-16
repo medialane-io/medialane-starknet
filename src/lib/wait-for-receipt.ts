@@ -1,11 +1,11 @@
-import { starknetProvider } from "@/lib/starknet";
+import { getMedialaneClient } from "@/lib/medialane-client";
 
 export async function waitForReceipt(hash: string): Promise<
   | { ok: true; polledOk?: boolean }
   | { ok: false; reason: string }
 > {
   try {
-    const receipt = await starknetProvider.waitForTransaction(hash, {
+    const receipt = await getMedialaneClient().provider.waitForTransaction(hash, {
       retryInterval: 3000,
     });
 

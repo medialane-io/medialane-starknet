@@ -9,7 +9,6 @@ import { executeIntent } from "@medialane/sdk/starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
-import { starknetProvider } from "@/lib/starknet";
 
 interface WriteOpts {
     silent?: boolean;
@@ -148,7 +147,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 amount: is1155 ? (amount ?? "1") : undefined,
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required listing intent");
-            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;
@@ -185,7 +184,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 tokenStandard,
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required offer intent");
-            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;
@@ -236,7 +235,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 tokenStandard,
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required cancel intent");
-            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;
@@ -261,7 +260,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 tokenStandard,
             });
             if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
-            const { txHash: hash } = await executeIntent(starknetProvider, signer, client, intentRes.data);
+            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;
