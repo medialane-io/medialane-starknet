@@ -135,21 +135,19 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
               tokenName={tokenName}
               tokenId={tokenId}
               fallbackIcon={<Layers className="h-10 w-10 text-muted-foreground/35" />}
-              badge={
-                <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-white drop-shadow font-bold text-lg leading-tight truncate">{name}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Zap className="h-3 w-3 text-emerald-300 drop-shadow" />
-                      <span className="text-[11px] font-medium text-emerald-200 drop-shadow">Wallet offer</span>
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                    #{tokenId}
-                  </span>
-                </div>
-              }
             />
+            <div className="flex items-end justify-between gap-3 px-5 pt-4">
+              <div className="min-w-0">
+                <p className="font-bold text-lg leading-tight truncate">{name}</p>
+                <div className="flex items-center gap-1 mt-1">
+                  <Zap className="h-3 w-3 text-emerald-500" />
+                  <span className="text-[11px] font-medium text-emerald-500">Wallet offer</span>
+                </div>
+              </div>
+              <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                #{tokenId}
+              </span>
+            </div>
             <div className="px-5 py-5 space-y-4">
               <div>
                 <DialogTitle>Make an offer</DialogTitle>
