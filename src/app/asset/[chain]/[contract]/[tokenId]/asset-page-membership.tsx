@@ -160,7 +160,7 @@ export function AssetPageMembership() {
 
   const dialogs = useAssetMarketplaceDialogState();
   const {
-    activeListings, activeBids, cheapest, cheapestUsd, isOwner, myListing,
+    activeListings, activeBids, cheapest, cheapestUsd, isOwner, walletBalance, myListing,
     attributes, hasTemplateData, isDisplayAttr,
   } = useAssetMarketState(token, listings, walletAddress);
 
@@ -205,12 +205,7 @@ export function AssetPageMembership() {
   const image = resolveTokenImage(token.metadata?.image);
   const description = token.metadata?.description;
   const holders = token.balances ?? [];
-  const myQuantity = walletAddress
-    ? parseInt(
-        holders.find((b) => b.owner && normalizeAddress("STARKNET", b.owner) === normalizeAddress("STARKNET", walletAddress))?.amount ?? "0",
-        10
-      )
-    : 0;
+  const myQuantity = walletBalance ? parseInt(walletBalance, 10) : 0;
 
   return (
     <div className="relative z-0 min-h-screen">
@@ -280,7 +275,7 @@ export function AssetPageMembership() {
               onOpenOffer={() => dialogs.setOfferOpen(true)}
             />
 
-            <AssetOwnersPanel balances={holders} maxVisible={8} />
+            <AssetOwnersPanel balances={holders} total={token.holderCount} maxVisible={8} />
 
             <AssetCollectionBar
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}

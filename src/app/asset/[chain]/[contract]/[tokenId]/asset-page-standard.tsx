@@ -244,7 +244,7 @@ export function AssetPageStandard() {
             />
 
             {isERC1155 && balances.length > 0 ? (
-              <AssetOwnersPanel balances={balances} maxVisible={5} />
+              <AssetOwnersPanel balances={balances} total={token.holderCount} maxVisible={5} />
             ) : null}
 
             <div className="pt-5 space-y-5">

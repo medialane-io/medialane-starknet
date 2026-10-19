@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useToken } from "@/hooks/use-tokens";
+import { useToken, useTokenBalance } from "@/hooks/use-tokens";
 import { useCollection } from "@/hooks/use-collections";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAccountSession } from "@/components/wallet-session-sync";
@@ -13,7 +13,7 @@ import { getListableTokens, getTokenBySymbol, getService, normalizeAddress } fro
 import { LICENSE_TYPES } from "@/types/ip";
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import { assetHref } from "@/lib/routes";
-import { ipfsToHttp } from "@/lib/utils";
+import { ipfsToHttp, checkIsOwner } from "@/lib/utils";
 import { ToggleGroup, Section } from "@/components/create/create-form-primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,12 +35,8 @@ export default function CreateLicensingPage() {
   const { token, isLoading: tokenLoading } = useToken(contract, tokenId);
   const { collection: parentCollection } = useCollection(contract);
 
-  const walletAddressNormalized = walletAddress ? normalizeAddress("STARKNET", walletAddress) : null;
-  const viewerIsOwner = !!(
-    token && walletAddressNormalized &&
-    (token.owner && normalizeAddress("STARKNET", token.owner) === walletAddressNormalized ||
-     token.balances?.some((b) => normalizeAddress("STARKNET", b.owner) === walletAddressNormalized))
-  );
+  const { amount: walletBalance } = useTokenBalance(contract, tokenId, walletAddress);
+  const viewerIsOwner = checkIsOwner(token, walletAddress, walletBalance);
   const originalName = token?.metadata?.name ?? `Token #${tokenId}`;
   const originalImage = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const originalAttributes = Array.isArray(token?.metadata?.attributes)

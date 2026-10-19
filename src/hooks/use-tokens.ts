@@ -43,6 +43,18 @@ export function useToken(contract: string | null, tokenId: string | null) {
   };
 }
 
+export function useTokenBalance(contract: string | null, tokenId: string | null, owner: string | null | undefined) {
+  const client = useMedialaneClient();
+
+  const { data, mutate } = useSWR(
+    contract && tokenId && owner ? `token-balance-${contract}-${tokenId}-${owner}` : null,
+    () => client.api.getTokenBalance(contract!, tokenId!, owner!),
+    { revalidateOnFocus: false }
+  );
+
+  return { amount: data?.data.amount ?? null, mutate };
+}
+
 export function useTokensByOwner(address: string | null, page = 1, limit = 20) {
   const client = useMedialaneClient();
 

@@ -111,8 +111,8 @@ export function AssetPageEdition() {
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const description = token.metadata?.description;
   const holders = token.balances ?? [];
-  const uniqueHolders = holders.length;
-  const totalEditions = holders.reduce((sum, b) => sum + parseInt(b.amount, 10), 0);
+  const uniqueHolders = token.holderCount ?? holders.length;
+  const totalEditions = Number(token.supply ?? 0);
 
   return (
     <div className="relative z-0 min-h-screen">
@@ -180,7 +180,7 @@ export function AssetPageEdition() {
               onOpenOffer={() => dialogs.setOfferOpen(true)}
             />
 
-            <AssetOwnersPanel balances={holders} maxVisible={8} />
+            <AssetOwnersPanel balances={holders} total={token.holderCount} maxVisible={8} />
 
             <AssetCollectionBar
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
