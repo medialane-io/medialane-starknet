@@ -4,12 +4,13 @@ import { useMemo } from "react";
 import Image from "next/image";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder, ApiToken } from "@medialane/sdk";
-import { checkIsOwner, usdValueFor } from "@/lib/utils";
+import { usdValueFor } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { useTokenBalance } from "@/hooks/use-tokens";
 import { LICENSE_TRAIT_TYPES } from "@/types/ip";
 import type { IPType } from "@/types/ip";
 import { IP_TEMPLATES, EMBED_PLATFORM_META, SOCIAL_PLATFORM_META } from "@/lib/ip-templates";
+import { checkIsOwner } from "@medialane/ui";
 
 export type AssetToken = ApiToken & {
   balances?: Array<{ owner: string; amount: string }> | null;

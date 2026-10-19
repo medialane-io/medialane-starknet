@@ -20,10 +20,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, HiddenContentBanner } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, HiddenContentBanner, AssetOwnersPanel, AssetProvenanceTab, AssetUnavailable, ASSET_ACCENTS } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
-import { AssetProvenanceTab } from "./asset-provenance-tab";
-import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
+import { AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
 import { ReportDialog } from "@/components/report-dialog";
 import { HelpIcon } from "@/components/ui/help-icon";
@@ -190,16 +189,7 @@ export function AssetPageMembership() {
     );
   }
 
-  if (!token) {
-    return (
-      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 text-center">
-        <p className="text-2xl font-bold">{isIndexing ? "Preparing this asset" : "Asset not found"}</p>
-        <p className="text-muted-foreground mt-2">
-          {isIndexing ? "It is live onchain and will appear here in a moment." : "Check the collection address and token ID."}
-        </p>
-      </div>
-    );
-  }
+  if (!token) return <AssetUnavailable isIndexing={isIndexing} />;
 
   const name = token.metadata?.name || `Membership #${token.tokenId}`;
   const image = resolveTokenImage(token.metadata?.image);
@@ -335,11 +325,7 @@ export function AssetPageMembership() {
         name={name}
         imageUrl={imageUrl}
         commentTotal={commentTotal}
-        accentBorderClassName="border-brand-purple/20"
-        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-purple) / 0.10), hsl(var(--brand-blue) / 0.08))"
-        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-purple) / 0.3), hsl(var(--brand-blue) / 0.3))"
-        accentLabelClassName="text-brand-purple"
-        accentCountStyle={{ background: "hsl(var(--brand-purple))" }}
+        {...ASSET_ACCENTS.membership}
       />
 
       <AssetMarketplaceDialogs

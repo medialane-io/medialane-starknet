@@ -30,7 +30,7 @@ import { registerRemix } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@/types/ip";
-import { ipfsToHttp, checkIsOwner } from "@/lib/utils";
+import { ipfsToHttp } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
   GitBranch, ChevronDown, ChevronLeft, ImagePlus, Upload,
@@ -40,6 +40,7 @@ import { ToggleGroup, Section } from "@/components/create/create-form-primitives
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import type { Call } from "starknet";
 import { uploadFileToIpfs, uploadJsonToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
+import { checkIsOwner } from "@medialane/ui";
 
 const TOKENS = getListableTokens();
 

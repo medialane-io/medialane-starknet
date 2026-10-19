@@ -19,10 +19,9 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useTokenRemixes } from "@/hooks/use-remix-offers";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow, AssetMediaColumn, isLivingRenderCollection, HiddenContentBanner, DropTokenLink } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetHeaderBlock, AssetOwnerRow, AssetMediaColumn, isLivingRenderCollection, HiddenContentBanner, DropTokenLink, AssetOwnersPanel, AssetProvenanceTab, AssetUnavailable, ASSET_ACCENTS } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
-import { AssetProvenanceTab } from "./asset-provenance-tab";
-import { AssetOwnersPanel, AssetCommentsDialog } from "./asset-side-panels";
+import { AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
 import { AssetLightbox } from "@/components/asset/asset-lightbox";
 import { ReportDialog } from "@/components/report-dialog";
@@ -147,18 +146,7 @@ export function AssetPageStandard() {
     );
   }
 
-  if (!token) {
-    return (
-      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 text-center">
-        <p className="text-2xl font-bold">{isIndexing ? "Preparing this asset" : "Asset not found"}</p>
-        <p className="text-muted-foreground mt-2">
-          {isIndexing
-            ? "It is live onchain and will appear here in a moment."
-            : "Check the collection address and token ID."}
-        </p>
-      </div>
-    );
-  }
+  if (!token) return <AssetUnavailable isIndexing={isIndexing} />;
 
   const name = token.metadata?.name || `Token #${token.tokenId}`;
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
@@ -329,11 +317,7 @@ export function AssetPageStandard() {
         name={name}
         imageUrl={imageUrl}
         commentTotal={commentTotal}
-        accentBorderClassName="border-brand-blue/20"
-        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.10), hsl(var(--brand-purple) / 0.08))"
-        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.3), hsl(var(--brand-purple) / 0.3))"
-        accentLabelClassName="text-brand-blue"
-        accentCountStyle={{ background: "hsl(var(--brand-blue))" }}
+        {...ASSET_ACCENTS.standard}
       />
 
       <AssetMarketplaceDialogs
