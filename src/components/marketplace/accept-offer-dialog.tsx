@@ -112,18 +112,19 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
         {step === "confirm" && (
           <div className="flex flex-col">
 
-            <div className="relative h-40 w-full bg-muted overflow-hidden shrink-0">
-              {image ? (
-                <Image src={image} alt={name} fill sizes="384px" className="h-full w-full object-cover" unoptimized />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-primary/20 via-brand-purple/10 to-transparent flex items-center justify-center">
-                  <DollarSign className="h-12 w-12 text-muted-foreground/30" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4">
-                <p className="text-white font-bold text-base leading-tight truncate">{name}</p>
-                <p className="text-white/70 text-xs mt-0.5">Accept this offer to sell</p>
+            <div className="flex flex-col items-center gap-3 px-5 pt-6 shrink-0">
+              <div className="relative h-32 w-32 rounded-2xl overflow-hidden border border-border bg-muted">
+                {image ? (
+                  <Image src={image} alt={name} fill sizes="128px" className="h-full w-full object-cover" unoptimized />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-primary/20 via-brand-purple/10 to-transparent flex items-center justify-center">
+                    <DollarSign className="h-12 w-12 text-muted-foreground/30" />
+                  </div>
+                )}
+              </div>
+              <div className="text-center min-w-0 max-w-full">
+                <p className="font-bold text-base leading-tight truncate">{name}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">Accept this offer to sell</p>
               </div>
             </div>
 

@@ -513,7 +513,7 @@ export function SingleEditionsContent() {
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.getElementById("image-upload")?.click(); } }}
               >
                 {imagePreview ? (
-                  <Image src={imagePreview} alt="Preview" width={320} height={192} className="mx-auto max-h-48 w-auto rounded-lg object-contain" unoptimized />
+                  <Image src={imagePreview} alt="Preview" width={192} height={192} className="mx-auto h-48 w-48 rounded-lg object-cover" unoptimized />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Upload className="h-8 w-8" />

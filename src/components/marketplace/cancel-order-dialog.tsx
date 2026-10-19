@@ -31,15 +31,16 @@ function TokenHero({ order, variant }: { order: ApiOrder; variant: "listing" | "
 
   return (
     <div>
-      <div className="relative h-44 w-full bg-muted overflow-hidden">
-        {image ? (
-          <Image src={image} alt={name} fill sizes="448px" className="h-full w-full object-cover" unoptimized />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-destructive/20 via-brand-rose/10 to-transparent flex items-center justify-center text-4xl font-bold text-muted-foreground/30">
-            #{order.nftTokenId}
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+      <div className="flex justify-center pt-6">
+        <div className="relative h-32 w-32 rounded-2xl overflow-hidden border border-border bg-muted">
+          {image ? (
+            <Image src={image} alt={name} fill sizes="128px" className="h-full w-full object-cover" unoptimized />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-destructive/20 via-brand-rose/10 to-transparent flex items-center justify-center text-2xl font-bold text-muted-foreground/30">
+              #{order.nftTokenId}
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-end justify-between px-6 pt-3 pb-1">
         <div className="min-w-0">

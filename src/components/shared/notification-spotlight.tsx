@@ -40,7 +40,7 @@ function SpotlightCard({
   return (
     <div className="flex flex-col">
 
-      <div className="relative w-full aspect-square max-h-64 bg-muted overflow-hidden shrink-0">
+      <div className="relative w-full aspect-square bg-muted overflow-hidden shrink-0">
         {notification.image ? (
           <Image
             src={notification.image}
