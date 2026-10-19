@@ -13,7 +13,7 @@ import { getListableTokens, getTokenBySymbol, getService, normalizeAddress } fro
 import { LICENSE_TYPES } from "@/types/ip";
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import { assetHref } from "@/lib/routes";
-import { ipfsToHttp, checkIsOwner } from "@/lib/utils";
+import { ipfsToHttp } from "@/lib/utils";
 import { ToggleGroup, Section } from "@/components/create/create-form-primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { ChevronLeft, ChevronDown, Shield, DollarSign, Percent, HandCoins, Loader2, Check } from "lucide-react";
+import { checkIsOwner } from "@medialane/ui";
 
 const TOKENS = getListableTokens();
 
