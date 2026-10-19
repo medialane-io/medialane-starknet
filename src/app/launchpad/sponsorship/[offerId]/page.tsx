@@ -117,7 +117,7 @@ export default function SponsorshipOfferPage() {
 
         <FadeIn>
           <div className="rounded-2xl border border-border/40 overflow-hidden">
-            <div className="relative aspect-video bg-muted/40">
+            <div className="relative aspect-square bg-muted/40">
               {imageUrl ? (
                 <Image src={imageUrl} alt={token?.metadata?.name ?? "Asset"} fill className="object-cover" />
               ) : (
