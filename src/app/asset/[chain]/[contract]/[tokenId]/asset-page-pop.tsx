@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { Award } from "lucide-react";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
-import { AssetCollectionBar, AssetUtilityIcons, AssetHeaderBlock, AssetOwnerRow, AssetMediaColumn } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetHeaderBlock, AssetMediaColumn } from "@medialane/ui";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { useToken, useTokenHistory } from "@/hooks/use-tokens";
 import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
@@ -62,7 +62,6 @@ export function AssetPagePop() {
   const name = token.metadata?.name || `POP #${token.tokenId}`;
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const description = token.metadata?.description;
-  const ownerAddress = token.balances?.[0]?.owner ?? token.owner ?? null;
 
   return (
     <div className="relative z-0 min-h-screen">
@@ -115,9 +114,6 @@ export function AssetPagePop() {
             {isOwner && <PopBurnButton collectionAddress={contract} tokenId={tokenId} />}
 
             <div className="pt-5 space-y-5">
-              {ownerAddress ? (
-                <AssetOwnerRow ownerAddress={ownerAddress} ownerHref={`/creator/${ownerAddress}`} />
-              ) : null}
               <AssetCollectionBar
                 collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
                 collectionImage={collection?.image ? ipfsToHttp(collection.image) : null}
