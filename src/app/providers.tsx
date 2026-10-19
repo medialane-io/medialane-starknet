@@ -1,5 +1,7 @@
 "use client";
 
+import { MedialaneAppProvider } from "@medialane/ui";
+import { useAppAdapter } from "@/lib/use-app-adapter";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
@@ -91,6 +93,10 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppAdapter({ children }: { children: React.ReactNode }) {
+  return <MedialaneAppProvider value={useAppAdapter()}>{children}</MedialaneAppProvider>;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isStandalone =
@@ -116,9 +122,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StarknetProvider>
           <WalletProvider>
             <WalletSessionSync>
-              <UserRegistration />
-              {isStandalone ? children : <Shell>{children}</Shell>}
-              {!isStandalone && <NotificationSpotlight />}
+              <AppAdapter>
+                <UserRegistration />
+                {isStandalone ? children : <Shell>{children}</Shell>}
+                {!isStandalone && <NotificationSpotlight />}
+              </AppAdapter>
             </WalletSessionSync>
           </WalletProvider>
         </StarknetProvider>

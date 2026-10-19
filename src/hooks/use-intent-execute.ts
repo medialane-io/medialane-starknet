@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import type { ApiIntentCreated } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { runIntentCalls } from "@/lib/run-intent-calls";
+import { runIntentCalls } from "@medialane/ui";
 
 export function useIntentExecute() {
   const signer = useVenueSigner();
