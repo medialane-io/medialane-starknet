@@ -5,7 +5,7 @@ import { assetHref } from "@/lib/routes";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useToken } from "@/hooks/use-tokens";
+import { useToken, useTokenBalance } from "@/hooks/use-tokens";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -30,7 +30,7 @@ import { registerRemix } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@/types/ip";
-import { ipfsToHttp } from "@/lib/utils";
+import { ipfsToHttp, checkIsOwner } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
   GitBranch, ChevronDown, ChevronLeft, ImagePlus, Upload,
@@ -57,14 +57,8 @@ export default function CreateRemixPage() {
     (c) => getService(c.service)?.id === "mip-erc721" && c.collectionId != null
   );
 
-  const walletAddressNormalized = walletAddress ? normalizeAddress("STARKNET", walletAddress) : null;
-  const isOwner = !!(
-    token && walletAddressNormalized &&
-    (
-      (token.owner && normalizeAddress("STARKNET", token.owner) === walletAddressNormalized) ||
-      token.balances?.some((balance) => normalizeAddress("STARKNET", balance.owner) === walletAddressNormalized)
-    )
-  );
+  const { amount: walletBalance } = useTokenBalance(contract, tokenId, walletAddress);
+  const isOwner = checkIsOwner(token, walletAddress, walletBalance);
 
   const originalName = token?.metadata?.name ?? `Token #${tokenId}`;
   const originalImage = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;

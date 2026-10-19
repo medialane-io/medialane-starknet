@@ -6,6 +6,7 @@ import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder, ApiToken } from "@medialane/sdk";
 import { checkIsOwner, usdValueFor } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { useTokenBalance } from "@/hooks/use-tokens";
 import { LICENSE_TRAIT_TYPES } from "@/types/ip";
 import type { IPType } from "@/types/ip";
 import { IP_TEMPLATES, EMBED_PLATFORM_META, SOCIAL_PLATFORM_META } from "@/lib/ip-templates";
@@ -47,6 +48,7 @@ export function useAssetMarketState(
   listings: ApiOrder[],
   walletAddress: string | null | undefined,
 ) {
+  const { amount: walletBalance } = useTokenBalance(token?.contractAddress ?? null, token?.tokenId ?? null, walletAddress);
   const marketState = useMemo(() => {
 
     const activeListings = listings.filter(
@@ -59,7 +61,7 @@ export function useAssetMarketState(
       BigInt(a.consideration.startAmount) < BigInt(b.consideration.startAmount) ? -1 : 1
     )[0];
 
-    const isOwner = checkIsOwner(token, walletAddress);
+    const isOwner = checkIsOwner(token, walletAddress, walletBalance);
     const myListing = isOwner && walletAddress
       ? activeListings.find((l) => normalizeAddress("STARKNET", l.offerer) === normalizeAddress("STARKNET", walletAddress)) ?? null
       : null;
@@ -94,6 +96,7 @@ export function useAssetMarketState(
       activeBids,
       cheapest,
       isOwner,
+      walletBalance,
       myListing,
       attributes,
       hasTemplateData,
@@ -101,7 +104,7 @@ export function useAssetMarketState(
       parentContract,
       parentTokenId,
     };
-  }, [token, listings, walletAddress]);
+  }, [token, listings, walletAddress, walletBalance]);
 
   const usdPrices = useUsdPrices();
   const cheapestUsd = useMemo(
