@@ -1,84 +1,91 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { Award, Users, Shield, CheckCircle2, ExternalLink, Flag } from "lucide-react";
-import { useToken } from "@/hooks/use-tokens";
-import { useCollection } from "@/hooks/use-collections";
-import { usePopClaimStatus } from "@/hooks/use-pop";
+import { useParams, useRouter } from "next/navigation";
+import { Award } from "lucide-react";
+import type { ApiActivity, ApiOrder } from "@medialane/sdk";
+import { AssetCollectionBar, AssetUtilityIcons, AssetHeaderBlock, AssetOwnerRow, AssetMediaColumn } from "@medialane/ui";
+import { assetHref, collectionHref } from "@/lib/routes";
+import { useToken, useTokenHistory } from "@/hooks/use-tokens";
+import { useCollection, useNearbyCollectionTokens } from "@/hooks/use-collections";
+import { useComments } from "@/hooks/use-comments";
+import { useTokenRemixes } from "@/hooks/use-remix-offers";
 import { useWallet } from "@/hooks/use-wallet";
-import { PopBurnButton } from "@/components/claim/pop-burn-button";
-import { normalizeAddress } from "@medialane/sdk";
 import { ipfsToHttp } from "@/lib/utils";
-import { AddressDisplay } from "@/components/shared/address-display";
-import { PopClaimButton } from "@/components/claim/pop-claim-button";
-import { ShareButton } from "@/components/shared/share-button";
-import { ReportDialog } from "@/components/report-dialog";
-import { AssetAtmosphere } from "./asset-shared";
 import { EXPLORER_URL } from "@/lib/constants";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
+import { AssetLightbox } from "@/components/asset/asset-lightbox";
+import { PopBurnButton } from "@/components/claim/pop-burn-button";
+import { ReportDialog } from "@/components/report-dialog";
+import { AssetProvenanceTab } from "./asset-provenance-tab";
+import { AssetCommentsDialog } from "./asset-side-panels";
+import { AssetOverviewContent } from "./asset-overview-content";
+import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
+
+const NO_LISTINGS: ApiOrder[] = [];
 
 export function AssetPagePop() {
   const { contract, tokenId } = useParams<{ contract: string; tokenId: string }>();
+  const router = useRouter();
   const { address: walletAddress } = useWallet();
-  const { token } = useToken(contract, tokenId);
   const { collection } = useCollection(contract);
-  const { hasClaimed } = usePopClaimStatus(contract, walletAddress ?? null);
-  const holdsThisToken =
-    !!walletAddress &&
-    !!token?.owner &&
-    normalizeAddress("STARKNET", token.owner) === normalizeAddress("STARKNET", walletAddress);
+  const { token: rawToken, isIndexing } = useToken(contract, tokenId);
+  const token = rawToken as AssetToken | null;
+  const { history } = useTokenHistory(contract, tokenId);
+  const { tokens: collectionTokens } = useNearbyCollectionTokens(contract, tokenId);
+  const { total: commentTotal } = useComments(contract, tokenId, 1, 20, false);
+  const { total: remixCount } = useTokenRemixes(contract, tokenId);
   const shouldReduce = useReducedMotion();
 
-  const imageUrl = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const [imgError, setImgError] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const name = token?.metadata?.name ?? collection?.name ?? `Credential #${tokenId}`;
-  const description = token?.metadata?.description ?? collection?.description;
-  const totalClaimed = collection?.totalSupply ?? 0;
-  const creator = collection?.owner;
+  const { isOwner, attributes, hasTemplateData, isDisplayAttr } = useAssetMarketState(token, NO_LISTINGS, walletAddress);
+
+  if (!token) {
+    return (
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 text-center">
+        <p className="text-2xl font-bold">{isIndexing ? "Preparing this asset" : "Asset not found"}</p>
+        <p className="text-muted-foreground mt-2">
+          {isIndexing
+            ? "It is live onchain and will appear here in a moment."
+            : "Check the collection address and token ID."}
+        </p>
+      </div>
+    );
+  }
+
+  const name = token.metadata?.name || `POP #${token.tokenId}`;
+  const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
+  const description = token.metadata?.description;
+  const ownerAddress = token.balances?.[0]?.owner ?? token.owner ?? null;
 
   return (
     <div className="relative z-0 min-h-screen">
-      <AssetAtmosphere imageUrl={imageUrl} />
+      <AssetAtmosphere imageUrl={image} opacityClassName="opacity-30" />
 
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 space-y-8 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-8 items-start">
-          <motion.div
-            initial={shouldReduce ? false : { scale: 1.0, opacity: 0 }}
-            animate={{ scale: 1.02, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="overflow-hidden rounded-xl lg:sticky lg:top-16"
-          >
-            <div className="rounded-2xl overflow-hidden border border-border bg-muted relative">
-              {imageUrl && !imgError ? (
-                <Image
-                  src={imageUrl}
-                  alt={name}
-                  width={0}
-                  height={0}
-                  sizes="(max-width: 1024px) 100vw, 66vw"
-                  className="w-full h-auto"
-                  onError={() => setImgError(true)}
-                  crossOrigin="anonymous"
-                  priority
-                />
-              ) : (
-                <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-emerald-500/20 to-teal-600/20">
-                  <Award className="h-24 w-24 text-emerald-500/40" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-10 gap-6 items-start">
+          <div className="space-y-3">
+            <AssetMediaColumn
+              shouldReduce={Boolean(shouldReduce)}
+              image={image}
+              imageAlt={name}
+              imgError={imgError}
+              onImageError={() => setImgError(true)}
+              onZoom={() => setLightboxOpen(true)}
+              animationUrl={token.metadata?.animationUrl}
+              fallback={(
+                <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/10 to-brand-purple/10">
+                  <Award className="h-24 w-24 text-muted-foreground/40" />
                 </div>
               )}
-              <div className="absolute top-3 left-3">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-emerald-400 border border-emerald-500/30">
-                  <Shield className="h-3 w-3" />
-                  Proof of Participation
-                </span>
-              </div>
-            </div>
-          </motion.div>
+            />
+          </div>
 
           <motion.div
             initial={shouldReduce ? false : { opacity: 0, y: 16 }}
@@ -90,97 +97,95 @@ export function AssetPagePop() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
                   <Award className="h-3 w-3" />
-                  POP Credential
+                  POP
                 </span>
+                <span className="text-xs text-muted-foreground">Yours forever · Verified on Starknet</span>
               </div>
-              <h1 className="text-3xl lg:text-5xl font-bold">{name}</h1>
-              {description && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-border p-5 space-y-4">
-              {hasClaimed ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-emerald-500 font-semibold">
-                    <CheckCircle2 className="h-5 w-5 shrink-0" />
-                    You hold this credential
-                  </div>
-                  <p className="text-xs text-muted-foreground">In your wallet</p>
-                  {holdsThisToken && <PopBurnButton collectionAddress={contract} tokenId={tokenId} />}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    This is an on-chain proof of participation. Once claimed, it stays in your wallet and cannot be transferred or sold.
-                  </p>
-                  <PopClaimButton collectionAddress={contract} />
-                </div>
-              )}
-              <div className="border-t border-border pt-3 space-y-1.5">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Shield className="h-3.5 w-3.5 shrink-0" />
-                  Non-transferable · Cannot be listed or sold
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                  Yours forever · Verified on Starknet
-                </div>
+              <div className="flex items-start justify-between gap-3">
+                <AssetHeaderBlock
+                  name={name}
+                  description={description}
+                  ipType={token.metadata?.ipType}
+                />
+                <AssetUtilityIcons
+                  contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
+                  shareTitle={name}
+                  onReportClick={() => setReportOpen(true)}
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border bg-muted/20 p-4 text-center">
-                <p className="text-2xl font-black">{totalClaimed.toLocaleString()}</p>
-                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
-                  <Users className="h-3 w-3" />
-                  holders
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-muted/20 p-4 text-center">
-                <p className="text-2xl font-black">#{tokenId}</p>
-                <p className="text-xs text-muted-foreground mt-1">credential ID</p>
-              </div>
+            {isOwner && <PopBurnButton collectionAddress={contract} tokenId={tokenId} />}
+
+            <div className="pt-5 space-y-5">
+              {ownerAddress ? (
+                <AssetOwnerRow ownerAddress={ownerAddress} ownerHref={`/creator/${ownerAddress}`} />
+              ) : null}
+              <AssetCollectionBar
+                collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
+                collectionImage={collection?.image ? ipfsToHttp(collection.image) : null}
+                collectionHref={collectionHref("STARKNET", contract)}
+                currentTokenId={tokenId}
+                siblingTokens={collectionTokens.map((t) => ({
+                  tokenId: t.tokenId,
+                  image: t.metadata?.image ? ipfsToHttp(t.metadata.image) : null,
+                }))}
+                onNavigate={(id) => router.push(assetHref("STARKNET", contract, id))}
+              />
+              <ReportDialog
+                target={{ type: "TOKEN", contract: token.contractAddress, tokenId: token.tokenId, name }}
+                open={reportOpen}
+                onOpenChange={setReportOpen}
+              />
             </div>
-
-            {creator && (
-              <div className="rounded-xl border border-border px-4 py-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">Issued by</p>
-                  <Link href={`/creator/${creator}`} className="text-sm font-medium hover:text-primary transition-colors">
-                    <AddressDisplay address={creator} chars={6} showCopy={false} />
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3 text-sm">
-              <a
-                href={`${EXPLORER_URL}/contract/${contract}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-              >
-                Contract <ExternalLink className="h-3 w-3" />
-              </a>
-              <ShareButton title={name} variant="ghost" size="icon" />
-              <button
-                className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                onClick={() => setReportOpen(true)}
-                title="Report this asset"
-              >
-                <Flag className="w-4 h-4" />
-              </button>
-            </div>
-
-            <ReportDialog
-              target={{ type: "TOKEN", contract, tokenId, name: name ?? undefined }}
-              open={reportOpen}
-              onOpenChange={setReportOpen}
-            />
           </motion.div>
         </div>
+
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="provenance">
+              Provenance {history.length > 0 && `(${history.length})`}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <AssetOverviewContent
+              attributes={attributes}
+              hasTemplateData={hasTemplateData}
+              isDisplayAttr={isDisplayAttr}
+            />
+          </TabsContent>
+
+          <TabsContent value="provenance">
+            <AssetProvenanceTab
+              history={history as ApiActivity[]}
+              contract={contract}
+              tokenId={tokenId}
+              remixCount={remixCount}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
+
+      <AssetLightbox open={lightboxOpen} onOpenChange={setLightboxOpen} image={image} alt={name} />
+
+      <FloatingCommentsButton onClick={() => setCommentOpen(true)} commentTotal={commentTotal} />
+
+      <AssetCommentsDialog
+        open={commentOpen}
+        onOpenChange={setCommentOpen}
+        contract={contract}
+        tokenId={tokenId}
+        name={name}
+        imageUrl={image}
+        commentTotal={commentTotal}
+        accentBorderClassName="border-brand-blue/20"
+        accentHeaderStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.10), hsl(var(--brand-purple) / 0.08))"
+        accentAvatarStyle="linear-gradient(135deg, hsl(var(--brand-blue) / 0.3), hsl(var(--brand-purple) / 0.3))"
+        accentLabelClassName="text-brand-blue"
+        accentCountStyle={{ background: "hsl(var(--brand-blue))" }}
+      />
     </div>
   );
 }
