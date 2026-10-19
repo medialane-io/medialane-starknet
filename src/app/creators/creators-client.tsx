@@ -36,7 +36,7 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
   return (
     <Link
       href={`/creator/${creator.username}`}
-      className="block relative aspect-[3/4] overflow-hidden rounded-2xl active:scale-[0.98] transition-transform duration-150 select-none"
+      className="block relative aspect-square overflow-hidden rounded-2xl active:scale-[0.98] transition-transform duration-150 select-none"
     >
 
       {resolvedImage ? (
@@ -103,7 +103,7 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
 }
 
 function CreatorCardSkeleton() {
-  return <Skeleton className="aspect-[3/4] w-full rounded-2xl" />;
+  return <Skeleton className="aspect-square w-full rounded-2xl" />;
 }
 
 export default function CreatorsPageClient() {
