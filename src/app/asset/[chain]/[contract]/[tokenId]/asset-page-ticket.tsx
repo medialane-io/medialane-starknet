@@ -26,7 +26,6 @@ import { AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
 import { ReportDialog } from "@/components/report-dialog";
 import { HelpIcon } from "@/components/ui/help-icon";
-import { SignedOutAssetActions } from "@/components/asset/signed-out-asset-actions";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 import { useAssetMarketplaceDialogState, AssetMarketplaceDialogs } from "./asset-marketplace-dialogs";
 
@@ -217,9 +216,7 @@ export function AssetPageTicket() {
               floorPriceRaw={collection?.floorPrice}
               usdValue={cheapestUsd}
               lastSaleRaw={lastSaleRaw}
-              renderAuthAction={() => (
-                <SignedOutAssetActions chain="STARKNET" contract={contract} tokenId={tokenId} />
-              )}
+              asset={token}
               renderHelp={(content) => <HelpIcon content={content} side="top" />}
               onCancelClick={dialogs.handleCancelClick}
               onAcceptBid={handleAcceptClick}

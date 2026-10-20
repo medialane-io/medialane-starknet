@@ -1,5 +1,6 @@
 "use client";
 
+import { Mail } from "lucide-react";
 import type { MedialaneApp } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
@@ -15,6 +16,13 @@ export function useAppAdapter(): MedialaneApp {
     walletAddress: address ?? null,
     onRequireWallet: open,
     connectLabel: "Connect wallet",
+    connectDescription: "Use your Starknet wallet to trade non-custodially.",
+    companion: {
+      title: "Trade with Google or email",
+      description: "Open this asset on Medialane — no wallet extension needed.",
+      icon: Mail,
+      origin: "https://medialane.io",
+    },
     getSigner: () => {
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
       return signer;
