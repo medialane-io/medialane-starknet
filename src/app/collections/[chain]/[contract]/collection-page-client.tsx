@@ -9,9 +9,8 @@ import { useOrders } from "@/hooks/use-orders";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AddressDisplay } from "@/components/shared/address-display";
-import { Flag, Inbox, Plus, Sparkles, Lock, Settings } from "lucide-react";
-import { LoadMoreSentinel, HiddenContentBanner, CollectionHeroBanner, ClubOwnerActions, OrderSortControl, sortOrders, checkIsOwner, ExpandableText, type OrderSort } from "@medialane/ui";
+import { Inbox, Plus, Sparkles, Lock, Settings } from "lucide-react";
+import { LoadMoreSentinel, HiddenContentBanner, CollectionHeader, ClubOwnerActions, OrderSortControl, sortOrders, checkIsOwner, type OrderSort } from "@medialane/ui";
 import { ReportDialog } from "@/components/report-dialog";
 import { useCollectionProfile } from "@/hooks/use-profiles";
 import { useGatedContent } from "@/hooks/use-gated-content";
@@ -19,12 +18,11 @@ import { GatedContentHero } from "@/components/collection/gated-content-hero";
 import { GatedContentPanel } from "@/components/collection/gated-content-panel";
 import { OwnerSetupPanel } from "@/components/collection/owner-setup-panel";
 import { TransferCollectionOwnershipDialog } from "@/components/collection/transfer-ownership-dialog";
-import { ShareButton } from "@/components/shared/share-button";
 import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
 import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
 import { CollectionTraitsTab } from "@/components/collection/collection-traits-tab";
-import { ipfsToHttp, formatDisplayPrice, usdValueFor, isCollectionOwner } from "@/lib/utils";
+import { formatDisplayPrice, usdValueFor, isCollectionOwner } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
@@ -33,7 +31,6 @@ import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
 import { useWallet } from "@/hooks/use-wallet";
-import { CreatorChip } from "@/components/collection/creator-chip";
 import { getService, normalizeAddress } from "@medialane/sdk";
 import type { ApiToken, ApiOrder, CollectionTokensSort } from "@medialane/sdk";
 import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
@@ -266,7 +263,6 @@ export default function CollectionPageClient() {
     limit: 100,
   });
 
-  const bannerUrl = collection?.image ? ipfsToHttp(collection.image) : null;
 
   const activeListings = orders.filter(
     (o) => o.status === "ACTIVE" && (o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155")
@@ -281,34 +277,14 @@ export default function CollectionPageClient() {
     return <CoinPageSkeleton />;
   }
 
-  const floorParsed = parsePriceDisplay(collection?.floorPrice);
-  const volumeParsed = parsePriceDisplay(collection?.totalVolume);
-
-  const stats = [
-    { label: "Items",   display: collection?.totalSupply != null ? String(collection.totalSupply) : "—", symbol: null },
-    { label: "Holders", display: collection?.holderCount  != null ? String(collection.holderCount)  : "—", symbol: null },
-    { label: "Floor",   display: floorParsed.numStr,  symbol: floorParsed.symbol },
-    { label: "Volume",  display: volumeParsed.numStr, symbol: volumeParsed.symbol },
-  ].filter((s) => s.label !== "Volume" || s.display !== "—");
-
   return (
     <div className="relative z-0 min-h-screen">
       {(collection as any)?.isHidden && <HiddenContentBanner />}
 
-      <CollectionHeroBanner
-        bannerUrl={bannerUrl}
-        loading={colLoading}
-        standard={collection?.standard}
-        symbol={collection?.symbol}
-        name={collection?.name ?? "Unnamed Collection"}
-        stats={stats}
-      />
-
-      {!colLoading && collection && (
-        <div className="px-4 sm:px-6 pt-4 pb-2 space-y-3">
-
-          {isCollectionOwner(collection, walletAddress) && (
-            <div className="flex items-center justify-end gap-2">
+      <div className="px-4 sm:px-6 pt-20 pb-6">
+        <CollectionHeader collection={collection} loading={colLoading} onReportClick={() => setReportOpen(true)}>
+          {collection && isCollectionOwner(collection, walletAddress) && (
+            <div className="flex flex-wrap items-center gap-2">
               {getService(collection.service)?.id === "ip-tickets" && (
                 <TicketOwnerActions
                   contractAddress={collection.contractAddress}
@@ -339,50 +315,25 @@ export default function CollectionPageClient() {
               </Link>
             </div>
           )}
+          {collection && (
+            <CollectionServiceAction
+              service={collection.service}
+              contractAddress={collection.contractAddress}
+            />
+          )}
+        </CollectionHeader>
+      </div>
 
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-6">
-            <div className="flex-1 min-w-0 lg:max-w-2xl">
-              {collection.description && <ExpandableText text={collection.description} />}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <AddressDisplay
-                address={collection.contractAddress ?? ""}
-                chars={6}
-                className="text-xs text-muted-foreground"
-              />
-              {collection.owner && <CreatorChip address={collection.owner} />}
-              <ShareButton
-                title={collection.name ?? "Collection"}
-                variant="ghost"
-                size="icon"
-                className="min-h-0 min-w-0 h-auto w-auto p-0 hover:bg-transparent text-muted-foreground/40 hover:text-muted-foreground"
-              />
-              <button
-                onClick={() => setReportOpen(true)}
-                title="Report this collection"
-                className="text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-              >
-                <Flag className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <CollectionServiceAction
-            service={collection.service}
-            contractAddress={collection.contractAddress}
-          />
-
-          <ReportDialog
-            target={{
-              type: "COLLECTION",
-              contract: collection.contractAddress,
-              name: collection.name ?? undefined,
-            }}
-            open={reportOpen}
-            onOpenChange={setReportOpen}
-          />
-        </div>
+      {collection && (
+        <ReportDialog
+          target={{
+            type: "COLLECTION",
+            contract: collection.contractAddress,
+            name: collection.name ?? undefined,
+          }}
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+        />
       )}
 
       {!colLoading && collection && profile && (

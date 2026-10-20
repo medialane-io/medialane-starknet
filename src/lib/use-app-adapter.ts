@@ -19,7 +19,7 @@ export function useAppAdapter(): MedialaneApp {
     connectDescription: "Use your Starknet wallet to trade non-custodially.",
     companion: {
       title: "Trade with Google or email",
-      description: "Open this asset on Medialane — no wallet extension needed.",
+      description: "Open this asset on Medialane and trade with your email.",
       icon: Mail,
       origin: "https://medialane.io",
     },
