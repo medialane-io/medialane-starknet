@@ -144,9 +144,6 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                   <span className="text-[11px] font-medium text-emerald-500">Wallet offer</span>
                 </div>
               </div>
-              <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-                #{tokenId}
-              </span>
             </div>
             <div className="px-5 py-5 space-y-4">
               <div>
