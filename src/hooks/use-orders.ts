@@ -7,27 +7,26 @@ import {
   useCounterOffers as useCounterOffersBase,
   useReceivedOffers as useReceivedOffersBase,
 } from "@medialane/ui";
-import { getMedialaneClient } from "@/lib/medialane-client";
 import type { ApiOrdersQuery } from "@medialane/sdk";
 
 
 export function useOrders(query: ApiOrdersQuery = {}) {
-  return useOrdersBase(getMedialaneClient, query);
+  return useOrdersBase(query);
 }
 
 export function useTokenListings(contract: string | null, tokenId: string | null) {
-  return useTokenListingsBase(getMedialaneClient, contract, tokenId);
+  return useTokenListingsBase(contract, tokenId);
 }
 
 export function useUserOrders(address: string | null) {
-  return useUserOrdersBase(getMedialaneClient, address);
+  return useUserOrdersBase(address);
 }
 
 export function useCounterOffers(args: { originalOrderHash?: string | null; sellerAddress?: string | null }) {
-  return useCounterOffersBase(getMedialaneClient, args);
+  return useCounterOffersBase(args);
 }
 
 export function useReceivedOffers(address: string | null) {
-  return useReceivedOffersBase(getMedialaneClient, address);
+  return useReceivedOffersBase(address);
 }
 

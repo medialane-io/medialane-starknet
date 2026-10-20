@@ -207,17 +207,14 @@ export function AssetPageTicket() {
               cheapest={cheapest}
               isMarketLoading={listingsLoading}
               isOwner={isOwner}
-              isSignedIn={isSignedIn}
               isProcessing={isProcessing}
               isERC1155
               myListing={myListing}
               activeBids={activeBids}
-              walletAddress={walletAddress}
               floorPriceRaw={collection?.floorPrice}
               usdValue={cheapestUsd}
               lastSaleRaw={lastSaleRaw}
               asset={token}
-              renderHelp={(content) => <HelpIcon content={content} side="top" />}
               onCancelClick={dialogs.handleCancelClick}
               onAcceptBid={handleAcceptClick}
               onOpenListing={() => dialogs.setListOpen(true)}
