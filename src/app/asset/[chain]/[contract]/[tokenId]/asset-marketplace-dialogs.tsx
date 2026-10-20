@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from "react";
 import type { ApiOrder } from "@medialane/sdk";
+import type { AssetMarketActions, AssetMarketContext } from "@medialane/ui";
+import { useMarketplace } from "@/hooks/use-marketplace";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { OfferDialog } from "@/components/marketplace/offer-dialog";
@@ -131,4 +133,35 @@ export function AssetMarketplaceDialogs({
       />
     </>
   );
+}
+
+export function useAssetMarketActions(context: AssetMarketContext): AssetMarketActions {
+  const dialogs = useAssetMarketplaceDialogState();
+  const { acceptOffer, isProcessing } = useMarketplace();
+  const { contract, tokenId, mutateListings } = context;
+
+  return {
+    isProcessing,
+    buy: dialogs.setPurchaseOrder,
+    list: () => dialogs.setListOpen(true),
+    offer: () => dialogs.setOfferOpen(true),
+    transfer: () => dialogs.setTransferOpen(true),
+    cancel: dialogs.handleCancelClick,
+    acceptBid: async (order: ApiOrder) => {
+      await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
+      mutateListings();
+    },
+    dialogs: (
+      <AssetMarketplaceDialogs
+        contract={contract}
+        tokenId={tokenId}
+        tokenName={context.tokenName}
+        tokenImage={context.tokenImage}
+        tokenStandard={context.tokenStandard}
+        hasActiveListing={context.activeListings.length > 0}
+        mutateListings={mutateListings}
+        dialogs={dialogs}
+      />
+    ),
+  };
 }
