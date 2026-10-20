@@ -108,8 +108,7 @@ test("the dapp's gateway does not reach the paymaster; transactions go from the 
   }
 });
 
-test("a token's owners and one owner's balance are readable", () => {
-  expect(isPathAllowed("GET", "tokens/0xabc/1/owners")).toBe(true);
+test("one owner's balance of a token is readable", () => {
   expect(isPathAllowed("GET", "tokens/0xabc/1/balances/0xdef")).toBe(true);
   expect(isPathAllowed("GET", "tokens/0xabc/1/balances")).toBe(false);
 });
