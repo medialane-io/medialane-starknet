@@ -14,7 +14,7 @@ import { ShareButton } from "@medialane/ui/share-button";
 import { CreatorChip } from "@/components/shared/creator-chip";
 import { MAX_TEAM_ALLOCATION_PERCENT } from "@medialane/sdk/starknet";
 import { useCoinGuarantees } from "@/hooks/use-coin-guarantees";
-import { ipfsToHttp, cn } from "@/lib/utils";
+import { resolveImage, cn } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
 
 function formatCompact(n: number): string {
@@ -26,7 +26,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
   const { price, status, isLoading: priceLoading } = useCoinPrice(coin);
 
   const bannerSource = coin.image;
-  const bannerUrl = bannerSource ? ipfsToHttp(bannerSource) : null;
+  const bannerUrl = resolveImage(bannerSource);
 
   const service = getService(coin.service);
   const serviceLabel = service?.displayName ?? "Creator Coin";

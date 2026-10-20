@@ -26,7 +26,7 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { CreateAssetAside } from "@/components/claim/create-asset-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
-import { cn, ipfsToHttp } from "@/lib/utils";
+import { cn, resolveImage } from "@/lib/utils";
 import { absoluteUrl } from "@/lib/seo";
 import { IP_TYPES, LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@medialane/ui/data/ip";
 import type { IPType, MetadataField } from "@medialane/ui";
@@ -45,6 +45,7 @@ import {
 import type { Call } from "starknet";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
+import { profileHref } from "@/lib/routes";
 
 const schema = z.object({
   collectionId: z.string().min(1, "Select a collection"),
@@ -112,7 +113,7 @@ function collectionWorks(col: ApiCollection) {
 }
 
 function CollectionThumb({ image, size }: { image: string | null | undefined; size: "sm" | "md" }) {
-  const imageUrl = image ? ipfsToHttp(image) : null;
+  const imageUrl = resolveImage(image);
   return (
     <div
       className={cn(
@@ -448,7 +449,7 @@ export function SingleEditionsContent() {
               name={form.watch("name")}
               collection={collections.find((c) => c.collectionId === form.watch("collectionId"))?.name || "IP Asset"}
               creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
-              creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
+              creatorHref={walletAddress ? profileHref({ address: walletAddress }) : undefined}
             />
             <CreateAssetAside />
           </>

@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata } from "@medialane/sdk";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
+import { profileHref } from "@/lib/routes";
 
 const EVENT_TYPES: {
   value: PopEventType;
@@ -229,7 +230,7 @@ export default function CreatePOPPage() {
             name={form.watch("name")}
             collection={form.watch("symbol") || "POP Event"}
             creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
-            creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
+            creatorHref={walletAddress ? profileHref({ address: walletAddress }) : undefined}
           />
           <CreatePopAside />
         </>

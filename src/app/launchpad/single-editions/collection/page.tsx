@@ -25,6 +25,7 @@ import { buildCollectionMetadata } from "@medialane/sdk";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import type { Call } from "starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
+import { profileHref } from "@/lib/routes";
 
 const schema = z.object({
   name: z.string().min(1, "Name required").max(100),
@@ -207,7 +208,7 @@ export default function LaunchpadCreateCollectionPage() {
               name={form.watch("name") || "My Creative Works"}
               collection={form.watch("symbol") || "Collection"}
               creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
-              creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
+              creatorHref={walletAddress ? profileHref({ address: walletAddress }) : undefined}
             />
             <CreateCollectionAside />
           </>

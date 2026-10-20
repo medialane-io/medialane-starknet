@@ -5,7 +5,7 @@ import { useUserOrders } from "@medialane/ui";
 import { Button } from "@medialane/ui/button";
 import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
+import { resolveImage, formatDisplayPrice } from "@/lib/utils";
 import { ExternalLink, Tag } from "lucide-react";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDistanceToNow } from "date-fns";
@@ -37,7 +37,7 @@ function ListingRow({
   onCancel: (order: ApiOrder) => void;
 }) {
   const name = order.token?.name || `#${order.nftTokenId}`;
-  const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
+  const image = resolveImage(order.token?.image);
   const expiry = formatExpiry(order.endTime);
 
   return (

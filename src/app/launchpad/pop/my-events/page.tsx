@@ -9,11 +9,11 @@ import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
 import { ConnectGate } from "@/components/connect-gate";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMyEvents } from "@/hooks/use-pop";
-import { ipfsToHttp } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import type { ApiCollection } from "@medialane/sdk";
 
 function MyEventCard({ collection }: { collection: ApiCollection }) {
-  const imageUrl = collection.image ? ipfsToHttp(collection.image) : null;
+  const imageUrl = resolveImage(collection.image);
   const initial = (collection.name ?? "E").charAt(0).toUpperCase();
 
   return (

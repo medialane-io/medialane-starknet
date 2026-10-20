@@ -22,6 +22,7 @@ import { ReportDialog, type ReportTarget } from "@/components/report-dialog";
 import { cn } from "@/lib/utils";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import type { Call } from "starknet";
+import { profileHref } from "@/lib/routes";
 
 const MAX_LEN = 1000;
 
@@ -172,7 +173,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                 >
 
                   {!own && (
-                    <Link href={`/creator/${comment.author}`} className="shrink-0 mb-1">
+                    <Link href={profileHref({ address: comment.author })} className="shrink-0 mb-1">
                       <div
                         className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] tabular-nums font-bold text-white select-none ring-2 ring-background"
                         style={{ background: "linear-gradient(135deg, hsl(var(--brand-blue)), hsl(var(--brand-purple)))" }}
@@ -187,7 +188,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                     {!own && (
                       <div className="flex items-center gap-1.5 mb-1 ml-1">
                         <Link
-                          href={`/creator/${comment.author}`}
+                          href={profileHref({ address: comment.author })}
                           className="text-[10px] font-medium text-muted-foreground hover:underline underline-offset-2"
                         >
                           <AddressDisplay address={comment.author} chars={4} showCopy={false} />

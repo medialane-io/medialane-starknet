@@ -27,6 +27,7 @@ import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
+import { profileHref } from "@/lib/routes";
 
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
@@ -210,7 +211,7 @@ export default function CreateClubPage() {
             name={form.watch("name")}
             collection={form.watch("symbol") || "Club"}
             creator={address ? `${address.slice(0, 6)}…${address.slice(-4)}` : undefined}
-            creatorHref={address ? `/account/${address}` : undefined}
+            creatorHref={address ? profileHref({ address }) : undefined}
           />
           <ClaimRail
             included={[

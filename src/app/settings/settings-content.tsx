@@ -20,8 +20,9 @@ import {
   AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon,
   Globe, Twitter, ArrowUpRight, Gem, Tag, LayoutGrid, Trophy,
 } from "lucide-react";
-import { cn, resolveTokenImage } from "@/lib/utils";
+import { cn, resolveImage } from "@/lib/utils";
 import { addressPalette } from "@/lib/creator-utils";
+import { profileHref } from "@/lib/routes";
 
 type CheckState = "idle" | "checking" | "available" | "taken";
 
@@ -115,7 +116,7 @@ function ProfileLivePreview({
   approvedUsername?: string | null;
   walletAddress?: string | null;
 }) {
-  const avatarUrl = resolveTokenImage(form.avatarImage);
+  const avatarUrl = resolveImage(form.avatarImage);
   const { h1 } = addressPalette(walletAddress ?? "0x0");
   const profileName = form.name || "Your name";
   const { data: rewards } = useRewards(walletAddress);
@@ -175,7 +176,7 @@ function ProfileLivePreview({
 
         {approvedUsername && (
           <Link
-            href={`/creator/${approvedUsername}`}
+            href={profileHref({ username: approvedUsername })}
             className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
           >
             View profile
@@ -277,7 +278,7 @@ export default function SettingsContent() {
     contractAddress: t.contractAddress,
     tokenId: t.tokenId,
     name: t.metadata?.name ?? `Token #${t.tokenId}`,
-    image: resolveTokenImage(t.metadata?.image),
+    image: resolveImage(t.metadata?.image),
   }));
   const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType !== "ERC20");
   const [saving, setSaving] = useState(false);
@@ -479,7 +480,7 @@ export default function SettingsContent() {
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Your profile is live at{" "}
                     <a
-                      href={`/creator/${approvedUsername}`}
+                      href={profileHref({ username: approvedUsername })}
                       className="tabular-nums font-medium text-primary hover:underline"
                     >
                       medialane.io/creator/{approvedUsername}

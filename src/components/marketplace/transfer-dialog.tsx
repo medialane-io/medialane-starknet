@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@medialane/ui/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
 import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
-import { resolveTokenImage } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { Badge } from "@medialane/ui/badge";
 
@@ -56,7 +56,7 @@ export function TransferDialog({
   onSuccess,
   hasActiveListing = false,
 }: TransferDialogProps) {
-  const tokenImage = resolveTokenImage(tokenImageRaw);
+  const tokenImage = resolveImage(tokenImageRaw);
   const {
     transferToken,
     walletAddress,

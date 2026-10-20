@@ -19,7 +19,7 @@ import { assetHref as buildAssetHref } from "@/lib/routes";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
-import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
+import { formatDisplayPrice, resolveImage } from "@/lib/utils";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
   MarketplaceErrorState,
@@ -43,7 +43,7 @@ interface PurchaseDialogProps {
 type Step = "details" | "processing" | "success";
 
 function TokenHero({ order, quantity }: { order: ApiOrder; quantity: number }) {
-  const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
+  const image = resolveImage(order.token?.image);
   const name = order.token?.name || `Token #${order.nftTokenId}`;
   const unitPrice = order.price?.formatted ? parseFloat(order.price.formatted) : null;
   const totalPrice = unitPrice !== null ? unitPrice * quantity : null;
@@ -134,7 +134,7 @@ function SuccessScreen({
   onClose: () => void;
   onViewPortfolio: () => void;
 }) {
-  const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
+  const image = resolveImage(order.token?.image);
   const name = order.token?.name ?? null;
   const is1155 = order.offer?.itemType === "ERC1155";
   const assetHref = buildAssetHref("STARKNET", order.nftContract, order.nftTokenId);
@@ -318,7 +318,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           <SuccessScreen order={order} quantity={quantity} txHash={successTxHash ?? txHash} onClose={handleDone} onViewPortfolio={handleViewPortfolio} />
         ) : isTerminalError ? (
           <MarketplaceErrorState
-            tokenImage={order.token?.image ? ipfsToHttp(order.token.image) : null}
+            tokenImage={resolveImage(order.token?.image)}
             name={order.token?.name || `Token #${order.nftTokenId}`}
             title="Purchase failed"
             description="The transaction was submitted, but the purchase could not be completed."

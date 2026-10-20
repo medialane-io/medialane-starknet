@@ -24,7 +24,7 @@ import { registerRemix } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@medialane/ui/data/ip";
-import { ipfsToHttp } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
   GitBranch, ChevronDown, ChevronLeft, ImagePlus, Upload,
@@ -55,7 +55,7 @@ export default function CreateRemixPage() {
   const isOwner = checkIsOwner(token, walletAddress, walletBalance);
 
   const originalName = token?.metadata?.name ?? `Token #${tokenId}`;
-  const originalImage = token?.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
+  const originalImage = resolveImage(token?.metadata?.image);
   const originalAttributes = Array.isArray(token?.metadata?.attributes)
     ? (token!.metadata!.attributes as { trait_type?: string; value?: string }[])
     : [];

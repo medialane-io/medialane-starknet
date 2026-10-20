@@ -14,7 +14,7 @@ import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent } from "@medialane/sdk/starknet";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
 import { RewardEarned } from "@/lib/reward-earned";
-import { resolveTokenImage, shortenAddress } from "@/lib/utils";
+import { resolveImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
 
 export default function SponsorshipOfferPage() {
@@ -96,7 +96,7 @@ export default function SponsorshipOfferPage() {
     return <div className="max-w-3xl mx-auto px-4 pt-24 pb-8 text-center text-sm text-muted-foreground">Offer not found.</div>;
   }
 
-  const imageUrl = resolveTokenImage(token?.metadata?.image);
+  const imageUrl = resolveImage(token?.metadata?.image);
   const minDisplay = paymentToken ? `${formatAmount(offer.minAmount, paymentToken.decimals)} ${paymentToken.symbol}` : offer.minAmount;
 
   return (

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialan
 import { Button } from "@medialane/ui/button";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL } from "@/lib/constants";
-import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
+import { formatDisplayPrice, resolveImage } from "@/lib/utils";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
   MarketplaceErrorState,
@@ -47,7 +47,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
 
   if (!order) return null;
 
-  const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
+  const image = resolveImage(order.token?.image);
   const name = order.token?.name || `#${order.nftTokenId}`;
   const tokenStandard = order.consideration?.itemType;
 
