@@ -2,12 +2,11 @@ import { useState, useCallback } from "react";
 import type { Call, TypedData } from "starknet";
 import { useSWRConfig } from "swr";
 import { getTokenBySymbol } from "@medialane/sdk";
-import { describeError } from "@medialane/ui";
+import { describeError, useMedialaneClient } from "@medialane/ui";
 import { checkoutExecution, type CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent } from "@medialane/sdk/starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
 
 interface WriteOpts {

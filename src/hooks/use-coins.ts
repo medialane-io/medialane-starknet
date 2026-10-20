@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useMedialaneClient } from "./use-medialane-client";
+import { useMedialaneClient } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import type { ApiCoin, ApiResponse } from "@medialane/sdk";
 

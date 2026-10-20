@@ -8,7 +8,7 @@ import { Skeleton } from "@medialane/ui/skeleton";
 import { AddressDisplay } from "@medialane/ui/address-display";
 import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { useMedialaneClient } from "@medialane/ui";
 import { executeIntent } from "@medialane/sdk/starknet";
 import {
   useSponsorshipProposals, useSponsorshipOffers, useSponsorshipBids, useSponsorshipLicenses,

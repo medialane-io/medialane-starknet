@@ -6,7 +6,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { normalizeAddress } from "@medialane/sdk";
 import { useWallet } from "@/hooks/use-wallet";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { useMedialaneClient, LevelBadge, useRewardsBatch } from "@medialane/ui";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useComments } from "@/hooks/use-comments";
 import { useTx } from "@/hooks/use-tx";
@@ -15,7 +15,6 @@ import { Skeleton } from "@medialane/ui/skeleton";
 import { Button } from "@medialane/ui/button";
 import { Textarea } from "@medialane/ui/textarea";
 import { AddressDisplay } from "@medialane/ui/address-display";
-import { LevelBadge, useRewardsBatch } from "@medialane/ui";
 
 
 import { STARKNET_NFTCOMMENTS_CONTRACT, EXPLORER_URL } from "@/lib/constants";
