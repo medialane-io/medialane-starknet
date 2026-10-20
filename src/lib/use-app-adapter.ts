@@ -6,6 +6,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
+import { ReportDialog } from "@/components/report-dialog";
 
 export function useAppAdapter(): MedialaneApp {
   const { address } = useWallet();
@@ -23,6 +24,7 @@ export function useAppAdapter(): MedialaneApp {
       icon: Mail,
       origin: "https://medialane.io",
     },
+    ReportDialog,
     getSigner: () => {
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
       return signer;

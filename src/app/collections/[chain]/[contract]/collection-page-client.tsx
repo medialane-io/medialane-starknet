@@ -1,529 +1,58 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useCollection, useCollectionTokens, useOrders, LoadMoreSentinel, HiddenContentBanner, CollectionHeader, ClubOwnerActions, OrderSortControl, sortOrders, checkIsOwner, type OrderSort, useCollectionProfile, CollectionActivityTab, CollectionTraitsTab } from "@medialane/ui";
+import { CollectionPage, useCollection, type CollectionMarketActions, type CollectionPageSlots } from "@medialane/ui";
+import type { ApiOrder, ApiToken } from "@medialane/sdk";
 import { useCoin } from "@/hooks/use-coins";
-import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@medialane/ui/tabs";
-import { Inbox, Plus, Sparkles, Lock, Settings } from "lucide-react";
-import { ReportDialog } from "@/components/report-dialog";
-import { useGatedContent } from "@/hooks/use-gated-content";
-import { GatedContentHero } from "@/components/collection/gated-content-hero";
-import { GatedContentPanel } from "@/components/collection/gated-content-panel";
-import { OwnerSetupPanel } from "@medialane/ui/owner-setup-panel";
-import { TransferCollectionOwnershipDialog } from "@/components/collection/transfer-ownership-dialog";
-import { CollectionFilters } from "@/components/collection/collection-filters";
-import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
-import { formatDisplayPrice, usdValueFor, isCollectionOwner } from "@/lib/utils";
-import { useUsdPrices } from "@/hooks/use-usd-prices";
-import { CollectionServiceAction } from "@/components/services/collection-service-action";
-import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
-import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
-import { TransferDialog } from "@/components/marketplace/transfer-dialog";
-import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog";
-import { useWallet } from "@/hooks/use-wallet";
-import { getService, normalizeAddress } from "@medialane/sdk";
-import type { ApiToken, ApiOrder, CollectionTokensSort } from "@medialane/sdk";
+import { OfferDialog } from "@/components/marketplace/offer-dialog";
+import { CollectionServiceAction } from "@/components/services/collection-service-action";
+import { TransferCollectionOwnershipDialog } from "@/components/collection/transfer-ownership-dialog";
+import { useGatedContent } from "@/hooks/use-gated-content";
 import { CoinPageClient, CoinPageSkeleton } from "./coin-page-client";
 
-const PAGE_SIZE = 24;
-
-function parsePriceDisplay(raw: string | null | undefined): { numStr: string; symbol: string | null } {
-  if (!raw) return { numStr: "—", symbol: null };
-  const parts = raw.trim().split(" ");
-  const sym = parts.length > 1 ? parts[parts.length - 1] : null;
-  const numericPart = sym ? parts.slice(0, -1).join(" ") : raw;
-  const num = Number(numericPart);
-  if (isNaN(num)) return { numStr: "—", symbol: sym };
-  if (num > 1e12) return { numStr: "—", symbol: null };
-  const formatted = formatDisplayPrice(numericPart);
-  if (!formatted || formatted === "—") return { numStr: "—", symbol: sym };
-  const clean = formatted.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-  return { numStr: clean || "—", symbol: sym };
+function useCollectionMarketActions(): CollectionMarketActions {
+  const [order, setOrder] = useState<ApiOrder | null>(null);
+  const [token, setToken] = useState<ApiToken | null>(null);
+  return {
+    buy: setOrder,
+    offer: setToken,
+    dialogs: (
+      <>
+        {order ? <PurchaseDialog order={order} open onOpenChange={(open) => { if (!open) setOrder(null); }} /> : null}
+        {token ? (
+          <OfferDialog
+            open
+            onOpenChange={(open) => { if (!open) setToken(null); }}
+            assetContract={token.contractAddress}
+            tokenId={token.tokenId}
+            tokenName={token.metadata?.name ?? undefined}
+            tokenImage={token.metadata?.image ?? undefined}
+            tokenStandard={token.standard ?? undefined}
+          />
+        ) : null}
+      </>
+    ),
+  };
 }
 
-function CollectionItems({ contract, activeListings }: { contract: string; activeListings: ApiOrder[] }) {
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<CollectionTokensSort>("recent");
-  const [allTokens, setAllTokens] = useState<ApiToken[]>([]);
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
-  const { tokens, meta, isLoading, mutate } = useCollectionTokens(contract, page, PAGE_SIZE, sort);
-
-  const { collection } = useCollection(contract);
-
-  function handleSortChange(next: CollectionTokensSort) {
-    setSort(next);
-    setPage(1);
-    setAllTokens([]);
-  }
-
-  const listingByTokenId = useMemo(() => {
-    const map = new Map<string, ApiOrder>();
-    for (const o of activeListings) {
-      if (o.nftTokenId) map.set(o.nftTokenId, o);
-    }
-    return map;
-  }, [activeListings]);
-
-  const { address: walletAddress } = useWallet();
-  const usdPrices = useUsdPrices();
-  const [selectedToken, setSelectedToken] = useState<ApiToken | null>(null);
-  const [listOpen, setListOpen] = useState(false);
-  const [transferToken, setTransferToken] = useState<ApiToken | null>(null);
-  const [transferOpen, setTransferOpen] = useState(false);
-  const [cancelToken, setCancelToken] = useState<ApiToken | null>(null);
-  const [cancelOpen, setCancelOpen] = useState(false);
-
-  const handleList = (token: ApiToken) => { setSelectedToken(token); setListOpen(true); };
-  const handleTransfer = (token: ApiToken) => { setTransferToken(token); setTransferOpen(true); };
-  const handleCancelRequest = (token: ApiToken) => { setCancelToken(token); setCancelOpen(true); };
-
-  useEffect(() => {
-    if (tokens.length > 0) {
-      setAllTokens((prev) => {
-        const ids = new Set(prev.map((t) => `${t.contractAddress}-${t.tokenId}`));
-        const next = tokens.filter((t) => !ids.has(`${t.contractAddress}-${t.tokenId}`));
-        return page === 1 ? tokens : [...prev, ...next];
-      });
-    }
-  }, [tokens, page]);
-
-  const enrichedTokens = useMemo(() => {
-    if (listingByTokenId.size === 0) return allTokens;
-    return allTokens.map((t) => {
-      const listing = listingByTokenId.get(t.tokenId);
-      if (!listing || (t.activeOrders?.length ?? 0) > 0) return t;
-      return { ...t, activeOrders: [listing] };
-    });
-  }, [allTokens, listingByTokenId]);
-
-  const filteredTokens = useMemo(() => {
-    const filterEntries = Object.entries(selectedFilters);
-    if (filterEntries.length === 0) return enrichedTokens;
-    return enrichedTokens.filter((token) => {
-      const attrs = Array.isArray(token.metadata?.attributes)
-        ? (token.metadata.attributes as { trait_type?: string; value?: string }[])
-        : [];
-
-      return filterEntries.every(([traitType, values]) =>
-        attrs.some((a) => a.trait_type === traitType && values.includes(String(a.value)))
-      );
-    });
-  }, [enrichedTokens, selectedFilters]);
-
-  const hasMore = meta ? allTokens.length < meta.total! : false;
-
-  if (isLoading && allTokens.length === 0) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-        {Array.from({ length: 8 }).map((_, i) => <TokenCardSkeleton key={i} />)}
-      </div>
-    );
-  }
-
-  if (allTokens.length === 0) {
-    const mintHref = isCollectionOwner(collection, walletAddress)
-      ? mintHrefFor(collection?.service, contract)
-      : null;
-
-    return (
-      <EmptyState
-        title={mintHref ? "Ready for your first work" : "No items yet"}
-        body={
-          mintHref
-            ? "Mint into this collection and it appears here."
-            : "Tokens in this collection will appear here once indexed."
-        }
-        action={mintHref ? { href: mintHref, label: "Mint your first work" } : undefined}
-      />
-    );
-  }
-
-  return (
-    <>
-      <div className="space-y-3">
-        <div className="flex items-center justify-end gap-2">
-          <CollectionFilters
-            tokens={allTokens}
-            selected={selectedFilters}
-            onChange={setSelectedFilters}
-            sort={sort}
-            onSortChange={handleSortChange}
-          />
-        </div>
-        {filteredTokens.length === 0 && Object.keys(selectedFilters).length > 0 ? (
-          <EmptyState
-            title="No items match these filters"
-            body="Try removing some filters to see more results."
-          />
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-            {filteredTokens.map((t) => {
-
-              const isOwner = collection?.standard === "ERC1155"
-                ? false
-                : checkIsOwner(t, walletAddress);
-              const listingOrder = t.activeOrders?.find((o) => o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155");
-              return (
-                <TokenCard
-                  key={`${t.contractAddress}-${t.tokenId}`}
-                  token={t}
-                  isOwner={isOwner}
-                  usdValue={usdValueFor(listingOrder?.price.formatted, listingOrder?.price.currency, usdPrices)}
-                  onList={isOwner ? handleList : undefined}
-                  onTransfer={isOwner ? handleTransfer : undefined}
-                  onCancel={isOwner ? handleCancelRequest : undefined}
-                />
-              );
-            })}
-          </div>
-        )}
-        <LoadMoreSentinel
-          hasMore={hasMore}
-          isLoading={isLoading}
-          onLoadMore={() => setPage((p) => p + 1)}
-        />
-      </div>
-
-      {selectedToken && (
-        <ListingDialog
-          open={listOpen}
-          onOpenChange={(o) => { setListOpen(o); if (!o) setSelectedToken(null); }}
-          assetContract={selectedToken.contractAddress}
-          tokenId={selectedToken.tokenId}
-          tokenName={selectedToken.metadata?.name ?? undefined}
-          tokenImage={selectedToken.metadata?.image ?? null}
-          tokenStandard={collection?.standard}
-          onSuccess={() => { setListOpen(false); setSelectedToken(null); setPage(1); setAllTokens([]); mutate(); }}
-        />
-      )}
-      {transferToken && (
-        <TransferDialog
-          open={transferOpen}
-          onOpenChange={(o) => { setTransferOpen(o); if (!o) setTransferToken(null); }}
-          contractAddress={transferToken.contractAddress}
-          tokenId={transferToken.tokenId}
-          tokenName={transferToken.metadata?.name ?? undefined}
-          tokenImage={transferToken.metadata?.image ?? null}
-          tokenStandard={(transferToken.standard ?? collection?.standard) === "ERC1155" ? "ERC1155" : "ERC721"}
-          hasActiveListing={!!transferToken.activeOrders?.[0]}
-          onSuccess={() => { setTransferOpen(false); setTransferToken(null); setPage(1); setAllTokens([]); mutate(); }}
-        />
-      )}
-      <CancelOrderDialog
-        order={cancelToken?.activeOrders?.[0] ?? null}
-        open={cancelOpen}
-        onOpenChange={(v) => { setCancelOpen(v); if (!v) setCancelToken(null); }}
-        onSuccess={() => { setPage(1); setAllTokens([]); mutate(); }}
-        variant="listing"
-      />
-
-    </>
-  );
-}
+const SLOTS: CollectionPageSlots = {
+  useMarketActions: useCollectionMarketActions,
+  useGatedContent,
+  ServiceAction: CollectionServiceAction,
+  TransferOwnership: TransferCollectionOwnershipDialog,
+};
 
 export default function CollectionPageClient() {
-
   const params = useParams<{ contract?: string; address?: string }>();
   const contract = params.contract ?? params.address ?? "";
-
   const isCoinRoute = params.address != null;
-  const [reportOpen, setReportOpen] = useState(false);
-
-  const [activeTab, setActiveTab] = useState("assets");
-  const [marketSubTab, setMarketSubTab] = useState<"listings" | "offers">("listings");
-  const [provenanceSubTab, setProvenanceSubTab] = useState<"activity" | "traits">("activity");
-  const [listingsSort, setListingsSort] = useState<OrderSort>("recent");
-  const [offersSort, setOffersSort] = useState<OrderSort>("recent");
-  const [buyOrder, setBuyOrder] = useState<ApiOrder | null>(null);
-  const [purchaseOpen, setPurchaseOpen] = useState(false);
-  const handleBuy = (o: ApiOrder) => { setBuyOrder(o); setPurchaseOpen(true); };
-  const { address: walletAddress } = useWallet();
-  const { collection, isLoading: colLoading } = useCollection(isCoinRoute ? null : contract);
-
-  const tryCoin = isCoinRoute || (!colLoading && !collection);
+  const { collection, isLoading } = useCollection(isCoinRoute ? null : contract);
+  const tryCoin = isCoinRoute || (!isLoading && !collection);
   const { coin, isLoading: coinLoading } = useCoin(tryCoin ? contract : null);
-  const { profile } = useCollectionProfile(contract);
-  const gatedState = useGatedContent(
-    profile?.hasGatedContent ? contract : undefined
-  );
-  const { orders, isLoading: ordersLoading } = useOrders({
-    collection: contract,
-    status: "ACTIVE",
-    sort: "recent",
-    limit: 100,
-  });
 
-
-  const activeListings = orders.filter(
-    (o) => o.status === "ACTIVE" && (o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155")
-  );
-  const activeBids = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC20");
-
-  if (coin) {
-    return <CoinPageClient coin={coin} />;
-  }
-
-  if (tryCoin && coinLoading) {
-    return <CoinPageSkeleton />;
-  }
-
-  return (
-    <div className="relative z-0 min-h-screen">
-      {(collection as any)?.isHidden && <HiddenContentBanner />}
-
-      <div className="px-4 sm:px-6 pt-20 pb-6">
-        <CollectionHeader collection={collection} loading={colLoading} onReportClick={() => setReportOpen(true)}>
-          {collection && isCollectionOwner(collection, walletAddress) && (
-            <div className="flex flex-wrap items-center gap-2">
-              {getService(collection.service)?.id === "ip-tickets" && (
-                <TicketOwnerActions
-                  contractAddress={collection.contractAddress}
-                  owner={collection.owner}
-                />
-              )}
-              {getService(collection.service)?.id === "ip-club" && (
-                <ClubOwnerActions
-                  contractAddress={collection.contractAddress}
-                  isOwner
-                />
-              )}
-              {collection.standard === "ERC1155" && getService(collection.service)?.id === "mip-erc1155" && (
-                <Link
-                  href={`/launchpad/nfteditions/${contract}/mint`}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white bg-brand-purple hover:brightness-110 active:scale-[0.98] transition"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Mint editions
-                </Link>
-              )}
-              <Link
-                href={`/portfolio/collections/${contract}/settings`}
-                className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border hover:bg-muted active:scale-[0.98] transition text-muted-foreground hover:text-foreground"
-              >
-                <Settings className="h-3.5 w-3.5" />
-                Settings
-              </Link>
-            </div>
-          )}
-          {collection && (
-            <CollectionServiceAction
-              service={collection.service}
-              contractAddress={collection.contractAddress}
-            />
-          )}
-        </CollectionHeader>
-      </div>
-
-      {collection && (
-        <ReportDialog
-          target={{
-            type: "COLLECTION",
-            contract: collection.contractAddress,
-            name: collection.name ?? undefined,
-          }}
-          open={reportOpen}
-          onOpenChange={setReportOpen}
-        />
-      )}
-
-      {!colLoading && collection && profile && (
-        <GatedContentHero
-          profile={profile}
-          gatedState={gatedState}
-          onViewExclusive={() => setActiveTab("exclusive")}
-        />
-      )}
-
-      <div className="px-4 sm:px-6 pb-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="sticky top-0 z-10 pt-3 pb-1">
-            <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="assets" className="flex-1 sm:flex-none">
-                Assets{collection?.totalSupply ? ` (${collection.totalSupply.toLocaleString()})` : ""}
-              </TabsTrigger>
-              <TabsTrigger value="market" className="flex-1 sm:flex-none">
-                Market{!ordersLoading && (activeListings.length + activeBids.length) > 0 && ` (${activeListings.length + activeBids.length})`}
-              </TabsTrigger>
-              <TabsTrigger value="provenance" className="flex-1 sm:flex-none">
-                Provenance
-              </TabsTrigger>
-              {profile?.hasGatedContent && (
-                <TabsTrigger value="exclusive" className="flex-1 sm:flex-none gap-1.5">
-                  <Lock className="h-3.5 w-3.5" />
-                  Exclusive
-                </TabsTrigger>
-              )}
-            </TabsList>
-          </div>
-
-          <TabsContent value="assets" className="mt-4">
-            <CollectionItems contract={contract} activeListings={activeListings} />
-          </TabsContent>
-
-          <TabsContent value="market" className="mt-4">
-            <Tabs value={marketSubTab} onValueChange={(v) => setMarketSubTab(v as "listings" | "offers")}>
-              <TabsList className="h-9">
-                <TabsTrigger value="listings" className="text-xs px-3 py-1">
-                  Listings{!ordersLoading && activeListings.length > 0 && ` (${activeListings.length})`}
-                </TabsTrigger>
-                <TabsTrigger value="offers" className="text-xs px-3 py-1">
-                  Offers{!ordersLoading && activeBids.length > 0 && ` (${activeBids.length})`}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="listings" className="mt-4">
-                {ordersLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                    {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
-                  </div>
-                ) : activeListings.length === 0 ? (
-                  <EmptyState
-                    title="No active listings"
-                    body="When items in this collection are listed for sale, they'll appear here."
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex justify-end">
-                      <OrderSortControl value={listingsSort} onChange={setListingsSort} />
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                      {sortOrders(activeListings, listingsSort).map((o) => <ListingCard key={o.orderHash} order={o} onBuy={handleBuy} />)}
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="offers" className="mt-4">
-                <div className="flex justify-between items-center mb-3">
-                  <div />
-                  <div className="flex items-center gap-2">
-                    {!ordersLoading && activeBids.length > 0 && (
-                      <OrderSortControl value={offersSort} onChange={setOffersSort} />
-                    )}
-                    <MakeOfferPicker contract={contract} />
-                  </div>
-                </div>
-                {ordersLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                    {Array.from({ length: 8 }).map((_, i) => <ListingCardSkeleton key={i} />)}
-                  </div>
-                ) : activeBids.length === 0 ? (
-                  <EmptyState
-                    title="No active offers"
-                    body="Make the first offer, or check back when collectors start bidding."
-                  />
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                    {sortOrders(activeBids, offersSort).map((o) => <ListingCard key={o.orderHash} order={o} />)}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          <TabsContent value="provenance" className="mt-4">
-            {collection?.standard && (collection.totalSupply ?? 0) > 1 ? (
-              <Tabs value={provenanceSubTab} onValueChange={(v) => setProvenanceSubTab(v as "activity" | "traits")}>
-                <TabsList className="h-9">
-                  <TabsTrigger value="activity" className="text-xs px-3 py-1">Activity</TabsTrigger>
-                  <TabsTrigger value="traits" className="text-xs px-3 py-1">Traits</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="activity" className="mt-4">
-                  <CollectionActivityTab contract={contract} />
-                </TabsContent>
-
-                <TabsContent value="traits" className="mt-4">
-                  <CollectionTraitsTab contract={contract} />
-                </TabsContent>
-              </Tabs>
-            ) : (
-              <CollectionActivityTab contract={contract} />
-            )}
-          </TabsContent>
-
-          {profile?.hasGatedContent && (
-            <TabsContent value="exclusive" className="mt-4">
-              <GatedContentPanel
-                state={gatedState}
-                onBrowseListings={() => { setMarketSubTab("listings"); setActiveTab("market"); }}
-              />
-            </TabsContent>
-          )}
-        </Tabs>
-      </div>
-
-      {!colLoading && collection && isCollectionOwner(collection, walletAddress) && (
-        <>
-          <OwnerSetupPanel
-            contract={contract}
-            profile={profile}
-          />
-          {collection.collectionId && collection.standard === "ERC721" && (
-            <div className="px-4 sm:px-6 -mt-2 mb-4 flex justify-end">
-              <TransferCollectionOwnershipDialog
-                collectionId={collection.collectionId}
-                currentOwner={collection.owner!}
-              />
-            </div>
-          )}
-        </>
-      )}
-
-      {buyOrder && (
-        <PurchaseDialog
-          order={buyOrder}
-          open={purchaseOpen}
-          onOpenChange={(open) => { setPurchaseOpen(open); if (!open) setBuyOrder(null); }}
-        />
-      )}
-    </div>
-  );
-}
-
-function EmptyState({
-  title,
-  body,
-  action,
-}: {
-  title: string;
-  body: string;
-  action?: { href: string; label: string };
-}) {
-  return (
-    <div className="py-20 flex flex-col items-center gap-3 text-center">
-      <Inbox className="h-10 w-10 text-muted-foreground/40" />
-      <p className="text-sm font-medium text-muted-foreground">{title}</p>
-      <p className="text-xs text-muted-foreground/70 max-w-xs">{body}</p>
-      {action ? (
-        <Link
-          href={action.href}
-          className="mt-2 inline-flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-semibold text-white bg-brand-blue hover:brightness-110 transition-all"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          {action.label}
-        </Link>
-      ) : null}
-    </div>
-  );
-}
-
-function mintHrefFor(service: string | null | undefined, contract: string): string | null {
-  switch (service) {
-    case "mip-erc721":
-      return "/launchpad/single-editions";
-    case "mip-erc1155":
-      return `/launchpad/nfteditions/${contract}/mint`;
-    case "ip-tickets":
-      return `/launchpad/tickets/${contract}/mint`;
-    case "ip-club":
-      return `/launchpad/club/${contract}/mint`;
-    default:
-      return null;
-  }
+  if (coin) return <CoinPageClient coin={coin} />;
+  if (tryCoin && coinLoading) return <CoinPageSkeleton />;
+  return <CollectionPage contract={contract} slots={SLOTS} />;
 }
