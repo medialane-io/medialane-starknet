@@ -7,20 +7,18 @@ import { useUserOrders } from "@/hooks/use-orders";
 import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCard, CollectionCardSkeleton, CollectionHeroBanner, TabEmptyState } from "@medialane/ui";
+import { CollectionCard, CollectionCardSkeleton, CreatorHeader, TabEmptyState } from "@medialane/ui";
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShareButton } from "@/components/shared/share-button";
 import { ipfsToHttp } from "@/lib/utils";
 import { normalizeAddress } from "@medialane/sdk";
 import {
   Activity, LayoutList, ShoppingBag, BarChart2,
-  Globe, Twitter, ExternalLink,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActivityRow } from "@/components/creator/activity-row";
-import { profileIdentity } from "@medialane/ui";
 
 const TABS = [
   { id: "collections", label: "Collections", Icon: LayoutList },
@@ -49,7 +47,9 @@ export default function CreatorUsernamePageClient({ username }: Props) {
   if (isLoading) {
     return (
       <div className="pb-20 min-h-screen">
-        <CollectionHeroBanner bannerUrl={null} loading name="" stats={[]} />
+        <div className="px-6 pt-20 pb-6">
+          <CreatorHeader creator={null} image={null} stats={[]} loading />
+        </div>
         <div className="px-6 pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => <CollectionCardSkeleton key={i} />)}
@@ -74,70 +74,28 @@ export default function CreatorUsernamePageClient({ username }: Props) {
     );
   }
 
-  const { identity, name } = profileIdentity({
-    username: creator.username,
-    name: creator.name,
-    walletAddress: creator.walletAddress,
-  });
-  const showSocials = Boolean(creator.websiteUrl || creator.twitterUrl);
 
   return (
     <div className="pb-20 min-h-screen">
 
-      <CollectionHeroBanner
-        bannerUrl={avatarUrl}
-        name={identity}
-        eyebrowSlot={
-          <span className="text-[11px] font-semibold text-white/90 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-0.5">
-            Creator
-          </span>
-        }
-        stats={[
-          { label: "Collections", display: !collectionsLoading ? String(collections.length) : "—" },
-          { label: "Listed", display: !ordersLoading ? String(activeListings.length) : "—" },
-          { label: "Events", display: !activitiesLoading ? String(activities.length) : "—" },
-        ]}
-      />
-
       <div className="px-6">
-
-        <div className="pt-5 pb-1 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground tabular-nums">@{creator.username}</p>
-            <div className="flex items-center gap-2">
-              <ShareButton
-                title={identity}
-                variant="ghost"
-                size="icon"
-                className="min-h-0 min-w-0 h-auto w-auto p-0 hover:bg-transparent text-muted-foreground/40 hover:text-muted-foreground"
-              />
-              <Button size="sm" variant="outline" asChild>
-                <Link href={`/account/${creator.walletAddress}`}>
-                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                  Full profile
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          {creator.bio && (
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xl line-clamp-2">{creator.bio}</p>
-          )}
-
-          {showSocials && (
-            <div className="flex items-center gap-3 pt-1">
-              {creator.websiteUrl && (
-                <a href={creator.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <Globe className="h-4 w-4" />
-                </a>
-              )}
-              {creator.twitterUrl && (
-                <a href={creator.twitterUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <Twitter className="h-4 w-4" />
-                </a>
-              )}
-            </div>
-          )}
+        <div className="pt-20 pb-6">
+          <CreatorHeader
+            creator={creator}
+            image={avatarUrl}
+            stats={[
+              { label: "Collections", value: collectionsLoading ? null : collections.length },
+              { label: "Listed", value: ordersLoading ? null : activeListings.length },
+              { label: "Events", value: activitiesLoading ? null : activities.length },
+            ]}
+          >
+            <Button size="sm" variant="outline" asChild className="w-fit">
+              <Link href={`/account/${creator.walletAddress}`}>
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                Full profile
+              </Link>
+            </Button>
+          </CreatorHeader>
         </div>
 
         <div className="sticky top-0 z-10 -mx-6 px-6 bg-background/95 backdrop-blur-sm border-b border-border mt-4">
