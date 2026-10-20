@@ -7,9 +7,9 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationRow } from "@/components/shared/notification-row";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { Button } from "@/components/ui/button";
+import { Button } from "@medialane/ui/button";
 import { cn } from "@/lib/utils";
-import type { Notification, NotificationType } from "@/types/notification";
+import type { Notification, NotificationType } from "@medialane/ui";
 
 const FILTERS: { label: string; value: NotificationType | "" }[] = [
   { label: "All",           value: ""               },

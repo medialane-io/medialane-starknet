@@ -10,30 +10,13 @@ import type { ApiCollection } from "@medialane/sdk";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@medialane/ui/collapsible";
+import { Skeleton } from "@medialane/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@medialane/ui/popover";
 import { useTx } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
@@ -47,15 +30,9 @@ import { CreateAssetAside } from "@/components/claim/create-asset-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { cn, ipfsToHttp } from "@/lib/utils";
 import { absoluteUrl } from "@/lib/seo";
-import {
-  IP_TYPES,
-  LICENSE_TYPES,
-  GEOGRAPHIC_SCOPES,
-  AI_POLICIES,
-  DERIVATIVES_OPTIONS,
-  type IPType,
-} from "@/types/ip";
-import { IPTypeFields, type MetadataField } from "@/components/create/ip-type-fields";
+import { IP_TYPES, LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@medialane/ui/data/ip";
+import type { IPType, MetadataField } from "@medialane/ui";
+import { IPTypeFields } from "@medialane/ui/ip-type-fields";
 import { makeUploadDocument } from "@/lib/upload-document";
 import {
   Upload,

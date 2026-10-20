@@ -5,7 +5,7 @@ import { useCoinsByCreator } from "@/hooks/use-coins";
 import { CoinRow, CoinRowSkeleton } from "@/components/shared/coin-row";
 import { COIN_GRID } from "@medialane/ui";
 import { cn } from "@/lib/utils";
-import { EmptyOrError } from "@/components/ui/empty-or-error";
+import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { Coins } from "lucide-react";
 import type { CoinCollectionLike } from "@medialane/ui";
 import type { ApiCoin } from "@medialane/sdk";

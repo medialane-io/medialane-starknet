@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@medialane/ui/button";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useIntentExecute } from "@/hooks/use-intent-execute";

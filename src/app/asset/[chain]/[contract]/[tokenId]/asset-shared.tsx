@@ -7,9 +7,9 @@ import type { ApiOrder, ApiToken } from "@medialane/sdk";
 import { usdValueFor } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { useTokenBalance } from "@/hooks/use-tokens";
-import { LICENSE_TRAIT_TYPES } from "@/types/ip";
-import type { IPType } from "@/types/ip";
-import { IP_TEMPLATES, EMBED_PLATFORM_META, SOCIAL_PLATFORM_META } from "@/lib/ip-templates";
+import { LICENSE_TRAIT_TYPES } from "@medialane/ui/data/ip";
+import type { IPType } from "@medialane/ui";
+import { IP_TEMPLATES, EMBED_PLATFORM_META, SOCIAL_PLATFORM_META } from "@medialane/ui/data/ip-templates";
 import { checkIsOwner } from "@medialane/ui";
 
 export type AssetToken = ApiToken & {

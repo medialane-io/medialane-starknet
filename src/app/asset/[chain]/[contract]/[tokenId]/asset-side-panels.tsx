@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import Image from "next/image";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@medialane/ui/dialog";
 import { CommentsSection } from "@/components/asset/comments-section";
 
 interface AssetCommentsDialogProps {

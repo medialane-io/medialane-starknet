@@ -14,12 +14,12 @@ import { AssetPicker, ServiceFormShell, LevelBadge, type OwnedAsset } from "@med
 import { FastMint } from "@/components/launchpad/fast-mint";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Label } from "@medialane/ui/label";
+import { Textarea } from "@medialane/ui/textarea";
+import { Badge } from "@medialane/ui/badge";
+import { Skeleton } from "@medialane/ui/skeleton";
 import {
   AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon,
   Globe, Twitter, ArrowUpRight, Gem, Tag, LayoutGrid, Trophy,

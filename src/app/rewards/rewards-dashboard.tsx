@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@medialane/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useRewards, useRewardsConfig, useRewardsEvents } from "@/hooks/use-rewards";

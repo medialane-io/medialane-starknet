@@ -12,37 +12,19 @@ import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
 import { Sparkles, Loader2, ImagePlus, X, Layers, ChevronDown, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@medialane/ui/collapsible";
 import {
   MintProgressDialog,
   type MintStep,
 } from "@/components/marketplace/mint-progress-dialog";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { FadeIn } from "@/components/ui/motion-primitives";
+import { FadeIn } from "@medialane/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
@@ -52,15 +34,9 @@ import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import {
-  IP_TYPES,
-  LICENSE_TYPES,
-  GEOGRAPHIC_SCOPES,
-  AI_POLICIES,
-  DERIVATIVES_OPTIONS,
-  type IPType,
-} from "@/types/ip";
-import { IPTypeFields, type MetadataField } from "@/components/create/ip-type-fields";
+import { IP_TYPES, LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@medialane/ui/data/ip";
+import type { IPType, MetadataField } from "@medialane/ui";
+import { IPTypeFields } from "@medialane/ui/ip-type-fields";
 import { makeUploadDocument } from "@/lib/upload-document";
 import type { TxStatus } from "@/hooks/use-tx";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";

@@ -6,18 +6,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@medialane/ui/form";
 import { CollectionProgressDialog } from "@/components/marketplace/collection-progress-dialog";
 import type { CollectionStep } from "@/components/marketplace/collection-progress-dialog";
 import { ConnectGate } from "@/components/connect-gate";

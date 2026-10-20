@@ -14,13 +14,13 @@ import { useTokenRemixes } from "@/hooks/use-remix-offers";
 import { useWallet } from "@/hooks/use-wallet";
 import { ipfsToHttp } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@medialane/ui/tabs";
 import { FloatingCommentsButton } from "@/components/asset/floating-comments-button";
-import { AssetLightbox } from "@/components/asset/asset-lightbox";
+import { AssetLightbox } from "@medialane/ui/asset-lightbox";
 import { PopBurnButton } from "@/components/claim/pop-burn-button";
 import { ReportDialog } from "@/components/report-dialog";
 import { AssetCommentsDialog } from "./asset-side-panels";
-import { AssetOverviewContent } from "./asset-overview-content";
+import { AssetOverviewContent } from "@medialane/ui/asset-overview-content";
 import { AssetAtmosphere, useAssetMarketState, type AssetToken } from "./asset-shared";
 
 const NO_LISTINGS: ApiOrder[] = [];

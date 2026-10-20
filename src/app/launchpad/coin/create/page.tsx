@@ -14,21 +14,20 @@ import {
   teamCoinsRaw, buybackQuoteRaw, fdvHuman,
   SUGGESTED_DEFAULT_PRICE, validatePrice,
 } from "@medialane/sdk/starknet";
-import { PageContainer } from "@medialane/ui";
+import { PageContainer, ServiceFormShell, GradientButton, CurrencyIcon, CurrencyAmount } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useLaunchCoin, type LaunchCoinInput } from "@/hooks/use-launch-coin";
 import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
 import { useAccountSession } from "@/components/wallet-session-sync";
-import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
+import { suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { CoinLaunchPreview, type CoinPreviewData } from "@/components/coin/coin-launch-preview";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { CoinLaunchPreview, type CoinPreviewData } from "@medialane/ui/coin-launch-preview";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Label } from "@medialane/ui/label";
+import { Textarea } from "@medialane/ui/textarea";
 import { ConnectGate } from "@/components/connect-gate";
-import { ServiceFormShell, GradientButton, CurrencyIcon, CurrencyAmount } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { CreateCoinAside } from "@/components/claim/create-coin-aside";
 import { cn } from "@/lib/utils";

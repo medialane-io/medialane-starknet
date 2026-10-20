@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Handshake, ArrowRight, Check } from "lucide-react";
-import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
-import { Button } from "@/components/ui/button";
+import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
+import { Button } from "@medialane/ui/button";
 import { ServiceHeader, AssetCard, AssetCardSkeleton } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { useSponsorshipOffers } from "@/hooks/use-sponsorship";

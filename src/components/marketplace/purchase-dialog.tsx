@@ -10,17 +10,17 @@ import {
 } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
 import { amountDue, orderTotal, type CheckoutItem } from "@/lib/checkout";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { assetHref as buildAssetHref } from "@/lib/routes";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
-import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
   MarketplaceErrorState,
   MarketplaceTxLink,

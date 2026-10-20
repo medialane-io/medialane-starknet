@@ -4,7 +4,7 @@ import { getService } from "@medialane/sdk";
 import { fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
 import { absoluteUrl, canonical, buildBreadcrumbJsonLd, buildSocialMetadata } from "@/lib/seo";
 import { chainFromSlug, collectionHref, coinHref } from "@/lib/routes";
-import { JsonLd } from "@/components/seo/json-ld";
+import { JsonLd } from "@medialane/ui/json-ld";
 import CollectionPageClient from "./collection-page-client";
 
 export const revalidate = 60;

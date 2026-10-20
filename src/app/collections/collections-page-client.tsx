@@ -3,14 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useCollections, type CollectionSort } from "@/hooks/use-collections";
 import { usePlatformStats } from "@/hooks/use-stats";
-import { CollectionCard, CollectionCardSkeleton, LoadMoreSentinel } from "@medialane/ui";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { HelpIcon } from "@/components/ui/help-icon";
+import { CollectionCard, CollectionCardSkeleton, LoadMoreSentinel, PageContainer } from "@medialane/ui";
+import { Button } from "@medialane/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@medialane/ui/dialog";
+import { HelpIcon } from "@medialane/ui/help-icon";
 import { Layers, BadgeCheck, Eye, SlidersHorizontal, Award, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ApiCollection } from "@medialane/sdk";
-import { PageContainer } from "@medialane/ui";
 
 const PAGE_SIZE = 18;
 

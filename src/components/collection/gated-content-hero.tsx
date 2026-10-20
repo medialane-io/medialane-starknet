@@ -3,7 +3,7 @@
 import { Lock, Unlock, Sparkles } from "lucide-react";
 import type { GatedContentState } from "@/hooks/use-gated-content";
 import type { ApiCollectionProfile } from "@medialane/sdk";
-import { GATED_CONTENT_TYPES, GATED_CONTENT_TYPE_FALLBACK } from "@/lib/gated-content-types";
+import { GATED_CONTENT_TYPES, GATED_CONTENT_TYPE_FALLBACK } from "@medialane/ui";
 
 interface GatedContentHeroProps {
   profile: ApiCollectionProfile | null;

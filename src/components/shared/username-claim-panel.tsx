@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
 import { useAccountSession } from "@/components/wallet-session-sync";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Badge } from "@medialane/ui/badge";
 import { AtSign, CheckCircle, Clock, XCircle, ArrowRight, Loader2 } from "lucide-react";
 
 type CheckState = "idle" | "checking" | "available" | "taken";

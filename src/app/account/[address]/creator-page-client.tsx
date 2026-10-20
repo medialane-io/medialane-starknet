@@ -10,11 +10,11 @@ import { useUserOrders } from "@/hooks/use-orders";
 import { useActivitiesByAddress } from "@/hooks/use-activities";
 import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
-import { AddressDisplay } from "@/components/shared/address-display";
+import { AddressDisplay } from "@medialane/ui/address-display";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
 import { CollectionCard, CollectionCardSkeleton, HiddenContentBanner, TabEmptyState } from "@medialane/ui";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@medialane/ui/button";
+import { Skeleton } from "@medialane/ui/skeleton";
 import {
   Activity,
   Image as ImageIcon,
@@ -24,7 +24,7 @@ import {
   Flag,
 } from "lucide-react";
 import { ReportDialog } from "@/components/report-dialog";
-import { ShareButton } from "@/components/shared/share-button";
+import { ShareButton } from "@medialane/ui/share-button";
 import { cn } from "@/lib/utils";
 import { ActivityRow } from "@/components/creator/activity-row";
 

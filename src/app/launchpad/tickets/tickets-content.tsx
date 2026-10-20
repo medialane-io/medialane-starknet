@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Ticket, Plus, Loader2 } from "lucide-react";
-import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
-import { Button } from "@/components/ui/button";
+import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
+import { Button } from "@medialane/ui/button";
 import { ServiceHeader, CollectionCard, CollectionCardSkeleton } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { collectionHref } from "@/lib/routes";

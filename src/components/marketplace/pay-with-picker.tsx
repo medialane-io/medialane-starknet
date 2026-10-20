@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { SWAP_TOKENS, formatTokenAmount } from "@/utils/swap-tokens";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useSwapQuote } from "@/hooks/use-swap-quote";
-import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { cn } from "@/lib/utils";
 
 interface PayWithOptionProps {

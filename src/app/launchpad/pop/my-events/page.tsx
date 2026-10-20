@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Award, Plus, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { FadeIn, Stagger, StaggerItem } from "@/components/ui/motion-primitives";
+import { Button } from "@medialane/ui/button";
+import { Skeleton } from "@medialane/ui/skeleton";
+import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
 import { ConnectGate } from "@/components/connect-gate";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMyEvents } from "@/hooks/use-pop";

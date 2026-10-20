@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
 import { canonical, buildBreadcrumbJsonLd, buildProductJsonLd, buildSocialMetadata } from "@/lib/seo";
 import { chainFromSlug, coinHref } from "@/lib/routes";
-import { JsonLd } from "@/components/seo/json-ld";
+import { JsonLd } from "@medialane/ui/json-ld";
 import CollectionPageClient from "@/app/collections/[chain]/[contract]/collection-page-client";
 
 export const revalidate = 60;

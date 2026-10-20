@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { absoluteUrl, canonical, buildBreadcrumbJsonLd, buildSocialMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/json-ld";
+import { JsonLd } from "@medialane/ui/json-ld";
 import CreatorUsernamePageClient from "./creator-username-client";
 
 export const revalidate = 60;

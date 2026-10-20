@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Handshake, Loader2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AddressDisplay } from "@/components/shared/address-display";
+import { Button } from "@medialane/ui/button";
+import { Skeleton } from "@medialane/ui/skeleton";
+import { AddressDisplay } from "@medialane/ui/address-display";
 import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";

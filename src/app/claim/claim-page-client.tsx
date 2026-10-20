@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Package, Globe, Share2, ShieldCheck, Palette, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@medialane/ui/button";
 import { WalletGate } from "@/components/claim/wallet-gate";
 import { ClaimCollectionPanel } from "@/components/claim/claim-collection-panel";
 import { UsernameClaimPanel } from "@/components/shared/username-claim-panel";

@@ -9,8 +9,8 @@ import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
 import { CollectionCard, CollectionCardSkeleton, CreatorHeader, TabEmptyState } from "@medialane/ui";
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@medialane/ui/button";
+import { Skeleton } from "@medialane/ui/skeleton";
 import { ipfsToHttp } from "@/lib/utils";
 import { normalizeAddress } from "@medialane/sdk";
 import {

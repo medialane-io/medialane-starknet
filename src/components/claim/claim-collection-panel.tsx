@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Label } from "@medialane/ui/label";
+import { Textarea } from "@medialane/ui/textarea";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Loader2 } from "lucide-react";
 

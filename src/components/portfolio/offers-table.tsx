@@ -1,8 +1,8 @@
 "use client";
 
 import { useUserOrders } from "@/hooks/use-orders";
-import { Button } from "@/components/ui/button";
-import { EmptyOrError } from "@/components/ui/empty-or-error";
+import { Button } from "@medialane/ui/button";
+import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ipfsToHttp, formatDisplayPrice, cn } from "@/lib/utils";
 import { ExternalLink, HandCoins } from "lucide-react";

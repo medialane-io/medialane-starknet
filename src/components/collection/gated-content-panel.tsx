@@ -2,7 +2,7 @@
 
 import { Lock, Loader2, Unlock, Sparkles, ShoppingBag } from "lucide-react";
 import type { GatedContentState } from "@/hooks/use-gated-content";
-import { GATED_CONTENT_TYPES, GATED_CONTENT_TYPE_FALLBACK } from "@/lib/gated-content-types";
+import { GATED_CONTENT_TYPES, GATED_CONTENT_TYPE_FALLBACK } from "@medialane/ui";
 
 interface GatedContentPanelProps {
   state: GatedContentState;

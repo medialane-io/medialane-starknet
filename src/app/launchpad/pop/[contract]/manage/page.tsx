@@ -6,10 +6,10 @@ import { normalizeAddress } from "@medialane/sdk";
 import {
   ArrowLeft, Users, Award, Loader2, CheckCircle2, AlertCircle, Download, Send,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { FadeIn } from "@/components/ui/motion-primitives";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@medialane/ui/button";
+import { Textarea } from "@medialane/ui/textarea";
+import { FadeIn } from "@medialane/ui/motion-primitives";
+import { Skeleton } from "@medialane/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCollection } from "@/hooks/use-collections";

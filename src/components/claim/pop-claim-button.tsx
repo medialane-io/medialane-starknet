@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
-import { claimProofFor } from "@medialane/ui";
+import { claimProofFor, describeError } from "@medialane/ui";
 import { RewardEarned } from "@/lib/reward-earned";
 import { Loader2, Award } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@medialane/ui/button";
 import { useWallet } from "@/hooks/use-wallet";
-import { describeError } from "@medialane/ui";
 import { usePopClaimStatus } from "@/hooks/use-pop";
 import { TransactionResultDialog, type TxResult } from "@/components/marketplace/transaction-result-dialog";
 import { useIntentExecute } from "@/hooks/use-intent-execute";

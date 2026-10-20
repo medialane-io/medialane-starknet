@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@medialane/ui/button";
+import { Badge } from "@medialane/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@medialane/ui/sheet";
 import {
   useCollectionFilters, CollectionFiltersTrigger, CollectionFiltersBody,
 } from "@medialane/ui";

@@ -12,16 +12,14 @@ import {
 import type { Call } from "starknet";
 import { normalizeAddress } from "@medialane/sdk";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,
-} from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { FadeIn } from "@/components/ui/motion-primitives";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@medialane/ui/collapsible";
+import { FadeIn } from "@medialane/ui/motion-primitives";
+import { Skeleton } from "@medialane/ui/skeleton";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard, ClaimRail } from "@medialane/ui";
@@ -39,7 +37,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn, isCollectionOwner } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
-import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@/types/ip";
+import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@medialane/ui/data/ip";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntents } from "@medialane/sdk/starknet";

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { fetchTokenMeta, fetchCollectionMeta, ipfsToHttpServer } from "@/lib/api-server";
 import { canonical, buildBreadcrumbJsonLd, buildProductJsonLd, buildSocialMetadata } from "@/lib/seo";
 import { chainFromSlug, assetHref, collectionHref } from "@/lib/routes";
-import { JsonLd } from "@/components/seo/json-ld";
+import { JsonLd } from "@medialane/ui/json-ld";
 import AssetPageClient from "./asset-page-client";
 
 export const revalidate = 60;

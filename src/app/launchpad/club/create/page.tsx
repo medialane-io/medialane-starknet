@@ -9,18 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { Users, Loader2, ChevronRight, ImagePlus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
 import {
   CollectionProgressDialog,
   type CollectionStep,

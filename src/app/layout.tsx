@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Urbanist } from "next/font/google";
 import Script from "next/script";
 import { Providers } from "./providers";
-import { JsonLd } from "@/components/seo/json-ld";
+import { JsonLd } from "@medialane/ui/json-ld";
 import { APP_URL, defaultRobots } from "@/lib/seo";
 import "@medialane/ui/styles";
 import "./globals.css";

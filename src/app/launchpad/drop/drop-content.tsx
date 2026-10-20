@@ -2,9 +2,9 @@
 
 import { Package, Users } from "lucide-react";
 import { DropFeatures, DropListing, ServiceHeader } from "@medialane/ui";
-import { FadeIn } from "@/components/ui/motion-primitives";
+import { FadeIn } from "@medialane/ui/motion-primitives";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
-import { BRAND } from "@/lib/brand";
+import { BRAND } from "@medialane/ui/data/brand";
 
 export function DropContent() {
   return (

@@ -9,25 +9,13 @@ import {
   MarketplaceProcessingState,
   MarketplaceSuccessState,
 } from "@medialane/ui";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@medialane/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
 import { resolveTokenImage } from "@/lib/utils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@medialane/ui/alert";
+import { Badge } from "@medialane/ui/badge";
 
 import { useTransfer } from "@/hooks/use-transfer";
 import { EXPLORER_URL } from "@/lib/constants";
