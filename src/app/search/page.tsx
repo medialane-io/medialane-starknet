@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useMedialaneClient, PageContainer, profileIdentity } from "@medialane/ui";
+import { useSearch, PageContainer, profileIdentity } from "@medialane/ui";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { Input } from "@medialane/ui/input";
 import { Button } from "@medialane/ui/button";
@@ -115,39 +115,13 @@ function SearchResults() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const q = searchParams.get("q") ?? "";
-  const client = useMedialaneClient();
   const [inputValue, setInputValue] = useState(q);
-  const [results, setResults] = useState<ApiSearchResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const { results, isLoading, error } = useSearch(q, { limit: 50 });
+  const hasError = Boolean(error);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setInputValue(q);
-  }, [q]);
-
-  useEffect(() => {
-    if (!q.trim()) {
-      setResults(null);
-      return;
-    }
-    let cancelled = false;
-    setIsLoading(true);
-    setHasError(false);
-    setResults(null);
-    client.api.search(q.trim(), 50).then((res) => {
-      if (!cancelled) {
-        setResults(res.data);
-        setIsLoading(false);
-      }
-    }).catch(() => {
-      if (!cancelled) {
-        setIsLoading(false);
-        setHasError(true);
-      }
-    });
-    return () => { cancelled = true; };
-
   }, [q]);
 
   function handleInputChange(value: string) {
@@ -164,7 +138,6 @@ function SearchResults() {
 
   function handleClear() {
     setInputValue("");
-    setResults(null);
     router.replace("/search");
   }
 
