@@ -8,9 +8,9 @@ import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCoin, updateCoinProfile } from "@/hooks/use-coins";
 import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@medialane/ui/button";
+import { Label } from "@medialane/ui/label";
+import { Textarea } from "@medialane/ui/textarea";
 import { ipfsToHttp } from "@/lib/utils";
 import { Loader2, Upload } from "lucide-react";
 

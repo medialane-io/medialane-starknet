@@ -2,18 +2,10 @@
 
 import { useState } from "react";
 import { UserRoundCog } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@medialane/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@medialane/ui/dialog";
+import { Input } from "@medialane/ui/input";
+import { Label } from "@medialane/ui/label";
 import { useWallet } from "@/hooks/use-wallet";
 import { normalizeAddress } from "@medialane/sdk";
 import { MarketplaceSuccessState } from "@medialane/ui";

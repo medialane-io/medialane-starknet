@@ -2,16 +2,15 @@
 
 import { use, useState, useEffect } from "react";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCollection } from "@/hooks/use-collections";
-import { useCollectionProfile } from "@/hooks/use-profiles";
+import { useCollection, useCollectionProfile } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Label } from "@medialane/ui/label";
+import { Textarea } from "@medialane/ui/textarea";
+import { Switch } from "@medialane/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
+import { Badge } from "@medialane/ui/badge";
 import {
   Lock, Gem, CheckCircle2,
   Video, Music, Radio, FileText, Link2,

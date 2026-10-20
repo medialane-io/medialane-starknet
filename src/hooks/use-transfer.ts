@@ -2,10 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { useSWRConfig } from "swr";
-import { describeError } from "@medialane/ui";
+import { describeError, useMedialaneClient } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 
 export interface TransferInput {

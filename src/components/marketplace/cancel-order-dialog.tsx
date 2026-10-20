@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
+import { Button } from "@medialane/ui/button";
+import { Alert, AlertDescription } from "@medialane/ui/alert";
+import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
 import {

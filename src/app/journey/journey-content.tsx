@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
-import { LevelJourneyList, BadgeCatalog } from "@medialane/ui";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LevelJourneyList, BadgeCatalog, useRewardsConfig } from "@medialane/ui";
+import { Skeleton } from "@medialane/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { useRewardsConfig } from "@/hooks/use-rewards";
 
 const EXAMPLE_ACTION_TYPES = [
   "mint_asset", "buy_asset", "create_collection", "comment",

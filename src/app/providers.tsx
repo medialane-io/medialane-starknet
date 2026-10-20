@@ -1,6 +1,6 @@
 "use client";
 
-import { MedialaneAppProvider } from "@medialane/ui";
+import { MedialaneAppProvider, NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground, useCreatorProfile } from "@medialane/ui";
 import { useAppAdapter } from "@/lib/use-app-adapter";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
@@ -8,17 +8,15 @@ import { ThemeProvider } from "next-themes";
 import Link from "next/link";
 import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
-import { NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
-import { useCreatorProfile } from "@/hooks/use-profiles";
 import { resolveTokenImage } from "@/lib/utils";
 
-import { MedialaneLogo } from "@/components/brand/medialane-logo";
+import { MedialaneLogoFull as MedialaneLogo } from "@medialane/ui/brand-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
 import { HeaderWalletTrigger } from "@/components/nav-wallet-trigger";
 import { AccountPanel } from "@/components/account-panel";
 import { ConnectDialog, useConnectDialog } from "@/components/connect-dialog";
-import { NavThemeToggle } from "@/components/nav-theme-toggle";
+import { NavThemeToggle } from "@medialane/ui/nav-theme-toggle";
 import { NavConnectButton } from "@/components/nav-connect-button";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";

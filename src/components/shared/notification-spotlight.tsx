@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Bell, ArrowRight, ChevronRight } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@medialane/ui/dialog";
+import { Button } from "@medialane/ui/button";
 import { fireConfetti } from "@/lib/confetti";
 import { useWallet } from "@/hooks/use-wallet";
-import { useNotifications } from "@/hooks/use-notifications";
-import { NOTIFICATION_ICON, NOTIFICATION_COLOR, NOTIFICATION_LABEL } from "@medialane/ui";
+import { useNotifications, NOTIFICATION_ICON, NOTIFICATION_COLOR, NOTIFICATION_LABEL } from "@medialane/ui";
+
+
 import { cn } from "@/lib/utils";
-import type { Notification } from "@/types/notification";
+import type { Notification } from "@medialane/ui";
 
 function SpotlightCard({
   notification,

@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CoinsExplorer as UICoinsExplorer, GradientButton, Button, coinServiceIds, type CoinFilter, type CoinSort } from "@medialane/ui";
+import { CoinsExplorer as UICoinsExplorer, GradientButton, Button, coinServiceIds, type CoinFilter, type CoinSort, usePriceMap } from "@medialane/ui";
+
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
 import { useCoinPriceAdapter } from "./use-coin-price-adapter";
-import { usePriceMap } from "@/hooks/use-coin-price";
+
 import { coinHref as buildCoinHref } from "@/lib/routes";
 
 function useCoins({ filter, sort }: { filter: CoinFilter; sort: CoinSort }) {

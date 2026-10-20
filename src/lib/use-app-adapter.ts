@@ -6,6 +6,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
+import { ReportDialog } from "@/components/report-dialog";
 
 export function useAppAdapter(): MedialaneApp {
   const { address } = useWallet();
@@ -19,10 +20,11 @@ export function useAppAdapter(): MedialaneApp {
     connectDescription: "Use your Starknet wallet to trade non-custodially.",
     companion: {
       title: "Trade with Google or email",
-      description: "Open this asset on Medialane — no wallet extension needed.",
+      description: "Open this asset on Medialane and trade with your email.",
       icon: Mail,
       origin: "https://medialane.io",
     },
+    ReportDialog,
     getSigner: () => {
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
       return signer;

@@ -8,18 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
 import {
   CollectionProgressDialog,
   type CollectionStep,
@@ -28,11 +20,10 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard } from "@medialane/ui";
+import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
-import { suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";

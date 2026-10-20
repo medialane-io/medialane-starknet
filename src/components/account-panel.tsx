@@ -8,16 +8,16 @@ import {
   HandCoins, LayoutGrid, LogOut, Settings, Wallet,
 } from "lucide-react";
 import { useAccount } from "@starknet-react/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@medialane/ui/button";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
-import { useActivitiesByAddress } from "@/hooks/use-activities";
-import { useReceivedOffers } from "@/hooks/use-orders";
+import { useActivitiesByAddress, useReceivedOffers, isWrongNetwork as computeIsWrongNetwork, useNavAccountSheet, NavThemeToggle } from "@medialane/ui";
+
+
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { getConnectorIconSrc } from "@/lib/wallet-connectors";
-import { isWrongNetwork as computeIsWrongNetwork } from "@medialane/ui";
+
 import { timeAgo } from "@/lib/utils";
-import { useNavAccountSheet, NavThemeToggle } from "@medialane/ui";
 import type { ApiActivity } from "@medialane/sdk";
 
 function truncate(addr: string): string {

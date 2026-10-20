@@ -2,10 +2,9 @@
 
 import { Package, Users } from "lucide-react";
 import { DropFeatures, DropListing, ServiceHeader } from "@medialane/ui";
-import { FadeIn } from "@/components/ui/motion-primitives";
+import { FadeIn } from "@medialane/ui/motion-primitives";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
-import { getMedialaneClient } from "@/lib/medialane-client";
-import { BRAND } from "@/lib/brand";
+import { BRAND } from "@medialane/ui/data/brand";
 
 export function DropContent() {
   return (
@@ -44,7 +43,7 @@ export function DropContent() {
       </section>
 
       <section className="px-4 max-w-5xl mx-auto">
-        <DropListing getClient={getMedialaneClient} />
+        <DropListing />
       </section>
 
     </div>

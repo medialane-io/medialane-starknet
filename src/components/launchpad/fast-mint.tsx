@@ -1,11 +1,11 @@
 "use client";
 
-import { FastMint as SharedFastMint, type FastMintProps as SharedFastMintProps } from "@medialane/ui";
+import { FastMint as SharedFastMint, type FastMintProps as SharedFastMintProps, useCollectionsByOwner, useMedialaneClient } from "@medialane/ui";
+
 import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
 import { useAccountSession } from "@/components/wallet-session-sync";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
+
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { RewardEarned } from "@/lib/reward-earned";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";

@@ -6,18 +6,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@medialane/ui/form";
 import { CollectionProgressDialog } from "@/components/marketplace/collection-progress-dialog";
 import type { CollectionStep } from "@/components/marketplace/collection-progress-dialog";
 import { ConnectGate } from "@/components/connect-gate";
@@ -25,9 +17,8 @@ import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { useTx } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard } from "@medialane/ui";
+import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { CreateCollectionAside } from "@/components/claim/create-collection-aside";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata } from "@medialane/sdk";

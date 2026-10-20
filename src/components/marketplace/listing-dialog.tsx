@@ -8,17 +8,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, Layers, ShieldCheck, Tag, Zap } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
 import { getListableTokens } from "@medialane/sdk";
 import { resolveTokenImage } from "@/lib/utils";
-import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
   CurrencyPicker,
   DurationPicker,

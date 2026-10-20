@@ -1,7 +1,7 @@
 "use client";
 
 import { useWallet } from "@/hooks/use-wallet";
-import { PortfolioActivity } from "@/components/portfolio/portfolio-activity";
+import { PortfolioActivity } from "@medialane/ui";
 
 export default function PortfolioActivityPage() {
   const { address: walletAddress } = useWallet();

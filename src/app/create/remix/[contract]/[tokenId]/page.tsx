@@ -5,42 +5,35 @@ import { assetHref } from "@/lib/routes";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useToken, useTokenBalance } from "@/hooks/use-tokens";
+import { useToken, useTokenBalance, useCollectionsByOwner, checkIsOwner, useMedialaneClient } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { MintProgressDialog } from "@/components/marketplace/mint-progress-dialog";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import type { MintStep } from "@/components/marketplace/mint-progress-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Label } from "@medialane/ui/label";
+import { Skeleton } from "@medialane/ui/skeleton";
+import { Badge } from "@medialane/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@medialane/ui/collapsible";
 import { registerRemix } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
-import { IP_TYPES, LICENSE_TYPES } from "@/types/ip";
+import { IP_TYPES, LICENSE_TYPES } from "@medialane/ui/data/ip";
 import { ipfsToHttp } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
   GitBranch, ChevronDown, ChevronLeft, ImagePlus, Upload,
   Shield, Percent, Boxes, Plus, Info, Loader2,
 } from "lucide-react";
-import { ToggleGroup, Section } from "@/components/create/create-form-primitives";
+import { ToggleGroup, Section } from "@medialane/ui/create-form-primitives";
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import type { Call } from "starknet";
 import { uploadFileToIpfs, uploadJsonToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
-import { checkIsOwner } from "@medialane/ui";
 
 const TOKENS = getListableTokens();
 

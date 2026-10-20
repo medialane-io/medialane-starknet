@@ -18,7 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { AirdropClaim } from "@/components/airdrop/airdrop-claim";
-import { MedialaneLogo } from "@/components/brand/medialane-logo";
+import { MedialaneLogoFull as MedialaneLogo } from "@medialane/ui/brand-logo";
 
 function EventCard() {
   const [errored, setErrored] = useState(false);

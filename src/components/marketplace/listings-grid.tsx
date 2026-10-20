@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useOrders } from "@/hooks/use-orders";
+import { useOrders, LoadMoreSentinel } from "@medialane/ui";
+
 import { ListingCard, ListingCardSkeleton } from "./listing-card";
 import { PurchaseDialog } from "./purchase-dialog";
-import { Button } from "@/components/ui/button";
-import { LoadMoreSentinel } from "@medialane/ui";
+import { Button } from "@medialane/ui/button";
+
 import type { ApiOrder, SortOrder } from "@medialane/sdk";
 
 const PAGE_SIZE = 15;

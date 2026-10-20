@@ -2,12 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import {
   MarketplaceSuccessState,
   MarketplaceErrorState,

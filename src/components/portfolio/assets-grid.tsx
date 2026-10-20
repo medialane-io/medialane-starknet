@@ -5,7 +5,7 @@ import { useTokensByOwner } from "@/hooks/use-tokens";
 import { TokenCard } from "@/components/shared/token-card";
 import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
-import { EmptyOrError } from "@/components/ui/empty-or-error";
+import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { LoadMoreSentinel } from "@medialane/ui";
 import { ImageIcon } from "lucide-react";
 import { useMarketplace } from "@/hooks/use-marketplace";

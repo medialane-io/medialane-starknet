@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { describeError } from "@medialane/ui";
-import { Button } from "@/components/ui/button";
+import { Button } from "@medialane/ui/button";
 import { useWallet } from "@/hooks/use-wallet";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
 import { getMedialaneClient } from "@/lib/medialane-client";

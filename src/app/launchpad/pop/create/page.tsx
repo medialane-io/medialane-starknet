@@ -12,22 +12,18 @@ import {
   Award, Mic2, Code2, Wrench, Zap, Users, BookOpen, Star,
   Loader2, ImagePlus, X, CheckCircle2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form, FormControl, FormField, FormItem,
-  FormLabel, FormMessage, FormDescription,
-} from "@/components/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@medialane/ui/form";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard } from "@medialane/ui";
+import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { CreatePopAside } from "@/components/claim/create-pop-aside";
 import { useWallet } from "@/hooks/use-wallet";
-import { FadeIn } from "@/components/ui/motion-primitives";
+import { FadeIn } from "@medialane/ui/motion-primitives";
 import { type PopEventType } from "@/lib/launchpad-contracts";
-import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@/lib/launchpad-defaults";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { cn } from "@/lib/utils";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata } from "@medialane/sdk";

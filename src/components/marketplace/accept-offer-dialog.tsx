@@ -7,12 +7,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, DollarSign } from "lucide-react";
 import { fireConfetti } from "@/lib/confetti";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
+import { Button } from "@medialane/ui/button";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDisplayPrice, ipfsToHttp } from "@/lib/utils";
-import { CurrencyIcon } from "@/components/shared/currency-icon";
+import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
   MarketplaceErrorState,
   MarketplaceProcessingState,

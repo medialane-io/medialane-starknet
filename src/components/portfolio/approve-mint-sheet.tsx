@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "@/hooks/use-wallet";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@medialane/ui/sheet";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Label } from "@medialane/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
+import { useMedialaneClient, describeError, MarketplaceSuccessState, useCollectionsByOwner } from "@medialane/ui";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
-import { describeError } from "@medialane/ui";
+
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
+
 import { confirmRemixOffer } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { formatDisplayPrice } from "@/lib/utils";
@@ -21,7 +21,6 @@ import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";
 import type { Call } from "starknet";
 import { EXPLORER_URL } from "@/lib/constants";
-import { MarketplaceSuccessState } from "@medialane/ui";
 import { fireConfetti } from "@/lib/confetti";
 import { assetHref } from "@/lib/routes";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";

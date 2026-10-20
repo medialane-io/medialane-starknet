@@ -1,7 +1,8 @@
 "use client";
 
-import { DiscoverCollectionsStrip } from "@medialane/ui";
-import { useCollections } from "@/hooks/use-collections";
+import { DiscoverCollectionsStrip, useCollections } from "@medialane/ui";
+
+
 import type { ApiCollection } from "@medialane/sdk";
 import { collectionHref } from "@/lib/routes";
 

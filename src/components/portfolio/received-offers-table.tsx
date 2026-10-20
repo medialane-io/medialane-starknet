@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useReceivedOffers } from "@/hooks/use-orders";
-import { Button } from "@/components/ui/button";
-import { EmptyOrError } from "@/components/ui/empty-or-error";
+import { useReceivedOffers } from "@medialane/ui";
+
+import { Button } from "@medialane/ui/button";
+import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ipfsToHttp, formatDisplayPrice, formatOrderExpiry, cn } from "@/lib/utils";
 import { ExternalLink, Inbox } from "lucide-react";

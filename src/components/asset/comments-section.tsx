@@ -6,17 +6,16 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { normalizeAddress } from "@medialane/sdk";
 import { useWallet } from "@/hooks/use-wallet";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
+import { useMedialaneClient, LevelBadge, useRewardsBatch, useComments } from "@medialane/ui";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
-import { useComments } from "@/hooks/use-comments";
 import { useTx } from "@/hooks/use-tx";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { AddressDisplay } from "@/components/shared/address-display";
-import { LevelBadge } from "@medialane/ui";
-import { useRewardsBatch } from "@/hooks/use-rewards";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@medialane/ui/dialog";
+import { Skeleton } from "@medialane/ui/skeleton";
+import { Button } from "@medialane/ui/button";
+import { Textarea } from "@medialane/ui/textarea";
+import { AddressDisplay } from "@medialane/ui/address-display";
+
+
 import { STARKNET_NFTCOMMENTS_CONTRACT, EXPLORER_URL } from "@/lib/constants";
 import { MessageSquare, Loader2, Send, CheckCircle, X, ExternalLink, Flag, Zap } from "lucide-react";
 import { ReportDialog, type ReportTarget } from "@/components/report-dialog";
@@ -25,7 +24,6 @@ import { getMedialaneClient } from "@/lib/medialane-client";
 import type { Call } from "starknet";
 
 const MAX_LEN = 1000;
-
 
 type PostStep = "idle" | "processing" | "success" | "error";
 

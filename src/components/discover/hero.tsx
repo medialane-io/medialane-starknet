@@ -1,8 +1,8 @@
 "use client";
 
-import { DiscoverHero } from "@medialane/ui";
-import { usePlatformStats } from "@/hooks/use-stats";
-import { useOrders } from "@/hooks/use-orders";
+import { DiscoverHero, usePlatformStats, useOrders } from "@medialane/ui";
+
+
 
 export function Hero() {
   const { stats } = usePlatformStats();

@@ -4,14 +4,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useConnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@medialane/ui/dialog";
+import { Button } from "@medialane/ui/button";
 import { Wallet, ExternalLink, Loader2 } from "lucide-react";
 import { useWallet } from "@/hooks/use-wallet";
 import { describeError } from "@medialane/ui";

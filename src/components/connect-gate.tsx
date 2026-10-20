@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Wallet } from "lucide-react";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@medialane/ui/skeleton";
 
 export type ConnectGateProps = {
   children: ReactNode;

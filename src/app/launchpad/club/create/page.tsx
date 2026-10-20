@@ -9,18 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { Users, Loader2, ChevronRight, ImagePlus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Button } from "@medialane/ui/button";
+import { Input } from "@medialane/ui/input";
+import { Textarea } from "@medialane/ui/textarea";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
 import {
   CollectionProgressDialog,
   type CollectionStep,
@@ -29,9 +21,8 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { ClaimRail, MedialaneCollectionCard } from "@medialane/ui";
+import { ClaimRail, MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { useMyClubCollections } from "@/hooks/use-club";
-import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
