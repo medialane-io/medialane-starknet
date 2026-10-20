@@ -36,9 +36,6 @@ function TokenCard({ token }: { token: NonNullable<ApiSearchResult["tokens"]>[nu
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-brand-purple/5" />
-            <span className="text-2xl tabular-nums text-muted-foreground z-10">
-              #{token.tokenId}
-            </span>
           </div>
         )}
       </div>

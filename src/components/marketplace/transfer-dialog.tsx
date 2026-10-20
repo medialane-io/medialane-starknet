@@ -152,9 +152,6 @@ export function TransferDialog({
             <div className="space-y-4">
 
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                <Badge variant="outline" className="tabular-nums">
-                  #{tokenId}
-                </Badge>
                 <span className="text-sm font-medium truncate">{displayName}</span>
               </div>
 

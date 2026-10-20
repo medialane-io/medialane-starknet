@@ -223,7 +223,6 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
             <div className="space-y-5 pt-4">
               {offer && (
                 <div className="rounded-xl border border-border bg-muted/30 p-3 text-sm space-y-1">
-                  <p><span className="text-muted-foreground">Token</span> #{offer.originalTokenId}</p>
                   <p><span className="text-muted-foreground">License</span> {offer.licenseType}</p>
                   <p><span className="text-muted-foreground">Price</span> {priceDisplay}</p>
                   {offer.message && <p className="text-muted-foreground italic">"{offer.message}"</p>}
