@@ -28,6 +28,7 @@ import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
+import { profileHref } from "@/lib/routes";
 
 
 const schema = z.object({
@@ -225,7 +226,7 @@ export default function CreateNFTEditionsCollectionPage() {
               name={form.watch("name")}
               collection={form.watch("symbol") || "Editions"}
               creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
-              creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
+              creatorHref={walletAddress ? profileHref({ address: walletAddress }) : undefined}
             />
             <CreateEditionsAside />
           </>

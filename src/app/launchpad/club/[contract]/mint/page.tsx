@@ -38,6 +38,7 @@ import { LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } fr
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntents } from "@medialane/sdk/starknet";
+import { profileHref } from "@/lib/routes";
 
 function dateToUnixTimestamp(dateStr: string | undefined): number | undefined {
   if (!dateStr) return undefined;
@@ -293,7 +294,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
               name={form.watch("name")}
               collection={collection.symbol || "Club"}
               creator={address ? `${address.slice(0, 6)}…${address.slice(-4)}` : undefined}
-              creatorHref={address ? `/account/${address}` : undefined}
+              creatorHref={address ? profileHref({ address }) : undefined}
             />
             <ClaimRail
               included={[

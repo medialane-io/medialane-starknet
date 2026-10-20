@@ -41,6 +41,7 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
+import { profileHref } from "@/lib/routes";
 
 const schema = z.object({
   value: z
@@ -368,7 +369,7 @@ export default function MintNFTEditionsPage() {
               collection="Edition"
               serial={Number(form.watch("value")) > 1 ? `${form.watch("value")} editions` : undefined}
               creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
-              creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
+              creatorHref={walletAddress ? profileHref({ address: walletAddress }) : undefined}
             />
             <MintEditionAside />
           </>

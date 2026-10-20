@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn, resolveTokenImage } from "@/lib/utils";
 import { addressPalette } from "@/lib/creator-utils";
+import { profileHref } from "@/lib/routes";
 
 type CheckState = "idle" | "checking" | "available" | "taken";
 
@@ -175,7 +176,7 @@ function ProfileLivePreview({
 
         {approvedUsername && (
           <Link
-            href={`/creator/${approvedUsername}`}
+            href={profileHref({ username: approvedUsername })}
             className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
           >
             View profile
@@ -479,7 +480,7 @@ export default function SettingsContent() {
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Your profile is live at{" "}
                     <a
-                      href={`/creator/${approvedUsername}`}
+                      href={profileHref({ username: approvedUsername })}
                       className="tabular-nums font-medium text-primary hover:underline"
                     >
                       medialane.io/creator/{approvedUsername}

@@ -12,6 +12,7 @@ import { AddressDisplay } from "@medialane/ui/address-display";
 
 import { resolveTokenImage } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { profileHref } from "@/lib/routes";
 
 export interface LeaderboardPanelProps {
   myAddress?: string | null;
@@ -88,7 +89,7 @@ export function LeaderboardPanel({
           entries={rows}
           highlightAddress={highlightAddress}
           renderAddress={(address) => (
-            <Link href={`/creator/${address}`} className="hover:text-foreground transition-colors">
+            <Link href={profileHref({ address })} className="hover:text-foreground transition-colors">
               <CreatorIdentity address={address} />
             </Link>
           )}

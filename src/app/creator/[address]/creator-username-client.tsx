@@ -15,7 +15,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ActivityRow } from "@/components/creator/activity-row";
+import { ActivityTimelineRow } from "@medialane/ui";
+import { profileHref } from "@/lib/routes";
 
 const TABS = [
   { id: "collections", label: "Collections", Icon: LayoutList },
@@ -87,7 +88,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
             ]}
           >
             <Button size="sm" variant="outline" asChild className="w-fit">
-              <Link href={`/account/${creator.walletAddress}`}>
+              <Link href={profileHref({ address: creator.walletAddress })}>
                 <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                 Full profile
               </Link>
@@ -172,7 +173,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
               ) : (
                 <div>
                   {activities.map((a, i) => (
-                    <ActivityRow key={i} event={a} isLast={i === activities.length - 1} />
+                    <ActivityTimelineRow key={i} event={a} isLast={i === activities.length - 1} />
                   ))}
                 </div>
               )}

@@ -45,6 +45,7 @@ import {
 import type { Call } from "starknet";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
+import { profileHref } from "@/lib/routes";
 
 const schema = z.object({
   collectionId: z.string().min(1, "Select a collection"),
@@ -448,7 +449,7 @@ export function SingleEditionsContent() {
               name={form.watch("name")}
               collection={collections.find((c) => c.collectionId === form.watch("collectionId"))?.name || "IP Asset"}
               creator={walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined}
-              creatorHref={walletAddress ? `/account/${walletAddress}` : undefined}
+              creatorHref={walletAddress ? profileHref({ address: walletAddress }) : undefined}
             />
             <CreateAssetAside />
           </>

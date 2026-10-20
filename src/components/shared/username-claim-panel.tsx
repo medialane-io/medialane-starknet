@@ -9,6 +9,7 @@ import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
 import { Badge } from "@medialane/ui/badge";
 import { AtSign, CheckCircle, Clock, XCircle, ArrowRight, Loader2 } from "lucide-react";
+import { profileHref } from "@/lib/routes";
 
 type CheckState = "idle" | "checking" | "available" | "taken";
 
@@ -119,12 +120,12 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
           <div className="flex items-center gap-2 text-sm">
             <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
             <span className="text-muted-foreground">Your username:</span>
-            <a href={`/creator/${approvedUsername}`} className="tabular-nums font-medium text-primary hover:underline">
+            <a href={profileHref({ username: approvedUsername })} className="tabular-nums font-medium text-primary hover:underline">
               @{approvedUsername}
             </a>
           </div>
           <Button size="sm" variant="outline" asChild>
-            <Link href={`/creator/${approvedUsername}`}>
+            <Link href={profileHref({ username: approvedUsername })}>
               View profile <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
             </Link>
           </Button>
