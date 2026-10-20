@@ -8,14 +8,14 @@ import { Input } from "@medialane/ui/input";
 import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
-import { ipfsToHttp } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { BRAND } from "@medialane/ui/data/brand";
 import { AtSign, Search, Users, Palette, Globe, Twitter, X } from "lucide-react";
 import type { ApiCreatorProfile } from "@medialane/sdk";
 import { profileHref } from "@/lib/routes";
 
 function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
-  const avatarUrl = creator.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
+  const avatarUrl = resolveImage(creator.avatarImage);
   const { identity, name } = profileIdentity({
     username: creator.username,
     name: creator.name,
@@ -27,7 +27,7 @@ function CreatorCard({ creator }: { creator: ApiCreatorProfile }) {
   const fallbackGradient = `linear-gradient(135deg, hsl(${hue},55%,35%), hsl(${hue2},50%,22%))`;
 
   const { collections } = useCollectionsByOwner(!avatarUrl ? creator.walletAddress : null);
-  const fallbackImage = collections[0]?.image ? ipfsToHttp(collections[0].image) : null;
+  const fallbackImage = resolveImage(collections[0]?.image);
 
   const resolvedImage = avatarUrl ?? fallbackImage;
 

@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
-import { resolveTokenImage } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import {
   DurationPicker,
   MarketplaceSuccessState,
@@ -47,7 +47,7 @@ export function CounterOfferDialog({
   open, onOpenChange, nftContract, tokenId, tokenName, tokenImage: tokenImageRaw,
   currentBid, currencySymbol, onSuccess,
 }: CounterOfferDialogProps) {
-  const tokenImage = resolveTokenImage(tokenImageRaw);
+  const tokenImage = resolveImage(tokenImageRaw);
   const { isConnected } = useWallet();
   const { makeOffer, isProcessing, txHash, error, resetState } = useMarketplace();
   const [done, setDone] = useState(false);

@@ -11,7 +11,7 @@ import { uploadFailureToast } from "@/lib/upload-error";
 import { Button } from "@medialane/ui/button";
 import { Label } from "@medialane/ui/label";
 import { Textarea } from "@medialane/ui/textarea";
-import { ipfsToHttp } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { Loader2, Upload } from "lucide-react";
 
 interface Props { params: Promise<{ contract: string }> }
@@ -82,7 +82,7 @@ export default function CoinSettingsPage({ params }: Props) {
     }
   }
 
-  const previewUrl = image ? ipfsToHttp(image) : null;
+  const previewUrl = resolveImage(image);
 
   return (
     <div className="space-y-8 max-w-2xl">

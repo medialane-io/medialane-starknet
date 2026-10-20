@@ -26,7 +26,7 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { CreateAssetAside } from "@/components/claim/create-asset-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
-import { cn, ipfsToHttp } from "@/lib/utils";
+import { cn, resolveImage } from "@/lib/utils";
 import { absoluteUrl } from "@/lib/seo";
 import { IP_TYPES, LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@medialane/ui/data/ip";
 import type { IPType, MetadataField } from "@medialane/ui";
@@ -113,7 +113,7 @@ function collectionWorks(col: ApiCollection) {
 }
 
 function CollectionThumb({ image, size }: { image: string | null | undefined; size: "sm" | "md" }) {
-  const imageUrl = image ? ipfsToHttp(image) : null;
+  const imageUrl = resolveImage(image);
   return (
     <div
       className={cn(

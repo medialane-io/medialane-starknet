@@ -9,7 +9,7 @@ import Link from "next/link";
 import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
-import { resolveTokenImage } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 
 import { MedialaneLogoFull as MedialaneLogo } from "@medialane/ui/brand-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
@@ -34,7 +34,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/creator/");
   const { isConnected, disconnect, address } = useWallet();
   const { profile } = useCreatorProfile(address ?? undefined);
-  const themeImageUrl = suppressAmbient ? null : resolveTokenImage(profile?.avatarImage);
+  const themeImageUrl = suppressAmbient ? null : resolveImage(profile?.avatarImage);
   const { open: openConnectDialog } = useConnectDialog();
   const commands = useMemo<NavCommandGroup[]>(
     () => [

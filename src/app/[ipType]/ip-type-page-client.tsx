@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogTitle } from "@medialane/ui/dialog";
 import { useWallet } from "@/hooks/use-wallet";
 import { useRouter } from "next/navigation";
 import { IP_TYPE_MAP, IP_TYPE_CONFIG } from "@/lib/ip-type-config";
-import { ipfsToHttp, formatDisplayPrice, cn } from "@/lib/utils";
+import { resolveImage, formatDisplayPrice, cn } from "@/lib/utils";
 import { OfferDialog } from "@/components/marketplace/offer-dialog";
 import type { ApiToken } from "@medialane/sdk";
 import { assetHref } from "@/lib/routes";
@@ -43,7 +43,7 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
   const [offerOpen, setOfferOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  const image = ipfsToHttp(token.metadata?.image);
+  const image = resolveImage(token.metadata?.image);
   const name = token.metadata?.name ?? `#${token.tokenId}`;
   const activeOrder = token.activeOrders?.[0];
 

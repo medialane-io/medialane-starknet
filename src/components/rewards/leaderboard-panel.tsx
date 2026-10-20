@@ -10,7 +10,7 @@ import { Skeleton } from "@medialane/ui/skeleton";
 import { AddressDisplay } from "@medialane/ui/address-display";
 
 
-import { resolveTokenImage } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { profileHref } from "@/lib/routes";
 
@@ -24,7 +24,7 @@ export interface LeaderboardPanelProps {
 
 function CreatorIdentity({ address }: { address: string }) {
   const { profile } = useCreatorProfile(address);
-  const avatarUrl = resolveTokenImage(profile?.avatarImage);
+  const avatarUrl = resolveImage(profile?.avatarImage);
   const { identity: name } = profileIdentity({
     username: profile?.username,
     name: profile?.name,

@@ -6,7 +6,7 @@ import { useReceivedOffers } from "@medialane/ui";
 import { Button } from "@medialane/ui/button";
 import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { ipfsToHttp, formatDisplayPrice, formatOrderExpiry, cn } from "@/lib/utils";
+import { resolveImage, formatDisplayPrice, formatOrderExpiry, cn } from "@/lib/utils";
 import { ExternalLink, Inbox } from "lucide-react";
 import { EXPLORER_URL, SUPPORTED_TOKENS } from "@/lib/constants";
 import { getSeenOffers } from "@/hooks/use-unread-offers";
@@ -35,7 +35,7 @@ function ReceivedOfferRow({
   isNew: boolean;
 }) {
   const name = order.token?.name || `#${order.nftTokenId}`;
-  const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
+  const image = resolveImage(order.token?.image);
   const expiry = formatOrderExpiry(order.endTime);
 
   return (
@@ -177,7 +177,7 @@ export function ReceivedOffersTable({ address }: ReceivedOffersTableProps) {
             tokenId={counterOrder.nftTokenId ?? ""}
             originalOrderHash={counterOrder.orderHash}
             tokenName={counterOrder.token?.name ?? undefined}
-            tokenImage={counterOrder.token?.image ? ipfsToHttp(counterOrder.token.image) : null}
+            tokenImage={resolveImage(counterOrder.token?.image)}
             currentBid={`${formatDisplayPrice(counterOrder.price.formatted)} ${counterOrder.price.currency}`}
             currencySymbol={counterOrder.price.currency ?? ""}
             currencyDecimals={token?.decimals ?? 18}

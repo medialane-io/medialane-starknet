@@ -1,35 +1,35 @@
 import { test, expect } from "bun:test";
-import { ipfsToHttp, isCollectionOwner } from "./utils";
+import { resolveImage, isCollectionOwner } from "./utils";
 
-test("ipfsToHttp routes known IPFS gateway URLs to Pinata's public gateway directly", () => {
-  const result = ipfsToHttp("https://gateway.pinata.cloud/ipfs/abc123");
+test("resolveImage routes known IPFS gateway URLs to Pinata's public gateway directly", () => {
+  const result = resolveImage("https://gateway.pinata.cloud/ipfs/abc123");
   expect(result.startsWith("https://gateway.pinata.cloud/ipfs/abc123")).toBe(true);
 });
 
-test("ipfsToHttp routes unrecognized https URLs through the generic image proxy", () => {
-  const result = ipfsToHttp("https://example.com/some-image.png");
+test("resolveImage routes unrecognized https URLs through the generic image proxy", () => {
+  const result = resolveImage("https://example.com/some-image.png");
   expect(result).toBe("/api/img?url=" + encodeURIComponent("https://example.com/some-image.png"));
 });
 
-test("ipfsToHttp passes data:image/* URIs through unchanged", () => {
+test("resolveImage passes data:image/* URIs through unchanged", () => {
   const dataUri = "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=";
-  expect(ipfsToHttp(dataUri)).toBe(dataUri);
+  expect(resolveImage(dataUri)).toBe(dataUri);
 });
 
-test("ipfsToHttp rejects javascript: URIs", () => {
-  expect(ipfsToHttp("javascript:alert(1)")).toBe("/placeholder.svg");
+test("resolveImage rejects javascript: URIs", () => {
+  expect(resolveImage("javascript:alert(1)")).toBe("/placeholder.svg");
 });
 
-test("ipfsToHttp rejects data:text/html URIs", () => {
-  expect(ipfsToHttp("data:text/html,<script>alert(1)</script>")).toBe("/placeholder.svg");
+test("resolveImage rejects data:text/html URIs", () => {
+  expect(resolveImage("data:text/html,<script>alert(1)</script>")).toBe("/placeholder.svg");
 });
 
-test("ipfsToHttp rejects blob: URIs", () => {
-  expect(ipfsToHttp("blob:https://evil.example/abc")).toBe("/placeholder.svg");
+test("resolveImage rejects blob: URIs", () => {
+  expect(resolveImage("blob:https://evil.example/abc")).toBe("/placeholder.svg");
 });
 
-test("ipfsToHttp resolves ipfs:// URIs to Pinata's public gateway directly, no app-server hop", () => {
-  expect(ipfsToHttp("ipfs://QmXxx").startsWith("https://gateway.pinata.cloud/ipfs/QmXxx")).toBe(true);
+test("resolveImage resolves ipfs:// URIs to Pinata's public gateway directly, no app-server hop", () => {
+  expect(resolveImage("ipfs://QmXxx").startsWith("https://gateway.pinata.cloud/ipfs/QmXxx")).toBe(true);
 });
 
 test("a collection belongs to the wallet that owns it, whatever the padding", () => {

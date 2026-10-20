@@ -8,7 +8,7 @@ import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listi
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
 import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";
-import { ipfsToHttp } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { normalizeAddress } from "@medialane/sdk";
 import {
   Activity, LayoutList, ShoppingBag, BarChart2,
@@ -40,7 +40,7 @@ export default function CreatorUsernamePageClient({ username }: Props) {
 
   const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721");
 
-  const avatarUrl = creator?.avatarImage ? ipfsToHttp(creator.avatarImage) : null;
+  const avatarUrl = resolveImage(creator?.avatarImage);
 
   if (isLoading) {
     return (

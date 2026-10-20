@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
-import { resolveTokenImage } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { getListableTokens } from "@medialane/sdk";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
@@ -51,7 +51,7 @@ interface OfferDialogProps {
 }
 
 export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenName, tokenStandard, tokenImage: tokenImageRaw, onSuccess }: OfferDialogProps) {
-  const tokenImage = resolveTokenImage(tokenImageRaw);
+  const tokenImage = resolveImage(tokenImageRaw);
   const { isConnected } = useWallet();
   const { makeOffer, isProcessing, txHash, error, resetState } = useMarketplace();
   const confettiFired = useRef(false);

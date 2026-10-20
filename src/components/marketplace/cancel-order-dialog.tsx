@@ -8,7 +8,7 @@ import { Button } from "@medialane/ui/button";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { ipfsToHttp, formatDisplayPrice } from "@/lib/utils";
+import { resolveImage, formatDisplayPrice } from "@/lib/utils";
 import {
   MarketplaceProcessingState,
   MarketplaceTxLink,
@@ -26,7 +26,7 @@ interface CancelOrderDialogProps {
 }
 
 function TokenHero({ order, variant }: { order: ApiOrder; variant: "listing" | "offer" }) {
-  const image = order.token?.image ? ipfsToHttp(order.token.image) : null;
+  const image = resolveImage(order.token?.image);
   const name = order.token?.name || `Token #${order.nftTokenId}`;
 
   return (
@@ -68,6 +68,7 @@ export function CancelOrderDialog({
   variant,
 }: CancelOrderDialogProps) {
   const { cancelOrder, isProcessing, txHash, error, resetState } = useMarketplace();
+  const image = resolveImage(order?.token?.image);
 
   const resolvedVariant: "listing" | "offer" =
     variant ?? (order?.offer.itemType === "ERC721" || order?.offer.itemType === "ERC1155" ? "listing" : "offer");
@@ -102,11 +103,11 @@ export function CancelOrderDialog({
             <div className="h-16 w-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
               <CheckCircle2 className="h-9 w-9 text-emerald-500" />
             </div>
-            {order?.token?.image && (
+            {image && (
               <div className="h-24 w-24 rounded-2xl overflow-hidden border border-border shadow-md">
                 <Image
-                  src={ipfsToHttp(order.token.image)}
-                  alt={order.token?.name || `Token #${order?.nftTokenId}`}
+                  src={image}
+                  alt={order?.token?.name || `Token #${order?.nftTokenId}`}
                   width={96}
                   height={96}
                   className="h-full w-full object-cover"

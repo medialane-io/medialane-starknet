@@ -7,7 +7,7 @@ import { Badge } from "@medialane/ui/badge";
 import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { orderTotal } from "@/lib/checkout";
-import { ipfsToHttp, formatDisplayPrice, formatOrderExpiry, cn } from "@/lib/utils";
+import { resolveImage, formatDisplayPrice, formatOrderExpiry, cn } from "@/lib/utils";
 import { ArrowLeftRight, ExternalLink, Inbox } from "lucide-react";
 import { EXPLORER_URL } from "@/lib/constants";
 import Image from "next/image";
@@ -30,7 +30,7 @@ function CounterOfferFetcher({
   if (!counter) return null;
 
   const name = counter.token?.name || `#${counter.nftTokenId}`;
-  const image = counter.token?.image ? ipfsToHttp(counter.token.image) : null;
+  const image = resolveImage(counter.token?.image);
   const expiry = formatOrderExpiry(counter.endTime);
   const isExpiredOrFilled = counter.status !== "ACTIVE" || expiry.expired;
 

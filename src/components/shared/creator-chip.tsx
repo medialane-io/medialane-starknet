@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCreatorProfile, profileIdentity } from "@medialane/ui";
 
-import { ipfsToHttp, cn } from "@/lib/utils";
+import { resolveImage, cn } from "@/lib/utils";
 import { profileHref } from "@/lib/routes";
 
 interface CreatorChipProps {
@@ -20,7 +20,7 @@ export function CreatorChip({ address, label = "by", className }: CreatorChipPro
   if (!address) return null;
 
   const href = profileHref({ username: profile?.username, address });
-  const avatarUrl = profile?.avatarImage ? ipfsToHttp(profile.avatarImage) : null;
+  const avatarUrl = resolveImage(profile?.avatarImage);
   const { identity: name } = profileIdentity({
     username: profile?.username,
     name: profile?.name,

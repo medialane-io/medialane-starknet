@@ -17,7 +17,7 @@ import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { RewardEarned } from "@/lib/reward-earned";
-import { resolveTokenImage, shortenAddress } from "@/lib/utils";
+import { resolveImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { FadeIn } from "@medialane/ui/motion-primitives";
 
@@ -102,7 +102,7 @@ export default function CreateSponsorshipPage() {
     contractAddress: t.contractAddress,
     tokenId: t.tokenId,
     name: t.metadata?.name ?? `Token #${t.tokenId}`,
-    image: resolveTokenImage(t.metadata?.image),
+    image: resolveImage(t.metadata?.image),
   }));
 
   const searchAssets = async (query: string): Promise<OwnedAsset[]> => {
@@ -111,7 +111,7 @@ export default function CreateSponsorshipPage() {
       contractAddress: t.contractAddress,
       tokenId: t.tokenId,
       name: t.name ?? `Token #${t.tokenId}`,
-      image: t.image ? resolveTokenImage(t.image) : null,
+      image: resolveImage(t.image),
     }));
   };
 
