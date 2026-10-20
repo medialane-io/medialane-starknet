@@ -5,15 +5,9 @@ import Link from "next/link";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { useRewards, useRewardsConfig, useRewardsEvents } from "@/hooks/use-rewards";
+import { useRewards, useRewardsConfig, useRewardsEvents, LevelBadge, LevelUpCelebration, BadgeUnlocked, useRewardsCelebrations } from "@medialane/ui";
 import { LeaderboardPanel } from "@/components/rewards/leaderboard-panel";
 import type { ApiRewardsBadge } from "@medialane/sdk";
-import {
-  LevelBadge,
-  LevelUpCelebration,
-  BadgeUnlocked,
-  useRewardsCelebrations,
-} from "@medialane/ui";
 import {
   Gift,
   ExternalLink,

@@ -1,6 +1,6 @@
 "use client";
 
-import { MedialaneAppProvider, NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground } from "@medialane/ui";
+import { MedialaneAppProvider, NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground, useCreatorProfile } from "@medialane/ui";
 import { useAppAdapter } from "@/lib/use-app-adapter";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
@@ -9,7 +9,6 @@ import Link from "next/link";
 import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
-import { useCreatorProfile } from "@/hooks/use-profiles";
 import { resolveTokenImage } from "@/lib/utils";
 
 import { MedialaneLogoFull as MedialaneLogo } from "@medialane/ui/brand-logo";

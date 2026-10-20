@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCreatorProfile } from "@/hooks/use-profiles";
+import { useCreatorProfile, profileIdentity } from "@medialane/ui";
+
 import { ipfsToHttp, cn } from "@/lib/utils";
-import { profileIdentity } from "@medialane/ui";
 
 interface CreatorChipProps {
   address?: string | null;

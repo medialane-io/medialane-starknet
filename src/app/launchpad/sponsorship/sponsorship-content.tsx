@@ -4,11 +4,10 @@ import Link from "next/link";
 import { Handshake, ArrowRight, Check } from "lucide-react";
 import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
 import { Button } from "@medialane/ui/button";
-import { ServiceHeader, AssetCard, AssetCardSkeleton } from "@medialane/ui";
+import { ServiceHeader, AssetCard, AssetCardSkeleton, useToken } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { useSponsorshipOffers } from "@/hooks/use-sponsorship";
 import type { SponsorshipOffer } from "@/hooks/use-sponsorship";
-import { useToken } from "@/hooks/use-tokens";
 import { getTokenByAddress, formatAmount, shortenAddress } from "@medialane/sdk";
 
 const SPONSORSHIP_FEATURES = [

@@ -11,11 +11,12 @@ import { useAccount } from "@starknet-react/core";
 import { Button } from "@medialane/ui/button";
 import { useNetwork } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
-import { useActivitiesByAddress } from "@/hooks/use-activities";
-import { useReceivedOffers } from "@/hooks/use-orders";
+import { useActivitiesByAddress, useReceivedOffers, isWrongNetwork as computeIsWrongNetwork, useNavAccountSheet, NavThemeToggle } from "@medialane/ui";
+
+
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { getConnectorIconSrc } from "@/lib/wallet-connectors";
-import { isWrongNetwork as computeIsWrongNetwork, useNavAccountSheet, NavThemeToggle } from "@medialane/ui";
+
 import { timeAgo } from "@/lib/utils";
 import type { ApiActivity } from "@medialane/sdk";
 

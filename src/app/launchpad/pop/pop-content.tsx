@@ -7,10 +7,9 @@ import { Award, Calendar, Users, Plus, LayoutList, Zap, ShieldCheck } from "luci
 import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { Button } from "@medialane/ui/button";
-import { ServiceHeader } from "@medialane/ui";
+import { ServiceHeader, usePopCollections } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 import { PopClaimButton } from "@/components/claim/pop-claim-button";
-import { usePopCollections } from "@/hooks/use-pop";
 import { ipfsToHttp } from "@/lib/utils";
 import { BRAND } from "@medialane/ui/data/brand";
 import type { ApiCollection } from "@medialane/sdk";

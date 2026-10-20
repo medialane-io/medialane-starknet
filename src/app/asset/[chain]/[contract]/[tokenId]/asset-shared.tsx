@@ -6,11 +6,10 @@ import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder, ApiToken } from "@medialane/sdk";
 import { usdValueFor } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
-import { useTokenBalance } from "@/hooks/use-tokens";
+import { useTokenBalance, checkIsOwner } from "@medialane/ui";
 import { LICENSE_TRAIT_TYPES } from "@medialane/ui/data/ip";
 import type { IPType } from "@medialane/ui";
 import { IP_TEMPLATES, EMBED_PLATFORM_META, SOCIAL_PLATFORM_META } from "@medialane/ui/data/ip-templates";
-import { checkIsOwner } from "@medialane/ui";
 
 export type AssetToken = ApiToken & {
   balances?: Array<{ owner: string; amount: string }> | null;

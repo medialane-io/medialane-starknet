@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { DiscoverActivityStrip } from "@medialane/ui";
-import { useOrders } from "@/hooks/use-orders";
+import { DiscoverActivityStrip, useOrders } from "@medialane/ui";
+
+
 import { useWallet } from "@/hooks/use-wallet";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
 import { normalizeAddress } from "@medialane/sdk";

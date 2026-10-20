@@ -1,8 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useToken } from "@/hooks/use-tokens";
-import { useCollection } from "@/hooks/use-collections";
+import { useToken, useCollection } from "@medialane/ui";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { AssetPageStandard } from "./asset-page-standard";
 import { AssetPagePop } from "./asset-page-pop";

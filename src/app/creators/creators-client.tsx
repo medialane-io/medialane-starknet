@@ -3,13 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useCreators } from "@/hooks/use-creators";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
+import { useCreators, useCollectionsByOwner, LoadMoreSentinel, profileIdentity } from "@medialane/ui";
 import { Input } from "@medialane/ui/input";
 import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { FadeIn, Stagger, StaggerItem } from "@medialane/ui/motion-primitives";
-import { LoadMoreSentinel, profileIdentity } from "@medialane/ui";
 import { ipfsToHttp } from "@/lib/utils";
 import { BRAND } from "@medialane/ui/data/brand";
 import { AtSign, Search, Users, Palette, Globe, Twitter, X } from "lucide-react";

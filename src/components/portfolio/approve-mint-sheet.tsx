@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
-import { describeError, MarketplaceSuccessState } from "@medialane/ui";
+import { describeError, MarketplaceSuccessState, useCollectionsByOwner } from "@medialane/ui";
+
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
+
 import { confirmRemixOffer } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { formatDisplayPrice } from "@/lib/utils";

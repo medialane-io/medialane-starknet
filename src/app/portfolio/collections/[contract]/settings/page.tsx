@@ -2,8 +2,7 @@
 
 import { use, useState, useEffect } from "react";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCollection } from "@/hooks/use-collections";
-import { useCollectionProfile } from "@/hooks/use-profiles";
+import { useCollection, useCollectionProfile } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";

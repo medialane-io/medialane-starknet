@@ -3,11 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCreatorByUsername } from "@/hooks/use-username-claims";
-import { useUserOrders } from "@/hooks/use-orders";
-import { useActivitiesByAddress } from "@/hooks/use-activities";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
+import { useUserOrders, useActivitiesByAddress, useCollectionsByOwner, CollectionCard, CollectionCardSkeleton, CreatorHeader, TabEmptyState } from "@medialane/ui";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCard, CollectionCardSkeleton, CreatorHeader, TabEmptyState } from "@medialane/ui";
 import { CreatorAnalytics } from "@/components/creator/creator-analytics";
 import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";

@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Tag } from "lucide-react";
-import { useOrders } from "@/hooks/use-orders";
+import { useOrders, ScrollSection } from "@medialane/ui";
+
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
 import { PurchaseDialog } from "@/components/marketplace/purchase-dialog";
-import { ScrollSection } from "@medialane/ui";
+
 import type { ApiOrder } from "@medialane/sdk";
 
 export function NewOnMarketplace() {

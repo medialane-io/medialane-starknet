@@ -15,8 +15,9 @@ import { Skeleton } from "@medialane/ui/skeleton";
 import { Button } from "@medialane/ui/button";
 import { Textarea } from "@medialane/ui/textarea";
 import { AddressDisplay } from "@medialane/ui/address-display";
-import { LevelBadge } from "@medialane/ui";
-import { useRewardsBatch } from "@/hooks/use-rewards";
+import { LevelBadge, useRewardsBatch } from "@medialane/ui";
+
+
 import { STARKNET_NFTCOMMENTS_CONTRACT, EXPLORER_URL } from "@/lib/constants";
 import { MessageSquare, Loader2, Send, CheckCircle, X, ExternalLink, Flag, Zap } from "lucide-react";
 import { ReportDialog, type ReportTarget } from "@/components/report-dialog";
@@ -25,7 +26,6 @@ import { getMedialaneClient } from "@/lib/medialane-client";
 import type { Call } from "starknet";
 
 const MAX_LEN = 1000;
-
 
 type PostStep = "idle" | "processing" | "success" | "error";
 

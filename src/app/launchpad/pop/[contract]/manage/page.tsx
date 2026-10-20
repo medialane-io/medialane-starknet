@@ -12,7 +12,7 @@ import { FadeIn } from "@medialane/ui/motion-primitives";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCollection } from "@/hooks/use-collections";
+import { useCollection } from "@medialane/ui";
 import { isCollectionOwner } from "@/lib/utils";
 import {
   buildPopAllowlist,

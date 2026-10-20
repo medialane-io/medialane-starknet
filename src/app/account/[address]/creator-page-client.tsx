@@ -1,18 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CreatorScoreInline } from "@/components/rewards/creator-score-inline";
+import { CreatorScoreInline, useUserOrders, useActivitiesByAddress, useCollectionsByOwner, CollectionCard, CollectionCardSkeleton, HiddenContentBanner, TabEmptyState } from "@medialane/ui";
 import useSWR from "swr";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { useParams } from "next/navigation";
 import { useTokensByOwner } from "@/hooks/use-tokens";
-import { useUserOrders } from "@/hooks/use-orders";
-import { useActivitiesByAddress } from "@/hooks/use-activities";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { AddressDisplay } from "@medialane/ui/address-display";
 import { ListingCard, ListingCardSkeleton } from "@/components/marketplace/listing-card";
-import { CollectionCard, CollectionCardSkeleton, HiddenContentBanner, TabEmptyState } from "@medialane/ui";
 import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";
 import {

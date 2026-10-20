@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useToken, useTokenBalance } from "@/hooks/use-tokens";
-import { useCollection } from "@/hooks/use-collections";
+import { useToken, useTokenBalance, useCollection, checkIsOwner } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { submitRemixOffer } from "@/hooks/use-remix-offers";
@@ -24,7 +23,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@medialane/ui/collapsible";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { ChevronLeft, ChevronDown, Shield, DollarSign, Percent, HandCoins, Loader2, Check } from "lucide-react";
-import { checkIsOwner } from "@medialane/ui";
 
 const TOKENS = getListableTokens();
 

@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { normalizeAddress } from "@medialane/sdk";
-import { LeaderboardTable, profileIdentity } from "@medialane/ui";
+import { LeaderboardTable, profileIdentity, useLeaderboard, useCreatorProfile } from "@medialane/ui";
+
 import { Skeleton } from "@medialane/ui/skeleton";
 import { AddressDisplay } from "@medialane/ui/address-display";
-import { useLeaderboard } from "@/hooks/use-rewards";
-import { useCreatorProfile } from "@/hooks/use-profiles";
+
+
 import { resolveTokenImage } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 

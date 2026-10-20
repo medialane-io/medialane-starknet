@@ -1,6 +1,7 @@
 "use client";
 
-import { useUserOrders, useCounterOffers } from "@/hooks/use-orders";
+import { useCounterOffers, useUserOrders } from "@medialane/ui";
+
 import { Button } from "@medialane/ui/button";
 import { Badge } from "@medialane/ui/badge";
 import { EmptyOrError } from "@medialane/ui/empty-or-error";

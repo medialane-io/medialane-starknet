@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import type { ApiRemixOffer, ApiResponse, ConfirmRemixOfferParams, ConfirmSelfRemixParams, CreateRemixOfferParams } from "@medialane/sdk";
-import { useTokenRemixes as useTokenRemixesBase } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSession } from "@/hooks/use-session";
 import { requireSignedIn } from "@/lib/account-gate";
@@ -31,10 +30,6 @@ export function useRemixOffers(role: "creator" | "requester", status?: string) {
   );
 
   return { offers: data?.data ?? [], total: data?.meta?.total ?? 0, isLoading, error, mutate };
-}
-
-export function useTokenRemixes(contract: string | null, tokenId: string | null) {
-  return useTokenRemixesBase(contract, tokenId);
 }
 
 export async function submitRemixOffer(body: CreateRemixOfferParams): Promise<ApiRemixOffer> {

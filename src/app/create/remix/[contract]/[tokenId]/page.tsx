@@ -5,12 +5,11 @@ import { assetHref } from "@/lib/routes";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useToken, useTokenBalance } from "@/hooks/use-tokens";
+import { useToken, useTokenBalance, useCollectionsByOwner, checkIsOwner } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMedialaneClient } from "@/hooks/use-medialane-client";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
-import { useCollectionsByOwner } from "@/hooks/use-collections";
 import { MintProgressDialog } from "@/components/marketplace/mint-progress-dialog";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import type { MintStep } from "@/components/marketplace/mint-progress-dialog";
@@ -36,7 +35,6 @@ import { ToggleGroup, Section } from "@medialane/ui/create-form-primitives";
 import { resolveRemixPolicy, getDerivativesTerm } from "@medialane/sdk";
 import type { Call } from "starknet";
 import { uploadFileToIpfs, uploadJsonToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
-import { checkIsOwner } from "@medialane/ui";
 
 const TOKENS = getListableTokens();
 
