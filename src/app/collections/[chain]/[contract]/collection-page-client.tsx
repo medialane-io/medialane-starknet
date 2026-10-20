@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCollection, useCollectionTokens } from "@/hooks/use-collections";
@@ -11,7 +11,7 @@ import { TokenCard, TokenCardSkeleton } from "@/components/shared/token-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddressDisplay } from "@/components/shared/address-display";
 import { Flag, Inbox, Plus, Sparkles, Lock, Settings } from "lucide-react";
-import { LoadMoreSentinel, HiddenContentBanner, CollectionHeroBanner, ClubOwnerActions, OrderSortControl, sortOrders, type OrderSort, checkIsOwner } from "@medialane/ui";
+import { LoadMoreSentinel, HiddenContentBanner, CollectionHeroBanner, ClubOwnerActions, OrderSortControl, sortOrders, checkIsOwner, ExpandableText, type OrderSort } from "@medialane/ui";
 import { ReportDialog } from "@/components/report-dialog";
 import { useCollectionProfile } from "@/hooks/use-profiles";
 import { useGatedContent } from "@/hooks/use-gated-content";
@@ -24,7 +24,7 @@ import { CollectionFilters } from "@/components/collection/collection-filters";
 import { CollectionActivityTab } from "@/components/collection/collection-activity-tab";
 import { MakeOfferPicker } from "@/components/collection/make-offer-picker";
 import { CollectionTraitsTab } from "@/components/collection/collection-traits-tab";
-import { ipfsToHttp, formatDisplayPrice, cn, usdValueFor, isCollectionOwner } from "@/lib/utils";
+import { ipfsToHttp, formatDisplayPrice, usdValueFor, isCollectionOwner } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { CollectionServiceAction } from "@/components/services/collection-service-action";
 import { TicketOwnerActions } from "@/components/tickets/ticket-owner-actions";
@@ -241,10 +241,6 @@ export default function CollectionPageClient() {
 
   const isCoinRoute = params.address != null;
   const [reportOpen, setReportOpen] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
-  const [descClamped, setDescClamped] = useState(false);
-  const [descOverflows, setDescOverflows] = useState(false);
-  const descRef = useRef<HTMLParagraphElement>(null);
 
   const [activeTab, setActiveTab] = useState("assets");
   const [marketSubTab, setMarketSubTab] = useState<"listings" | "offers">("listings");
@@ -271,13 +267,6 @@ export default function CollectionPageClient() {
   });
 
   const bannerUrl = collection?.image ? ipfsToHttp(collection.image) : null;
-
-  useEffect(() => {
-    const el = descRef.current;
-    if (!el || !collection?.description) return;
-    setDescOverflows(el.scrollHeight > 80);
-    setDescClamped(true);
-  }, [collection?.description]);
 
   const activeListings = orders.filter(
     (o) => o.status === "ACTIVE" && (o.offer.itemType === "ERC721" || o.offer.itemType === "ERC1155")
@@ -353,27 +342,7 @@ export default function CollectionPageClient() {
 
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-6">
             <div className="flex-1 min-w-0 lg:max-w-2xl">
-              {collection.description && (
-                <>
-                  <p
-                    ref={descRef}
-                    className={cn(
-                      "text-sm text-muted-foreground leading-relaxed",
-                      descClamped && !descExpanded && "line-clamp-3"
-                    )}
-                  >
-                    {collection.description}
-                  </p>
-                  {descOverflows && (
-                    <button
-                      onClick={() => setDescExpanded((e) => !e)}
-                      className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                    >
-                      {descExpanded ? "Show less" : "Show more"}
-                    </button>
-                  )}
-                </>
-              )}
+              {collection.description && <ExpandableText text={collection.description} />}
             </div>
 
             <div className="flex flex-wrap items-center gap-2 shrink-0">
