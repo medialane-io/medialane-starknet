@@ -18,7 +18,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApiActivity, ApiOrder } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, buildEditionStats, HiddenContentBanner, AssetOwnersPanel, AssetProvenanceTab, AssetUnavailable, ASSET_ACCENTS } from "@medialane/ui";
+import { AssetCollectionBar, AssetUtilityIcons, AssetMarketplacePanel, AssetMediaColumn, AssetHeaderBlock, HiddenContentBanner, AssetOwnersPanel, AssetProvenanceTab, AssetUnavailable, ASSET_ACCENTS } from "@medialane/ui";
 import { AssetMarketsTab } from "./asset-markets-tab";
 import { AssetCommentsDialog } from "./asset-side-panels";
 import { AssetOverviewContent } from "./asset-overview-content";
@@ -100,8 +100,6 @@ export function AssetPageEdition() {
   const image = token.metadata?.image ? ipfsToHttp(token.metadata.image) : null;
   const description = token.metadata?.description;
   const holders = token.balances ?? [];
-  const uniqueHolders = token.holderCount ?? holders.length;
-  const totalEditions = Number(token.supply ?? 0);
 
   return (
     <div className="relative z-0 min-h-screen">
@@ -121,7 +119,6 @@ export function AssetPageEdition() {
                 <Layers className="h-24 w-24 text-brand-purple/40" />
               </div>
             )}
-            stats={buildEditionStats(totalEditions, uniqueHolders)}
           />
 
           <motion.div
@@ -135,7 +132,6 @@ export function AssetPageEdition() {
                 name={name}
                 description={description}
                 ipType={token.metadata?.ipType}
-                showMultiEditionBadge={true}
               />
               <AssetUtilityIcons
                 contractExplorerHref={`${EXPLORER_URL}/contract/${token.contractAddress}`}
@@ -167,7 +163,7 @@ export function AssetPageEdition() {
               onOpenOffer={() => dialogs.setOfferOpen(true)}
             />
 
-            <AssetOwnersPanel balances={holders} total={token.holderCount} maxVisible={8} />
+            <AssetOwnersPanel balances={holders} total={token.holderCount} editions={Number(token.supply ?? 0)} />
 
             <AssetCollectionBar
               collectionName={collection?.name ?? contract.slice(0, 8) + "…"}
