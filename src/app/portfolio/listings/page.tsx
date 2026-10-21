@@ -1,9 +1,9 @@
 "use client";
 
-import { useWallet } from "@/hooks/use-wallet";
-import { ListingsTable } from "@/components/portfolio/listings-table";
+import { PortfolioOrders, useMedialaneApp } from "@medialane/ui";
+import { useListingActions } from "@/components/portfolio/portfolio-actions";
 
 export default function PortfolioListingsPage() {
-  const { address: walletAddress } = useWallet();
-  return <ListingsTable address={walletAddress!} />;
+  const { walletAddress } = useMedialaneApp();
+  return walletAddress ? <PortfolioOrders view="listings" address={walletAddress} useActions={useListingActions} /> : null;
 }

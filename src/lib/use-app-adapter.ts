@@ -10,12 +10,13 @@ import { ReportDialog } from "@/components/report-dialog";
 import { resolveImage } from "@/lib/utils";
 
 export function useAppAdapter(): MedialaneApp {
-  const { address } = useWallet();
+  const { address, isConnecting } = useWallet();
   const { open } = useConnectDialog();
   const signer = useVenueSigner();
   return {
     getClient: getMedialaneClient,
     walletAddress: address ?? null,
+    walletLoading: isConnecting,
     onRequireWallet: open,
     connectLabel: "Connect wallet",
     connectDescription: "Use your Starknet wallet to trade non-custodially.",
