@@ -3,6 +3,7 @@
 import { Mail } from "lucide-react";
 import type { MedialaneApp } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { useConnectDialog } from "@/components/connect-dialog";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { getMedialaneClient } from "@/lib/medialane-client";
@@ -11,6 +12,7 @@ import { resolveImage } from "@/lib/utils";
 
 export function useAppAdapter(): MedialaneApp {
   const { address, isConnecting } = useWallet();
+  const { ensureSignedIn } = useAccountSession();
   const { open } = useConnectDialog();
   const signer = useVenueSigner();
   return {
@@ -18,6 +20,7 @@ export function useAppAdapter(): MedialaneApp {
     walletAddress: address ?? null,
     walletLoading: isConnecting,
     onRequireWallet: open,
+    ensureSignedIn,
     connectLabel: "Connect wallet",
     connectDescription: "Use your Starknet wallet to trade non-custodially.",
     companion: {
