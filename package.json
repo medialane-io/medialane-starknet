@@ -15,7 +15,7 @@
     "@cartridge/connector": "^0.13.16",
     "@hookform/resolvers": "^3",
     "@medialane/sdk": "0.187.0",
-    "@medialane/ui": "0.211.2",
+    "@medialane/ui": "0.212.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@starknet-react/chains": "^5.0.3",
     "@starknet-react/core": "^5.0.3",
