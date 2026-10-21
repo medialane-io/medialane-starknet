@@ -1,9 +1,9 @@
 "use client";
 
-import { useWallet } from "@/hooks/use-wallet";
-import { OffersTable } from "@/components/portfolio/offers-table";
+import { PortfolioOrders, useMedialaneApp } from "@medialane/ui";
+import { useOfferActions } from "@/components/portfolio/portfolio-actions";
 
 export default function PortfolioOffersPage() {
-  const { address: walletAddress } = useWallet();
-  return <OffersTable address={walletAddress!} />;
+  const { walletAddress } = useMedialaneApp();
+  return walletAddress ? <PortfolioOrders view="offers" address={walletAddress} useActions={useOfferActions} /> : null;
 }
