@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { TicketsContent } from "./tickets-content";
+import { ServiceCollectionsPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "IP Tickets";
@@ -13,5 +13,5 @@ export const metadata: Metadata = {
 };
 
 export default function TicketsPage() {
-  return <TicketsContent />;
+  return <ServiceCollectionsPage kind="tickets" />;
 }
