@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Link2 } from "lucide-react";
 import { canonical } from "@/lib/seo";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { CollectionNameClaim } from "@/components/claim/collection-name-claim";
+import { CollectionNameClaim } from "@medialane/ui";
 import { ClaimCollectionNameAside } from "@/components/claim/claim-collection-name-aside";
 
 export const metadata: Metadata = {
