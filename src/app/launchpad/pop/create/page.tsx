@@ -26,7 +26,7 @@ import { type PopEventType } from "@/lib/launchpad-contracts";
 import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { cn } from "@/lib/utils";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadSizeError } from "@medialane/sdk";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
 import { profileHref } from "@/lib/routes";
 
@@ -109,7 +109,8 @@ export default function CreatePOPPage() {
   }, [autoSymbol, eventName, form]);
 
   const handleImageSelect = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { setImageError("That image is over 10 MB. Please choose a smaller one."); return; }
+    const sizeError = uploadSizeError(file, "image");
+    if (sizeError) { setImageError(sizeError); return; }
     setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
@@ -324,7 +325,7 @@ export default function CreatePOPPage() {
                   <p className="text-xs text-muted-foreground">
                     {imageUri
                       ? <span className="text-green-500">✓ Uploaded</span>
-                      : "JPG, PNG, SVG or WebP · max 10 MB"}
+                      : "JPG, PNG, SVG or WebP"}
                   </p>
                   {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                 </div>

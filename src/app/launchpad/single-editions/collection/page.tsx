@@ -21,7 +21,7 @@ import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { CreateCollectionAside } from "@/components/claim/create-collection-aside";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadSizeError } from "@medialane/sdk";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import type { Call } from "starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -76,13 +76,13 @@ export default function LaunchpadCreateCollectionPage() {
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
   const handleImageSelect = async (file: File) => {
-    const MAX_BYTES = 10 * 1024 * 1024;
     if (!ALLOWED_TYPES.includes(file.type)) {
       setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
       return;
     }
-    if (file.size > MAX_BYTES) {
-      setImageError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please choose one under 10 MB.`);
+    const sizeError = uploadSizeError(file, "image");
+    if (sizeError) {
+      setImageError(sizeError);
       return;
     }
     setImageFile(file);
@@ -276,7 +276,7 @@ export default function LaunchpadCreateCollectionPage() {
                     </button>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    JPG, PNG, GIF, SVG or WebP · max 10 MB
+                    JPG, PNG, GIF, SVG or WebP
                     {imageUri && (
                       <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>
                     )}

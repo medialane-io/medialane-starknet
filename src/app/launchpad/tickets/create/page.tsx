@@ -25,7 +25,7 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimRail, MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadSizeError } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 import { profileHref } from "@/lib/routes";
@@ -95,8 +95,9 @@ export default function CreateTicketCollectionPage() {
       setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setImageError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please choose one under 10 MB.`);
+    const sizeError = uploadSizeError(file, "image");
+    if (sizeError) {
+      setImageError(sizeError);
       return;
     }
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -280,7 +281,7 @@ export default function CreateTicketCollectionPage() {
                     </button>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    JPG, PNG, GIF, SVG or WebP · max 10 MB
+                    JPG, PNG, GIF, SVG or WebP
                     {imageUri && <span className="ml-2 text-emerald-500 font-medium">✓ Uploaded</span>}
                   </p>
                   {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
