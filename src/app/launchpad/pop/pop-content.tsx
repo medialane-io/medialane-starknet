@@ -14,11 +14,7 @@ import { resolveImage } from "@/lib/utils";
 import { BRAND } from "@medialane/ui/data/brand";
 import type { ApiCollection } from "@medialane/sdk";
 
-interface PopCollection extends ApiCollection {
-  attributes?: Array<{ trait_type: string; value: string }>;
-}
-
-function PopCollectionCard({ collection }: { collection: PopCollection }) {
+function PopCollectionCard({ collection }: { collection: ApiCollection }) {
   const [imgError, setImgError] = useState(false);
   const imageUrl = resolveImage(collection.image);
   const showImage = imageUrl && !imgError;
@@ -116,7 +112,7 @@ const POP_FEATURES = [
 export function PopContent() {
   const { collections, isLoading } = usePopCollections();
 
-  const publicCollections = (collections as PopCollection[]).filter(
+  const publicCollections = collections.filter(
     (c) => c.attributes?.find((a) => a.trait_type === "Visibility")?.value !== "Private"
   );
 

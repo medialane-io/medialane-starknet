@@ -123,7 +123,7 @@ export function useAssetActions({ refresh }: Context): PortfolioAssetActions {
             tokenId={selectedToken.tokenId}
             tokenName={selectedToken.metadata?.name ?? undefined}
             tokenImage={selectedToken.metadata?.image ?? null}
-            tokenStandard={selectedToken.standard}
+            tokenStandard={selectedToken.standard ?? undefined}
             onSuccess={handleSuccess}
           />
         )}
