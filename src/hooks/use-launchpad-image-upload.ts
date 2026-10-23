@@ -2,22 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
-import { uploadSizeError } from "@medialane/sdk";
+import { uploadError as checkUpload } from "@medialane/sdk";
 
 interface UseLaunchpadImageUploadOptions {
-  allowedTypes?: string[];
   successMessage: string;
   failureMessage?: string;
-  invalidTypeTitle?: string;
-  invalidTypeDescription?: string;
 }
 
 export function useLaunchpadImageUpload({
-  allowedTypes,
   successMessage,
   failureMessage = "Image upload failed",
-  invalidTypeTitle = "Unsupported format",
-  invalidTypeDescription,
 }: UseLaunchpadImageUploadOptions) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -47,18 +41,9 @@ export function useLaunchpadImageUpload({
     setUploadError(null);
     setUploadSuccess(null);
 
-    if (allowedTypes && !allowedTypes.includes(file.type)) {
-      setUploadError(
-        invalidTypeDescription
-          ? `${invalidTypeTitle}: ${invalidTypeDescription}`
-          : invalidTypeTitle
-      );
-      return;
-    }
-
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) {
-      setUploadError(sizeError);
+    const fileError = checkUpload(file, "image");
+    if (fileError) {
+      setUploadError(fileError);
       return;
     }
 

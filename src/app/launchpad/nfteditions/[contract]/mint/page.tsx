@@ -28,7 +28,7 @@ import { FadeIn } from "@medialane/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
-import { normalizeAddress, uploadSizeError } from "@medialane/sdk";
+import { normalizeAddress, uploadError, acceptFor } from "@medialane/sdk";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -194,8 +194,8 @@ export default function MintNFTEditionsPage() {
   };
 
   const handleImageSelect = async (file: File) => {
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) { setImageError(sizeError); return; }
+    const fileError = uploadError(file, "image");
+    if (fileError) { setImageError(fileError); return; }
     setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
@@ -402,7 +402,7 @@ export default function MintNFTEditionsPage() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                    <input ref={fileInputRef} type="file" accept={acceptFor("image")} className="hidden"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }} />
                     <Button type="button" variant="outline" size="sm" disabled={imageUploading}
                       onClick={() => fileInputRef.current?.click()}>

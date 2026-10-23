@@ -21,7 +21,7 @@ import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { CreateCollectionAside } from "@/components/claim/create-collection-aside";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata, uploadSizeError } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadError, acceptFor } from "@medialane/sdk";
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import type { Call } from "starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
@@ -73,16 +73,11 @@ export default function LaunchpadCreateCollectionPage() {
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
 
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
   const handleImageSelect = async (file: File) => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
-      return;
-    }
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) {
-      setImageError(sizeError);
+    const fileError = uploadError(file, "image");
+    if (fileError) {
+      setImageError(fileError);
       return;
     }
     setImageFile(file);
@@ -244,7 +239,7 @@ export default function LaunchpadCreateCollectionPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp"
+                    accept={acceptFor("image")}
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];

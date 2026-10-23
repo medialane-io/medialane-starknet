@@ -25,7 +25,7 @@ import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata, uploadSizeError } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadError, acceptFor } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 import { profileHref } from "@/lib/routes";
@@ -90,16 +90,11 @@ export default function CreateNFTEditionsCollectionPage() {
     }
   }, [autoSymbol, collectionName, form]);
 
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
   const handleImageSelect = async (file: File) => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
-      return;
-    }
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) {
-      setImageError(sizeError);
+    const fileError = uploadError(file, "image");
+    if (fileError) {
+      setImageError(fileError);
       return;
     }
     setImageFile(file);
@@ -263,7 +258,7 @@ export default function CreateNFTEditionsCollectionPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp"
+                    accept={acceptFor("image")}
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }}
                   />

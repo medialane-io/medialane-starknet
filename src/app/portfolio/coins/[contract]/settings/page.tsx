@@ -2,7 +2,7 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { normalizeAddress } from "@medialane/sdk";
+import { normalizeAddress, acceptFor } from "@medialane/sdk";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCoin, updateCoinProfile } from "@/hooks/use-coins";
@@ -108,7 +108,7 @@ export default function CoinSettingsPage({ params }: Props) {
             </div>
           )}
           <div className="flex items-center gap-3">
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+            <input ref={fileRef} type="file" accept={acceptFor("image")} className="hidden" onChange={handleFile} />
             <Button variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
               {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
               {uploading ? "Uploading…" : "Upload image"}

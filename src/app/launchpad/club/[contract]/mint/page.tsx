@@ -10,7 +10,7 @@ import {
   Users, Loader2, ImagePlus, X, ShieldCheck, ChevronDown, AlertCircle,
 } from "lucide-react";
 import type { Call } from "starknet";
-import { normalizeAddress, uploadSizeError } from "@medialane/sdk";
+import { normalizeAddress, uploadError, acceptFor } from "@medialane/sdk";
 
 import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
@@ -129,8 +129,8 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
   const isOwner = isCollectionOwner(collection, address);
 
   const handleImageSelect = async (file: File) => {
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) { setImageError(sizeError); return; }
+    const fileError = uploadError(file, "image");
+    if (fileError) { setImageError(fileError); return; }
     setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
@@ -329,7 +329,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
                     {imageUploading && <div className="absolute inset-0 bg-background/70 flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin" /></div>}
                   </div>
                   <div className="space-y-1.5">
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }} />
+                    <input ref={fileInputRef} type="file" accept={acceptFor("image")} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }} />
                     <Button type="button" variant="outline" size="sm" disabled={imageUploading} onClick={() => fileInputRef.current?.click()}>
                       {imageUploading ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Uploading…</> : imagePreview ? "Change" : "Upload image"}
                     </Button>

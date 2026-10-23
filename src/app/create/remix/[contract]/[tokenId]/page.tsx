@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@medialane/ui/collapsible";
 import { registerRemix } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
-import { getListableTokens, getService, normalizeAddress, uploadSizeError } from "@medialane/sdk";
+import { getListableTokens, getService, normalizeAddress, uploadError, acceptFor } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@medialane/ui/data/ip";
 import { resolveImage } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -110,16 +110,11 @@ export default function CreateRemixPage() {
     return () => { if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current); };
   }, []);
 
-  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
   const handleImageChange = (file: File) => {
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setFormError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
-      return;
-    }
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) {
-      setFormError(sizeError);
+    const fileError = uploadError(file, "image");
+    if (fileError) {
+      setFormError(fileError);
       return;
     }
     setFormError(null);
@@ -348,7 +343,7 @@ export default function CreateRemixPage() {
                 <input
                   id="remix-image-input"
                   type="file"
-                  accept="image/*"
+                  accept={acceptFor("image")}
                   className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageChange(f); }}
                 />
