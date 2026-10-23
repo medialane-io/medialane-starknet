@@ -18,7 +18,7 @@ import { Textarea } from "@medialane/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@medialane/ui/form";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
+import { MedialaneCollectionCard, useMedialaneClient, ExternalLinkField } from "@medialane/ui";
 import { CreatePopAside } from "@/components/claim/create-pop-aside";
 import { useWallet } from "@/hooks/use-wallet";
 import { FadeIn } from "@medialane/ui/motion-primitives";
@@ -374,16 +374,7 @@ export default function CreatePOPPage() {
           </FadeIn>
 
           <FadeIn delay={0.155}>
-            <FormField control={form.control} name="external_link" render={({ field }) => (
-              <FormItem>
-                <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                <FormControl>
-                  <Input placeholder="https://yourwebsite.com" {...field} />
-                </FormControl>
-                <FormDescription>Your website, portfolio, or social profile. Defaults to your Medialane account page.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <ExternalLinkField form={form} address={walletAddress} />
           </FadeIn>
 
           <FadeIn delay={0.16}>
