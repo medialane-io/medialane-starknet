@@ -8,6 +8,8 @@ const TABS = PORTFOLIO_TABS.flatMap((t) =>
 );
 
 export function PortfolioShell({ children }: { children: React.ReactNode }) {
-  const { offers } = useRemixOffers("creator");
-  return <SharedPortfolioShell tabs={TABS} remixOffers={offers}>{children}</SharedPortfolioShell>;
+  const { offers, isLoading } = useRemixOffers("creator");
+  const { offers: requests, isLoading: requestsLoading } = useRemixOffers("requester");
+  const licensing = { present: offers.length + requests.length > 0, isLoading: isLoading || requestsLoading };
+  return <SharedPortfolioShell tabs={TABS} remixOffers={offers} licensing={licensing}>{children}</SharedPortfolioShell>;
 }
