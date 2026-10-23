@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { normalizeAddress } from "@medialane/sdk";
+import { normalizeAddress, type ApiIntentCreated } from "@medialane/sdk";
 import {
   ArrowLeft, Users, Award, Loader2, CheckCircle2, AlertCircle, Download, Send,
 } from "lucide-react";
@@ -168,7 +168,7 @@ export default function PopManagePage({
   const isOwner = isCollectionOwner(collection, address);
 
   const runTx = async (
-    create: () => ReturnType<ReturnType<typeof getMedialaneClient>["api"]["createPopManageIntent"]>,
+    create: () => Promise<ApiIntentCreated>,
     successMsg: string
   ): Promise<boolean> => {
     setIsTxLoading(true);
@@ -187,14 +187,14 @@ export default function PopManagePage({
   };
 
   const handleIssue = (recipient: string) => {
-    void runTx(() => getMedialaneClient().api.createPopManageIntent({ owner: address!, collection: contract, action: "issue", recipient }), "Credential issued");
+    void runTx(() => getMedialaneClient().api.intents.create("pop-manage", { owner: address!, collection: contract, action: "issue", recipient }), "Credential issued");
   };
 
   const handlePublish = (addresses: string[]) => {
     const list = buildPopAllowlist(addresses);
     const count = Object.keys(list.proofs).length;
     void runTx(
-      () => getMedialaneClient().api.createPopManageIntent({ owner: address!, collection: contract, action: "set_allowlist_root", root: list.root }),
+      () => getMedialaneClient().api.intents.create("pop-manage", { owner: address!, collection: contract, action: "set_allowlist_root", root: list.root }),
       `Published ${count} participant${count !== 1 ? "s" : ""}`
     ).then((ok) => {
       if (ok) setLinks(popClaimLinks(window.location.origin, contract, list));

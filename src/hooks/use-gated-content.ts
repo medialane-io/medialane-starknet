@@ -13,7 +13,7 @@ export function useGatedContent(contract: string | undefined): GatedContentState
   const { data, error, isLoading } = useSWR<GatedContent | "not_holder">(
     contract && isConnected && address && session ? ["gated-content", contract, address] : null,
     async () => {
-      const content = await getMedialaneClient().api.getGatedContent(contract!);
+      const content = await getMedialaneClient().api.collections.findGatedContent(contract!);
       return content ?? "not_holder";
     },
     { shouldRetryOnError: false, revalidateOnFocus: false }

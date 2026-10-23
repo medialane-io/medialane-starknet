@@ -91,8 +91,8 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
     setPostTxHash(null);
     setPostError(null);
     try {
-      const created = await getMedialaneClient().api.createCommentIntent({ author: walletAddress!, nftContract: contract, tokenId, text: text.trim() });
-      const intent = created.data as { id: string; calls: Call[] };
+      const created = await getMedialaneClient().api.intents.create("comment", { author: walletAddress!, nftContract: contract, tokenId, text: text.trim() });
+      const intent = created as { id: string; calls: Call[] };
       const result = await executeTransaction(intent.calls);
 
       setPostTxHash(result);

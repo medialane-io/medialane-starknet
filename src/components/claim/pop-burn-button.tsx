@@ -37,7 +37,7 @@ export function PopBurnButton({ collectionAddress, tokenId }: PopBurnButtonProps
     setBusy(true);
     setError(null);
     try {
-      await runIntent(() => getMedialaneClient().api.createPopBurnIntent({ owner: address!, collection: collectionAddress, tokenId: String(tokenId) }));
+      await runIntent(() => getMedialaneClient().api.intents.create("pop-burn", { owner: address!, collection: collectionAddress, tokenId: String(tokenId) }));
       setDone(true);
     } catch (err) {
       setError(describeError(err).message);

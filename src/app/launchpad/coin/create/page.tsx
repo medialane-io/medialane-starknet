@@ -124,7 +124,7 @@ export default function CoinCreatePage() {
       try {
         if (attempt > 0) await new Promise((r) => setTimeout(r, 10_000));
         if (!(await signedIn())) throw new Error("no session");
-        await getMedialaneClient().api.updateCollectionProfile(contract, {
+        await getMedialaneClient().api.collections.updateProfile(contract, {
           displayName: name,
           ...(description ? { description } : {}),
           ...(imageUri ? { image: imageUri } : {}),

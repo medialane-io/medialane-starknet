@@ -11,7 +11,7 @@ export function useCoins(opts: { service?: string; sort?: string; page?: number;
 
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiCoin[]>>(
     key,
-    () => getMedialaneClient().api.getCoins({ page, limit, service, sort }),
+    () => getMedialaneClient().api.coins.list({ page, limit, service, sort }),
     { revalidateOnFocus: false }
   );
 
@@ -23,17 +23,17 @@ export function useCoin(contract: string | null) {
 
   const { data, error, isLoading, mutate } = useSWR(
     contract ? `coin-${contract}` : null,
-    () => client.api.getCoin(contract!),
+    () => client.api.coins.get(contract!),
     { revalidateOnFocus: false }
   );
 
-  return { coin: data?.data ?? null, isLoading, error, mutate };
+  return { coin: data ?? null, isLoading, error, mutate };
 }
 
 export function useCoinsByCreator(address: string | null) {
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<ApiCoin[]>>(
     address ? `coins-by-creator-${address}` : null,
-    () => getMedialaneClient().api.getCoins({ creator: address!, limit: 100 }),
+    () => getMedialaneClient().api.coins.list({ creator: address!, limit: 100 }),
     { revalidateOnFocus: false }
   );
   return { coins: data?.data ?? [], isLoading, error, mutate };
@@ -43,5 +43,5 @@ export async function updateCoinProfile(
   contract: string,
   data: { image?: string | null; description?: string | null }
 ): Promise<ApiCoin> {
-  return (await getMedialaneClient().api.updateCoinProfile(contract, data)).data;
+  return await getMedialaneClient().api.coins.updateProfile(contract, data);
 }

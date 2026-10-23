@@ -138,18 +138,18 @@ export default function CreateTicketCollectionPage() {
         }),
       );
 
-      const intentRes = await client.api.createCollectionIntent({
+      const intentRes = await client.api.intents.create("create-collection", {
         owner: address,
         name: values.name,
         symbol: values.symbol,
         baseUri,
         service: "ip-tickets",
       });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
 
       setDialogTxStatus("submitting");
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { receipt } = await executeIntent(signer, client, intentRes.data);
+      const { receipt } = await executeIntent(signer, client, intentRes);
 
       setDialogTxStatus("confirming");
 

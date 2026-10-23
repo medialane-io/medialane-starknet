@@ -175,8 +175,8 @@ export default function MintNFTEditionsPage() {
 
   useEffect(() => {
     if (!walletAddress || !collectionAddress) return;
-    client.api.getCollection(collectionAddress)
-      .then(({ data }) => {
+    client.api.collections.get(collectionAddress)
+      .then((data) => {
         const onChainOwner = data.owner ? normalizeAddress("STARKNET", data.owner) : null;
         setOwnerCheck(onChainOwner === normalizeAddress("STARKNET", walletAddress) ? "ok" : "denied");
       })
@@ -267,7 +267,7 @@ export default function MintNFTEditionsPage() {
       setTxStatus("submitting");
 
       if (!walletAddress) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const intentRes = await client.api.createMintIntent({
+      const intentRes = await client.api.intents.create("mint", {
         owner: walletAddress,
         recipient: values.recipient,
         collectionContract: collectionAddress,
@@ -276,10 +276,10 @@ export default function MintNFTEditionsPage() {
 
         royaltyBps: 0,
       });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt mint intent");
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt mint intent");
 
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { txHash: txHashResult, receipt } = await executeIntent(signer, client, intentRes.data);
+      const { txHash: txHashResult, receipt } = await executeIntent(signer, client, intentRes);
 
       const editionId = mintedTokenIdFromReceipt(receipt, collectionAddress);
       if (!editionId) throw new Error("Minted, but could not read the assigned token id from the receipt");

@@ -200,7 +200,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
       const tierId = await predictNextMembershipId(contract);
       setMintedTierId(String(tierId));
 
-      const tierRes = await client.api.createTierIntent({
+      const tierRes = await client.api.intents.create("create-tier", {
         owner: address,
         collection: contract,
         service: "ip-club",
@@ -210,19 +210,19 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
         royaltyBps,
         metadataUri,
       });
-      const mintRes = await client.api.createMintIntent({
+      const mintRes = await client.api.intents.create("mint", {
         owner: address,
         recipient: address,
         collectionContract: contract,
         tokenId: String(tierId),
         amount: values.maxSupply,
       });
-      if (tierRes.data.requiresSignature || mintRes.data.requiresSignature) {
+      if (tierRes.requiresSignature || mintRes.requiresSignature) {
         throw new Error("Expected prebuilt create-tier and mint intents");
       }
 
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      await executeIntents(signer, client, [tierRes.data, mintRes.data]);
+      await executeIntents(signer, client, [tierRes, mintRes]);
 
       setDialogTxStatus("confirmed");
       setMintStep("success");

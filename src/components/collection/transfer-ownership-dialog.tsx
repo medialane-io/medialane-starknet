@@ -46,7 +46,7 @@ export function TransferCollectionOwnershipDialog({
     setSubmitting(true);
     try {
       const hash = await runIntent(() =>
-        getMedialaneClient().api.createTransferCollectionOwnershipIntent({ owner: address!, collectionId: String(collectionId), newOwner: trimmed }),
+        getMedialaneClient().api.intents.create("transfer-collection-ownership", { owner: address!, collectionId: String(collectionId), newOwner: trimmed }),
       );
       setTxHash(hash);
       setTransferredTo(trimmed);

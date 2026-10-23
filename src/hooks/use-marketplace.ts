@@ -139,7 +139,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
         return withProcessing("createListing", async () => {
             const now = Math.floor(Date.now() / 1000);
-            const intentRes = await client.api.createListingIntent({
+            const intentRes = await client.api.intents.create("listing", {
                 offerer: signer.address,
                 nftContract: assetContractAddress,
                 tokenId,
@@ -148,8 +148,8 @@ export function useMarketplace(): UseMarketplaceReturn {
                 endTime: now + durationSeconds,
                 amount: is1155 ? (amount ?? "1") : undefined,
             });
-            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required listing intent");
-            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
+            if (!intentRes.requiresSignature) throw new Error("Expected a signature-required listing intent");
+            const { txHash: hash } = await executeIntent(signer, client, intentRes);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;
@@ -176,7 +176,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
         return withProcessing("makeOffer", async () => {
             const now = Math.floor(Date.now() / 1000);
-            const intentRes = await client.api.createOfferIntent({
+            const intentRes = await client.api.intents.create("offer", {
                 offerer: signer.address,
                 nftContract: assetContractAddress,
                 tokenId,
@@ -185,8 +185,8 @@ export function useMarketplace(): UseMarketplaceReturn {
                 endTime: now + durationSeconds,
                 tokenStandard: asTokenStandard(tokenStandard),
             });
-            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required offer intent");
-            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
+            if (!intentRes.requiresSignature) throw new Error("Expected a signature-required offer intent");
+            const { txHash: hash } = await executeIntent(signer, client, intentRes);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;
@@ -204,20 +204,20 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
 
         return withProcessing("checkoutCart", async () => {
-            const checkoutRes = await client.api.createCheckoutIntent({
+            const checkoutRes = await client.api.intents.checkout({
                 fulfiller: signer.address,
                 items: items.map((i) => ({ orderHash: i.orderHash, quantity: i.quantity })),
             });
-            const failed = checkoutRes.data.filter((r) => r.error);
+            const failed = checkoutRes.filter((r) => r.error);
             if (failed.length > 0) {
                 throw new Error(`${failed.length} item(s) could not be prepared: ${failed.map((f) => f.error).join("; ")}`);
             }
-            const prepared = checkoutRes.data.map((r) => ({ id: r.id!, calls: (r.calls as Call[]) ?? [] }));
+            const prepared = checkoutRes.map((r) => ({ id: r.id!, calls: (r.calls as Call[]) ?? [] }));
             const { calls, intentIds } = checkoutExecution(prepared, opts?.swap);
             const { txHash: hash } = await signer.execute(calls, { intentIds });
 
             await Promise.all(
-                checkoutRes.data.map((r) => (r.id ? client.api.confirmIntent(r.id, hash).catch(() => {}) : Promise.resolve()))
+                checkoutRes.map((r) => (r.id ? client.api.intents.confirm(r.id, hash).catch(() => {}) : Promise.resolve()))
             );
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
@@ -231,13 +231,13 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         return withProcessing("cancelOrder", async () => {
-            const intentRes = await client.api.createCancelIntent({
+            const intentRes = await client.api.intents.create("cancel", {
                 offerer: signer.address,
                 orderHash,
                 tokenStandard: asTokenStandard(tokenStandard),
             });
-            if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required cancel intent");
-            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
+            if (!intentRes.requiresSignature) throw new Error("Expected a signature-required cancel intent");
+            const { txHash: hash } = await executeIntent(signer, client, intentRes);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;
@@ -256,13 +256,13 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         return withProcessing("acceptOffer", async () => {
-            const intentRes = await client.api.createFulfillIntent({
+            const intentRes = await client.api.intents.create("fulfill", {
                 fulfiller: signer.address,
                 orderHash,
                 tokenStandard: asTokenStandard(tokenStandard),
             });
-            if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
-            const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
+            if (intentRes.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
+            const { txHash: hash } = await executeIntent(signer, client, intentRes);
             setTxHash(hash);
             await refreshMarketplaceCaches(hash);
             return hash;

@@ -68,8 +68,7 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
         setSubmitError("Sign in with your wallet to send a report.");
         return;
       }
-      await getMedialaneClient().api.submitReport(
-        {
+      await getMedialaneClient().api.platform.submitReport({
           targetType: target.type,
           categories,
           description: description.trim() || undefined,
@@ -77,8 +76,7 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
           ...(target.type === "COLLECTION" ? { targetContract: target.contract } : {}),
           ...(target.type === "CREATOR" ? { targetAddress: target.address } : {}),
           ...(target.type === "COMMENT" ? { targetId: target.commentId } : {}),
-        },
-      );
+        });
       setSubmitted(true);
     } catch (err) {
       if (err instanceof MedialaneApiError && err.status === 409) {

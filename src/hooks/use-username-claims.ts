@@ -15,7 +15,7 @@ export function useMyUsernameClaim() {
 
   const { data, error, isLoading, mutate } = useSWR(
     isConnected && address && session ? `username-claim-me-${address}` : null,
-    () => getMedialaneClient().api.getMyUsernameClaim(),
+    () => getMedialaneClient().api.creators.myUsernameClaim(),
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
@@ -23,7 +23,7 @@ export function useMyUsernameClaim() {
 }
 
 export function checkUsernameAvailability(username: string): Promise<{ available: boolean; reason?: string }> {
-  return getMedialaneClient().api.checkUsernameAvailability(username);
+  return getMedialaneClient().api.creators.usernameAvailability(username);
 }
 
 export async function submitUsernameClaim(
@@ -31,7 +31,7 @@ export async function submitUsernameClaim(
   notifyEmail?: string
 ): Promise<{ claim?: ApiUsernameClaim; error?: string }> {
   try {
-    return { claim: await getMedialaneClient().api.submitUsernameClaim(username, undefined, notifyEmail) };
+    return { claim: await getMedialaneClient().api.creators.submitUsernameClaim(username, notifyEmail) };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to submit claim" };
   }

@@ -66,7 +66,7 @@ export function useTransfer() {
         }
 
         const hash = await runIntent(() =>
-          client.api.createTransferNftIntent({
+          client.api.intents.create("transfer-nft", {
             owner: address,
             contractAddress: input.contractAddress,
             tokenId: input.tokenId,

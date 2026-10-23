@@ -46,7 +46,7 @@ function CollectionSlugClaimSection({
     setCheckState("checking");
     setCheckReason(null);
     try {
-      const result = await getMedialaneClient().api.checkCollectionSlugAvailability(slug);
+      const result = await getMedialaneClient().api.collections.slugAvailability(slug);
       setCheckState(result.available ? "available" : "taken");
       if (!result.available) setCheckReason(result.reason ?? "That slug is not available.");
     } catch {
@@ -61,7 +61,7 @@ function CollectionSlugClaimSection({
     setSubmitState("submitting");
     setSubmitError(null);
     try {
-      await getMedialaneClient().api.submitCollectionSlugClaim(contract, slug, "");
+      await getMedialaneClient().api.withBearer("").collections.submitSlugClaim(contract, slug);
       setSubmitState("done");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to submit claim.";
@@ -228,7 +228,7 @@ export default function CollectionSettingsPage({ params }: Props) {
           ? ((form.gatedContentType || null) as "VIDEO" | "STREAM" | "AUDIO" | "DOCUMENT" | "LINK" | null)
           : null,
       };
-      await getMedialaneClient().api.updateCollectionProfile(contract, payload, "");
+      await getMedialaneClient().api.withBearer("").collections.updateProfile(contract, payload);
       await mutate();
       setSaveMessage({ tone: "success", text: "Collection profile updated." });
     } catch (err) {

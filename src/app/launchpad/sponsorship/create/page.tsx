@@ -44,10 +44,10 @@ function PendingProposalsPanel({
     setActiveId(proposalId);
     try {
       const intentRes = decision === "accept"
-        ? await client.api.acceptSponsorshipProposalIntent({ owner, proposalId })
-        : await client.api.rejectSponsorshipProposalIntent({ owner, proposalId });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
-      await executeIntent(signer, client, intentRes.data);
+        ? await client.api.intents.create("sponsorship-proposal-accept", { owner, proposalId })
+        : await client.api.intents.create("sponsorship-proposal-reject", { owner, proposalId });
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
+      await executeIntent(signer, client, intentRes);
       await mutate();
     } catch (err) {
       console.error("sponsorship proposal response failed", err);
@@ -136,18 +136,18 @@ export default function CreateSponsorshipPage() {
       const royaltyBps = Math.round(Number(terms.royaltyPercent || "0") * 100);
 
       const intentRes = mode === "offer"
-        ? await client.api.createSponsorshipOfferIntent({
+        ? await client.api.intents.create("sponsorship-offer", {
             author: activeAddress, nftContract, tokenId, minAmount: amount.toString(),
             duration: durationDays * 86400, paymentToken: token.address, licenseTermsUri,
             transferable: terms.transferable, royaltyBps,
           })
-        : await client.api.createSponsorshipProposalIntent({
+        : await client.api.intents.create("sponsorship-proposal", {
             proposer: activeAddress, nftContract, tokenId, amount: amount.toString(),
             duration: durationDays * 86400, paymentToken: token.address, licenseTermsUri,
             transferable: terms.transferable, royaltyBps,
           });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship intent");
-      await executeIntent(signer, client, intentRes.data);
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt sponsorship intent");
+      await executeIntent(signer, client, intentRes);
 
       setDone(true);
     } catch (err) {
