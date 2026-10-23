@@ -8,7 +8,7 @@ import { runIntentCalls } from "@medialane/ui";
 export function useIntentExecute() {
   const signer = useVenueSigner();
   return useCallback(
-    async (create: () => Promise<{ data: ApiIntentCreated }>): Promise<string> => {
+    async (create: () => Promise<ApiIntentCreated>): Promise<string> => {
       if (!signer) throw new Error("Wallet not connected");
       const { txHash } = await runIntentCalls(signer, create);
       return txHash;

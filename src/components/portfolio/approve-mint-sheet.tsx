@@ -117,14 +117,14 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       };
       const pinnedUri = await uploadJsonToIpfs(metadata);
 
-      const intentRes = await client.api.createMintIntent({
+      const intentRes = await client.api.intents.create("mint", {
         owner: walletAddress,
         collectionId: effectiveCollectionId,
         recipient: walletAddress,
         tokenUri: pinnedUri,
         royaltyBps: 0,
       });
-      const mintCalls = (intentRes.data as any)?.calls as Call[];
+      const mintCalls = (intentRes as any)?.calls as Call[];
       if (!mintCalls?.length) throw new Error("No mint calls returned");
 
       const mintResult = await executeTransaction(mintCalls);
@@ -133,7 +133,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
       await syncTransactionBestEffort(client, mintResult);
 
-      const tokensRes = await client.api.getTokensByOwner(walletAddress, 1, 5);
+      const tokensRes = await client.api.tokens.ownedBy(walletAddress, { page: 1, limit: 5 });
       const remixTokenId = tokensRes.data?.find(
         (t) => t.contractAddress === selectedCollection.contractAddress
       )?.tokenId;
@@ -155,10 +155,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       while (Date.now() < listingDeadline) {
         await new Promise((r) => setTimeout(r, 2000));
         try {
-          const ordersRes = await client.api.getActiveOrdersForToken(
-            selectedCollection.contractAddress,
-            remixTokenId
-          );
+          const ordersRes = await client.api.orders.forToken(selectedCollection.contractAddress, remixTokenId);
           const listing = ordersRes.data?.find(
             (o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721"
           );

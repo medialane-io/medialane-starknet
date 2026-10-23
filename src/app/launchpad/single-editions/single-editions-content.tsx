@@ -367,7 +367,7 @@ export function SingleEditionsContent() {
 
       setMintStep("processing");
 
-      const intentRes = await client.api.createMintIntent({
+      const intentRes = await client.api.intents.create("mint", {
         owner: walletAddress,
         collectionId: values.collectionId,
         recipient: walletAddress,
@@ -376,7 +376,7 @@ export function SingleEditionsContent() {
         royaltyBps: Math.round(values.royalty * 100),
       });
 
-      const intentData = intentRes.data as { id?: string; calls?: { contractAddress: string; [key: string]: unknown }[] } | undefined;
+      const intentData = intentRes as { id?: string; calls?: { contractAddress: string; [key: string]: unknown }[] } | undefined;
       if (!intentData?.calls?.length) {
         throw new Error("Mint intent returned no calls");
       }

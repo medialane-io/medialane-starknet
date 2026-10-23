@@ -49,14 +49,14 @@ export default function SponsorshipOfferPage() {
     setIsPlacingBid(true);
     try {
       const amount = BigInt(Math.round(Number(bidAmount) * 10 ** paymentToken.decimals));
-      const intentRes = await client.api.placeSponsorshipBidIntent({
+      const intentRes = await client.api.intents.create("sponsorship-bid", {
         sponsor: activeAddress,
         offerId: offer.offerId,
         amount: amount.toString(),
         paymentToken: offer.paymentToken,
       });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid intent");
-      await executeIntent(signer, client, intentRes.data);
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid intent");
+      await executeIntent(signer, client, intentRes);
       setBidPlaced(true);
       setBidAmount("");
       await mutateBids();
@@ -72,13 +72,13 @@ export default function SponsorshipOfferPage() {
     if (!signer || !activeAddress || !offer) { setAcceptError("Connect your wallet to continue."); return; }
     setAcceptingSponsor(sponsor);
     try {
-      const intentRes = await client.api.acceptSponsorshipBidIntent({
+      const intentRes = await client.api.intents.create("sponsorship-bid-accept", {
         author: activeAddress,
         offerId: offer.offerId,
         sponsor,
       });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-      await executeIntent(signer, client, intentRes.data);
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
+      await executeIntent(signer, client, intentRes);
       setAcceptMessage("Bid accepted. The license is minted to the sponsor.");
       await Promise.all([mutateOffer(), mutateBids()]);
     } catch (err) {

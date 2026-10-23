@@ -195,14 +195,14 @@ export default function CreateRemixPage() {
 
       setMintStep("processing");
 
-      const intentRes = await client.api.createMintIntent({
+      const intentRes = await client.api.intents.create("mint", {
         owner: walletAddress,
         collectionId,
         recipient: walletAddress,
         tokenUri,
         royaltyBps: 0,
       });
-      const intentData = intentRes.data;
+      const intentData = intentRes;
       if (!intentData || intentData.requiresSignature) {
         throw new Error("Mint intent should be pre-signed but requires a signature");
       }
@@ -214,7 +214,7 @@ export default function CreateRemixPage() {
 
       await syncTransactionBestEffort(client, (result as any).txHash ?? "");
 
-      const owned = await client.api.getTokensByOwner(walletAddress, 1, 5);
+      const owned = await client.api.tokens.ownedBy(walletAddress, { page: 1, limit: 5 });
       const remixTokenId = owned.data?.find(
         (t) => normalizeAddress("STARKNET", t.contractAddress) === normalizeAddress("STARKNET", selectedCollection.contractAddress)
       )?.tokenId;

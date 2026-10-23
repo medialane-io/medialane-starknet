@@ -134,14 +134,14 @@ export default function LaunchpadCreateCollectionPage() {
         }),
       );
 
-      const intentRes = await client.api.createCollectionIntent({
+      const intentRes = await client.api.intents.create("create-collection", {
         owner: walletAddress,
         name: values.name,
         symbol: values.symbol,
         baseUri,
       });
 
-      const intentData = intentRes.data;
+      const intentData = intentRes;
       if (intentData.requiresSignature) {
         throw new Error("Collection intent should be pre-signed but requires a signature");
       }

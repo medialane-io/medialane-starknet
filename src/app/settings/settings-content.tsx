@@ -353,7 +353,7 @@ export default function SettingsContent() {
     setSaving(true);
     try {
       await ensureSignedIn();
-      const result = await getMedialaneClient().api.updateCreatorProfile(walletAddress, form) as any;
+      const result = await getMedialaneClient().api.creators.updateProfile(walletAddress, form) as any;
       if (!result?.walletAddress) {
         throw new Error(result?.error ?? "Save failed — please try again");
       }

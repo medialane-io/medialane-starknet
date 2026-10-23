@@ -156,7 +156,7 @@ export default function CreatePOPPage() {
         new Date(`${values.claimEndDate}T${values.claimEndTime}:00`).getTime() / 1000
       );
 
-      const intentRes = await client.api.createCollectionIntent({
+      const intentRes = await client.api.intents.create("create-collection", {
         owner: walletAddress,
         name: values.name,
         symbol: values.symbol,
@@ -164,7 +164,7 @@ export default function CreatePOPPage() {
         service: "pop-protocol",
         claimEndTimestamp,
       });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       await runIntent(async () => intentRes);
 
       setDone(true);

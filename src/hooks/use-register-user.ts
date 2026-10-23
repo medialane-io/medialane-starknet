@@ -19,7 +19,7 @@ export function useRegisterUser(
     if (sessionStorage.getItem(sessionKey)) return;
 
     getMedialaneClient()
-      .api.registerUser({
+      .api.account.registerUser({
         walletAddress: address,
         walletType: walletType ?? undefined,
         chain: "STARKNET",

@@ -13,7 +13,7 @@ function fetchQuote(
   buyAmountRaw: string,
   takerAddress: string | null
 ): Promise<SwapQuoteSummary> {
-  return getMedialaneClient().api.getSwapQuote({ sellSymbol, buySymbol, buyAmountRaw, takerAddress: takerAddress ?? undefined });
+  return getMedialaneClient().api.platform.swapQuote({ sellSymbol, buySymbol, buyAmountRaw, takerAddress: takerAddress ?? undefined });
 }
 
 export function swapQuoteKey(

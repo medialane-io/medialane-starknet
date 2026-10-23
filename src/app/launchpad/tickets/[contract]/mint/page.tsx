@@ -204,7 +204,7 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
       const ticketId = await predictNextTicketId(contract);
       setMintedTicketId(String(ticketId));
 
-      const tierRes = await client.api.createTierIntent({
+      const tierRes = await client.api.intents.create("create-tier", {
         owner: address,
         collection: contract,
         service: "ip-tickets",
@@ -214,19 +214,19 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
         royaltyBps,
         metadataUri,
       });
-      const mintRes = await client.api.createMintIntent({
+      const mintRes = await client.api.intents.create("mint", {
         owner: address,
         recipient: address,
         collectionContract: contract,
         tokenId: String(ticketId),
         amount: values.maxSupply,
       });
-      if (tierRes.data.requiresSignature || mintRes.data.requiresSignature) {
+      if (tierRes.requiresSignature || mintRes.requiresSignature) {
         throw new Error("Expected prebuilt create-tier and mint intents");
       }
 
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      await executeIntents(signer, client, [tierRes.data, mintRes.data]);
+      await executeIntents(signer, client, [tierRes, mintRes]);
 
       setDialogTxStatus("confirmed");
       setMintStep("success");

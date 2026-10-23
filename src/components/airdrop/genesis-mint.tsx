@@ -94,7 +94,7 @@ export function GenesisMint({
     setPhase("minting");
     setError(null);
     try {
-      const hash = await runIntent(() => getMedialaneClient().api.createGenesisMintIntent({ owner: address, recipient: address }));
+      const hash = await runIntent(() => getMedialaneClient().api.intents.create("genesis-mint", { owner: address, recipient: address }));
       if (!hash) throw new Error("Transaction not confirmed");
       setTxHash(hash);
       setPhase("success");

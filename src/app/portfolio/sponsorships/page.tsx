@@ -28,9 +28,9 @@ function OfferBidsRow({ offer }: { offer: SponsorshipOffer }) {
     if (!signer || !walletAddress) { setActionError("Connect your wallet to continue."); return; }
     setActiveSponsor(sponsor);
     try {
-      const intentRes = await client.api.acceptSponsorshipBidIntent({ author: walletAddress, offerId: offer.offerId, sponsor });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
-      await executeIntent(signer, client, intentRes.data);
+      const intentRes = await client.api.intents.create("sponsorship-bid-accept", { author: walletAddress, offerId: offer.offerId, sponsor });
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt sponsorship-bid-accept intent");
+      await executeIntent(signer, client, intentRes);
       await mutate();
     } catch (err) {
       console.error("accept bid failed", err);
@@ -72,10 +72,10 @@ function ReceivedProposalsSection({ walletAddress }: { walletAddress: string }) 
     setActiveId(proposalId);
     try {
       const intentRes = decision === "accept"
-        ? await client.api.acceptSponsorshipProposalIntent({ owner: walletAddress, proposalId })
-        : await client.api.rejectSponsorshipProposalIntent({ owner: walletAddress, proposalId });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
-      await executeIntent(signer, client, intentRes.data);
+        ? await client.api.intents.create("sponsorship-proposal-accept", { owner: walletAddress, proposalId })
+        : await client.api.intents.create("sponsorship-proposal-reject", { owner: walletAddress, proposalId });
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal response intent");
+      await executeIntent(signer, client, intentRes);
       await mutate();
     } catch (err) {
       console.error("respond to proposal failed", err);
@@ -126,9 +126,9 @@ function SentProposalsSection({ walletAddress }: { walletAddress: string }) {
     if (!signer) { setActionError("Connect your wallet to continue."); return; }
     setActiveId(proposalId);
     try {
-      const intentRes = await client.api.withdrawSponsorshipProposalIntent({ proposer: walletAddress, proposalId });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal-withdraw intent");
-      await executeIntent(signer, client, intentRes.data);
+      const intentRes = await client.api.intents.create("sponsorship-proposal-withdraw", { proposer: walletAddress, proposalId });
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt sponsorship-proposal-withdraw intent");
+      await executeIntent(signer, client, intentRes);
       await mutate();
     } catch (err) {
       console.error("withdraw proposal failed", err);

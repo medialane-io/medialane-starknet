@@ -56,19 +56,19 @@ export function useLaunchCoin() {
       try {
 
         setStatus("deploying");
-        const createIntent = await client.api.createCoinIntent({
+        const createIntent = await client.api.intents.create("create-coin", {
           owner: ownerAddr,
           name: input.name,
           symbol: input.symbol,
           initialSupply: supplyRaw.toString(),
         });
-        if (createIntent.data.requiresSignature) throw new Error("Expected a prebuilt create-coin intent");
+        if (createIntent.requiresSignature) throw new Error("Expected a prebuilt create-coin intent");
         const createHash = await runIntent(async () => createIntent);
         const receipt = await getMedialaneClient().provider.waitForTransaction(createHash);
         const coinAddress = parseCreatorCoinCreated(receipt as unknown as CreatorCoinReceiptLike);
 
         setStatus("launching");
-        const launchIntent = await client.api.launchCoinIntent({
+        const launchIntent = await client.api.intents.create("launch-coin", {
           owner: ownerAddr,
           creatorCoin: coinAddress,
           quoteToken: quote.address,
@@ -78,11 +78,11 @@ export function useLaunchCoin() {
           transferRestrictionDelay: 0,
           quoteFundAmount: buybackRaw.toString(),
         });
-        if (launchIntent.data.requiresSignature) throw new Error("Expected a prebuilt launch-coin intent");
+        if (launchIntent.requiresSignature) throw new Error("Expected a prebuilt launch-coin intent");
         await runIntent(async () => launchIntent);
 
         setStatus("indexing");
-        await client.api.syncCoin(coinAddress, ownerAddr).catch(() => {});
+        await client.api.coins.sync(coinAddress, ownerAddr).catch(() => {});
 
         setStatus("done");
         return { coinAddress };

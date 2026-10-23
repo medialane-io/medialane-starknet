@@ -159,22 +159,22 @@ export default function CreateNFTEditionsCollectionPage() {
       );
 
       setDialogTxStatus("submitting");
-      const intentRes = await client.api.createCollectionIntent({
+      const intentRes = await client.api.intents.create("create-collection", {
         owner: walletAddress,
         name: values.name,
         symbol: values.symbol,
         baseUri: collectionMetaUri,
         service: "mip-erc1155",
       });
-      if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
+      if (intentRes.requiresSignature) throw new Error("Expected a prebuilt create-collection intent");
       if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
-      const { receipt } = await executeIntent(signer, client, intentRes.data);
+      const { receipt } = await executeIntent(signer, client, intentRes);
       setDialogTxStatus("confirming");
 
       const addr = deployedCollectionFromReceipt(receipt, "mip-erc1155");
 
       if (addr) {
-        await client.api.registerCollection(addr).catch(() => {});
+        await client.api.collections.register(addr).catch(() => {});
       }
 
       if (walletAddress) invalidatePortfolioCache(walletAddress);

@@ -34,7 +34,7 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
       storage = null;
     }
     setProof(claimProofFor(storage, collectionAddress, window.location.hash));
-    getMedialaneClient().api.getPopClaimInfo(collectionAddress)
+    getMedialaneClient().api.chainReads.popClaimInfo(collectionAddress)
       .then(setInfo)
       .catch(() => setInfo(null));
   }, [collectionAddress]);
@@ -50,7 +50,7 @@ export function PopClaimButton({ collectionAddress }: PopClaimButtonProps) {
     if (!proof) return;
     setIsTxLoading(true);
     try {
-      const hash = await runIntent(() => getMedialaneClient().api.createPopClaimIntent({ claimer: address!, collection: collectionAddress, proof }));
+      const hash = await runIntent(() => getMedialaneClient().api.intents.create("pop-claim", { claimer: address!, collection: collectionAddress, proof }));
       setResult({
         status: "success",
         title: "Credential claimed!",
