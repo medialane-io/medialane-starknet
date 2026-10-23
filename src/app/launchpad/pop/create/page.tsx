@@ -26,7 +26,7 @@ import { type PopEventType } from "@/lib/launchpad-contracts";
 import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { cn } from "@/lib/utils";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata, uploadSizeError } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadError, acceptFor } from "@medialane/sdk";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
 import { profileHref } from "@/lib/routes";
 
@@ -109,8 +109,8 @@ export default function CreatePOPPage() {
   }, [autoSymbol, eventName, form]);
 
   const handleImageSelect = async (file: File) => {
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) { setImageError(sizeError); return; }
+    const fileError = uploadError(file, "image");
+    if (fileError) { setImageError(fileError); return; }
     setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
@@ -298,7 +298,7 @@ export default function CreatePOPPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept={acceptFor("image")}
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }}
                   />

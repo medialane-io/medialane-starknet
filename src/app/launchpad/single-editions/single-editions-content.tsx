@@ -5,7 +5,7 @@ import { RewardEarned } from "@/lib/reward-earned";
 import { collectionHref } from "@/lib/routes";
 import Image from "next/image";
 import Link from "next/link";
-import { getService, uploadSizeError } from "@medialane/sdk";
+import { getService, uploadError, acceptFor } from "@medialane/sdk";
 import type { ApiCollection } from "@medialane/sdk";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -499,20 +499,14 @@ export function SingleEditionsContent() {
                 <input
                   id="image-upload"
                   type="file"
-                  accept="image/*"
+                  accept={acceptFor("image")}
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const ALLOWED = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
-                    const sizeError = uploadSizeError(file, "image");
-                    if (sizeError) {
-                      form.setError("image", { message: sizeError });
-                      e.target.value = "";
-                      return;
-                    }
-                    if (!ALLOWED.includes(file.type)) {
-                      form.setError("image", { message: "Please choose a JPG, PNG, GIF, SVG or WebP image." });
+                    const fileError = uploadError(file, "image");
+                    if (fileError) {
+                      form.setError("image", { message: fileError });
                       e.target.value = "";
                       return;
                     }

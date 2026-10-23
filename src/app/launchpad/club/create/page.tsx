@@ -24,13 +24,12 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimRail, MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { useMyClubCollections } from "@/hooks/use-club";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata, uploadSizeError } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadError, acceptFor } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
 import { profileHref } from "@/lib/routes";
 
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
 
 const schema = z.object({
   name: z.string().min(1, "Name required").max(100),
@@ -89,13 +88,9 @@ export default function CreateClubPage() {
   };
 
   const handleImageSelect = async (file: File) => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setImageError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
-      return;
-    }
-    const sizeError = uploadSizeError(file, "image");
-    if (sizeError) {
-      setImageError(sizeError);
+    const fileError = uploadError(file, "image");
+    if (fileError) {
+      setImageError(fileError);
       return;
     }
     setImageError(null);
@@ -260,7 +255,7 @@ export default function CreateClubPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp"
+                    accept={acceptFor("image")}
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }}
                   />
