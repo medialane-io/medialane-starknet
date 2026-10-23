@@ -22,7 +22,7 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { ClaimRail, MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
+import { ClaimRail, MedialaneCollectionCard, useMedialaneClient, ExternalLinkField } from "@medialane/ui";
 import { useMyTicketCollections } from "@/hooks/use-tickets";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata, uploadError, acceptFor } from "@medialane/sdk";
@@ -337,20 +337,7 @@ export default function CreateTicketCollectionPage() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="external_link"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://yourwebsite.com" {...field} />
-                  </FormControl>
-                  <FormDescription>Your website, portfolio, or social profile. Defaults to your Medialane account page.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <ExternalLinkField form={form} address={address} />
 
             {form.formState.errors.root && (
 

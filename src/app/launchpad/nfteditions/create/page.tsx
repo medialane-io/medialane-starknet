@@ -20,7 +20,7 @@ import type { TxStatus } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
-import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
+import { MedialaneCollectionCard, useMedialaneClient, ExternalLinkField } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
 import { suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
@@ -77,12 +77,6 @@ export default function CreateNFTEditionsCollectionPage() {
     resolver: zodResolver(schema),
     defaultValues: { name: "", symbol: "", description: "", external_link: "" },
   });
-
-  useEffect(() => {
-    if (walletAddress && !form.getValues("external_link")) {
-      form.setValue("external_link", `https://www.medialane.io/account/${walletAddress}`);
-    }
-  }, [walletAddress, form]);
   const collectionName = form.watch("name");
 
   useEffect(() => {
@@ -331,14 +325,7 @@ export default function CreateNFTEditionsCollectionPage() {
               </FormItem>
             )} />
 
-            <FormField control={form.control} name="external_link" render={({ field }) => (
-              <FormItem>
-                <FormLabel>External link <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                <FormControl><Input placeholder="https://yourwebsite.com" {...field} /></FormControl>
-                <FormDescription>Your website, portfolio, or social profile. Defaults to your Medialane account page.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <ExternalLinkField form={form} address={walletAddress} />
 
             {form.formState.errors.root && (
 

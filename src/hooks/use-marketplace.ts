@@ -53,6 +53,9 @@ interface UseMarketplaceReturn {
     resetState: () => void;
 }
 
+const asTokenStandard = (value?: string): "ERC721" | "ERC1155" | undefined =>
+    value === "ERC721" || value === "ERC1155" ? value : undefined;
+
 export function useMarketplace(): UseMarketplaceReturn {
     const signer = useVenueSigner();
     const client = useMedialaneClient();
@@ -180,7 +183,7 @@ export function useMarketplace(): UseMarketplaceReturn {
                 currency: token.address,
                 price,
                 endTime: now + durationSeconds,
-                tokenStandard,
+                tokenStandard: asTokenStandard(tokenStandard),
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required offer intent");
             const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
@@ -231,7 +234,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             const intentRes = await client.api.createCancelIntent({
                 offerer: signer.address,
                 orderHash,
-                tokenStandard,
+                tokenStandard: asTokenStandard(tokenStandard),
             });
             if (!intentRes.data.requiresSignature) throw new Error("Expected a signature-required cancel intent");
             const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
@@ -256,7 +259,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             const intentRes = await client.api.createFulfillIntent({
                 fulfiller: signer.address,
                 orderHash,
-                tokenStandard,
+                tokenStandard: asTokenStandard(tokenStandard),
             });
             if (intentRes.data.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
             const { txHash: hash } = await executeIntent(signer, client, intentRes.data);
