@@ -222,7 +222,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
       const creatorVal =
         t.metadata?.attributes?.find((a) => a.trait_type === "Creator")?.value ?? "";
       return (
-        creatorVal.toLowerCase().includes(q) ||
+        String(creatorVal).toLowerCase().includes(q) ||
         t.contractAddress.toLowerCase().includes(q)
       );
     });
