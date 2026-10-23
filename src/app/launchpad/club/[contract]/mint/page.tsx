@@ -10,7 +10,7 @@ import {
   Users, Loader2, ImagePlus, X, ShieldCheck, ChevronDown, AlertCircle,
 } from "lucide-react";
 import type { Call } from "starknet";
-import { normalizeAddress } from "@medialane/sdk";
+import { normalizeAddress, uploadSizeError } from "@medialane/sdk";
 
 import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
@@ -129,7 +129,8 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
   const isOwner = isCollectionOwner(collection, address);
 
   const handleImageSelect = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { setImageError("That image is over 10 MB. Please choose a smaller one."); return; }
+    const sizeError = uploadSizeError(file, "image");
+    if (sizeError) { setImageError(sizeError); return; }
     setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
@@ -337,7 +338,7 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
                         <X className="h-3 w-3" /> Remove
                       </button>
                     )}
-                    <p className="text-xs text-muted-foreground">{imageUri ? <span className="text-brand-purple">✓ Uploaded</span> : "JPG, PNG, SVG or WebP · max 10 MB"}</p>
+                    <p className="text-xs text-muted-foreground">{imageUri ? <span className="text-brand-purple">✓ Uploaded</span> : "JPG, PNG, SVG or WebP"}</p>
                     {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                   </div>
                 </div>

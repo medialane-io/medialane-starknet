@@ -28,7 +28,7 @@ import { FadeIn } from "@medialane/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
-import { normalizeAddress } from "@medialane/sdk";
+import { normalizeAddress, uploadSizeError } from "@medialane/sdk";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -194,7 +194,8 @@ export default function MintNFTEditionsPage() {
   };
 
   const handleImageSelect = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { setImageError("That image is over 10 MB. Please choose a smaller one."); return; }
+    const sizeError = uploadSizeError(file, "image");
+    if (sizeError) { setImageError(sizeError); return; }
     setImageError(null);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = URL.createObjectURL(file);
@@ -418,7 +419,7 @@ export default function MintNFTEditionsPage() {
                     <p className="text-xs text-muted-foreground">
                       {imageUri
                         ? <span className="text-brand-purple">✓ Uploaded to IPFS</span>
-                        : "JPG, PNG, SVG or WebP · max 10 MB"}
+                        : "JPG, PNG, SVG or WebP"}
                     </p>
                     {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
                   </div>

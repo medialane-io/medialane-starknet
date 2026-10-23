@@ -5,7 +5,7 @@ import { RewardEarned } from "@/lib/reward-earned";
 import { collectionHref } from "@/lib/routes";
 import Image from "next/image";
 import Link from "next/link";
-import { getService } from "@medialane/sdk";
+import { getService, uploadSizeError } from "@medialane/sdk";
 import type { ApiCollection } from "@medialane/sdk";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -493,7 +493,7 @@ export function SingleEditionsContent() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Upload className="h-8 w-8" />
-                    <p className="text-sm">Click to upload (JPG, PNG, GIF, SVG, WebP · max 10 MB)</p>
+                    <p className="text-sm">Click to upload (JPG, PNG, GIF, SVG, WebP)</p>
                   </div>
                 )}
                 <input
@@ -505,8 +505,9 @@ export function SingleEditionsContent() {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     const ALLOWED = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
-                    if (file.size > 10 * 1024 * 1024) {
-                      form.setError("image", { message: "That image is over 10 MB. Please choose a smaller one." });
+                    const sizeError = uploadSizeError(file, "image");
+                    if (sizeError) {
+                      form.setError("image", { message: sizeError });
                       e.target.value = "";
                       return;
                     }

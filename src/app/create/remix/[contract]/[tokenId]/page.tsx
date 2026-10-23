@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@medialane/ui/collapsible";
 import { registerRemix } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
-import { getListableTokens, getService, normalizeAddress } from "@medialane/sdk";
+import { getListableTokens, getService, normalizeAddress, uploadSizeError } from "@medialane/sdk";
 import { IP_TYPES, LICENSE_TYPES } from "@medialane/ui/data/ip";
 import { resolveImage } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -111,15 +111,15 @@ export default function CreateRemixPage() {
   }, []);
 
   const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"];
-  const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
   const handleImageChange = (file: File) => {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setFormError("Please choose a JPG, PNG, GIF, SVG or WebP image.");
       return;
     }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setFormError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Please choose one under 10 MB.`);
+    const sizeError = uploadSizeError(file, "image");
+    if (sizeError) {
+      setFormError(sizeError);
       return;
     }
     setFormError(null);
