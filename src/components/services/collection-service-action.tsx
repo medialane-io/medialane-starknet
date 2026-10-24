@@ -1,7 +1,7 @@
 "use client";
 
 import { getService } from "@medialane/sdk";
-import { PopClaimButton } from "@/components/claim/pop-claim-button";
+import { PopClaimButton } from "@medialane/ui";
 
 interface CollectionServiceActionProps {
   service: string | null | undefined;
