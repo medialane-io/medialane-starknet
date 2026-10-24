@@ -1,6 +1,6 @@
 "use client";
 
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 
 import { useEffect, useState } from "react";
 import Image from "next/image";

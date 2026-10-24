@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";

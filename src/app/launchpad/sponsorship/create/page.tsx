@@ -16,7 +16,7 @@ import { useTokensByOwner } from "@/hooks/use-tokens";
 import { usePendingProposalsForAsset } from "@/hooks/use-sponsorship";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { uploadFailureToast } from "@/lib/upload-error";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { resolveImage, shortenAddress } from "@/lib/utils";
 import { getTokenBySymbol, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { FadeIn } from "@medialane/ui/motion-primitives";

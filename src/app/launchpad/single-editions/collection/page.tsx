@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { CollectionProgressDialog } from "@/components/marketplace/collection-progress-dialog";
 import type { CollectionStep } from "@/components/marketplace/collection-progress-dialog";
 import { ConnectGate } from "@/components/connect-gate";
-import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
+import { invalidatePortfolioCache } from "@medialane/ui";
 import { useTx } from "@/hooks/use-tx";
 import { useWallet } from "@/hooks/use-wallet";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
