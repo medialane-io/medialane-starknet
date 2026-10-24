@@ -148,9 +148,9 @@ function ProfileLivePreview({
         <div className="min-w-0">
           <p className="truncate text-[18px] font-bold leading-snug text-foreground">{profileName}</p>
           <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-            <span className="pill-badge text-[10px]">Creator</span>
+            <span className="pill-badge text-2xs">Creator</span>
             {approvedUsername && (
-              <span className="text-[11px] tabular-nums text-muted-foreground">@{approvedUsername}</span>
+              <span className="text-2xs tabular-nums text-muted-foreground">@{approvedUsername}</span>
             )}
           </div>
         </div>
@@ -177,7 +177,7 @@ function ProfileLivePreview({
         {approvedUsername && (
           <Link
             href={profileHref({ username: approvedUsername })}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-2xs font-medium text-primary hover:underline"
           >
             View profile
             <ArrowUpRight className="h-3 w-3" />
@@ -204,7 +204,7 @@ function PortfolioSnapshot({ assets, listings, collections }: { assets: number; 
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Portfolio</p>
+        <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">Portfolio</p>
         <p className="mt-0.5 text-xs text-muted-foreground/70">What you own on Medialane</p>
       </div>
       <div className="flex items-center border-t border-border/60 pt-4">
@@ -231,7 +231,7 @@ function RewardsSnapshot({ address }: { address?: string | null }) {
     <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Rewards</p>
+          <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">Rewards</p>
           <p className="mt-0.5 text-xs text-muted-foreground/70">Your creator journey</p>
         </div>
         <Trophy className="h-4 w-4 text-muted-foreground/50" />
@@ -496,7 +496,7 @@ export default function SettingsContent() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-medium text-foreground">Claim under review</p>
-                    <Badge variant="outline" className="border-yellow-500/40 text-yellow-700 dark:text-yellow-400 bg-yellow-500/10 text-[10px]">
+                    <Badge variant="outline" className="border-yellow-500/40 text-yellow-700 dark:text-yellow-400 bg-yellow-500/10 text-2xs">
                       Pending
                     </Badge>
                   </div>

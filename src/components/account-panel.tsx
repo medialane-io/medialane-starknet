@@ -169,7 +169,7 @@ export function AccountPanel() {
           <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
           <div className="space-y-1">
             <p className="text-xs font-bold text-red-200">Switch network needed</p>
-            <p className="text-[10px] leading-relaxed text-red-200/60">
+            <p className="text-2xs leading-relaxed text-red-200/60">
               Switch to {networkConfig.name} in your wallet to interact with Medialane.
             </p>
           </div>

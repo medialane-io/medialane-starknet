@@ -205,7 +205,7 @@ export default function CreatePage() {
 
         <div className="flex items-center gap-4">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60 font-semibold whitespace-nowrap">
+          <span className="text-2xs uppercase tracking-widest text-muted-foreground/60 font-semibold whitespace-nowrap">
             Platform Features
           </span>
           <div className="flex-1 h-px bg-border" />
@@ -249,7 +249,7 @@ export default function CreatePage() {
             ].map(({ value, label }) => (
               <div key={label} className="text-center space-y-1">
                 <p className="text-2xl sm:text-3xl font-black text-foreground">{value}</p>
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground/70 font-medium">
+                <p className="text-2xs uppercase tracking-widest text-muted-foreground/70 font-medium">
                   {label}
                 </p>
               </div>

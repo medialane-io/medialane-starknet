@@ -76,7 +76,7 @@ function CollectionSlugClaimSection({
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           <span className="text-sm font-medium">Active URL</span>
-          <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-emerald-600 border-emerald-500/30">
+          <Badge variant="outline" className="text-2xs h-4 px-1.5 text-emerald-600 border-emerald-500/30">
             Active
           </Badge>
         </div>
@@ -93,7 +93,7 @@ function CollectionSlugClaimSection({
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium">Claim submitted</span>
-          <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-amber-600 border-amber-500/30">
+          <Badge variant="outline" className="text-2xs h-4 px-1.5 text-amber-600 border-amber-500/30">
             Pending review
           </Badge>
         </div>

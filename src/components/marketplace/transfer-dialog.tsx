@@ -206,7 +206,7 @@ export function TransferDialog({
                       </>
                     )}
                   </Button>
-                  <p className="text-[10px] text-center text-muted-foreground">
+                  <p className="text-2xs text-center text-muted-foreground">
                     Confirm in your wallet to complete the transfer.
                   </p>
                 </form>

@@ -79,7 +79,7 @@ function TokenBrowseCard({ token }: { token: ApiToken }) {
           )}
           {price?.formatted && (
             <div className="absolute top-2 right-2">
-              <Badge className="text-[10px] bg-black/70 text-white border-0 backdrop-blur-sm gap-1">
+              <Badge className="text-2xs bg-black/70 text-white border-0 backdrop-blur-sm gap-1">
                 <CurrencyIcon symbol={price.currency ?? ""} size={12} />
                 {formatDisplayPrice(price.formatted)} {price.currency}
               </Badge>
@@ -284,7 +284,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Filters
             {activeChipCount > 0 && (
-              <span className="ml-0.5 bg-primary text-primary-foreground rounded-full px-1.5 text-[10px] font-bold leading-4">
+              <span className="ml-0.5 bg-primary text-primary-foreground rounded-full px-1.5 text-2xs font-bold leading-4">
                 {activeChipCount}
               </span>
             )}
@@ -333,7 +333,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
 
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground">Status</p>
+                <p className="text-2xs font-semibold text-muted-foreground">Status</p>
                 <div className="flex flex-wrap gap-1.5">
                   <FilterChip active={!listedOnly} onClick={() => setListedOnly(false)} label="All" />
                   <FilterChip
@@ -345,7 +345,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
               </div>
 
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground">Sort</p>
+                <p className="text-2xs font-semibold text-muted-foreground">Sort</p>
                 <div className="flex flex-wrap gap-1.5">
                   <FilterChip active={sortOrder === "recent"} onClick={() => setSortOrder("recent")} label="Recent" />
                   <FilterChip active={sortOrder === "price_asc"} onClick={() => setSortOrder("price_asc")} label="Price ↑" />
@@ -354,7 +354,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
               </div>
 
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground">License</p>
+                <p className="text-2xs font-semibold text-muted-foreground">License</p>
                 <div className="flex flex-wrap gap-1.5">
                   {["all", "CC0", "CC BY", "CC BY-SA", "CC BY-NC", "CC BY-ND", "Custom"].map((lic) => (
                     <FilterChip
@@ -368,7 +368,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
               </div>
 
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground">Creator</p>
+                <p className="text-2xs font-semibold text-muted-foreground">Creator</p>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
@@ -381,7 +381,7 @@ export function IpTypePageClient({ slug }: IpTypePageClientProps) {
               </div>
 
               <div className="space-y-2 pt-1 border-t border-border/60">
-                <p className="text-[10px] font-semibold text-muted-foreground">IP Type</p>
+                <p className="text-2xs font-semibold text-muted-foreground">IP Type</p>
                 <div className="flex flex-wrap gap-1.5">
                   {IP_TYPE_CONFIG.map((t) => (
                     <Link
