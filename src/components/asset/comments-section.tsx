@@ -6,7 +6,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { normalizeAddress } from "@medialane/sdk";
 import { useWallet } from "@/hooks/use-wallet";
-import { useMedialaneClient, LevelBadge, useRewardsBatch, useComments } from "@medialane/ui";
+import { useMedialaneClient, useComments } from "@medialane/ui";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
 import { useTx } from "@/hooks/use-tx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@medialane/ui/dialog";
@@ -41,7 +41,6 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
   const { comments, total, isLoading, mutate } = useComments(contract, tokenId);
   const { execute: executeTransaction } = useTx();
 
-  const { data: authorLevels } = useRewardsBatch(comments.map((c) => c.author));
 
   const [text, setText] = useState("");
   const [postStep, setPostStep] = useState<PostStep>("idle");
@@ -193,18 +192,6 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                         >
                           <AddressDisplay address={comment.author} chars={4} showCopy={false} />
                         </Link>
-                        {(() => {
-                          const level = authorLevels?.get(comment.author);
-                          if (!level || level.totalXp <= 0) return null;
-                          return (
-                            <LevelBadge
-                              level={level.currentLevel}
-                              name={level.currentLevelName}
-                              badgeColor={level.badgeColor}
-                              size="sm"
-                            />
-                          );
-                        })()}
                       </div>
                     )}
 
