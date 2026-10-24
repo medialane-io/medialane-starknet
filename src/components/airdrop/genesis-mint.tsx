@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import { Button } from "@medialane/ui/button";
+import { runIntentCalls, useTransaction } from "@medialane/ui";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
-import { useIntentExecute } from "@/hooks/use-intent-execute";
 import { getMedialaneClient } from "@/lib/medialane-client";
 
 export function AirdropEventCard() {
@@ -62,7 +62,7 @@ export function GenesisMint({
   locale = "en",
 }: GenesisMintProps) {
   const { address, isConnected } = useWallet();
-  const runIntent = useIntentExecute();
+  const tx = useTransaction();
   const copy = COPY[locale];
 
   const [phase, setPhase] = useState<MintPhase>("idle");
@@ -89,21 +89,26 @@ export function GenesisMint({
     });
   }, [isConnected]);
 
-  const handleMint = useCallback(async () => {
+  const handleMint = useCallback(() => {
     if (!address) return;
     setPhase("minting");
     setError(null);
-    try {
-      const hash = await runIntent(() => getMedialaneClient().api.intents.create("genesis-mint", { owner: address, recipient: address }));
-      if (!hash) throw new Error("Transaction not confirmed");
-      setTxHash(hash);
+    void tx.run(async (signer) => {
+      await runIntentCalls(signer, () => getMedialaneClient().api.intents.create("genesis-mint", { owner: address, recipient: address }));
+    });
+  }, [address, tx]);
+
+  useEffect(() => {
+    if (tx.phase === "success" && tx.txHash) {
+      setTxHash(tx.txHash);
       setPhase("success");
-      if (lsKey) localStorage.setItem(lsKey, hash);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
+      if (lsKey) localStorage.setItem(lsKey, tx.txHash);
+    }
+    if (tx.phase === "error") {
+      setError(tx.error ?? "Something went wrong. Try again.");
       setPhase("error");
     }
-  }, [address, runIntent, lsKey]);
+  }, [tx.phase, tx.txHash, tx.error, lsKey]);
 
   const card = "rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-5 space-y-4 shadow-lg shadow-black/5";
 
@@ -149,7 +154,7 @@ export function GenesisMint({
           className="w-full font-bold gap-2 h-12 text-base bg-transparent text-white rounded-[15px] hover:bg-transparent hover:brightness-110 active:scale-[0.98] transition-all"
           onClick={
             phase === "error"
-              ? () => { setPhase("ready"); setError(null); }
+              ? () => { tx.reset(); setPhase("ready"); setError(null); }
               : handleMint
           }
           disabled={phase === "minting"}
