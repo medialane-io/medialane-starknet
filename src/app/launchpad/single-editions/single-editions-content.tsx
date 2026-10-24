@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { RewardEarned } from "@/lib/reward-earned";
-import { collectionHref } from "@/lib/routes";
+import { assetHref, collectionHref } from "@/lib/routes";
 import Image from "next/image";
 import Link from "next/link";
 import { getService, uploadError, acceptFor, FIELD_LIMITS } from "@medialane/sdk";
@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import type { Call } from "starknet";
 import { uploadFileToIpfs, pinAssetMetadata } from "@/lib/ipfs-upload-client";
-import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
+import { syncTransactionBestEffort, assertTransactionSucceeded, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
 import { profileHref } from "@/lib/routes";
 
 const schema = z.object({
@@ -273,6 +273,7 @@ export function SingleEditionsContent() {
   const [licensingOpen, setLicensingOpen] = useState(false);
   const [ipTypeOpen, setIpTypeOpen] = useState(false);
   const [mintStep, setMintStep] = useState<MintStep>("idle");
+  const [mintedHref, setMintedHref] = useState<string | null>(null);
   const [mintError, setMintError] = useState<string | null>(null);
 
   const templateFieldsRef = useRef<MetadataField[]>([]);
@@ -389,6 +390,11 @@ export function SingleEditionsContent() {
 
       await syncTransactionBestEffort(client, result);
 
+      const mintedInto = collections.find((c) => c.collectionId === values.collectionId);
+      const receipt = await assertTransactionSucceeded(client.provider, result).catch(() => null);
+      const mintedTokenId = receipt && mintedInto ? mintedTokenIdFromReceipt(receipt, mintedInto.contractAddress) : null;
+      if (mintedInto && mintedTokenId) setMintedHref(assetHref("STARKNET", mintedInto.contractAddress, mintedTokenId));
+
       setMintStep("success");
       invalidatePortfolioCache(walletAddress);
     } catch (err: unknown) {
@@ -398,6 +404,7 @@ export function SingleEditionsContent() {
   };
 
   const handleMintAnother = () => {
+    setMintedHref(null);
     setMintStep("idle");
     setMintError(null);
     form.reset({
@@ -428,9 +435,9 @@ export function SingleEditionsContent() {
         txStatus={status}
         assetName={form.getValues("name") ?? ""}
         imagePreview={imagePreview}
-        txHash={txHash}
         error={mintError}
         onMintAnother={handleMintAnother}
+        assetHref={mintedHref}
       />
 
       <ConnectGate

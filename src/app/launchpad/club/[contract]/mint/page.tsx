@@ -30,7 +30,6 @@ import { predictNextMembershipId } from "@/hooks/use-club";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { RewardEarned } from "@/lib/reward-earned";
-import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn, isCollectionOwner } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
@@ -494,16 +493,12 @@ export default function CreateMembershipPage({ params }: { params: Promise<{ con
         txStatus={dialogTxStatus}
         assetName={form.getValues("name")}
         imagePreview={imagePreview}
-        txHash={null}
         error={mintError}
         onMintAnother={handleMintAnother}
         uploadStepLabel="Upload membership metadata"
         processingTitle="Creating your membership on Starknet…"
-        successTitle="Membership created!"
-        successSubtitle={`${form.getValues("maxSupply")} membership card(s) are in your wallet — list them on the marketplace whenever you're ready.`}
-        mintedTokenId={mintedTierId ?? ""}
+        caption="Your membership is ready"
         assetHref={mintedTierId ? assetHref("STARKNET", contract, mintedTierId) : undefined}
-        explorerAssetHref={mintedTierId ? `${EXPLORER_URL}/nft/${contract}/${mintedTierId}` : undefined}
         mintAnotherLabel="Create another membership"
       />
     </>

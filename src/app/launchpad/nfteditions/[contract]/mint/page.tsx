@@ -29,7 +29,6 @@ import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress, uploadError, acceptFor, FIELD_LIMITS } from "@medialane/sdk";
-import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
@@ -714,12 +713,9 @@ export default function MintNFTEditionsPage() {
         txStatus={txStatus}
         assetName={form.getValues("name")}
         imagePreview={imagePreview}
-        txHash={txHash}
         error={mintError}
         onMintAnother={handleMintAnother}
-        mintedTokenId={mintedTokenId ?? ""}
-        assetHref={assetHref("STARKNET", collectionAddress, mintedTokenId ?? "")}
-        explorerAssetHref={`${EXPLORER_URL}/nft/${collectionAddress}/${mintedTokenId ?? ""}`}
+        assetHref={mintedTokenId ? assetHref("STARKNET", collectionAddress, mintedTokenId) : undefined}
       />
     </>
   );

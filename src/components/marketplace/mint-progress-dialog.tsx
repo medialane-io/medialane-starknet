@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import Image from "next/image";
 import { fireConfetti } from "@/lib/confetti";
 import { Dialog, DialogContent, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
+import { CreationSuccess } from "@medialane/ui";
 import {
   Loader2,
   CheckCircle2,
   XCircle,
-  Sparkles,
   Tag,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import type { TxStatus } from "@/hooks/use-tx";
 
 export type MintStep = "idle" | "uploading" | "processing" | "success" | "error";
@@ -24,28 +22,17 @@ interface MintProgressDialogProps {
   txStatus: TxStatus;
   assetName: string;
   imagePreview: string | null;
-  txHash: string | null;
   error: string | null;
   onMintAnother: () => void;
-  mintedTokenId?: string | null;
   assetHref?: string | null;
-  explorerAssetHref?: string | null;
   listingStep?: ListingStep;
   listingError?: string | null;
 
   mintAnotherLabel?: string;
 
-  primaryActionLabel?: string;
-
-  primaryActionHref?: string;
-
-  onPrimaryAction?: () => void;
-
   processingTitle?: string;
 
-  successTitle?: string;
-
-  successSubtitle?: string;
+  caption?: string;
 
   uploadStepLabel?: string;
   successFooter?: ReactNode;
@@ -76,25 +63,17 @@ export function MintProgressDialog({
   txStatus,
   assetName,
   imagePreview,
-  txHash,
   error,
   onMintAnother,
-  mintedTokenId,
   assetHref,
-  explorerAssetHref,
   listingStep = "idle",
   listingError,
   mintAnotherLabel = "Mint another",
-  primaryActionLabel = "View portfolio",
-  primaryActionHref = "/portfolio/assets",
-  onPrimaryAction,
   processingTitle,
-  successTitle,
-  successSubtitle,
+  caption = "Your work is live",
   successFooter,
   uploadStepLabel = "Upload to IPFS",
 }: MintProgressDialogProps) {
-  const router = useRouter();
   const confettiFired = useRef(false);
 
   useEffect(() => {
@@ -225,69 +204,18 @@ export function MintProgressDialog({
           </div>
         )}
 
-        {isFullSuccess && (
-          <div className="flex flex-col items-center gap-5 py-2">
-            <div className="relative">
-              <div className="h-16 w-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <CheckCircle2 className="h-9 w-9 text-emerald-500" />
-              </div>
-              <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-brand-orange" />
-            </div>
-            <div className="text-center space-y-1">
-              <p className="font-bold text-xl">Minted & Listed!</p>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{assetName || "Your asset"}</span> is now live on the marketplace.
-              </p>
-              <p className="text-xs text-muted-foreground/70 pt-1">
-                Metadata, traits, and licensing may take 1-2 minutes to appear while the platform indexes the onchain mint.
-              </p>
-            </div>
-            {imagePreview && (
-              <div className="h-28 w-28 rounded-xl overflow-hidden border border-border shadow-md">
-                <Image src={imagePreview} alt={assetName} width={112} height={112} className="h-full w-full object-cover" unoptimized />
-              </div>
-            )}
-            <div className="flex flex-col sm:flex-row gap-2 w-full pt-1">
-              <Button variant="outline" className="flex-1" onClick={onMintAnother}>
-                Mint another
-              </Button>
-              <Button className="flex-1" onClick={() => router.push("/portfolio/assets")}>
-                View portfolio
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {isSuccess && (
-          <div className="flex flex-col items-center gap-5 py-2">
-            <div className="relative">
-              <div className="h-16 w-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <CheckCircle2 className="h-9 w-9 text-emerald-500" />
-              </div>
-              <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-brand-orange" />
-            </div>
-            <div className="text-center space-y-1">
-              <p className="font-bold text-xl">{successTitle ?? "Minted!"}</p>
-              <p className="text-sm text-muted-foreground">
-                {successSubtitle ?? (
-                  <>
-                    <span className="font-medium text-foreground">{assetName || "Your asset"}</span> is now live on Starknet.
-                  </>
-                )}
-              </p>
-              {!successSubtitle && (
-                <p className="text-xs text-muted-foreground/70 pt-1">
-                  Metadata, traits, and licensing may take 1-2 minutes to appear while the platform indexes the onchain mint.
-                </p>
-              )}
-            </div>
-            {imagePreview && (
-              <div className="h-28 w-28 rounded-xl overflow-hidden border border-border shadow-md">
-                <Image src={imagePreview} alt={assetName} width={112} height={112} className="h-full w-full object-cover" unoptimized />
-              </div>
-            )}
+        {(isFullSuccess || isSuccess) && (
+          <CreationSuccess
+            name={assetName || "Your asset"}
+            image={imagePreview}
+            caption={isFullSuccess ? "Your work is live on the market" : caption}
+            primary={assetHref ? { href: assetHref, label: "View asset" } : { href: "/portfolio/assets", label: "View portfolio" }}
+            secondary={isFullSuccess ? { href: "/marketplace", label: "View on market" } : assetHref ? { href: "/portfolio/assets", label: "View portfolio" } : undefined}
+            onAgain={onMintAnother}
+            againLabel={mintAnotherLabel}
+          >
             {listingError && (
-              <div className="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/5 px-4 py-3 flex items-start gap-2">
+              <div className="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/5 px-4 py-3 flex items-start gap-2 text-left">
                 <Tag className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Listing failed</p>
@@ -295,16 +223,8 @@ export function MintProgressDialog({
                 </div>
               </div>
             )}
-            <div className="flex flex-col sm:flex-row gap-2 w-full pt-1">
-              <Button variant="outline" className="flex-1" onClick={onMintAnother}>
-                {mintAnotherLabel}
-              </Button>
-              <Button className="flex-1" onClick={() => (onPrimaryAction ? onPrimaryAction() : router.push(primaryActionHref))}>
-                {primaryActionLabel}
-              </Button>
-            </div>
             {successFooter}
-          </div>
+          </CreationSuccess>
         )}
 
         {isError && (

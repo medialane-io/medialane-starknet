@@ -25,7 +25,7 @@ import { buildCollectionMetadata, uploadError, acceptFor, FIELD_LIMITS } from "@
 import { Layers, Loader2, ImagePlus, X } from "lucide-react";
 import type { Call } from "starknet";
 import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
-import { profileHref } from "@/lib/routes";
+import { collectionHref, profileHref } from "@/lib/routes";
 
 const schema = z.object({
   name: z.string().min(1, "Name required").max(FIELD_LIMITS.name),
@@ -52,6 +52,7 @@ export default function LaunchpadCreateCollectionPage() {
   const client = useMedialaneClient();
 
   const [collectionStep, setCollectionStep] = useState<CollectionStep>("idle");
+  const [createdHref, setCreatedHref] = useState<string | null>(null);
   const [collectionError, setCollectionError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
 
@@ -164,7 +165,26 @@ export default function LaunchpadCreateCollectionPage() {
     }
   };
 
+  const createdName = form.getValues("name");
+  useEffect(() => {
+    if (collectionStep !== "success" || !walletAddress) return;
+    let alive = true;
+    client.api.collections
+      .list({ owner: walletAddress, limit: 50 })
+      .then((res) => {
+        const created = (res.data ?? [])
+          .filter((c) => c.name === createdName)
+          .sort((a, b) => Number(BigInt(b.collectionId ?? 0) - BigInt(a.collectionId ?? 0)))[0];
+        if (alive && created) setCreatedHref(collectionHref("STARKNET", created.contractAddress));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [collectionStep, walletAddress, createdName, client]);
+
   const handleCreateAnother = () => {
+    setCreatedHref(null);
     setCollectionStep("idle");
     setCollectionError(null);
     form.reset();
@@ -180,10 +200,10 @@ export default function LaunchpadCreateCollectionPage() {
         txStatus={status}
         collectionName={form.getValues("name") ?? ""}
         imagePreview={imagePreview}
-        txHash={txHash}
         error={collectionError}
         onCreateAnother={handleCreateAnother}
         mintHref="/launchpad/single-editions"
+        viewHref={createdHref}
       />
 
       <ConnectGate
