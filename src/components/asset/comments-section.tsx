@@ -174,7 +174,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                   {!own && (
                     <Link href={profileHref({ address: comment.author })} className="shrink-0 mb-1">
                       <div
-                        className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] tabular-nums font-bold text-white select-none ring-2 ring-background"
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-2xs tabular-nums font-bold text-white select-none ring-2 ring-background"
                         style={{ background: "linear-gradient(135deg, hsl(var(--brand-blue)), hsl(var(--brand-purple)))" }}
                       >
                         {comment.author.slice(2, 4).toUpperCase()}
@@ -188,7 +188,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                       <div className="flex items-center gap-1.5 mb-1 ml-1">
                         <Link
                           href={profileHref({ address: comment.author })}
-                          className="text-[10px] font-medium text-muted-foreground hover:underline underline-offset-2"
+                          className="text-2xs font-medium text-muted-foreground hover:underline underline-offset-2"
                         >
                           <AddressDisplay address={comment.author} chars={4} showCopy={false} />
                         </Link>
@@ -221,7 +221,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                     </div>
 
                     <div className={`flex items-center gap-2 mt-1.5 ${own ? "mr-1 flex-row-reverse" : "ml-1"}`}>
-                      <span className="text-[10px] text-muted-foreground/70" title={comment.postedAt}>
+                      <span className="text-2xs text-muted-foreground/70" title={comment.postedAt}>
                         {formatDistanceToNow(new Date(comment.postedAt), { addSuffix: true })}
                       </span>
                       {comment.txHash && (
@@ -230,7 +230,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                           target="_blank"
                           rel="noopener noreferrer"
                           title="View on Voyager"
-                          className="flex items-center gap-0.5 text-[10px] transition-colors"
+                          className="flex items-center gap-0.5 text-2xs transition-colors"
                           style={{ color: "hsl(var(--brand-blue) / 0.6)" }}
                           onMouseEnter={(e) => (e.currentTarget.style.color = "hsl(var(--brand-blue))")}
                           onMouseLeave={(e) => (e.currentTarget.style.color = "hsl(var(--brand-blue) / 0.6)")}
@@ -263,7 +263,7 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
 
             <div className="flex items-center gap-1.5">
               <Zap className="h-3 w-3" style={{ color: "hsl(var(--brand-blue))" }} />
-              <span className="text-[10px] font-semibold" style={{ color: "hsl(var(--brand-blue))" }}>
+              <span className="text-2xs font-semibold" style={{ color: "hsl(var(--brand-blue))" }}>
                 Mint your message onchain
               </span>
             </div>
@@ -293,12 +293,12 @@ export function CommentsSection({ contract, tokenId, className }: CommentsSectio
                 disabled={isProcessing}
               />
               <div className="flex items-center justify-between px-3 pb-2.5">
-                <span className="text-[10px] text-muted-foreground/40 flex items-center gap-1">
+                <span className="text-2xs text-muted-foreground/40 flex items-center gap-1">
                   Enter ↵ to post
                 </span>
                 <div className="flex items-center gap-2">
                   {byteLen > 800 && (
-                    <span className={`text-[10px] ${byteLen > MAX_LEN ? "text-destructive" : "text-muted-foreground"}`}>
+                    <span className={`text-2xs ${byteLen > MAX_LEN ? "text-destructive" : "text-muted-foreground"}`}>
                       {byteLen}/{MAX_LEN}
                     </span>
                   )}

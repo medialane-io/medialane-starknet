@@ -141,7 +141,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                 <p className="font-bold text-lg leading-tight truncate">{name}</p>
                 <div className="flex items-center gap-1 mt-1">
                   <Zap className="h-3 w-3 text-emerald-500" />
-                  <span className="text-[11px] font-medium text-emerald-500">Wallet offer</span>
+                  <span className="text-2xs font-medium text-emerald-500">Wallet offer</span>
                 </div>
               </div>
             </div>
@@ -203,7 +203,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                     </Button>
                     <div className="flex items-start justify-center gap-1.5">
                       <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
-                      <p className="text-[10px] text-center text-muted-foreground">
+                      <p className="text-2xs text-center text-muted-foreground">
                         You can cancel your offer anytime before it's accepted.
                       </p>
                     </div>

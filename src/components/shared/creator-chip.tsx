@@ -41,7 +41,7 @@ export function CreatorChip({ address, label = "by", className }: CreatorChipPro
           className="h-5 w-5 rounded-full object-cover border border-border/60 shrink-0"
         />
       ) : (
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-purple text-[9px] font-bold text-white shrink-0">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-purple text-2xs font-bold text-white shrink-0">
           {initial}
         </span>
       )}

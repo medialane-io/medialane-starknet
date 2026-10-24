@@ -94,7 +94,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
             </div>
 
             <Panel className="p-5">
-              <p className="text-[11px] text-muted-foreground mb-1.5">
+              <p className="text-2xs text-muted-foreground mb-1.5">
                 Price
               </p>
               {priceLoading ? (
@@ -116,7 +116,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
                 <p className="text-sm text-muted-foreground">Price unavailable right now.</p>
               )}
               {price && (
-                <p className="mt-2 text-[11px] text-muted-foreground/70">
+                <p className="mt-2 text-2xs text-muted-foreground/70">
                   Live market price · updates every 30s
                 </p>
               )}
@@ -222,7 +222,7 @@ function Panel({ className, children }: { className?: string; children: React.Re
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
     <Panel className="rounded-xl px-3 py-2.5">
-      <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
+      <p className="text-2xs text-muted-foreground mb-1">{label}</p>
       <p className="text-base font-bold tabular-nums truncate">{value}</p>
     </Panel>
   );
