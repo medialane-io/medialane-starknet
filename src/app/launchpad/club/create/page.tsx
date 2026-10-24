@@ -185,14 +185,13 @@ export default function CreateClubPage() {
         txStatus={dialogTxStatus}
         collectionName={form.getValues("name")}
         imagePreview={imagePreview}
-        txHash={null}
         error={collectionError}
         onCreateAnother={handleReset}
         createAnotherLabel="Create another"
+        caption="Your club is live"
         firstStepLabel="Deploy club"
         mintHref={deployedAddress ? collectionHref("STARKNET", deployedAddress) : undefined}
         mintLabel="Create memberships"
-        deployedAddress={deployedAddress}
       />
 
       <ClaimRouteShell

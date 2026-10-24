@@ -1,21 +1,15 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import Image from "next/image";
 import { fireConfetti } from "@/lib/confetti";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
-import { EXPLORER_URL } from "@/lib/constants";
+import { CreationSuccess } from "@medialane/ui";
 import {
   Loader2,
   CheckCircle2,
   XCircle,
-  ExternalLink,
-  Sparkles,
-  Layers,
-  Settings,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import type { TxStatus } from "@/hooks/use-tx";
 
 export type CollectionStep = "idle" | "processing" | "success" | "error";
@@ -26,7 +20,6 @@ interface CollectionProgressDialogProps {
   txStatus: TxStatus;
   collectionName: string;
   imagePreview: string | null;
-  txHash: string | null;
   error: string | null;
   onCreateAnother: () => void;
 
@@ -38,7 +31,9 @@ interface CollectionProgressDialogProps {
 
   mintLabel?: string;
 
-  deployedAddress?: string | null;
+  viewHref?: string | null;
+
+  caption?: string;
   successFooter?: ReactNode;
 }
 
@@ -67,7 +62,6 @@ export function CollectionProgressDialog({
   txStatus,
   collectionName,
   imagePreview,
-  txHash,
   error,
   onCreateAnother,
   createAnotherLabel = "Create another",
@@ -75,9 +69,9 @@ export function CollectionProgressDialog({
   mintHref,
   mintLabel,
   successFooter,
-  deployedAddress,
+  viewHref,
+  caption = "Your collection is live",
 }: CollectionProgressDialogProps) {
-  const router = useRouter();
   const confettiFired = useRef(false);
 
   useEffect(() => {
@@ -169,83 +163,17 @@ export function CollectionProgressDialog({
         )}
 
         {isSuccess && (
-          <div className="flex flex-col items-center gap-5 py-2">
-            <div className="relative">
-              <div className="h-16 w-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <CheckCircle2 className="h-9 w-9 text-emerald-500" />
-              </div>
-              <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-brand-orange" />
-            </div>
-
-            <div className="text-center space-y-1">
-              <p className="font-bold text-xl">Collection deployed!</p>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{collectionName || "Your collection"}</span> is
-                live on Starknet. Start minting assets into it.
-              </p>
-            </div>
-
-            {imagePreview && (
-              <div className="h-24 w-24 rounded-xl overflow-hidden border border-border shadow-md">
-                <Image src={imagePreview} alt={collectionName} width={96} height={96} className="h-full w-full object-cover" unoptimized />
-              </div>
-            )}
-
-            {!imagePreview && (
-              <div className="h-24 w-24 rounded-xl border border-border bg-primary/5 flex items-center justify-center">
-                <Layers className="h-10 w-10 text-primary/40" />
-              </div>
-            )}
-
-            <div className="flex flex-col items-center gap-1.5">
-              {deployedAddress && (
-                <a
-                  href={`${EXPLORER_URL}/contract/${deployedAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <span className="tabular-nums">
-                    {deployedAddress.slice(0, 10)}…{deployedAddress.slice(-8)}
-                  </span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-              {txHash && (
-                <a
-                  href={`${EXPLORER_URL}/tx/${txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <span>View transaction</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2 w-full pt-1">
-              {deployedAddress && (
-                <Button
-                  variant="outline"
-                  className="w-full border-primary/30 text-primary hover:bg-primary/5 hover:text-primary gap-2"
-                  onClick={() => router.push(`/launchpad/collections/${deployedAddress}/settings`)}
-                >
-                  <Settings className="h-4 w-4" />
-                  Set up your collection
-                </Button>
-              )}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button variant="outline" className="flex-1" onClick={onCreateAnother}>
-                  {createAnotherLabel}
-                </Button>
-                <Button className="flex-1" onClick={() => router.push(mintHref ?? "/launchpad")}>
-                  {mintHref ? (mintLabel ?? "Mint tokens") : "Go to Launchpad"}
-                </Button>
-              </div>
-            </div>
+          <CreationSuccess
+            name={collectionName || "Your collection"}
+            image={imagePreview}
+            caption={caption}
+            primary={mintHref ? { href: mintHref, label: mintLabel ?? "Mint tokens" } : undefined}
+            secondary={viewHref ? { href: viewHref, label: "View collection" } : undefined}
+            onAgain={onCreateAnother}
+            againLabel={createAnotherLabel}
+          >
             {successFooter}
-          </div>
+          </CreationSuccess>
         )}
 
         {isError && (

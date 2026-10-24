@@ -186,14 +186,12 @@ export default function CreateTicketCollectionPage() {
         txStatus={dialogTxStatus}
         collectionName={form.getValues("name")}
         imagePreview={imagePreview}
-        txHash={null}
         error={collectionError}
         onCreateAnother={handleReset}
         createAnotherLabel="Create another"
         firstStepLabel="Deploy collection"
         mintHref={deployedAddress ? collectionHref("STARKNET", deployedAddress) : undefined}
         mintLabel="Create tickets"
-        deployedAddress={deployedAddress}
       />
 
       <ClaimRouteShell

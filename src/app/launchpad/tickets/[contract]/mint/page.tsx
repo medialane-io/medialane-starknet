@@ -30,7 +30,6 @@ import { predictNextTicketId } from "@/hooks/use-tickets";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { RewardEarned } from "@/lib/reward-earned";
-import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn, isCollectionOwner } from "@/lib/utils";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
@@ -498,16 +497,12 @@ export default function MintTicketPage({ params }: { params: Promise<{ contract:
         txStatus={dialogTxStatus}
         assetName={form.getValues("name")}
         imagePreview={imagePreview}
-        txHash={null}
         error={mintError}
         onMintAnother={handleMintAnother}
         uploadStepLabel="Upload ticket metadata"
         processingTitle="Minting your tickets on Starknet…"
-        successTitle="Tickets minted!"
-        successSubtitle={`${form.getValues("maxSupply")} ticket(s) are in your wallet — list them on the marketplace whenever you're ready.`}
-        mintedTokenId={mintedTicketId ?? ""}
+        caption="Your tickets are ready"
         assetHref={mintedTicketId ? assetHref("STARKNET", contract, mintedTicketId) : undefined}
-        explorerAssetHref={mintedTicketId ? `${EXPLORER_URL}/nft/${contract}/${mintedTicketId}` : undefined}
         mintAnotherLabel="Mint another ticket"
       />
     </>

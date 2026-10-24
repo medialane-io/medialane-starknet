@@ -28,7 +28,7 @@ import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata, uploadError, acceptFor, FIELD_LIMITS } from "@medialane/sdk";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent, deployedCollectionFromReceipt } from "@medialane/sdk/starknet";
-import { profileHref } from "@/lib/routes";
+import { collectionHref, profileHref } from "@/lib/routes";
 
 
 const schema = z.object({
@@ -197,13 +197,12 @@ export default function CreateNFTEditionsCollectionPage() {
         txStatus={dialogTxStatus}
         collectionName={form.getValues("name")}
         imagePreview={imagePreview}
-        txHash={null}
         error={collectionError}
         onCreateAnother={handleReset}
         createAnotherLabel="Deploy another"
         firstStepLabel="Prepare metadata"
         mintHref={deployedAddress ? `/launchpad/nfteditions/${deployedAddress}/mint` : undefined}
-        deployedAddress={deployedAddress}
+        viewHref={deployedAddress ? collectionHref("STARKNET", deployedAddress) : undefined}
       />
 
       <ConnectGate
