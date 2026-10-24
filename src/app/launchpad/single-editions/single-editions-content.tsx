@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { assetHref, collectionHref } from "@/lib/routes";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,7 +25,7 @@ import type { MintStep } from "@/components/marketplace/mint-progress-dialog";
 import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { CreateAssetAside } from "@/components/claim/create-asset-aside";
-import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
+import { invalidatePortfolioCache } from "@medialane/ui";
 import { cn, resolveImage } from "@/lib/utils";
 import { absoluteUrl } from "@/lib/seo";
 import { IP_TYPES, LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@medialane/ui/data/ip";

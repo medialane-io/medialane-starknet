@@ -13,7 +13,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { executeIntent } from "@medialane/sdk/starknet";
 import { useSponsorshipOffer, useSponsorshipBids } from "@/hooks/use-sponsorship";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { resolveImage, shortenAddress } from "@/lib/utils";
 import { getTokenByAddress, formatAmount, normalizeAddress } from "@medialane/sdk";
 

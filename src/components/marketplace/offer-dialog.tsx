@@ -1,6 +1,6 @@
 "use client";
 
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";

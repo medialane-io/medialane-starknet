@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { assetHref, collectionHref } from "@/lib/routes";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { uploadFailureToast } from "@/lib/upload-error";
@@ -31,7 +31,7 @@ import { MintEditionAside } from "@/components/claim/mint-edition-aside";
 import { normalizeAddress, uploadError, acceptFor, FIELD_LIMITS } from "@medialane/sdk";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
-import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
+import { invalidatePortfolioCache } from "@medialane/ui";
 import { IP_TYPES, LICENSE_TYPES, GEOGRAPHIC_SCOPES, AI_POLICIES, DERIVATIVES_OPTIONS } from "@medialane/ui/data/ip";
 import type { IPType, MetadataField } from "@medialane/ui";
 import { IPTypeFields } from "@medialane/ui/ip-type-fields";

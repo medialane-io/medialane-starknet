@@ -7,8 +7,8 @@ import { useConnectDialog } from "@/components/connect-dialog";
 import { useAccountSession } from "@/components/wallet-session-sync";
 
 import { useVenueSigner } from "@/lib/use-venue-signer";
-import { RewardEarned } from "@/lib/reward-earned";
-import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
+import { RewardEarned } from "@medialane/ui";
+import { invalidatePortfolioCache } from "@medialane/ui";
 
 export interface FastMintProps {
   presentation?: "inline" | "dialog";

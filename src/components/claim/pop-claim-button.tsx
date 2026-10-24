@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { popClaimState, type PopClaimInfo } from "@medialane/sdk/starknet";
 import { claimProofFor, describeError, usePopClaimStatus } from "@medialane/ui";
 
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { Loader2, Award } from "lucide-react";
 import { Button } from "@medialane/ui/button";
 import { useWallet } from "@/hooks/use-wallet";

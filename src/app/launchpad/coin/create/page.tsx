@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { coinHref } from "@/lib/routes";
 import { useRouter } from "next/navigation";
 import { Coins, ArrowRight, ImagePlus, X, Loader2 } from "lucide-react";
@@ -18,7 +18,7 @@ import { PageContainer, ServiceFormShell, GradientButton, CurrencyIcon, Currency
 import { useWallet } from "@/hooks/use-wallet";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useLaunchCoin, type LaunchCoinInput } from "@/hooks/use-launch-coin";
-import { useLaunchpadImageUpload } from "@/hooks/use-launchpad-image-upload";
+import { useLaunchpadImageUpload } from "@medialane/ui";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { getMedialaneClient } from "@/lib/medialane-client";

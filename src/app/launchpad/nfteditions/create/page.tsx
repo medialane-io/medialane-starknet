@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { RewardEarned } from "@/lib/reward-earned";
+import { RewardEarned } from "@medialane/ui";
 import { uploadFailureToast } from "@/lib/upload-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,7 @@ import { ConnectGate } from "@/components/connect-gate";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard, useMedialaneClient, ExternalLinkField } from "@medialane/ui";
 import { CreateEditionsAside } from "@/components/claim/create-editions-aside";
-import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
+import { invalidatePortfolioCache } from "@medialane/ui";
 import { suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { buildCollectionMetadata, uploadError, acceptFor, FIELD_LIMITS } from "@medialane/sdk";
