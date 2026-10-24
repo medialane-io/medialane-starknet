@@ -26,7 +26,7 @@ import { type PopEventType } from "@/lib/launchpad-contracts";
 import { getDefaultClaimWindow, suggestLaunchpadSymbol } from "@medialane/ui/utils/launchpad-defaults";
 import { cn } from "@/lib/utils";
 import { uploadFileToIpfs, uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
-import { buildCollectionMetadata, uploadError, acceptFor } from "@medialane/sdk";
+import { buildCollectionMetadata, uploadError, acceptFor, FIELD_LIMITS } from "@medialane/sdk";
 import { useIntentExecute } from "@/hooks/use-intent-execute";
 import { profileHref } from "@/lib/routes";
 
@@ -46,9 +46,9 @@ const EVENT_TYPES: {
 ];
 
 const schema = z.object({
-  name:         z.string().min(1, "Event name required").max(100),
-  symbol:       z.string().min(1, "Symbol required").max(10).regex(/^[A-Z0-9]+$/, "Uppercase letters and numbers only"),
-  description:  z.string().max(500).optional(),
+  name:         z.string().min(1, "Event name required").max(FIELD_LIMITS.name),
+  symbol:       z.string().min(1, "Symbol required").max(FIELD_LIMITS.symbol).regex(/^[A-Z0-9]+$/, "Uppercase letters and numbers only"),
+  description:  z.string().max(FIELD_LIMITS.description).optional(),
   external_link: z
     .string()
     .max(500)

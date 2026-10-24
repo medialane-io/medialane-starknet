@@ -28,7 +28,7 @@ import { FadeIn } from "@medialane/ui/motion-primitives";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { MedialaneCollectionCard, useMedialaneClient } from "@medialane/ui";
 import { MintEditionAside } from "@/components/claim/mint-edition-aside";
-import { normalizeAddress, uploadError, acceptFor } from "@medialane/sdk";
+import { normalizeAddress, uploadError, acceptFor, FIELD_LIMITS } from "@medialane/sdk";
 import { EXPLORER_URL } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -50,8 +50,8 @@ const schema = z.object({
     .regex(/^\d+$/, "Must be a positive integer")
     .refine((v) => parseInt(v, 10) >= 1, "Minimum 1"),
   recipient: z.string().min(1, "Recipient address required"),
-  name: z.string().min(1, "Token name required").max(100),
-  description: z.string().max(500).optional(),
+  name: z.string().min(1, "Token name required").max(FIELD_LIMITS.name),
+  description: z.string().max(FIELD_LIMITS.description).optional(),
   external_url: z
     .string()
     .max(500)
