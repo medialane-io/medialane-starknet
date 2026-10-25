@@ -2,7 +2,8 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { normalizeAddress, acceptFor } from "@medialane/sdk";
+import { normalizeAddress } from "@medialane/sdk";
+import { acceptFor } from "@medialane/ui/utils/upload-limits";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCoin, updateCoinProfile } from "@/hooks/use-coins";
