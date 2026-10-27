@@ -11,6 +11,7 @@ import { Label } from "@medialane/ui/label";
 import { Textarea } from "@medialane/ui/textarea";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Loader2 } from "lucide-react";
+import { describeError } from "@medialane/ui";
 
 type Step = "input" | "verifying" | "success" | "manual" | "pending";
 
@@ -60,8 +61,8 @@ export function ClaimCollectionPanel({
         setVerifyError(("reason" in result && result.reason) || "Could not verify onchain ownership");
         setStep("manual");
       }
-    } catch {
-      setVerifyError("Verification failed");
+    } catch (err) {
+      setVerifyError(describeError(err, "Verification failed").message);
       setStep("manual");
     }
   }

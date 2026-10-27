@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useOnOpen } from "@/hooks/use-on-open";
 import Image from "next/image";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
@@ -67,7 +67,7 @@ export function CancelOrderDialog({
   onSuccess,
   variant,
 }: CancelOrderDialogProps) {
-  const { cancelOrder, isProcessing, txHash, error, resetState } = useMarketplace();
+  const { cancelOrder, isProcessing, isConfirmed, txHash, error, resetState } = useMarketplace();
   const image = resolveImage(order?.token?.image);
 
   const resolvedVariant: "listing" | "offer" =
@@ -78,17 +78,14 @@ export function CancelOrderDialog({
       ? "ERC1155"
       : "ERC721";
 
-  useEffect(() => {
-    if (open) resetState();
-  }, [open]);
+  useOnOpen(open, resetState);
 
   const handleConfirm = async () => {
     if (!order) return;
-    const hash = await cancelOrder(order.orderHash, tokenStandard, resolvedVariant, { silent: true });
+    const hash = await cancelOrder(order.orderHash, tokenStandard);
     if (hash) onSuccess?.();
   };
 
-  const isSuccess = !isProcessing && !!txHash && !error;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
@@ -98,7 +95,7 @@ export function CancelOrderDialog({
           Cancel this onchain marketplace {resolvedVariant} and remove it from active trading.
         </DialogDescription>
 
-        {isSuccess ? (
+        {isConfirmed ? (
           <div className="flex flex-col items-center gap-5 p-6 py-8">
             <div className="h-16 w-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
               <CheckCircle2 className="h-9 w-9 text-emerald-500" />

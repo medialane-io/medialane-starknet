@@ -1,111 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useWallet } from "@/hooks/use-wallet";
-import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
+import { useMyUsernameClaim } from "@/hooks/use-username-claims";
+import { useUsernameClaimForm } from "@/hooks/use-username-claim-form";
+import { InlineNote } from "@/components/shared/inline-note";
+import { UsernameInput } from "@/components/shared/username-input";
+import { VerifyWithWalletButton } from "@/components/shared/verify-with-wallet-button";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { Button } from "@medialane/ui/button";
-import { Input } from "@medialane/ui/input";
 import { Badge } from "@medialane/ui/badge";
-import { AtSign, CheckCircle, Clock, XCircle, ArrowRight, Loader2 } from "lucide-react";
+import { AtSign, CheckCircle, Clock, XCircle, ArrowRight } from "lucide-react";
 import { profileHref } from "@/lib/routes";
-
-type CheckState = "idle" | "checking" | "available" | "taken";
-
-type InlineMessage = { tone: "error" | "success"; text: string } | null;
-
-function UsernameInput({ value, onChange, onCheck, onSubmit, checkState, checkReason, loading, disabled }: {
-  value: string; onChange: (v: string) => void;
-  onCheck: () => void; onSubmit: () => void;
-  checkState: CheckState; checkReason?: string;
-  loading: boolean; disabled: boolean;
-}) {
-  const isAvailable = checkState === "available";
-  const isChecking = checkState === "checking";
-
-  return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <AtSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            className="pl-7 tabular-nums"
-            placeholder="yourname"
-            value={value}
-            onChange={(e) => onChange(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
-            maxLength={20}
-            onKeyDown={(e) => e.key === "Enter" && !loading && !isChecking && (isAvailable ? onSubmit() : onCheck())}
-          />
-        </div>
-        {isAvailable ? (
-          <Button onClick={onSubmit} disabled={loading || disabled} className="bg-green-600 hover:bg-green-700">
-            {loading ? "Submitting…" : `Claim @${value}`}
-          </Button>
-        ) : (
-          <Button onClick={onCheck} disabled={isChecking || disabled || value.length < 3} variant="outline">
-            {isChecking ? "Checking…" : "Check"}
-          </Button>
-        )}
-      </div>
-      {checkState === "taken" && (
-        <p className="text-xs text-destructive">{checkReason ?? "That username is not available."}</p>
-      )}
-      {checkState === "available" && (
-        <p className="text-xs text-green-500">@{value} is available!</p>
-      )}
-    </div>
-  );
-}
 
 export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
   const shell = bare ? "space-y-3 max-w-lg" : "bento-cell p-5 space-y-3";
   const { address: walletAddress } = useWallet();
-  const { ensureSignedIn, session: accountSession, isSigningIn } = useAccountSession();
-  const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
+  const { session: accountSession } = useAccountSession();
+  const { username: approvedUsername, claim } = useMyUsernameClaim();
 
   const usernameVerified = !!accountSession;
-  const [claimInput, setClaimInput] = useState("");
-  const [claiming, setClaiming] = useState(false);
-  const [checkState, setCheckState] = useState<CheckState>("idle");
-  const [checkReason, setCheckReason] = useState<string | undefined>();
-  const [claimMessage, setClaimMessage] = useState<InlineMessage>(null);
-
-  async function handleCheck() {
-    if (!claimInput.trim()) return;
-    setCheckState("checking");
-    setCheckReason(undefined);
-    try {
-      const result = await checkUsernameAvailability(claimInput);
-      setCheckState(result.available ? "available" : "taken");
-      if (!result.available) setCheckReason(result.reason);
-    } catch {
-      setCheckState("idle");
-      setClaimMessage({ tone: "error", text: "We could not check that username just now. Please try again." });
-    }
-  }
-
-  async function handleClaim() {
-    if (!claimInput.trim()) return;
-    setClaiming(true);
-    try {
-      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), undefined);
-      if (result.error) {
-        setClaimMessage({ tone: "error", text: result.error });
-      } else {
-        setClaimMessage({ tone: "success", text: "Username claim submitted. The Medialane DAO team will review it shortly." });
-        setClaimInput("");
-        setCheckState("idle");
-        setCheckReason(undefined);
-        await mutateClaim();
-      }
-    } catch (err) {
-      console.error("username claim failed", err);
-      setClaimMessage({ tone: "error", text: "That claim could not be submitted. Please try again." });
-    } finally {
-      setClaiming(false);
-    }
-  }
+  const usernameForm = useUsernameClaimForm();
 
   if (approvedUsername) {
     return (
@@ -146,14 +61,7 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
         <p className="text-sm text-muted-foreground">
           Sign a message with your wallet to check whether you already have a username.
         </p>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={isSigningIn || !walletAddress}
-          onClick={() => { void ensureSignedIn().catch(() => {}); }}
-        >
-          {isSigningIn ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Signing…</> : "Verify with wallet"}
-        </Button>
+        <VerifyWithWalletButton disabled={!walletAddress} />
       </div>
     );
   }
@@ -208,24 +116,8 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
         </p>
       )}
 
-      <UsernameInput
-        value={claimInput}
-        onChange={(v) => { setClaimInput(v); setCheckState("idle"); setCheckReason(undefined); }}
-        onCheck={handleCheck}
-        onSubmit={handleClaim}
-        checkState={checkState}
-        checkReason={checkReason}
-        loading={claiming}
-        disabled={!walletAddress}
-      />
-      {claimMessage && (
-        <p
-          role={claimMessage.tone === "error" ? "alert" : "status"}
-          className={claimMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
-        >
-          {claimMessage.text}
-        </p>
-      )}
+      <UsernameInput form={usernameForm} disabled={!walletAddress} />
+      <InlineNote message={usernameForm.message} />
     </div>
   );
 }

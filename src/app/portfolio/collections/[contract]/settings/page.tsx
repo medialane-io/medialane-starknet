@@ -1,7 +1,10 @@
 "use client";
 
+import { CollectionSlugClaimSection } from "@/components/portfolio/collection-slug-claim";
+import { InlineNote, type InlineMessage } from "@/components/shared/inline-note";
 import { use, useState, useEffect } from "react";
 import { useWallet } from "@/hooks/use-wallet";
+import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCollection, useCollectionProfile } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@medialane/ui/button";
@@ -10,13 +13,7 @@ import { Label } from "@medialane/ui/label";
 import { Textarea } from "@medialane/ui/textarea";
 import { Switch } from "@medialane/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
-import { Badge } from "@medialane/ui/badge";
-import {
-  Lock, Gem, CheckCircle2,
-  Video, Music, Radio, FileText, Link2,
-} from "lucide-react";
-import { normalizeAddress } from "@medialane/sdk";
-import type { ApiCollectionProfile } from "@medialane/sdk";
+import { Lock, Gem, Video, Music, Radio, FileText, Link2 } from "lucide-react";
 import { isCollectionOwner } from "@/lib/utils";
 
 const CONTENT_TYPES = [
@@ -27,151 +24,16 @@ const CONTENT_TYPES = [
   { value: "LINK",     label: "Link",        icon: Link2,    hint: "Any URL" },
 ];
 
-function CollectionSlugClaimSection({
-  contract,
-  profile,
-}: {
-  contract: string;
-  profile: ApiCollectionProfile | null;
-}) {
-  const [slugInput, setSlugInput] = useState("");
-  const [checkState, setCheckState] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
-  const [checkReason, setCheckReason] = useState<string | null>(null);
-  const [submitState, setSubmitState] = useState<"idle" | "submitting" | "done" | "error">("idle");
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const handleCheck = async () => {
-    const slug = slugInput.toLowerCase().trim();
-    if (!slug) return;
-    setCheckState("checking");
-    setCheckReason(null);
-    try {
-      const result = await getMedialaneClient().api.collections.slugAvailability(slug);
-      setCheckState(result.available ? "available" : "taken");
-      if (!result.available) setCheckReason(result.reason ?? "That slug is not available.");
-    } catch {
-      setCheckState("invalid");
-      setCheckReason("Unable to check availability. Try again.");
-    }
-  };
-
-  const handleSubmit = async () => {
-    const slug = slugInput.toLowerCase().trim();
-    if (!slug || checkState !== "available") return;
-    setSubmitState("submitting");
-    setSubmitError(null);
-    try {
-      await getMedialaneClient().api.withBearer("").collections.submitSlugClaim(contract, slug);
-      setSubmitState("done");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to submit claim.";
-      setSubmitError(msg);
-      setSubmitState("error");
-    }
-  };
-
-  if (profile?.slug) {
-    return (
-      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.02] p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          <span className="text-sm font-medium">Active URL</span>
-          <Badge variant="outline" className="text-2xs h-4 px-1.5 text-emerald-600 border-emerald-500/30">
-            Active
-          </Badge>
-        </div>
-        <p className="text-xs text-muted-foreground tabular-nums">
-          medialane.io/collection/{profile.slug}
-        </p>
-      </div>
-    );
-  }
-
-  if (submitState === "done") {
-    return (
-      <div className="rounded-xl border border-primary/20 bg-primary/[0.02] p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">Claim submitted</span>
-          <Badge variant="outline" className="text-2xs h-4 px-1.5 text-amber-600 border-amber-500/30">
-            Pending review
-          </Badge>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Your claim for{" "}
-          <span className="tabular-nums text-foreground">medialane.io/collection/{slugInput}</span>{" "}
-          is under review.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-border p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="flex-1 flex items-center rounded-lg border border-border bg-muted/40 px-3 py-2">
-          <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
-            medialane.io/collection/
-          </span>
-          <input
-            type="text"
-            className="flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/50 min-w-0"
-            placeholder="your-name"
-            value={slugInput}
-            onChange={(e) => {
-              setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""));
-              setCheckState("idle");
-            }}
-            onKeyDown={(e) => { if (e.key === "Enter") handleCheck(); }}
-            maxLength={20}
-          />
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCheck}
-          disabled={!slugInput.trim() || checkState === "checking"}
-          className="shrink-0"
-        >
-          {checkState === "checking" ? "Checking…" : "Check"}
-        </Button>
-      </div>
-
-      {checkState === "available" && (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-emerald-600 font-medium truncate">
-            ✓ Available — <span className="tabular-nums">medialane.io/collection/{slugInput}</span>
-          </p>
-          <Button size="sm" onClick={handleSubmit} disabled={submitState === "submitting"} className="shrink-0">
-            {submitState === "submitting" ? "Claiming…" : "Claim this URL"}
-          </Button>
-        </div>
-      )}
-
-      {(checkState === "taken" || checkState === "invalid") && (
-        <p className="text-xs text-destructive">{checkReason ?? "That slug is not available."}</p>
-      )}
-
-      {submitState === "error" && (
-        <p className="text-xs text-destructive">{submitError}</p>
-      )}
-
-      <p className="text-xs text-muted-foreground">
-        3–20 characters, lowercase letters, numbers, underscores or hyphens. Claims are reviewed before going live.
-      </p>
-    </div>
-  );
-}
-
 interface Props { params: Promise<{ contract: string }> }
 
 export default function CollectionSettingsPage({ params }: Props) {
   const { contract } = use(params);
   const { address: walletAddress } = useWallet();
+  const { ensureSignedIn } = useAccountSession();
   const { collection, isLoading: collectionLoading } = useCollection(contract);
   const { profile, isLoading: profileLoading, mutate } = useCollectionProfile(contract);
   const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+  const [saveMessage, setSaveMessage] = useState<InlineMessage>(null);
   const [form, setForm] = useState({
     displayName: "", description: "", image: "", bannerImage: "",
     websiteUrl: "", twitterUrl: "", discordUrl: "", telegramUrl: "",
@@ -228,7 +90,8 @@ export default function CollectionSettingsPage({ params }: Props) {
           ? ((form.gatedContentType || null) as "VIDEO" | "STREAM" | "AUDIO" | "DOCUMENT" | "LINK" | null)
           : null,
       };
-      await getMedialaneClient().api.withBearer("").collections.updateProfile(contract, payload);
+      await ensureSignedIn();
+      await getMedialaneClient().api.collections.updateProfile(contract, payload);
       await mutate();
       setSaveMessage({ tone: "success", text: "Collection profile updated." });
     } catch (err) {
@@ -390,14 +253,7 @@ export default function CollectionSettingsPage({ params }: Props) {
         <CollectionSlugClaimSection contract={contract} profile={profile ?? null} />
       </div>
 
-      {saveMessage && (
-        <p
-          role={saveMessage.tone === "error" ? "alert" : "status"}
-          className={saveMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
-        >
-          {saveMessage.text}
-        </p>
-      )}
+      <InlineNote message={saveMessage} />
       <Button onClick={handleSave} disabled={saving || collectionLoading || profileLoading}>
         {saving ? "Saving…" : "Save Changes"}
       </Button>

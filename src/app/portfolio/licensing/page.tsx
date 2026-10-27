@@ -6,7 +6,7 @@ import { useRemixOffers } from "@/hooks/use-remix-offers";
 import { ApproveMintSheet } from "@/components/portfolio/approve-mint-sheet";
 import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";
-import { GitBranch, Check, X, Clock } from "lucide-react";
+import { GitBranch, Check, Clock } from "lucide-react";
 import { AddressDisplay } from "@medialane/ui/address-display";
 import { timeAgo } from "@/lib/utils";
 import { assetHref } from "@/lib/routes";

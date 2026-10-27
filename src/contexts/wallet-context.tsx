@@ -3,24 +3,9 @@
 import React, { createContext, useContext, useMemo, useCallback } from "react";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import type { Connector } from "@starknet-react/core";
-import type { AccountInterface, Call } from "starknet";
-import { waitForReceipt } from "@/lib/wait-for-receipt";
-import { assertCorrectNetwork } from "@medialane/ui";
-import { useNetwork } from "@/components/starknet-provider";
 import type { ActiveWallet, WalletType } from "@/lib/wallet-types";
 import { signOut } from "@/lib/wallet-session";
 import { refreshSession } from "@/hooks/use-session";
-
-function makeInjectedExecute(account: AccountInterface) {
-  return async (calls: Call[]): Promise<string> => {
-
-    const response = await account.execute(calls as any);
-    const hash: string = response.transaction_hash;
-    const result = await waitForReceipt(hash);
-    if (!result.ok) throw new Error(result.reason);
-    return hash;
-  };
-}
 
 interface WalletContextValue {
   active: ActiveWallet | null;
@@ -34,16 +19,13 @@ const WalletContext = createContext<WalletContextValue | undefined>(undefined);
 export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const {
-    account: injectedAccount,
     address: injectedAddress,
     isConnected: injectedConnectedRaw,
     connector: injectedConnector,
     status: injectedStatus,
-    chainId,
   } = useAccount();
   const { connectAsync } = useConnect();
   const { disconnect: injectedDisconnect } = useDisconnect();
-  const { networkConfig } = useNetwork();
   const injectedConnected = injectedConnectedRaw ?? false;
 
   const injectedType: WalletType = useMemo(() => {
@@ -55,20 +37,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const active: ActiveWallet | null = useMemo(() => {
     if (injectedConnected && injectedAddress) {
-      return {
-        type: injectedType,
-        address: injectedAddress,
-        execute: async (calls) => {
-          if (!injectedAccount) {
-            throw new Error("Wallet not ready yet — please try again in a moment");
-          }
-          assertCorrectNetwork(chainId, networkConfig.chainId);
-          return makeInjectedExecute(injectedAccount)(calls);
-        },
-      };
+      return { type: injectedType, address: injectedAddress };
     }
     return null;
-  }, [injectedConnected, injectedAddress, injectedAccount, injectedType, chainId, networkConfig.chainId]);
+  }, [injectedConnected, injectedAddress, injectedType]);
 
   const isConnecting = injectedStatus === "connecting" || injectedStatus === "reconnecting";
 

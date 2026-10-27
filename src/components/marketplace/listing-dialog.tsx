@@ -2,12 +2,13 @@
 
 import { RewardEarned } from "@medialane/ui";
 
-import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, Layers, ShieldCheck, Tag, Zap } from "lucide-react";
-import { fireConfetti } from "@/lib/confetti";
+import { useConfetti } from "@/hooks/use-confetti";
+import { useOnOpen } from "@/hooks/use-on-open";
+import { LISTABLE_CURRENCIES, orderFormSchema } from "@/lib/order-form";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
 import { Button } from "@medialane/ui/button";
@@ -16,7 +17,6 @@ import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
-import { getListableTokens } from "@medialane/sdk";
 import { resolveImage } from "@/lib/utils";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
@@ -28,14 +28,7 @@ import {
   MarketplaceDialogHero,
 } from "@medialane/ui";
 
-const CURRENCIES = getListableTokens().map((t) => t.symbol);
-
-const schema = z.object({
-  price: z.string().min(1, "Price required").refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, "Must be positive"),
-  currency: z.string().refine((v) => getListableTokens().some((t) => t.symbol === v), "Invalid currency"),
-  durationSeconds: z.number().min(86400),
-  amount: z.string().optional(),
-});
+const schema = orderFormSchema.extend({ amount: z.string().optional() });
 type FormValues = z.infer<typeof schema>;
 
 interface ListingDialogProps {
@@ -52,12 +45,9 @@ interface ListingDialogProps {
 export function ListingDialog({ open, onOpenChange, assetContract, tokenId, tokenName, tokenStandard, tokenImage: tokenImageRaw, onSuccess }: ListingDialogProps) {
   const tokenImage = resolveImage(tokenImageRaw);
   const { isConnected } = useWallet();
-  const { createListing, isProcessing, txHash, error, resetState } = useMarketplace();
-  const confettiFired = useRef(false);
-  const [txStatus, setTxStatus] = useState<"idle" | "confirmed">("idle");
+  const { createListing, isProcessing, isConfirmed, isTerminalError, txHash, error, resetState } = useMarketplace();
   const is1155 = tokenStandard === "ERC1155";
   const name = tokenName || `Token #${tokenId}`;
-  const isTerminalError = !isProcessing && !!error && !!txHash;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -73,27 +63,19 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
         return;
       }
     }
-    const hash = await createListing(
+    await createListing(
       assetContract,
       tokenId,
       values.price,
       values.currency,
       values.durationSeconds,
       tokenStandard,
-      is1155 ? (values.amount?.trim() || "1") : undefined,
-      { silent: true }
+      is1155 ? (values.amount?.trim() || "1") : undefined
     );
-    if (hash) setTxStatus("confirmed");
   };
 
-  useEffect(() => {
-    if (txStatus === "confirmed" && !confettiFired.current) { confettiFired.current = true; fireConfetti(); }
-    if (txStatus !== "confirmed") confettiFired.current = false;
-  }, [txStatus]);
-
-  useEffect(() => {
-    if (open) { resetState(); form.reset(); setTxStatus("idle"); }
-  }, [open]);
+  useConfetti(isConfirmed);
+  useOnOpen(open, () => { resetState(); form.reset(); });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
@@ -102,7 +84,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
         <DialogDescription className="sr-only">
           Set pricing, currency, duration, and quantity to create an onchain marketplace listing.
         </DialogDescription>
-        {txStatus === "confirmed" ? (
+        {isConfirmed ? (
           <MarketplaceSuccessState
             title="Listing live!"
             description={
@@ -194,7 +176,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
                       <FormControl>
-                        <CurrencyPicker currencies={CURRENCIES} value={field.value} onChange={field.onChange} disabled={isProcessing} />
+                        <CurrencyPicker currencies={LISTABLE_CURRENCIES} value={field.value} onChange={field.onChange} disabled={isProcessing} />
                       </FormControl>
                     </FormItem>
                   )} />

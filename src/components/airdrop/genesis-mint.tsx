@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import { Button } from "@medialane/ui/button";
 import { runIntentCalls, useTransaction } from "@medialane/ui";
@@ -22,10 +23,11 @@ export function AirdropEventCard() {
         </div>
       ) : (
 
-        <img
+        <Image
           src="/genesis.jpg"
           alt="Medialane Creator's Airdrop"
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
           onError={() => setErrored(true)}
         />
       )}

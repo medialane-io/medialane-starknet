@@ -12,7 +12,7 @@ import { CancelOrderDialog } from "@/components/marketplace/cancel-order-dialog"
 
 type TokenStandard = "ERC721" | "ERC1155" | "UNKNOWN";
 
-export function useAssetMarketplaceDialogState() {
+function useAssetMarketplaceDialogState() {
   const [purchaseOrder, setPurchaseOrder] = useState<ApiOrder | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
@@ -42,7 +42,7 @@ export function useAssetMarketplaceDialogState() {
   };
 }
 
-export type AssetMarketplaceDialogState = ReturnType<typeof useAssetMarketplaceDialogState>;
+type AssetMarketplaceDialogState = ReturnType<typeof useAssetMarketplaceDialogState>;
 
 interface AssetMarketplaceDialogsProps {
   contract: string;
@@ -56,7 +56,7 @@ interface AssetMarketplaceDialogsProps {
   dialogs: AssetMarketplaceDialogState;
 }
 
-export function AssetMarketplaceDialogs({
+function AssetMarketplaceDialogs({
   contract,
   tokenId,
   tokenName,
@@ -148,7 +148,7 @@ export function useAssetMarketActions(context: AssetMarketContext): AssetMarketA
     transfer: () => dialogs.setTransferOpen(true),
     cancel: dialogs.handleCancelClick,
     acceptBid: async (order: ApiOrder) => {
-      await acceptOffer(order.orderHash, contract, tokenId, order.consideration.itemType);
+      await acceptOffer(order.orderHash, order.consideration.itemType);
       mutateListings();
     },
     dialogs: (

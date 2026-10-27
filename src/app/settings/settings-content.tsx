@@ -1,11 +1,15 @@
 "use client";
 
+import { ProfileLivePreview, type ProfileForm } from "@/components/settings/profile-live-preview";
+import { PortfolioSnapshot, RewardsSnapshot } from "@/components/settings/snapshots";
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCreatorProfile, useUserOrders, useCollectionsByOwner, useRewards, AssetPicker, ServiceFormShell, LevelBadge, type OwnedAsset } from "@medialane/ui";
-import { useMyUsernameClaim, submitUsernameClaim, checkUsernameAvailability } from "@/hooks/use-username-claims";
+import { useCreatorProfile, useUserOrders, useCollectionsByOwner, AssetPicker, ServiceFormShell, type OwnedAsset } from "@medialane/ui";
+import { useMyUsernameClaim } from "@/hooks/use-username-claims";
+import { useUsernameClaimForm } from "@/hooks/use-username-claim-form";
+import { InlineNote, type InlineMessage } from "@/components/shared/inline-note";
+import { UsernameInput } from "@/components/shared/username-input";
+import { VerifyWithWalletButton } from "@/components/shared/verify-with-wallet-button";
 import { useTokensByOwner } from "@/hooks/use-tokens";
 import { FastMint } from "@/components/launchpad/fast-mint";
 import { useAccountSession } from "@/components/wallet-session-sync";
@@ -16,259 +20,16 @@ import { Label } from "@medialane/ui/label";
 import { Textarea } from "@medialane/ui/textarea";
 import { Badge } from "@medialane/ui/badge";
 import { Skeleton } from "@medialane/ui/skeleton";
-import {
-  AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon,
-  Globe, Twitter, ArrowUpRight, Gem, Tag, LayoutGrid, Trophy,
-} from "lucide-react";
+import { AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon } from "lucide-react";
 import { cn, resolveImage } from "@/lib/utils";
-import { addressPalette } from "@/lib/creator-utils";
 import { profileHref } from "@/lib/routes";
-
-type CheckState = "idle" | "checking" | "available" | "taken";
-
-type InlineMessage = { tone: "error" | "success"; text: string } | null;
-
-function InlineNote({ message }: { message: InlineMessage }) {
-  if (!message) return null;
-  return (
-    <p
-      role={message.tone === "error" ? "alert" : "status"}
-      className={message.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
-    >
-      {message.text}
-    </p>
-  );
-}
-
-type ProfileForm = {
-  name: string;
-  bio: string;
-  avatarImage: string;
-  websiteUrl: string;
-  twitterUrl: string;
-  discordUrl: string;
-  telegramUrl: string;
-};
-
-function UsernameClaimInput({
-  value, onChange, onCheck, onSubmit, checkState, checkReason, loading, disabled,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onCheck: () => void;
-  onSubmit: () => void;
-  checkState: CheckState;
-  checkReason?: string;
-  loading: boolean;
-  disabled: boolean;
-}) {
-  const isAvailable = checkState === "available";
-  const isChecking = checkState === "checking";
-
-  return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <AtSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            className="pl-7 tabular-nums"
-            placeholder="yourname"
-            value={value}
-            onChange={(e) => onChange(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
-            maxLength={20}
-            disabled={loading || isChecking}
-            onKeyDown={(e) => e.key === "Enter" && !loading && !isChecking && (isAvailable ? onSubmit() : onCheck())}
-          />
-        </div>
-        {isAvailable ? (
-          <Button
-            onClick={onSubmit}
-            disabled={loading || disabled}
-            className="bg-green-600 hover:bg-green-700 text-white shrink-0"
-          >
-            {loading ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Submitting…</> : `Claim @${value}`}
-          </Button>
-        ) : (
-          <Button
-            onClick={onCheck}
-            disabled={isChecking || disabled || value.length < 3}
-            variant="outline"
-            className="shrink-0"
-          >
-            {isChecking ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Checking…</> : "Check"}
-          </Button>
-        )}
-      </div>
-      {checkState === "taken" && (
-        <p className="text-xs text-destructive">{checkReason ?? "That username is not available."}</p>
-      )}
-      {checkState === "available" && (
-        <p className="text-xs text-green-600 dark:text-green-500 font-medium">@{value} is available!</p>
-      )}
-    </div>
-  );
-}
-
-function ProfileLivePreview({
-  form, approvedUsername, walletAddress,
-}: {
-  form: ProfileForm;
-  approvedUsername?: string | null;
-  walletAddress?: string | null;
-}) {
-  const avatarUrl = resolveImage(form.avatarImage);
-  const { h1 } = addressPalette(walletAddress ?? "0x0");
-  const profileName = form.name || "Your name";
-  const { data: rewards } = useRewards(walletAddress);
-
-  return (
-    <div className="rounded-[24px] border border-border/60 bg-card overflow-hidden">
-
-      <div className="px-2.5 pt-2.5">
-        <div className="relative aspect-square w-full overflow-hidden rounded-[16px] bg-muted ring-1 ring-black/10 dark:ring-white/10">
-          {avatarUrl ? (
-            <Image src={avatarUrl} alt="" fill unoptimized className="object-cover" />
-          ) : (
-            <div
-              className="h-full w-full flex items-center justify-center text-3xl font-bold text-white"
-              style={{ backgroundColor: `hsl(${h1}, 55%, 42%)` }}
-            >
-              {profileName.slice(0, 1).toUpperCase()}
-            </div>
-          )}
-          {rewards && rewards.totalXp > 0 && (
-            <div className="absolute bottom-2 right-2">
-              <LevelBadge level={rewards.currentLevel} name={rewards.currentLevelName} badgeColor={rewards.badgeColor} size="sm" />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="px-5 pb-5 pt-3 space-y-3">
-        <div className="min-w-0">
-          <p className="truncate text-[18px] font-bold leading-snug text-foreground">{profileName}</p>
-          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-            <span className="pill-badge text-2xs">Creator</span>
-            {approvedUsername && (
-              <span className="text-2xs tabular-nums text-muted-foreground">@{approvedUsername}</span>
-            )}
-          </div>
-        </div>
-
-        {form.bio && (
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{form.bio}</p>
-        )}
-
-        {(form.websiteUrl || form.twitterUrl) && (
-          <div className="flex items-center gap-2">
-            {form.websiteUrl && (
-              <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <Globe className="h-3.5 w-3.5" />
-              </span>
-            )}
-            {form.twitterUrl && (
-              <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <Twitter className="h-3.5 w-3.5" />
-              </span>
-            )}
-          </div>
-        )}
-
-        {approvedUsername && (
-          <Link
-            href={profileHref({ username: approvedUsername })}
-            className="inline-flex items-center gap-1 text-2xs font-medium text-primary hover:underline"
-          >
-            View profile
-            <ArrowUpRight className="h-3 w-3" />
-          </Link>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function SnapshotStat({ icon: Icon, value, label }: { icon: React.ElementType; value: number; label: string }) {
-  return (
-    <div className="flex-1 min-w-0 text-center">
-      <div className="flex items-center justify-center gap-1 text-muted-foreground/70">
-        <Icon className="h-3 w-3" />
-      </div>
-      <p className="mt-1 text-lg font-bold tabular-nums text-foreground">{value}</p>
-      <p className="text-[10.5px] text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-function PortfolioSnapshot({ assets, listings, collections }: { assets: number; listings: number; collections: number }) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
-      <div>
-        <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">Portfolio</p>
-        <p className="mt-0.5 text-xs text-muted-foreground/70">What you own on Medialane</p>
-      </div>
-      <div className="flex items-center border-t border-border/60 pt-4">
-        <SnapshotStat icon={Gem} value={assets} label="Assets" />
-        <SnapshotStat icon={Tag} value={listings} label="Listed" />
-        <SnapshotStat icon={LayoutGrid} value={collections} label="Collections" />
-      </div>
-      <Link
-        href="/portfolio"
-        className="flex items-center justify-center gap-1 text-xs font-medium text-primary hover:underline"
-      >
-        View portfolio
-        <ArrowUpRight className="h-3 w-3" />
-      </Link>
-    </div>
-  );
-}
-
-function RewardsSnapshot({ address }: { address?: string | null }) {
-  const { data: rewards } = useRewards(address);
-  if (!rewards) return null;
-
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">Rewards</p>
-          <p className="mt-0.5 text-xs text-muted-foreground/70">Your creator journey</p>
-        </div>
-        <Trophy className="h-4 w-4 text-muted-foreground/50" />
-      </div>
-      <div className="border-t border-border/60 pt-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <LevelBadge level={rewards.currentLevel} name={rewards.currentLevelName} badgeColor={rewards.badgeColor} />
-          <span className="text-xs tabular-nums text-muted-foreground">{rewards.totalXp.toLocaleString()} XP</span>
-        </div>
-        <div className="h-2 rounded-full bg-muted-foreground/15 overflow-hidden">
-          <div
-            className="h-full rounded-full"
-            style={{ width: `${rewards.progressPct}%`, backgroundColor: rewards.badgeColor }}
-          />
-        </div>
-        {rewards.nextLevel && (
-          <p className="text-[10.5px] text-muted-foreground">
-            {rewards.nextLevel.xpRequired - rewards.totalXp} XP to Lv.{rewards.nextLevel.level} {rewards.nextLevel.name}
-          </p>
-        )}
-      </div>
-      <Link
-        href="/rewards"
-        className="flex items-center justify-center gap-1 text-xs font-medium text-primary hover:underline"
-      >
-        View rewards
-        <ArrowUpRight className="h-3 w-3" />
-      </Link>
-    </div>
-  );
-}
 
 export default function SettingsContent() {
   const { address: walletAddress } = useWallet();
-  const { ensureSignedIn, session: accountSession, isSigningIn } = useAccountSession();
+  const { ensureSignedIn, session: accountSession } = useAccountSession();
   const { profile, isLoading: profileLoading, mutate } = useCreatorProfile(walletAddress ?? undefined);
-  const { username: approvedUsername, claim, mutate: mutateClaim } = useMyUsernameClaim();
+  const { username: approvedUsername, claim } = useMyUsernameClaim();
+  const usernameForm = useUsernameClaimForm();
 
   const usernameVerified = !!accountSession;
   const { tokens: ownedTokens, isLoading: assetsLoading } = useTokensByOwner(walletAddress ?? null, 1, 100);
@@ -283,12 +44,7 @@ export default function SettingsContent() {
   const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType !== "ERC20");
   const [saving, setSaving] = useState(false);
   const [fastMintOpen, setFastMintOpen] = useState(false);
-  const [claimInput, setClaimInput] = useState("");
-  const [claiming, setClaiming] = useState(false);
-  const [checkState, setCheckState] = useState<CheckState>("idle");
-  const [claimMessage, setClaimMessage] = useState<InlineMessage>(null);
   const [saveMessage, setSaveMessage] = useState<InlineMessage>(null);
-  const [checkReason, setCheckReason] = useState<string | undefined>();
   const [form, setForm] = useState<ProfileForm>({
     name: "", bio: "", avatarImage: "",
     websiteUrl: "", twitterUrl: "", discordUrl: "", telegramUrl: "",
@@ -306,42 +62,6 @@ export default function SettingsContent() {
     });
   }, [profile]);
 
-  async function handleCheckUsername() {
-    if (!claimInput.trim()) return;
-    setCheckState("checking");
-    setCheckReason(undefined);
-    try {
-      const result = await checkUsernameAvailability(claimInput);
-      setCheckState(result.available ? "available" : "taken");
-      if (!result.available) setCheckReason(result.reason);
-    } catch {
-      setCheckState("idle");
-      setClaimMessage({ tone: "error", text: "We could not check that username just now. Please try again." });
-    }
-  }
-
-  async function handleClaimUsername() {
-    if (!claimInput.trim()) return;
-    setClaiming(true);
-    try {
-      const result = await submitUsernameClaim(claimInput.trim().toLowerCase(), undefined);
-      if (result.error) {
-        setClaimMessage({ tone: "error", text: result.error });
-      } else {
-        setClaimMessage({ tone: "success", text: "Username claim submitted. The Medialane DAO team will review it shortly." });
-        setClaimInput("");
-        setCheckState("idle");
-        setCheckReason(undefined);
-        await mutateClaim();
-      }
-    } catch (err) {
-      console.error("username claim failed", err);
-      setClaimMessage({ tone: "error", text: "That claim could not be submitted. Please try again." });
-    } finally {
-      setClaiming(false);
-    }
-  }
-
   async function handleSave() {
     if (!walletAddress) return;
     const urlFields = ["websiteUrl", "twitterUrl", "discordUrl", "telegramUrl"] as const;
@@ -353,13 +73,10 @@ export default function SettingsContent() {
     setSaving(true);
     try {
       await ensureSignedIn();
-      const result = await getMedialaneClient().api.creators.updateProfile(walletAddress, form) as any;
-      if (!result?.walletAddress) {
-        throw new Error(result?.error ?? "Save failed — please try again");
-      }
+      await getMedialaneClient().api.creators.updateProfile(walletAddress, form);
       await mutate(undefined, { revalidate: true });
       setSaveMessage({ tone: "success", text: "Profile updated." });
-    } catch (e: any) {
+    } catch (e) {
       console.error("profile save failed", e);
       setSaveMessage({ tone: "error", text: "Your changes could not be saved. Please try again." });
     } finally {
@@ -457,15 +174,7 @@ export default function SettingsContent() {
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Sign a message with your wallet to check whether you already have a username.
                   </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mt-3"
-                    disabled={isSigningIn}
-                    onClick={() => { void ensureSignedIn().catch(() => {}); }}
-                  >
-                    {isSigningIn ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Signing…</> : "Verify with wallet"}
-                  </Button>
+                  <VerifyWithWalletButton className="mt-3" />
                 </div>
               </div>
             )}
@@ -520,17 +229,8 @@ export default function SettingsContent() {
                     <p className="text-sm text-muted-foreground mt-1">You can submit a new claim below.</p>
                   </div>
                 </div>
-                <UsernameClaimInput
-                  value={claimInput}
-                  onChange={(v) => { setClaimInput(v); setCheckState("idle"); setCheckReason(undefined); }}
-                  onCheck={handleCheckUsername}
-                  onSubmit={handleClaimUsername}
-                  checkState={checkState}
-                  checkReason={checkReason}
-                  loading={claiming}
-                  disabled={!walletAddress}
-                />
-                <InlineNote message={claimMessage} />
+                <UsernameInput form={usernameForm} disabled={!walletAddress} />
+                <InlineNote message={usernameForm.message} />
               </div>
             )}
 
@@ -541,17 +241,8 @@ export default function SettingsContent() {
                   <span className="tabular-nums text-foreground">medialane.io/creator/yourname</span>.
                   Claims are reviewed by the Medialane DAO team to prevent impersonation.
                 </p>
-                <UsernameClaimInput
-                  value={claimInput}
-                  onChange={(v) => { setClaimInput(v); setCheckState("idle"); setCheckReason(undefined); }}
-                  onCheck={handleCheckUsername}
-                  onSubmit={handleClaimUsername}
-                  checkState={checkState}
-                  checkReason={checkReason}
-                  loading={claiming}
-                  disabled={!walletAddress}
-                />
-                <InlineNote message={claimMessage} />
+                <UsernameInput form={usernameForm} disabled={!walletAddress} />
+                <InlineNote message={usernameForm.message} />
               </div>
             )}
           </div>

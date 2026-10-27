@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { useProvider } from "@starknet-react/core";
 import type { Call, TypedData } from "starknet";
 import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
@@ -9,7 +8,6 @@ import { markMarketplaceDebug } from "@/lib/marketplace-debug";
 export function useVenueSigner(): StarknetVenueSigner | null {
   const account = useSigner();
   const { address } = useWallet();
-  const { provider } = useProvider();
 
   const signTypedData = useCallback(
     async (data: TypedData): Promise<string[]> => {
@@ -28,15 +26,10 @@ export function useVenueSigner(): StarknetVenueSigner | null {
       if (!account || !address) throw new Error("Wallet not ready. Please reconnect and try again.");
       markMarketplaceDebug("execute: awaiting wallet submit", { callCount: calls.length });
       const txHash = (await account.execute(calls)).transaction_hash;
-      markMarketplaceDebug("execute: wallet submitted, awaiting confirmation", { txHash });
-      const receipt = await provider.waitForTransaction(txHash);
-      markMarketplaceDebug("execute: confirmed", { status: receipt.statusReceipt });
-      if (receipt.isReverted()) {
-        throw new Error(receipt.value.revert_reason || "Transaction reverted on-chain. Check the explorer for details.");
-      }
+      markMarketplaceDebug("execute: wallet submitted", { txHash });
       return { txHash };
     },
-    [account, address, provider],
+    [account, address],
   );
 
   if (!address) return null;

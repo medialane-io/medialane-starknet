@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import type { ApiRemixOffer, ApiResponse, ConfirmRemixOfferParams, ConfirmSelfRemixParams, CreateRemixOfferParams } from "@medialane/sdk";
+import type { ApiRemixOffer, ApiResponse, ConfirmRemixOfferParams } from "@medialane/sdk";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSession } from "@/hooks/use-session";
 import { requireSignedIn } from "@/lib/account-gate";
@@ -30,14 +30,6 @@ export function useRemixOffers(role: "creator" | "requester", status?: string) {
   );
 
   return { offers: data?.data ?? [], total: data?.meta?.total ?? 0, isLoading, error, mutate };
-}
-
-export async function submitRemixOffer(body: CreateRemixOfferParams): Promise<ApiRemixOffer> {
-  return await getMedialaneClient().api.remix.submit(body);
-}
-
-export async function registerRemix(body: ConfirmSelfRemixParams): Promise<ApiRemixOffer> {
-  return await getMedialaneClient().api.remix.confirmSelf(body);
 }
 
 export async function confirmRemixOffer(id: string, body: ConfirmRemixOfferParams): Promise<ApiRemixOffer> {

@@ -19,7 +19,7 @@ export function useListingActions({ refresh }: Context): PortfolioOrderActions {
   return {
     isProcessing,
     cancel: async (order) => {
-      await cancelOrder(order.orderHash, order.offer.itemType, "listing");
+      await cancelOrder(order.orderHash, order.offer.itemType);
       refresh();
     },
   };
@@ -30,7 +30,7 @@ export function useOfferActions({ refresh }: Context): PortfolioOrderActions {
   return {
     isProcessing,
     cancel: async (order) => {
-      await cancelOrder(order.orderHash, order.consideration.itemType, "offer");
+      await cancelOrder(order.orderHash, order.consideration.itemType);
       refresh();
     },
   };
@@ -103,11 +103,7 @@ export function useAssetActions({ refresh }: Context): PortfolioAssetActions {
     cancel: async (token) => {
       const activeOrder = token.activeOrders?.[0];
       if (!activeOrder) return;
-      await cancelOrder(
-        activeOrder.orderHash,
-        activeOrder.offer.itemType,
-        activeOrder.offer.itemType === "ERC20" ? "offer" : "listing"
-      );
+      await cancelOrder(activeOrder.orderHash, activeOrder.offer.itemType);
       handleSuccess();
     },
     dialogs: (
