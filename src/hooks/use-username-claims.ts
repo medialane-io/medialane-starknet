@@ -3,11 +3,8 @@
 import useSWR from "swr";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSession } from "@/hooks/use-session";
-import type { ApiCreatorProfile, ApiUsernameClaim } from "@medialane/sdk";
+import type { ApiUsernameClaim } from "@medialane/sdk";
 import { getMedialaneClient } from "@/lib/medialane-client";
-
-export type { ApiUsernameClaim as UsernameClaim } from "@medialane/sdk";
-export type { ApiCreatorProfile as CreatorByUsername };
 
 export function useMyUsernameClaim() {
   const { address, isConnected } = useWallet();

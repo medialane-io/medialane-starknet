@@ -18,7 +18,7 @@ export function useSigner(): AccountInterface | undefined {
           return (...args: unknown[]) => {
             assertCorrectNetwork(chainId, networkConfig.chainId);
 
-            return (target[prop] as (...a: unknown[]) => unknown).apply(target, args as any);
+            return (target[prop] as (...a: unknown[]) => unknown).apply(target, args);
           };
         }
         return Reflect.get(target, prop, receiver);

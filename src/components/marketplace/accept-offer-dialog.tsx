@@ -2,7 +2,8 @@
 
 import { RewardEarned } from "@medialane/ui";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useOnOpen } from "@/hooks/use-on-open";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, DollarSign } from "lucide-react";
@@ -36,14 +37,12 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
   const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      resetState();
-      setStep("confirm");
-      setSuccessTxHash(null);
-      setLocalError(null);
-    }
-  }, [open]);
+  useOnOpen(open, () => {
+    resetState();
+    setStep("confirm");
+    setSuccessTxHash(null);
+    setLocalError(null);
+  });
 
   if (!order) return null;
 
@@ -55,13 +54,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
     try {
       setStep("processing");
       setLocalError(null);
-      const hash = await acceptOffer(
-        order.orderHash,
-        order.nftContract ?? "",
-        order.nftTokenId ?? "",
-        tokenStandard,
-        { silent: true }
-      );
+      const hash = await acceptOffer(order.orderHash, tokenStandard);
       if (hash) {
         setSuccessTxHash(hash);
         setStep("success");

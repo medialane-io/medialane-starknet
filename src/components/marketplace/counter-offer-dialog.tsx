@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { usdValueFor } from "@/lib/utils";
@@ -16,17 +15,15 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
+import { orderFormSchema } from "@/lib/order-form";
+import { useOnOpen } from "@/hooks/use-on-open";
 import {
   DurationPicker,
   MarketplaceSuccessState,
   MarketplaceProcessingState,
 } from "@medialane/ui";
 
-const schema = z.object({
-  price: z.string().min(1, "Price required").refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, "Must be positive"),
-  durationSeconds: z.number().min(86400),
-  message: z.string().optional(),
-});
+const schema = orderFormSchema.pick({ price: true, durationSeconds: true }).extend({ message: z.string().optional() });
 type FormValues = z.infer<typeof schema>;
 
 interface CounterOfferDialogProps {
@@ -49,8 +46,7 @@ export function CounterOfferDialog({
 }: CounterOfferDialogProps) {
   const tokenImage = resolveImage(tokenImageRaw);
   const { isConnected } = useWallet();
-  const { makeOffer, isProcessing, txHash, error, resetState } = useMarketplace();
-  const [done, setDone] = useState(false);
+  const { makeOffer, isProcessing, isConfirmed, txHash, error, resetState } = useMarketplace();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -63,23 +59,15 @@ export function CounterOfferDialog({
 
   const onSubmit = async (values: FormValues) => {
     if (!isConnected) return;
-    try {
-      await makeOffer(nftContract, tokenId, values.price, currencySymbol, values.durationSeconds, undefined, { silent: true });
-      setDone(true);
-    } catch (e) {
-      console.error("counter-offer failed", e);
-      form.setError("root", { message: "Your counter-offer could not be sent. Please try again." });
-    }
+    await makeOffer(nftContract, tokenId, values.price, currencySymbol, values.durationSeconds);
   };
 
-  useEffect(() => {
-    if (open) { resetState(); form.reset(); setDone(false); }
-  }, [open]);
+  useOnOpen(open, () => { resetState(); form.reset(); });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
       <DialogContent className="sm:max-w-md">
-        {done ? (
+        {isConfirmed ? (
           <MarketplaceSuccessState
             title="Counter-offer submitted!"
             description={`Your counter on ${tokenName || `#${tokenId}`} is live.`}
@@ -120,9 +108,6 @@ export function CounterOfferDialog({
                   </FormItem>
                 )} />
                 {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
-                {form.formState.errors.root && (
-                  <p role="alert" className="text-sm text-destructive">{form.formState.errors.root.message}</p>
-                )}
                 <Button type="submit" className="w-full h-11" disabled={isProcessing || !isConnected}>
                   <ArrowLeftRight className="h-4 w-4 mr-2" />Submit counter-offer
                 </Button>

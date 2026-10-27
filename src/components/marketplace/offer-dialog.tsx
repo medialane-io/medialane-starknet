@@ -2,12 +2,13 @@
 
 import { RewardEarned } from "@medialane/ui";
 
-import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, HandCoins, Layers, ShieldCheck, Zap } from "lucide-react";
-import { fireConfetti } from "@/lib/confetti";
+import { useConfetti } from "@/hooks/use-confetti";
+import { useOnOpen } from "@/hooks/use-on-open";
+import { LISTABLE_CURRENCIES, orderFormSchema } from "@/lib/order-form";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
 import { Button } from "@medialane/ui/button";
@@ -17,7 +18,6 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
-import { getListableTokens } from "@medialane/sdk";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { usdValueFor } from "@/lib/utils";
@@ -30,13 +30,7 @@ import {
   MarketplaceDialogHero,
 } from "@medialane/ui";
 
-const CURRENCIES = getListableTokens().map((t) => t.symbol);
-
-const schema = z.object({
-  price: z.string().min(1, "Price required").refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, "Must be positive"),
-  currency: z.string().refine((v) => getListableTokens().some((t) => t.symbol === v), "Invalid currency"),
-  durationSeconds: z.number().min(86400),
-});
+const schema = orderFormSchema;
 type FormValues = z.infer<typeof schema>;
 
 interface OfferDialogProps {
@@ -53,12 +47,9 @@ interface OfferDialogProps {
 export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenName, tokenStandard, tokenImage: tokenImageRaw, onSuccess }: OfferDialogProps) {
   const tokenImage = resolveImage(tokenImageRaw);
   const { isConnected } = useWallet();
-  const { makeOffer, isProcessing, txHash, error, resetState } = useMarketplace();
-  const confettiFired = useRef(false);
-  const [txStatus, setTxStatus] = useState<"idle" | "confirmed">("idle");
+  const { makeOffer, isProcessing, isConfirmed, isTerminalError, txHash, error, resetState } = useMarketplace();
   const name = tokenName || `Token #${tokenId}`;
   const isCancelled = error?.toLowerCase().includes("request cancelled") ?? false;
-  const isTerminalError = !isProcessing && !!error && !!txHash;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -72,18 +63,11 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
 
   const onSubmit = async (values: FormValues) => {
     if (!isConnected) return;
-    const hash = await makeOffer(assetContract, tokenId, values.price, values.currency, values.durationSeconds, tokenStandard, { silent: true });
-    if (hash) setTxStatus("confirmed");
+    await makeOffer(assetContract, tokenId, values.price, values.currency, values.durationSeconds, tokenStandard);
   };
 
-  useEffect(() => {
-    if (txStatus === "confirmed" && !confettiFired.current) { confettiFired.current = true; fireConfetti(); }
-    if (txStatus !== "confirmed") confettiFired.current = false;
-  }, [txStatus]);
-
-  useEffect(() => {
-    if (open) { resetState(); form.reset(); setTxStatus("idle"); }
-  }, [open]);
+  useConfetti(isConfirmed);
+  useOnOpen(open, () => { resetState(); form.reset(); });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
@@ -92,7 +76,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
         <DialogDescription className="sr-only">
           Set an amount, currency, and expiry to submit an onchain marketplace offer.
         </DialogDescription>
-        {txStatus === "confirmed" ? (
+        {isConfirmed ? (
           <MarketplaceSuccessState
             title="Offer live!"
             description={
@@ -176,7 +160,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
                       <FormControl>
-                        <CurrencyPicker currencies={CURRENCIES} value={field.value} onChange={field.onChange} disabled={isProcessing} />
+                        <CurrencyPicker currencies={LISTABLE_CURRENCIES} value={field.value} onChange={field.onChange} disabled={isProcessing} />
                       </FormControl>
                     </FormItem>
                   )} />

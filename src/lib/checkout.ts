@@ -22,10 +22,3 @@ export function amountDue(order: ApiOrder, quantity: number): bigint {
   const total = orderTotal(order, quantity);
   return total + feeAmount(total, resolveFeeConfig({}).marketplaceBps);
 }
-
-type IntentCalls = { id: string; calls: import("starknet").Call[] };
-
-export function checkoutExecution(items: IntentCalls[], swap?: IntentCalls): { calls: import("starknet").Call[]; intentIds: string[] } {
-  const all = swap ? [swap, ...items] : items;
-  return { calls: all.flatMap((i) => i.calls), intentIds: all.map((i) => i.id) };
-}

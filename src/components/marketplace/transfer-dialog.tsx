@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { AlertCircle, ArrowRightLeft, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowRightLeft } from "lucide-react";
 import {
   MarketplaceProcessingState,
   MarketplaceSuccessState,
@@ -15,7 +14,6 @@ import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
 import { resolveImage } from "@/lib/utils";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
-import { Badge } from "@medialane/ui/badge";
 
 import { useTransfer } from "@/hooks/use-transfer";
 import { EXPLORER_URL } from "@/lib/constants";
@@ -60,16 +58,12 @@ export function TransferDialog({
   const {
     transferToken,
     walletAddress,
-    hasWallet,
     isProcessing,
-    isLoadingWallet,
-    txStatus,
+    isConfirmed,
     txHash,
     error,
     resetState,
   } = useTransfer();
-
-  const [pendingAddress, setPendingAddress] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -77,17 +71,10 @@ export function TransferDialog({
   });
 
   const onSubmit = async (values: FormValues) => {
-    if (walletAddress) {
-      try {
-        if (BigInt(values.toAddress) === BigInt(walletAddress)) {
-          form.setError("toAddress", { message: "Cannot transfer to yourself" });
-          return;
-        }
-      } catch {
-
-      }
+    if (walletAddress && BigInt(values.toAddress) === BigInt(walletAddress)) {
+      form.setError("toAddress", { message: "Cannot transfer to yourself" });
+      return;
     }
-    setPendingAddress(values.toAddress);
     await transferToken({
       contractAddress,
       tokenId,
@@ -100,12 +87,10 @@ export function TransferDialog({
     if (!isProcessing) {
       resetState();
       form.reset();
-      setPendingAddress(null);
       onOpenChange(v);
     }
   };
 
-  const isSuccess = txStatus === "confirmed" && !error;
   const displayName = tokenName || `Token #${tokenId}`;
 
   return (
@@ -116,7 +101,7 @@ export function TransferDialog({
             <DialogTitle>Transfer asset</DialogTitle>
           </DialogHeader>
 
-          {isSuccess ? (
+          {isConfirmed ? (
             <MarketplaceSuccessState
               title="Transfer complete!"
               description={`${displayName} has been sent successfully.`}
@@ -127,15 +112,12 @@ export function TransferDialog({
               onDone={() => {
                 resetState();
                 form.reset();
-                setPendingAddress(null);
                 onOpenChange(false);
                 onSuccess?.();
               }}
             />
           ) : isProcessing ? (
-            <MarketplaceProcessingState
-              title={txStatus === "submitting" ? "Submitting transfer…" : "Confirming on Starknet…"}
-            />
+            <MarketplaceProcessingState title="Submitting transfer…" />
           ) : (
             <div className="space-y-4">
 
@@ -189,22 +171,9 @@ export function TransferDialog({
                     </Alert>
                   )}
 
-                  <Button
-                    type="submit"
-                    className="w-full h-11"
-                    disabled={isProcessing || isLoadingWallet}
-                  >
-                    {isLoadingWallet ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Loading wallet…
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRightLeft className="h-4 w-4 mr-2" />
-                        Transfer
-                      </>
-                    )}
+                  <Button type="submit" className="w-full h-11" disabled={isProcessing}>
+                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                    Transfer
                   </Button>
                   <p className="text-2xs text-center text-muted-foreground">
                     Confirm in your wallet to complete the transfer.

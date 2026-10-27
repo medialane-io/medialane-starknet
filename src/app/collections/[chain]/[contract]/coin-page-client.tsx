@@ -227,12 +227,3 @@ function StatCell({ label, value }: { label: string; value: string }) {
     </Panel>
   );
 }
-
-function DetailRow({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn("tabular-nums text-right", valueClassName)}>{value}</span>
-    </div>
-  );
-}

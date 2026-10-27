@@ -4,7 +4,6 @@ export {
   STARKNET_MARKETPLACE_1155_CONTRACT,
   STARKNET_COLLECTION_721_CONTRACT,
   STARKNET_COLLECTION_1155_CONTRACT,
-  STARKNET_NFTCOMMENTS_CONTRACT,
 } from "@medialane/sdk";
 
 const isServer = typeof window === "undefined";

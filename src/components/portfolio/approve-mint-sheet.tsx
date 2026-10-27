@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useWallet } from "@/hooks/use-wallet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@medialane/ui/sheet";
 import { Button } from "@medialane/ui/button";
@@ -8,8 +8,8 @@ import { Input } from "@medialane/ui/input";
 import { Label } from "@medialane/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
 import { useMedialaneClient, describeError, MarketplaceSuccessState, useCollectionsByOwner } from "@medialane/ui";
-import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
-import { useTx } from "@/hooks/use-tx";
+import { executeIntent, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
+import { useVenueSigner } from "@/lib/use-venue-signer";
 
 import { useMarketplace } from "@/hooks/use-marketplace";
 
@@ -19,9 +19,8 @@ import { formatDisplayPrice } from "@/lib/utils";
 import { getService } from "@medialane/sdk";
 import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";
-import type { Call } from "starknet";
 import { EXPLORER_URL } from "@/lib/constants";
-import { fireConfetti } from "@/lib/confetti";
+import { useConfetti } from "@/hooks/use-confetti";
 import { assetHref } from "@/lib/routes";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 
@@ -35,7 +34,7 @@ interface Props {
 export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props) {
   const { address: walletAddress } = useWallet();
   const { ensureSignedIn } = useAccountSession();
-  const { execute: executeTransaction } = useTx();
+  const signer = useVenueSigner();
   const { createListing } = useMarketplace();
   const client = useMedialaneClient();
 
@@ -51,16 +50,13 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [remixName, setRemixName] = useState("");
-  const [pinOpen, setPinOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [newAssetLink, setNewAssetLink] = useState<string | null>(null);
   const [mintHash, setMintHash] = useState<string | null>(null);
   const [approveError, setApproveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (done) fireConfetti();
-  }, [done]);
+  useConfetti(done);
 
   const effectiveCollectionId = selectedCollectionId ?? defaultCollectionId;
   const selectedCollection = eligibleCollections.find((c) => c.collectionId === effectiveCollectionId);
@@ -82,18 +78,13 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
 
   const effectiveName = remixName.trim() || `Remix of Token #${offer?.originalTokenId}`;
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!effectiveCollectionId || !selectedCollection) {
       setApproveError("Choose a collection to mint into.");
       return;
     }
+    if (!offer || !walletAddress) return;
     setApproveError(null);
-    setPinOpen(true);
-  };
-
-  const handlePin = async (pin: string) => {
-    setPinOpen(false);
-    if (!offer || !walletAddress || !effectiveCollectionId || !selectedCollection) return;
     setLoading(true);
 
     try {
@@ -124,19 +115,11 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
         tokenUri: pinnedUri,
         royaltyBps: 0,
       });
-      const mintCalls = (intentRes as any)?.calls as Call[];
-      if (!mintCalls?.length) throw new Error("No mint calls returned");
+      if (!signer) throw new Error("Wallet not connected");
+      const { txHash, receipt } = await executeIntent(signer, client, intentRes);
+      setMintHash(txHash);
 
-      const mintResult = await executeTransaction(mintCalls);
-      if (mintResult === null) throw new Error("Mint reverted");
-      setMintHash(mintResult);
-
-      await syncTransactionBestEffort(client, mintResult);
-
-      const tokensRes = await client.api.tokens.ownedBy(walletAddress, { page: 1, limit: 5 });
-      const remixTokenId = tokensRes.data?.find(
-        (t) => t.contractAddress === selectedCollection.contractAddress
-      )?.tokenId;
+      const remixTokenId = mintedTokenIdFromReceipt(receipt, selectedCollection.contractAddress);
       if (!remixTokenId) throw new Error("Could not determine remix token ID");
 
       await createListing(
@@ -144,26 +127,21 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
         remixTokenId,
         offer.price?.raw ?? "0",
         offer.price?.currency ?? "STRK",
-        30 * 24 * 60 * 60,
-        undefined,
-        undefined,
-        { silent: true },
+        30 * 24 * 60 * 60
       );
 
       let orderHash: string | undefined;
       const listingDeadline = Date.now() + 15_000;
       while (Date.now() < listingDeadline) {
         await new Promise((r) => setTimeout(r, 2000));
-        try {
-          const ordersRes = await client.api.orders.forToken(selectedCollection.contractAddress, remixTokenId);
-          const listing = ordersRes.data?.find(
-            (o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721"
-          );
-          if (listing) {
-            orderHash = listing.orderHash;
-            break;
-          }
-        } catch {  }
+        const ordersRes = await client.api.orders.forToken(selectedCollection.contractAddress, remixTokenId).catch(() => null);
+        const listing = ordersRes?.data?.find(
+          (o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721"
+        );
+        if (listing) {
+          orderHash = listing.orderHash;
+          break;
+        }
       }
       if (!orderHash) throw new Error("Could not confirm listing orderHash — check portfolio shortly");
 

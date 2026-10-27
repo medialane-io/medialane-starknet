@@ -1,5 +1,6 @@
 "use client";
 
+import { InlineNote, type InlineMessage } from "@/components/shared/inline-note";
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { normalizeAddress } from "@medialane/sdk";
@@ -27,7 +28,7 @@ export default function CoinSettingsPage({ params }: Props) {
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+  const [saveMessage, setSaveMessage] = useState<InlineMessage>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -135,14 +136,7 @@ export default function CoinSettingsPage({ params }: Props) {
         </div>
       </div>
 
-      {saveMessage && (
-        <p
-          role={saveMessage.tone === "error" ? "alert" : "status"}
-          className={saveMessage.tone === "error" ? "text-sm text-destructive" : "text-sm text-emerald-500"}
-        >
-          {saveMessage.text}
-        </p>
-      )}
+      <InlineNote message={saveMessage} />
       <Button onClick={handleSave} disabled={saving || uploading || isLoading}>
         {saving ? "Saving…" : "Save Changes"}
       </Button>

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useSWRConfig } from "swr";
-import { describeError, useMedialaneClient } from "@medialane/ui";
+import { useCallback } from "react";
+import { useMedialaneClient } from "@medialane/ui";
+import { executeIntent } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
-import { useIntentExecute } from "@/hooks/use-intent-execute";
-import { syncTransactionBestEffort } from "@medialane/sdk/starknet";
+import { useWriteState } from "@/hooks/use-write-state";
+import { useVenueSigner } from "@/lib/use-venue-signer";
+import { invalidateTokens } from "@/lib/cache";
 
 export interface TransferInput {
   contractAddress: string;
@@ -23,82 +24,44 @@ function isValidStarknetAddress(addr: string): boolean {
 
 export function useTransfer() {
   const client = useMedialaneClient();
-  const { address, isConnected } = useWallet();
-  const runIntent = useIntentExecute();
-  const { mutate } = useSWRConfig();
-
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [txStatus, setTxStatus] = useState<"idle" | "submitting" | "confirmed" | "failed">("idle");
-
-  const invalidate = useCallback(() => {
-
-    mutate(
-      (key) => {
-        if (typeof key !== "string") return false;
-        return key.startsWith("tokens-owned-") || key.startsWith("token-");
-      }
-    );
-  }, [mutate]);
-
-  const resetState = useCallback(() => {
-    setIsProcessing(false);
-    setError(null);
-    setTxHash(null);
-    setTxStatus("idle");
-  }, []);
+  const { address } = useWallet();
+  const signer = useVenueSigner();
+  const { isProcessing, txHash, setTxHash, error, isConfirmed, run, resetState } = useWriteState();
 
   const transferToken = useCallback(
-    async (input: TransferInput) => {
-      if (!address) throw new Error("Wallet not connected.");
-      setIsProcessing(true);
-      setError(null);
-      setTxStatus("submitting");
+    (input: TransferInput) =>
+      run(
+        async () => {
+          if (!signer) throw new Error("Wallet not connected.");
+          if (!isValidStarknetAddress(input.toAddress)) {
+            throw new Error("Invalid recipient address.");
+          }
+          if (!isValidStarknetAddress(input.contractAddress)) {
+            throw new Error("Invalid token contract address.");
+          }
 
-      try {
-
-        if (!isValidStarknetAddress(input.toAddress)) {
-          throw new Error("Invalid recipient address.");
-        }
-        if (!isValidStarknetAddress(input.contractAddress)) {
-          throw new Error("Invalid token contract address.");
-        }
-
-        const hash = await runIntent(() =>
-          client.api.intents.create("transfer-nft", {
-            owner: address,
+          const intent = await client.api.intents.create("transfer-nft", {
+            owner: signer.address,
             contractAddress: input.contractAddress,
             tokenId: input.tokenId,
             recipient: input.toAddress,
             tokenStandard: input.tokenStandard === "ERC1155" ? "ERC1155" : "ERC721",
-          }),
-        );
-        setTxHash(hash);
-        setTxStatus("confirmed");
-
-        await syncTransactionBestEffort(client, hash);
-        invalidate();
-        return hash;
-      } catch (err: unknown) {
-        const friendly = describeError(err);
-        setError(friendly.message);
-        setTxStatus("failed");
-        console.error("transfer failed", err);
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [address, runIntent, invalidate, client]
+          });
+          const { txHash: hash } = await executeIntent(signer, client, intent);
+          setTxHash(hash);
+          invalidateTokens();
+          return hash;
+        },
+        (err) => console.error("transfer failed", err),
+      ),
+    [signer, client, run, setTxHash],
   );
 
   return {
     transferToken,
-    walletAddress: address ?? null,
-    hasWallet: isConnected,
-    isLoadingWallet: false,
+    walletAddress: address,
     isProcessing,
-    txStatus,
+    isConfirmed,
     txHash,
     error,
     resetState,

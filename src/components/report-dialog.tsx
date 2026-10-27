@@ -11,7 +11,7 @@ import { Textarea } from "@medialane/ui/textarea";
 import { Label } from "@medialane/ui/label";
 import { useAccountSession } from "@/components/wallet-session-sync";
 
-export type ReportTarget =
+type ReportTarget =
   | { type: "TOKEN"; contract: string; tokenId: string; name?: string }
   | { type: "COLLECTION"; contract: string; name?: string }
   | { type: "CREATOR"; address: string; name?: string }
