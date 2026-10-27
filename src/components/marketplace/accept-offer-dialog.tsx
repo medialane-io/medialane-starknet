@@ -2,12 +2,11 @@
 
 import { RewardEarned } from "@medialane/ui";
 
-import { useState } from "react";
 import { useOnOpen } from "@/hooks/use-on-open";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, DollarSign } from "lucide-react";
-import { fireConfetti } from "@/lib/confetti";
+import { useConfetti } from "@/hooks/use-confetti";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
 import { useMarketplace } from "@/hooks/use-marketplace";
@@ -28,21 +27,13 @@ interface AcceptOfferDialogProps {
   onSuccess?: () => void;
 }
 
-type Step = "confirm" | "processing" | "success" | "error";
-
 export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: AcceptOfferDialogProps) {
   const router = useRouter();
-  const { acceptOffer, isProcessing, txHash, error, resetState } = useMarketplace();
-  const [step, setStep] = useState<Step>("confirm");
-  const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const { acceptOffer, isProcessing, isConfirmed, txHash, error, resetState } = useMarketplace();
+  const step = isProcessing ? "processing" : isConfirmed ? "success" : error ? "error" : "confirm";
 
-  useOnOpen(open, () => {
-    resetState();
-    setStep("confirm");
-    setSuccessTxHash(null);
-    setLocalError(null);
-  });
+  useOnOpen(open, resetState);
+  useConfetti(isConfirmed);
 
   if (!order) return null;
 
@@ -51,23 +42,8 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
   const tokenStandard = order.consideration?.itemType;
 
   const handleAccept = async () => {
-    try {
-      setStep("processing");
-      setLocalError(null);
-      const hash = await acceptOffer(order.orderHash, tokenStandard);
-      if (hash) {
-        setSuccessTxHash(hash);
-        setStep("success");
-        fireConfetti();
-        onSuccess?.();
-      } else {
-        setLocalError(error || "Transaction failed");
-        setStep("error");
-      }
-    } catch (e) {
-      setLocalError(e instanceof Error ? e.message : "Transaction failed");
-      setStep("error");
-    }
+    const hash = await acceptOffer(order.orderHash, tokenStandard);
+    if (hash) onSuccess?.();
   };
 
   const handleClose = (nextOpen: boolean) => {
@@ -78,14 +54,6 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
     onOpenChange(false);
     onSuccess?.();
   };
-
-  const handleRetry = () => {
-    setStep("confirm");
-    setLocalError(null);
-    resetState();
-  };
-
-  const resolvedTxHash = successTxHash ?? txHash;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -177,7 +145,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
                 </span>
               </>
             }
-            txHash={resolvedTxHash}
+            txHash={txHash}
             explorerUrl={EXPLORER_URL}
             onDone={handleDone}
             footer={
@@ -197,10 +165,10 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
             name={name}
             title="Offer acceptance failed"
             description="The transaction could not be completed. Your asset is still yours."
-            error={localError ?? error}
-            txHash={resolvedTxHash}
+            error={error}
+            txHash={txHash}
             explorerUrl={EXPLORER_URL}
-            onRetry={handleRetry}
+            onRetry={resetState}
             onDone={handleDone}
           />
         )}

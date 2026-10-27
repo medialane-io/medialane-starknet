@@ -14,13 +14,13 @@ export function useWriteState() {
     setIsProcessing(false);
   }, []);
 
-  const run = useCallback(async <T,>(work: () => Promise<T>, onError?: (err: unknown) => void): Promise<T | undefined> => {
+  const run = useCallback(async <T,>(work: () => Promise<T>): Promise<T | undefined> => {
     setIsProcessing(true);
     setError(null);
     try {
       return await work();
     } catch (err) {
-      onError?.(err);
+      console.error("[write] failed", err);
       setError(describeError(err).message);
       return undefined;
     } finally {

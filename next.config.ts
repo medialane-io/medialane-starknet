@@ -11,36 +11,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@cartridge/connector", "@cartridge/controller", "@cartridge/controller-wasm"],
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "gateway.pinata.cloud",
-        pathname: "/ipfs/**",
-      },
-      {
-        protocol: "https",
-        hostname: "**.mypinata.cloud",
-      },
-      {
-        protocol: "https",
-        hostname: "ipfs.io",
-        pathname: "/ipfs/**",
-      },
-      {
-        protocol: "https",
-        hostname: "dweb.link",
-        pathname: "/ipfs/**",
-      },
-      {
-        protocol: "https",
-        hostname: "cloudflare-ipfs.com",
-        pathname: "/ipfs/**",
-      },
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
   },
   async redirects() {
     return [

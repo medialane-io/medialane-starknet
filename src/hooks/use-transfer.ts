@@ -30,30 +30,27 @@ export function useTransfer() {
 
   const transferToken = useCallback(
     (input: TransferInput) =>
-      run(
-        async () => {
-          if (!signer) throw new Error("Wallet not connected.");
-          if (!isValidStarknetAddress(input.toAddress)) {
-            throw new Error("Invalid recipient address.");
-          }
-          if (!isValidStarknetAddress(input.contractAddress)) {
-            throw new Error("Invalid token contract address.");
-          }
+      run(async () => {
+        if (!signer) throw new Error("Wallet not connected.");
+        if (!isValidStarknetAddress(input.toAddress)) {
+          throw new Error("Invalid recipient address.");
+        }
+        if (!isValidStarknetAddress(input.contractAddress)) {
+          throw new Error("Invalid token contract address.");
+        }
 
-          const intent = await client.api.intents.create("transfer-nft", {
-            owner: signer.address,
-            contractAddress: input.contractAddress,
-            tokenId: input.tokenId,
-            recipient: input.toAddress,
-            tokenStandard: input.tokenStandard === "ERC1155" ? "ERC1155" : "ERC721",
-          });
-          const { txHash: hash } = await executeIntent(signer, client, intent);
-          setTxHash(hash);
-          invalidateTokens();
-          return hash;
-        },
-        (err) => console.error("transfer failed", err),
-      ),
+        const intent = await client.api.intents.create("transfer-nft", {
+          owner: signer.address,
+          contractAddress: input.contractAddress,
+          tokenId: input.tokenId,
+          recipient: input.toAddress,
+          tokenStandard: input.tokenStandard === "ERC1155" ? "ERC1155" : "ERC721",
+        });
+        const { txHash: hash } = await executeIntent(signer, client, intent);
+        setTxHash(hash);
+        invalidateTokens();
+        return hash;
+      }),
     [signer, client, run, setTxHash],
   );
 
