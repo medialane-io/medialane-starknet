@@ -3,6 +3,7 @@ import type { Call, TypedData } from "starknet";
 import type { StarknetVenueSigner } from "@medialane/sdk/starknet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useSigner } from "@/hooks/use-signer";
+import { assertNoSelfCalls } from "@/lib/call-guard";
 
 export function useVenueSigner(): StarknetVenueSigner | null {
   const account = useSigner();
@@ -21,6 +22,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
   const execute = useCallback(
     async (calls: Call[]): Promise<{ txHash: string }> => {
       if (!account || !address) throw new Error("Wallet not ready. Please reconnect and try again.");
+      assertNoSelfCalls(calls, address);
       const txHash = (await account.execute(calls)).transaction_hash;
       return { txHash };
     },
