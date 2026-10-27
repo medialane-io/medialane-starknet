@@ -2,12 +2,14 @@
 
 import { ProfileLivePreview, type ProfileForm } from "@/components/settings/profile-live-preview";
 import { PortfolioSnapshot, RewardsSnapshot } from "@/components/settings/snapshots";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCreatorProfile, useUserOrders, useCollectionsByOwner, AssetPicker, ServiceFormShell, type OwnedAsset } from "@medialane/ui";
 import { useMyUsernameClaim } from "@/hooks/use-username-claims";
 import { useUsernameClaimForm } from "@/hooks/use-username-claim-form";
-import { InlineNote, type InlineMessage } from "@/components/shared/inline-note";
+import { InlineNote } from "@/components/shared/inline-note";
+import { useDraft } from "@/hooks/use-draft";
+import { useSave } from "@/hooks/use-save";
 import { UsernameInput } from "@/components/shared/username-input";
 import { VerifyWithWalletButton } from "@/components/shared/verify-with-wallet-button";
 import { useTokensByOwner } from "@/hooks/use-tokens";
@@ -24,9 +26,14 @@ import { AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon
 import { cn, resolveImage } from "@/lib/utils";
 import { profileHref } from "@/lib/routes";
 
+const URL_FIELDS = ["websiteUrl", "twitterUrl", "discordUrl", "telegramUrl"] as const;
+
+const isValidUrl = (v: string) =>
+  !v || v.startsWith("http://") || v.startsWith("https://") || v.startsWith("ipfs://");
+
 export default function SettingsContent() {
   const { address: walletAddress } = useWallet();
-  const { ensureSignedIn, session: accountSession } = useAccountSession();
+  const { session: accountSession } = useAccountSession();
   const { profile, isLoading: profileLoading, mutate } = useCreatorProfile(walletAddress ?? undefined);
   const { username: approvedUsername, claim } = useMyUsernameClaim();
   const usernameForm = useUsernameClaimForm();
@@ -42,51 +49,29 @@ export default function SettingsContent() {
     image: resolveImage(t.metadata?.image),
   }));
   const activeListings = orders.filter((o) => o.status === "ACTIVE" && o.offer.itemType !== "ERC20");
-  const [saving, setSaving] = useState(false);
   const [fastMintOpen, setFastMintOpen] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<InlineMessage>(null);
-  const [form, setForm] = useState<ProfileForm>({
-    name: "", bio: "", avatarImage: "",
-    websiteUrl: "", twitterUrl: "", discordUrl: "", telegramUrl: "",
+  const { saving, message: saveMessage, setMessage: setSaveMessage, save } = useSave();
+  const { draft: form, edit } = useDraft<ProfileForm>({
+    name: profile?.name ?? "",
+    bio: profile?.bio ?? "",
+    avatarImage: profile?.avatarImage ?? "",
+    websiteUrl: profile?.websiteUrl ?? "",
+    twitterUrl: profile?.twitterUrl ?? "",
+    discordUrl: profile?.discordUrl ?? "",
+    telegramUrl: profile?.telegramUrl ?? "",
   });
-
-  useEffect(() => {
-    if (profile) setForm({
-      name: profile.name ?? "",
-      bio: profile.bio ?? "",
-      avatarImage: profile.avatarImage ?? "",
-      websiteUrl: profile.websiteUrl ?? "",
-      twitterUrl: profile.twitterUrl ?? "",
-      discordUrl: profile.discordUrl ?? "",
-      telegramUrl: profile.telegramUrl ?? "",
-    });
-  }, [profile]);
 
   async function handleSave() {
     if (!walletAddress) return;
-    const urlFields = ["websiteUrl", "twitterUrl", "discordUrl", "telegramUrl"] as const;
-    const hasInvalidUrl = urlFields.some((k) => !isValidUrl(form[k]));
-    if (hasInvalidUrl) {
+    if (URL_FIELDS.some((k) => !isValidUrl(form[k]))) {
       setSaveMessage({ tone: "error", text: "Every link must start with http://, https:// or ipfs://" });
       return;
     }
-    setSaving(true);
-    try {
-      await ensureSignedIn();
+    await save("Profile updated.", async () => {
       await getMedialaneClient().api.creators.updateProfile(walletAddress, form);
       await mutate(undefined, { revalidate: true });
-      setSaveMessage({ tone: "success", text: "Profile updated." });
-    } catch (e) {
-      console.error("profile save failed", e);
-      setSaveMessage({ tone: "error", text: "Your changes could not be saved. Please try again." });
-    } finally {
-      setSaving(false);
-    }
+    });
   }
-
-  const URL_KEYS = new Set(["websiteUrl", "twitterUrl", "discordUrl", "telegramUrl"]);
-  const isValidUrl = (v: string) =>
-    !v || v.startsWith("http://") || v.startsWith("https://") || v.startsWith("ipfs://");
 
   const field = (
     key: keyof ProfileForm,
@@ -94,7 +79,7 @@ export default function SettingsContent() {
     placeholder = "",
     helper?: string
   ) => {
-    const isUrl = URL_KEYS.has(key);
+    const isUrl = (URL_FIELDS as readonly string[]).includes(key);
     const invalid = isUrl && !isValidUrl(form[key]);
     return (
       <div className="space-y-1.5">
@@ -103,7 +88,7 @@ export default function SettingsContent() {
           id={key}
           placeholder={placeholder}
           value={form[key]}
-          onChange={(e) => setForm(f => ({ ...f, [key]: e.target.value }))}
+          onChange={(e) => edit({ [key]: e.target.value })}
           className={invalid ? "border-destructive focus-visible:ring-destructive" : ""}
         />
         {invalid && <p className="text-xs text-destructive">Must start with http://, https://, or ipfs://</p>}
@@ -260,7 +245,7 @@ export default function SettingsContent() {
               <Textarea
                 id="bio"
                 value={form.bio}
-                onChange={(e) => setForm(f => ({ ...f, bio: e.target.value }))}
+                onChange={(e) => edit({ bio: e.target.value })}
                 rows={3}
                 placeholder="Tell the world about yourself and your work…"
               />
@@ -283,7 +268,7 @@ export default function SettingsContent() {
                 assets={ownedAssets}
                 isLoading={assetsLoading}
                 selected={ownedAssets.find((a) => a.image === form.avatarImage) ?? null}
-                onSelect={(asset) => setForm((f) => ({ ...f, avatarImage: asset.image ?? "" }))}
+                onSelect={(asset) => edit({ avatarImage: asset.image ?? "" })}
                 onMintClick={() => setFastMintOpen(true)}
               />
             </div>
@@ -317,7 +302,7 @@ export default function SettingsContent() {
         onClose={() => setFastMintOpen(false)}
         mediaKindLock="image"
         onMinted={(asset) => {
-          setForm((f) => ({ ...f, avatarImage: asset.image ?? "" }));
+          edit({ avatarImage: asset.image ?? "" });
           setFastMintOpen(false);
         }}
       />
