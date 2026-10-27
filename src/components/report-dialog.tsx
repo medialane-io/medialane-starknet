@@ -4,6 +4,7 @@ import { MedialaneApiError } from "@medialane/sdk";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { useState } from "react";
 import { Flag } from "lucide-react";
+import { describeError } from "@medialane/ui";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
 import { Checkbox } from "@medialane/ui/checkbox";
@@ -86,7 +87,7 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
         return;
       }
       console.error("report submission failed", err);
-      setSubmitError("Your report could not be sent. Please try again.");
+      setSubmitError(describeError(err).message);
     } finally {
       setLoading(false);
     }

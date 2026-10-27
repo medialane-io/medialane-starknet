@@ -107,7 +107,7 @@ export function GenesisMint({
       if (lsKey) localStorage.setItem(lsKey, tx.txHash);
     }
     if (tx.phase === "error") {
-      setError(tx.error ?? "Something went wrong. Try again.");
+      setError(tx.error ?? "");
       setPhase("error");
     }
   }, [tx.phase, tx.txHash, tx.error, lsKey]);

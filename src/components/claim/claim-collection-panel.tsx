@@ -62,7 +62,7 @@ export function ClaimCollectionPanel({
         setStep("manual");
       }
     } catch (err) {
-      setVerifyError(describeError(err, "Verification failed").message);
+      setVerifyError(describeError(err).message);
       setStep("manual");
     }
   }
