@@ -62,9 +62,7 @@ export function ReportDialog({ target, open, onOpenChange }: ReportDialogProps) 
     setLoading(true);
 
     try {
-      try {
-        await ensureSignedIn();
-      } catch {
+      if (!(await ensureSignedIn().then(() => true, () => false))) {
         setSubmitError("Sign in with your wallet to send a report.");
         return;
       }

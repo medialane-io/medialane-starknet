@@ -23,6 +23,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { useConfetti } from "@/hooks/use-confetti";
 import { assetHref } from "@/lib/routes";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
+import { pollUntil } from "@/lib/poll";
 
 interface Props {
   offer: RemixOffer | null;
@@ -131,19 +132,10 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       );
       if (!listingHash) return;
 
-      let orderHash: string | undefined;
-      const listingDeadline = Date.now() + 15_000;
-      while (Date.now() < listingDeadline) {
-        await new Promise((r) => setTimeout(r, 2000));
+      const orderHash = await pollUntil(async () => {
         const ordersRes = await client.api.orders.forToken(selectedCollection.contractAddress, remixTokenId).catch(() => null);
-        const listing = ordersRes?.data?.find(
-          (o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721"
-        );
-        if (listing) {
-          orderHash = listing.orderHash;
-          break;
-        }
-      }
+        return ordersRes?.data?.find((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721")?.orderHash;
+      });
       if (!orderHash) throw new Error("Could not confirm listing orderHash — check portfolio shortly");
 
       await confirmRemixOffer(

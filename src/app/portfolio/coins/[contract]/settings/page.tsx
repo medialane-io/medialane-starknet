@@ -1,11 +1,13 @@
 "use client";
 
-import { InlineNote, type InlineMessage } from "@/components/shared/inline-note";
-import { use, useEffect, useRef, useState } from "react";
+import { InlineNote } from "@/components/shared/inline-note";
+import { use, useRef, useState } from "react";
 import Image from "next/image";
 import { normalizeAddress } from "@medialane/sdk";
 import { acceptFor } from "@medialane/ui/utils/upload-limits";
 import { useWallet } from "@/hooks/use-wallet";
+import { useDraft } from "@/hooks/use-draft";
+import { useSave } from "@/hooks/use-save";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCoin, updateCoinProfile } from "@/hooks/use-coins";
 import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
@@ -24,19 +26,13 @@ export default function CoinSettingsPage({ params }: Props) {
   const { ensureSignedIn } = useAccountSession();
   const { coin, isLoading, mutate } = useCoin(contract);
 
-  const [image, setImage] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<InlineMessage>(null);
+  const { saving, message: saveMessage, setMessage: setSaveMessage, save } = useSave();
+  const { draft: { image, description }, edit } = useDraft<{ image: string | null; description: string }>({
+    image: coin?.image ?? null,
+    description: coin?.description ?? "",
+  });
   const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (coin) {
-      setImage(coin.image ?? null);
-      setDescription(coin.description ?? "");
-    }
-  }, [coin]);
 
   const isCreator =
     walletAddress && coin?.creator &&
@@ -57,7 +53,7 @@ export default function CoinSettingsPage({ params }: Props) {
     try {
       await ensureSignedIn();
       const { uri } = await uploadFileToIpfs(file, "image");
-      setImage(uri);
+      edit({ image: uri });
     } catch (err) {
       console.error("coin image upload failed", err);
       const t = uploadFailureToast(err);
@@ -69,19 +65,10 @@ export default function CoinSettingsPage({ params }: Props) {
   }
 
   async function handleSave() {
-    setSaving(true);
-    setSaveMessage(null);
-    try {
-      await ensureSignedIn();
+    await save("Coin profile updated.", async () => {
       await updateCoinProfile(contract, { image, description: description || null });
       await mutate();
-      setSaveMessage({ tone: "success", text: "Coin profile updated." });
-    } catch (err) {
-      console.error("coin profile save failed", err);
-      setSaveMessage({ tone: "error", text: "Your changes could not be saved. Please try again." });
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   const previewUrl = resolveImage(image);
@@ -116,7 +103,7 @@ export default function CoinSettingsPage({ params }: Props) {
               {uploading ? "Uploading…" : "Upload image"}
             </Button>
             {image && (
-              <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => setImage(null)}>
+              <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => edit({ image: null })}>
                 Remove
               </button>
             )}
@@ -132,7 +119,7 @@ export default function CoinSettingsPage({ params }: Props) {
         <div className="border-t border-border pt-4 space-y-1.5">
           <Label htmlFor="description">Description</Label>
           <Textarea id="description" rows={4} maxLength={500} value={description}
-            onChange={(e) => setDescription(e.target.value)} placeholder="What is this coin about?" />
+            onChange={(e) => edit({ description: e.target.value })} placeholder="What is this coin about?" />
         </div>
       </div>
 

@@ -1,10 +1,11 @@
 "use client";
 
 import { CollectionSlugClaimSection } from "@/components/portfolio/collection-slug-claim";
-import { InlineNote, type InlineMessage } from "@/components/shared/inline-note";
-import { use, useState, useEffect } from "react";
+import { InlineNote } from "@/components/shared/inline-note";
+import { useDraft } from "@/hooks/use-draft";
+import { useSave } from "@/hooks/use-save";
+import { use } from "react";
 import { useWallet } from "@/hooks/use-wallet";
-import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCollection, useCollectionProfile } from "@medialane/ui";
 import { getMedialaneClient } from "@/lib/medialane-client";
 import { Button } from "@medialane/ui/button";
@@ -29,37 +30,23 @@ interface Props { params: Promise<{ contract: string }> }
 export default function CollectionSettingsPage({ params }: Props) {
   const { contract } = use(params);
   const { address: walletAddress } = useWallet();
-  const { ensureSignedIn } = useAccountSession();
   const { collection, isLoading: collectionLoading } = useCollection(contract);
   const { profile, isLoading: profileLoading, mutate } = useCollectionProfile(contract);
-  const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<InlineMessage>(null);
-  const [form, setForm] = useState({
-    displayName: "", description: "", image: "", bannerImage: "",
-    websiteUrl: "", twitterUrl: "", discordUrl: "", telegramUrl: "",
-    gatedEnabled: false,
-    gatedContentTitle: "",
+  const { saving, message: saveMessage, save } = useSave();
+  const { draft: form, edit } = useDraft({
+    displayName: profile?.displayName ?? "",
+    description: profile?.description ?? "",
+    image: profile?.image ?? "",
+    bannerImage: profile?.bannerImage ?? "",
+    websiteUrl: profile?.websiteUrl ?? "",
+    twitterUrl: profile?.twitterUrl ?? "",
+    discordUrl: profile?.discordUrl ?? "",
+    telegramUrl: profile?.telegramUrl ?? "",
+    gatedEnabled: !!profile?.hasGatedContent,
+    gatedContentTitle: profile?.gatedContentTitle ?? "",
     gatedContentUrl: "",
     gatedContentType: "",
   });
-
-  useEffect(() => {
-    if (profile) {
-      setForm(f => ({
-        ...f,
-        displayName: profile.displayName ?? "",
-        description: profile.description ?? "",
-        image: profile.image ?? "",
-        bannerImage: profile.bannerImage ?? "",
-        websiteUrl: profile.websiteUrl ?? "",
-        twitterUrl: profile.twitterUrl ?? "",
-        discordUrl: profile.discordUrl ?? "",
-        telegramUrl: profile.telegramUrl ?? "",
-        gatedEnabled: !!profile.hasGatedContent,
-        gatedContentTitle: profile.gatedContentTitle ?? "",
-      }));
-    }
-  }, [profile]);
 
   const isOwner = isCollectionOwner(collection, walletAddress);
 
@@ -72,9 +59,7 @@ export default function CollectionSettingsPage({ params }: Props) {
   }
 
   async function handleSave() {
-    setSaving(true);
-    setSaveMessage(null);
-    try {
+    await save("Collection profile updated.", async () => {
       const payload = {
         displayName: form.displayName || null,
         description: form.description || null,
@@ -90,16 +75,9 @@ export default function CollectionSettingsPage({ params }: Props) {
           ? ((form.gatedContentType || null) as "VIDEO" | "STREAM" | "AUDIO" | "DOCUMENT" | "LINK" | null)
           : null,
       };
-      await ensureSignedIn();
       await getMedialaneClient().api.collections.updateProfile(contract, payload);
       await mutate();
-      setSaveMessage({ tone: "success", text: "Collection profile updated." });
-    } catch (err) {
-      console.error("collection profile save failed", err);
-      setSaveMessage({ tone: "error", text: "Your changes could not be saved. Please try again." });
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   const field = (
@@ -114,7 +92,7 @@ export default function CollectionSettingsPage({ params }: Props) {
         id={key}
         placeholder={placeholder}
         value={form[key] as string}
-        onChange={(e) => setForm(f => ({ ...f, [key]: e.target.value }))}
+        onChange={(e) => edit({ [key]: e.target.value })}
       />
       {helper && <p className="text-xs text-muted-foreground">{helper}</p>}
     </div>
@@ -139,7 +117,7 @@ export default function CollectionSettingsPage({ params }: Props) {
             <Textarea
               id="description"
               value={form.description}
-              onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
+              onChange={(e) => edit({ description: e.target.value })}
               rows={4}
               placeholder="Tell people about your collection…"
             />
@@ -190,7 +168,7 @@ export default function CollectionSettingsPage({ params }: Props) {
             </div>
             <Switch
               checked={form.gatedEnabled}
-              onCheckedChange={(checked) => setForm(f => ({ ...f, gatedEnabled: checked }))}
+              onCheckedChange={(checked) => edit({ gatedEnabled: checked })}
             />
           </div>
 
@@ -202,7 +180,7 @@ export default function CollectionSettingsPage({ params }: Props) {
                   id="gatedContentTitle"
                   placeholder="e.g. Behind-the-scenes footage"
                   value={form.gatedContentTitle}
-                  onChange={(e) => setForm(f => ({ ...f, gatedContentTitle: e.target.value }))}
+                  onChange={(e) => edit({ gatedContentTitle: e.target.value })}
                 />
               </div>
 
@@ -212,7 +190,7 @@ export default function CollectionSettingsPage({ params }: Props) {
                   id="gatedContentUrl"
                   placeholder="https://…"
                   value={form.gatedContentUrl}
-                  onChange={(e) => setForm(f => ({ ...f, gatedContentUrl: e.target.value }))}
+                  onChange={(e) => edit({ gatedContentUrl: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground">
                   Only holders will see this URL. Use a private or unlisted link.
@@ -223,7 +201,7 @@ export default function CollectionSettingsPage({ params }: Props) {
                 <Label>Content type</Label>
                 <Select
                   value={form.gatedContentType}
-                  onValueChange={(v) => setForm(f => ({ ...f, gatedContentType: v }))}
+                  onValueChange={(v) => edit({ gatedContentType: v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
