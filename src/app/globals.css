@@ -221,10 +221,6 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-@keyframes kenburns {
-  0%   { transform: scale(1.0) translate(0%, 0%); }
-  100% { transform: scale(1.08) translate(-1.5%, -1%); }
-}
 
 .animate-float      { animation: float 5s ease-in-out infinite; }
 .animate-blob       { animation: blob-pulse 7s ease-in-out infinite; }
@@ -232,10 +228,6 @@
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 .animate-spin-slow  { animation: spin-slow 24s linear infinite; }
 .animate-sparkle    { animation: pulse-glow 2.5s ease-in-out infinite; }
-.animate-kenburns {
-  animation: kenburns 8s ease-in-out infinite alternate;
-  transform-origin: center center;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
@@ -243,8 +235,7 @@
   .animate-blob-slow,
   .animate-pulse-glow,
   .animate-spin-slow,
-  .animate-sparkle,
-  .animate-kenburns {
+  .animate-sparkle {
     animation: none;
   }
 }
