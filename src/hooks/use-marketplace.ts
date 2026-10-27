@@ -6,7 +6,6 @@ import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useWriteState } from "@/hooks/use-write-state";
 import { invalidateMarketplace } from "@/lib/cache";
 import { executeIntent, executeIntents } from "@medialane/sdk/starknet";
-import { resetMarketplaceDebug, markMarketplaceDebug, getMarketplaceDebugText } from "@/lib/marketplace-debug";
 
 interface UseMarketplaceReturn {
     createListing: (
@@ -46,16 +45,6 @@ export function useMarketplace(): UseMarketplaceReturn {
     const client = useMedialaneClient();
     const { isProcessing, isConfirmed, isTerminalError, txHash, setTxHash, error, setError, run, resetState } = useWriteState();
 
-    const withProcessing = useCallback(async <T>(op: string, fn: () => Promise<T>): Promise<T | undefined> => {
-        resetMarketplaceDebug(op);
-        const result = await run(fn, (err) => {
-            markMarketplaceDebug(`${op}: threw`);
-            console.error("[marketplace] error:", getMarketplaceDebugText({ error: err }));
-        });
-        if (result !== undefined) markMarketplaceDebug(`${op}: done`);
-        return result;
-    }, [run]);
-
     const submitSigned = useCallback(async (intent: ApiIntentCreated): Promise<string> => {
         if (!signer) throw new Error("Connect your wallet to continue.");
         const { txHash: hash } = await executeIntent(signer, client, intent);
@@ -82,7 +71,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             setError(`${currencySymbol} is not a currency this marketplace accepts.`);
             return undefined;
         }
-        return withProcessing("createListing", async () => {
+        return run(async () => {
             const now = Math.floor(Date.now() / 1000);
             const intentRes = await client.api.intents.create("listing", {
                 offerer: signer.address,
@@ -96,7 +85,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!intentRes.requiresSignature) throw new Error("Expected a signature-required listing intent");
             return submitSigned(intentRes);
         });
-    }, [signer, client, setError, withProcessing, submitSigned]);
+    }, [signer, client, setError, run, submitSigned]);
 
     const makeOffer = useCallback(async (
         assetContractAddress: string,
@@ -115,7 +104,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             setError(`${currencySymbol} is not a currency this marketplace accepts.`);
             return undefined;
         }
-        return withProcessing("makeOffer", async () => {
+        return run(async () => {
             const now = Math.floor(Date.now() / 1000);
             const intentRes = await client.api.intents.create("offer", {
                 offerer: signer.address,
@@ -129,7 +118,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!intentRes.requiresSignature) throw new Error("Expected a signature-required offer intent");
             return submitSigned(intentRes);
         });
-    }, [signer, client, setError, withProcessing, submitSigned]);
+    }, [signer, client, setError, run, submitSigned]);
 
     const checkoutCart = useCallback(async (items: CheckoutItem[], swap?: ApiIntentCreated) => {
         if (!signer) {
@@ -141,7 +130,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
 
-        return withProcessing("checkoutCart", async () => {
+        return run(async () => {
             const checkoutRes = await client.api.intents.checkout({
                 fulfiller: signer.address,
                 items: items.map((i) => ({ orderHash: i.orderHash, quantity: i.quantity })),
@@ -161,14 +150,14 @@ export function useMarketplace(): UseMarketplaceReturn {
             invalidateMarketplace();
             return hash;
         });
-    }, [signer, client, setError, setTxHash, withProcessing]);
+    }, [signer, client, setError, setTxHash, run]);
 
     const cancelOrder = useCallback(async (orderHash: string, tokenStandard?: string) => {
         if (!signer) {
             setError("Connect your wallet to continue.");
             return undefined;
         }
-        return withProcessing("cancelOrder", async () => {
+        return run(async () => {
             const intentRes = await client.api.intents.create("cancel", {
                 offerer: signer.address,
                 orderHash,
@@ -177,14 +166,14 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (!intentRes.requiresSignature) throw new Error("Expected a signature-required cancel intent");
             return submitSigned(intentRes);
         });
-    }, [signer, client, setError, withProcessing, submitSigned]);
+    }, [signer, client, setError, run, submitSigned]);
 
     const acceptOffer = useCallback(async (orderHash: string, tokenStandard?: string) => {
         if (!signer) {
             setError("Connect your wallet to continue.");
             return undefined;
         }
-        return withProcessing("acceptOffer", async () => {
+        return run(async () => {
             const intentRes = await client.api.intents.create("fulfill", {
                 fulfiller: signer.address,
                 orderHash,
@@ -193,7 +182,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             if (intentRes.requiresSignature) throw new Error("Expected a prebuilt fulfill intent");
             return submitSigned(intentRes);
         });
-    }, [signer, client, setError, withProcessing, submitSigned]);
+    }, [signer, client, setError, run, submitSigned]);
 
     return {
         createListing,

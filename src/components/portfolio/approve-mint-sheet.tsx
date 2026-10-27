@@ -35,7 +35,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
   const { address: walletAddress } = useWallet();
   const { ensureSignedIn } = useAccountSession();
   const signer = useVenueSigner();
-  const { createListing } = useMarketplace();
+  const { createListing, error: listingError } = useMarketplace();
   const client = useMedialaneClient();
 
   const { collections } = useCollectionsByOwner(walletAddress ?? null);
@@ -122,13 +122,14 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
       const remixTokenId = mintedTokenIdFromReceipt(receipt, selectedCollection.contractAddress);
       if (!remixTokenId) throw new Error("Could not determine remix token ID");
 
-      await createListing(
+      const listingHash = await createListing(
         selectedCollection.contractAddress,
         remixTokenId,
         offer.price?.raw ?? "0",
         offer.price?.currency ?? "STRK",
         30 * 24 * 60 * 60
       );
+      if (!listingHash) return;
 
       let orderHash: string | undefined;
       const listingDeadline = Date.now() + 15_000;
@@ -235,7 +236,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
                 )}
               </div>
 
-              {approveError && <p role="alert" className="text-sm text-destructive">{approveError}</p>}
+              {(approveError ?? listingError) && <p role="alert" className="text-sm text-destructive">{approveError ?? listingError}</p>}
 
               <Button
                 className="w-full"

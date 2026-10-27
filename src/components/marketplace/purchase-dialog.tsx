@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useOnOpen } from "@/hooks/use-on-open";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Minus, Plus, RefreshCw, ShieldCheck, ShoppingCart } from "lucide-react";
-import { fireConfetti } from "@/lib/confetti";
+import { useConfetti } from "@/hooks/use-confetti";
 import { amountDue, orderTotal, type CheckoutItem } from "@/lib/checkout";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
@@ -31,21 +31,18 @@ interface PurchaseDialogProps {
   onSuccess?: () => void;
 }
 
-type Step = "details" | "processing" | "success";
-
 export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: PurchaseDialogProps) {
   const router = useRouter();
   const { address, isConnected } = useWallet();
-  const { checkoutCart, isProcessing, txHash, error, resetState } = useMarketplace();
+  const { checkoutCart, isProcessing, isConfirmed, isTerminalError, txHash, error, resetState } = useMarketplace();
 
   const isOwnOrder =
     isConnected &&
     !!address &&
     normalizeAddress("STARKNET", order.offerer) === normalizeAddress("STARKNET", address);
-  const [step, setStep] = useState<Step>("details");
+  const [preparing, setPreparing] = useState(false);
   const [buyError, setBuyError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
   const [paymentSymbol, setPaymentSymbol] = useState<string | null>(null);
   const isERC1155 = order.offer.itemType === "ERC1155";
   const maxQty = isERC1155
@@ -63,11 +60,11 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
 
   useOnOpen(open, () => {
     resetState();
-    setStep("details");
     setQuantity(1);
-    setSuccessTxHash(null);
     setPaymentSymbol(null);
   });
+
+  useConfetti(isConfirmed);
 
   const handleBuy = async () => {
     setBuyError(null);
@@ -78,48 +75,34 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     }
     if (needsSwap && !paymentSymbol) return;
 
-    try {
-      setStep("processing");
-
-      let swap: Awaited<ReturnType<typeof createSwapIntent>> | undefined;
-      if (paymentSymbol && order.price?.currency && address) {
-        try {
-          swap = await createSwapIntent(getMedialaneClient().api, {
-            sellSymbol: paymentSymbol,
-            buySymbol: order.price.currency,
-            buyAmountRaw: amountDue(order, quantity).toString(),
-            takerAddress: address,
-          });
-        } catch {
-          setStep("details");
-          setBuyError("The price moved before the swap could be prepared. Please try again.");
-          return;
-        }
+    let swap: Awaited<ReturnType<typeof createSwapIntent>> | undefined;
+    if (paymentSymbol && order.price?.currency && address) {
+      setPreparing(true);
+      try {
+        swap = await createSwapIntent(getMedialaneClient().api, {
+          sellSymbol: paymentSymbol,
+          buySymbol: order.price.currency,
+          buyAmountRaw: amountDue(order, quantity).toString(),
+          takerAddress: address,
+        });
+      } catch {
+        setBuyError("The price moved before the swap could be prepared. Please try again.");
+        return;
+      } finally {
+        setPreparing(false);
       }
-
-      const item: CheckoutItem = {
-        orderHash: order.orderHash,
-        considerationToken: order.consideration.token,
-
-        considerationAmount: orderTotal(order, quantity).toString(),
-        offerIdentifier: order.offer.identifier,
-        isERC1155,
-        quantity: quantity.toString(),
-      };
-      const hash = await checkoutCart([item], swap);
-      if (hash) {
-        setSuccessTxHash(hash);
-        setStep("success");
-        fireConfetti();
-        onSuccess?.();
-      } else {
-        setStep("details");
-      }
-    } catch (e) {
-      setStep("details");
-      console.error("purchase failed", e);
-      setBuyError("Your purchase could not be completed. Please try again.");
     }
+
+    const item: CheckoutItem = {
+      orderHash: order.orderHash,
+      considerationToken: order.consideration.token,
+      considerationAmount: orderTotal(order, quantity).toString(),
+      offerIdentifier: order.offer.identifier,
+      isERC1155,
+      quantity: quantity.toString(),
+    };
+    const hash = await checkoutCart([item], swap);
+    if (hash) onSuccess?.();
   };
 
   const handleClose = (nextOpen: boolean) => {
@@ -137,8 +120,6 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     onSuccess?.();
   };
 
-  const isTerminalError = !isProcessing && !!error && !!txHash && step !== "success";
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-[calc(100%-12px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl">
@@ -146,8 +127,8 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         <DialogDescription className="sr-only">
           Review the asset, price, quantity, and transaction status for this marketplace purchase.
         </DialogDescription>
-        {step === "success" ? (
-          <SuccessScreen order={order} quantity={quantity} txHash={successTxHash ?? txHash} onClose={handleDone} onViewPortfolio={handleViewPortfolio} />
+        {isConfirmed ? (
+          <SuccessScreen order={order} quantity={quantity} txHash={txHash} onClose={handleDone} onViewPortfolio={handleViewPortfolio} />
         ) : isTerminalError ? (
           <MarketplaceErrorState
             tokenImage={resolveImage(order.token?.image)}
@@ -157,13 +138,10 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
             error={error}
             txHash={txHash}
             explorerUrl={EXPLORER_URL}
-            onRetry={() => {
-              resetState();
-              setStep("details");
-            }}
+            onRetry={resetState}
             onDone={() => onOpenChange(false)}
           />
-        ) : step === "processing" || isProcessing ? (
+        ) : preparing || isProcessing ? (
           <div className="flex flex-col">
             <TokenHero order={order} quantity={quantity} />
             <div className="px-5 py-8 flex flex-col items-center text-center gap-4">
