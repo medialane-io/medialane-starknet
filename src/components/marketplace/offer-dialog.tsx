@@ -25,7 +25,8 @@ import {
   CurrencyPicker,
   DurationPicker,
   MarketplaceErrorState,
-  MarketplaceSuccessState,
+  TransactionSuccess,
+  successMessages,
   MarketplaceProcessingState,
   MarketplaceDialogHero,
 } from "@medialane/ui";
@@ -77,20 +78,15 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
           Set an amount, currency, and expiry to submit an onchain marketplace offer.
         </DialogDescription>
         {isConfirmed ? (
-          <MarketplaceSuccessState
-            title="Offer live!"
-            description={
-              <>
-                Your offer on <span className="font-medium text-foreground">{name}</span> is now active.
-              </>
-            }
-            txHash={txHash}
-            explorerUrl={EXPLORER_URL}
-            tokenImage={tokenImage}
+          <TransactionSuccess
             name={name}
-            footer={<RewardEarned actionType="make_offer" />}
-            onDone={() => { onOpenChange(false); onSuccess?.(); }}
-          />
+            image={tokenImage}
+            {...successMessages.offered({ name, price: `${form.getValues("price")} ${form.getValues("currency")}` })}
+            txHash={txHash}
+            actions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
+          >
+            <RewardEarned actionType="make_offer" />
+          </TransactionSuccess>
         ) : isTerminalError ? (
           <MarketplaceErrorState
             tokenImage={tokenImage}

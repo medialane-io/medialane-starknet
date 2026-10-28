@@ -2,7 +2,7 @@
 
 import { useOnOpen } from "@/hooks/use-on-open";
 import Image from "next/image";
-import { CheckCircle2, AlertCircle, X } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
@@ -11,7 +11,8 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 import { resolveImage, formatDisplayPrice } from "@/lib/utils";
 import {
   MarketplaceProcessingState,
-  MarketplaceTxLink,
+  TransactionSuccess,
+  successMessages,
 } from "@medialane/ui";
 import { EXPLORER_URL } from "@/lib/constants";
 import type { ApiOrder } from "@medialane/sdk";
@@ -96,35 +97,13 @@ export function CancelOrderDialog({
         </DialogDescription>
 
         {isConfirmed ? (
-          <div className="flex flex-col items-center gap-5 p-6 py-8">
-            <div className="h-16 w-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
-              <CheckCircle2 className="h-9 w-9 text-emerald-500" />
-            </div>
-            {image && (
-              <div className="h-24 w-24 rounded-2xl overflow-hidden border border-border shadow-md">
-                <Image
-                  src={image}
-                  alt={order?.token?.name || `Token #${order?.nftTokenId}`}
-                  width={96}
-                  height={96}
-                  className="h-full w-full object-cover"
-                  unoptimized
-                />
-              </div>
-            )}
-            <div className="text-center space-y-1">
-              <p className="font-bold text-xl capitalize">{resolvedVariant} cancelled</p>
-              <p className="text-sm text-muted-foreground">
-                Your {resolvedVariant} for{" "}
-                <span className="font-medium text-foreground">
-                  {order?.token?.name || `Token #${order?.nftTokenId}`}
-                </span>{" "}
-                has been removed.
-              </p>
-            </div>
-            {txHash ? <MarketplaceTxLink txHash={txHash} explorerUrl={EXPLORER_URL} /> : null}
-            <Button className="w-full" onClick={() => onOpenChange(false)}>Done</Button>
-          </div>
+          <TransactionSuccess
+            name={order?.token?.name || `Token #${order?.nftTokenId}`}
+            image={image}
+            {...successMessages.cancelled({ kind: resolvedVariant })}
+            txHash={txHash}
+            actions={[{ label: "Done", onClick: () => onOpenChange(false) }]}
+          />
 
         ) : isProcessing ? (
 

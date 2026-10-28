@@ -7,7 +7,7 @@ import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
 import { Label } from "@medialane/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
-import { useMedialaneClient, describeError, MarketplaceSuccessState, useCollectionsByOwner } from "@medialane/ui";
+import { useMedialaneClient, describeError, TransactionSuccess, useCollectionsByOwner } from "@medialane/ui";
 import { executeIntent, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 
@@ -19,7 +19,6 @@ import { formatDisplayPrice } from "@/lib/utils";
 import { getService } from "@medialane/sdk";
 import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";
-import { EXPLORER_URL } from "@/lib/constants";
 import { useConfetti } from "@/hooks/use-confetti";
 import { assetHref } from "@/lib/routes";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
@@ -171,20 +170,15 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
           </SheetHeader>
 
           {done ? (
-            <MarketplaceSuccessState
+            <TransactionSuccess
               name="Remix"
               title="License granted!"
-              description={'The buyer will see "Complete Purchase" in their portfolio.'}
+              description='The buyer will see "Complete Purchase" in their portfolio.'
               txHash={mintHash}
-              explorerUrl={EXPLORER_URL}
-              onDone={() => handleOpenChange(false)}
-              footer={
-                newAssetLink ? (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={newAssetLink}>View new asset</a>
-                  </Button>
-                ) : undefined
-              }
+              actions={[
+                { label: "Done", onClick: () => handleOpenChange(false) },
+                ...(newAssetLink ? [{ label: "View new asset", href: newAssetLink }] : []),
+              ]}
             />
           ) : (
             <div className="space-y-5 pt-4">

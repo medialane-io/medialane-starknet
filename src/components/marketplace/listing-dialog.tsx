@@ -23,7 +23,8 @@ import {
   CurrencyPicker,
   DurationPicker,
   MarketplaceErrorState,
-  MarketplaceSuccessState,
+  TransactionSuccess,
+  successMessages,
   MarketplaceProcessingState,
   MarketplaceDialogHero,
 } from "@medialane/ui";
@@ -85,20 +86,15 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
           Set pricing, currency, duration, and quantity to create an onchain marketplace listing.
         </DialogDescription>
         {isConfirmed ? (
-          <MarketplaceSuccessState
-            title="Listing live!"
-            description={
-              <>
-                <span className="font-medium text-foreground">{name}</span> will appear for sale shortly.
-              </>
-            }
-            txHash={txHash}
-            explorerUrl={EXPLORER_URL}
-            tokenImage={tokenImage}
+          <TransactionSuccess
             name={name}
-            footer={<RewardEarned actionType="list_asset" />}
-            onDone={() => { onOpenChange(false); onSuccess?.(); }}
-          />
+            image={tokenImage}
+            {...successMessages.listed({ name, price: `${form.getValues("price")} ${form.getValues("currency")}${is1155 && form.getValues("amount") && form.getValues("amount") !== "1" ? ` × ${form.getValues("amount")}` : ""}` })}
+            txHash={txHash}
+            actions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
+          >
+            <RewardEarned actionType="list_asset" />
+          </TransactionSuccess>
         ) : isTerminalError ? (
           <MarketplaceErrorState
             tokenImage={tokenImage}

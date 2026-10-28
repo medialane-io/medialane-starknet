@@ -13,13 +13,14 @@ import { Input } from "@medialane/ui/input";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { EXPLORER_URL, DURATION_OPTIONS } from "@/lib/constants";
+import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
 import { orderFormSchema } from "@/lib/order-form";
 import { useOnOpen } from "@/hooks/use-on-open";
 import {
   DurationPicker,
-  MarketplaceSuccessState,
+  TransactionSuccess,
+  successMessages,
   MarketplaceProcessingState,
 } from "@medialane/ui";
 
@@ -68,14 +69,12 @@ export function CounterOfferDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
       <DialogContent className="sm:max-w-md">
         {isConfirmed ? (
-          <MarketplaceSuccessState
-            title="Counter-offer submitted!"
-            description={`Your counter on ${tokenName || `#${tokenId}`} is live.`}
-            txHash={txHash}
-            explorerUrl={EXPLORER_URL}
+          <TransactionSuccess
             name={tokenName || `#${tokenId}`}
-            tokenImage={tokenImage}
-            onDone={() => { onOpenChange(false); onSuccess?.(); }}
+            image={tokenImage}
+            {...successMessages.countered({ name: tokenName || `#${tokenId}`, price: `${form.getValues("price")} ${currencySymbol}` })}
+            txHash={txHash}
+            actions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
           />
         ) : isProcessing ? (
           <MarketplaceProcessingState title="Submitting counter-offer…" />
