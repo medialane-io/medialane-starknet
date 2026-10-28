@@ -16,7 +16,8 @@ import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
   MarketplaceErrorState,
   MarketplaceProcessingState,
-  MarketplaceSuccessState,
+  TransactionSuccess,
+  successMessages,
 } from "@medialane/ui";
 import type { ApiOrder } from "@medialane/sdk";
 
@@ -133,30 +134,18 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
         )}
 
         {step === "success" && (
-          <MarketplaceSuccessState
-            tokenImage={image}
+          <TransactionSuccess
             name={name}
-            title="Sold!"
-            description={
-              <>
-                <span className="font-medium text-foreground">{name}</span> sold for{" "}
-                <span className="font-semibold text-foreground">
-                  {formatDisplayPrice(order.price?.formatted)} {order.price?.currency}
-                </span>
-              </>
-            }
+            image={image}
+            {...successMessages.accepted({ name, price: `${formatDisplayPrice(order.price?.formatted)} ${order.price?.currency}` })}
             txHash={txHash}
-            explorerUrl={EXPLORER_URL}
-            onDone={handleDone}
-            footer={
-              <>
-                <RewardEarned actionType="offer_accepted_seller" />
-                <Button variant="outline" className="w-full h-11" onClick={() => { handleDone(); router.push("/portfolio/assets"); }}>
-                  View portfolio
-                </Button>
-              </>
-            }
-          />
+            actions={[
+              { label: "Done", onClick: handleDone },
+              { label: "View portfolio", onClick: () => { handleDone(); router.push("/portfolio/assets"); } },
+            ]}
+          >
+            <RewardEarned actionType="offer_accepted_seller" />
+          </TransactionSuccess>
         )}
 
         {step === "error" && (

@@ -6,7 +6,9 @@ import * as z from "zod";
 import { AlertCircle, ArrowRightLeft } from "lucide-react";
 import {
   MarketplaceProcessingState,
-  MarketplaceSuccessState,
+  TransactionSuccess,
+  successMessages,
+  shortenAddress,
 } from "@medialane/ui";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@medialane/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
@@ -16,7 +18,6 @@ import { resolveImage } from "@/lib/utils";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 
 import { useTransfer } from "@/hooks/use-transfer";
-import { EXPLORER_URL } from "@/lib/constants";
 
 const schema = z.object({
   toAddress: z
@@ -102,19 +103,22 @@ export function TransferDialog({
           </DialogHeader>
 
           {isConfirmed ? (
-            <MarketplaceSuccessState
-              title="Transfer complete!"
-              description={`${displayName} has been sent successfully.`}
-              txHash={txHash}
-              explorerUrl={EXPLORER_URL}
+            <TransactionSuccess
               name={displayName}
-              tokenImage={tokenImage}
-              onDone={() => {
-                resetState();
-                form.reset();
-                onOpenChange(false);
-                onSuccess?.();
-              }}
+              image={tokenImage}
+              {...successMessages.transferred({ name: displayName, to: shortenAddress(form.getValues("toAddress")) })}
+              txHash={txHash}
+              actions={[
+                {
+                  label: "Done",
+                  onClick: () => {
+                    resetState();
+                    form.reset();
+                    onOpenChange(false);
+                    onSuccess?.();
+                  },
+                },
+              ]}
             />
           ) : isProcessing ? (
             <MarketplaceProcessingState title="Submitting transfer…" />
