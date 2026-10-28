@@ -8,7 +8,7 @@ import { assetHref as buildAssetHref } from "@/lib/routes";
 import { EXPLORER_URL } from "@/lib/constants";
 import { formatDisplayPrice, resolveImage } from "@/lib/utils";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
-import { MarketplaceTxLink } from "@medialane/ui";
+import { MarketplaceTxLink, successMessages } from "@medialane/ui";
 import type { ApiOrder } from "@medialane/sdk";
 import { resolveFeeConfig } from "@medialane/sdk";
 
@@ -110,7 +110,7 @@ export function SuccessScreen({
   const assetHref = buildAssetHref("STARKNET", order.nftContract, order.nftTokenId);
   const unitPrice = order.price?.formatted ? parseFloat(order.price.formatted) : null;
   const totalPrice = unitPrice !== null ? unitPrice * quantity : null;
-  const headline = is1155 && quantity > 1 ? `You own ${quantity} editions!` : "You own it!";
+  const message = successMessages.purchased({ name: name ?? "the asset", quantity: is1155 ? quantity : 1 });
 
   return (
     <div className="flex flex-col">
@@ -130,8 +130,8 @@ export function SuccessScreen({
           </div>
         </div>
         <div className="text-center min-w-0 max-w-full">
-          <p className="font-black text-xl leading-tight">{headline}</p>
-          {name ? <p className="text-muted-foreground text-sm font-medium truncate mt-0.5">{name}</p> : null}
+          <p className="font-black text-xl leading-tight">{message.title}</p>
+          <p className="text-muted-foreground text-sm mt-0.5 break-words">{message.description}</p>
         </div>
       </div>
 

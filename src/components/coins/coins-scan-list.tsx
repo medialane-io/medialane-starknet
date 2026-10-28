@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CoinRow, CoinRowSkeleton, COIN_GRID, coinKind, coinServiceIds, type CoinCollectionLike } from "@medialane/ui";
+import { CoinRow, CoinRowSkeleton, COIN_GRID, coinKind, coinServiceIds, emptyMessages, type CoinCollectionLike } from "@medialane/ui";
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
 import { useCoinPriceAdapter } from "./use-coin-price-adapter";
 import { cn } from "@/lib/utils";
@@ -64,9 +64,16 @@ export function CoinsScanList({ query }: { query: string }) {
         {isLoading && items.length === 0 ? (
           Array.from({ length: 6 }).map((_, i) => <CoinRowSkeleton key={i} />)
         ) : items.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            {query.trim() ? `No tokens match "${query.trim()}".` : "No tokens yet."}
-          </p>
+          <div className="py-16 text-center">
+            {query.trim() ? (
+              <p className="text-sm text-muted-foreground">{`No tokens match "${query.trim()}".`}</p>
+            ) : (
+              <>
+                <p className="text-sm font-medium">{emptyMessages.coins.title}</p>
+                <p className="text-sm text-muted-foreground">{emptyMessages.coins.description}</p>
+              </>
+            )}
+          </div>
         ) : (
           items.map((c) => (
             <CoinRow

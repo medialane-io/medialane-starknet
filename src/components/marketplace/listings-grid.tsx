@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useOrders, LoadMoreSentinel } from "@medialane/ui";
+import { useOrders, LoadMoreSentinel, emptyMessages } from "@medialane/ui";
 
 import { ListingCard, ListingCardSkeleton } from "./listing-card";
 import { PurchaseDialog } from "./purchase-dialog";
@@ -105,16 +105,11 @@ export function ListingsGrid({ sort = "recent", currency, orderType = "", minPri
   }
 
   if (filteredOrders.length === 0 && !isLoading && !hasBackendMore) {
-    const emptyHeading =
-      orderType === "offers" ? "No offers yet" : "No listings yet";
-    const emptyBody =
-      orderType === "offers"
-        ? "No active bids on any assets right now."
-        : "Be the first to list your IP asset on Medialane.";
+    const empty = orderType === "offers" ? emptyMessages.offers : emptyMessages.listings;
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <p className="text-2xl font-bold">{emptyHeading}</p>
-        <p className="text-muted-foreground max-w-sm">{emptyBody}</p>
+        <p className="text-2xl font-bold">{empty.title}</p>
+        <p className="text-muted-foreground max-w-sm">{empty.description}</p>
         {orderType !== "offers" && (
           <Button variant="outline" asChild>
             <Link href="/create">Create &amp; List</Link>

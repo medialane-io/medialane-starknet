@@ -7,7 +7,7 @@ import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
 import { Label } from "@medialane/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
-import { useMedialaneClient, describeError, TransactionSuccess, useCollectionsByOwner } from "@medialane/ui";
+import { useMedialaneClient, describeError, TransactionSuccess, successMessages, useCollectionsByOwner } from "@medialane/ui";
 import { executeIntent, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 
@@ -172,8 +172,7 @@ export function ApproveMintSheet({ offer, open, onOpenChange, onSuccess }: Props
           {done ? (
             <TransactionSuccess
               name="Remix"
-              title="License granted!"
-              description='The buyer will see "Complete Purchase" in their portfolio.'
+              {...successMessages.licenseGranted({ price: priceDisplay })}
               txHash={mintHash}
               actions={[
                 { label: "Done", onClick: () => handleOpenChange(false) },
