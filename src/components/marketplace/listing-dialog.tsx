@@ -23,7 +23,7 @@ import {
   CurrencyPicker,
   DurationPicker,
   MarketplaceErrorState,
-  TransactionSuccess,
+  DialogTransactionSuccess,
   successMessages,
   MarketplaceProcessingState,
   MarketplaceDialogHero,
@@ -86,7 +86,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
           Set pricing, currency, duration, and quantity to create an onchain marketplace listing.
         </DialogDescription>
         {isConfirmed ? (
-          <TransactionSuccess
+          <DialogTransactionSuccess
             name={name}
             image={tokenImage}
             {...successMessages.listed({ name, price: `${form.getValues("price")} ${form.getValues("currency")}${is1155 && form.getValues("amount") && form.getValues("amount") !== "1" ? ` × ${form.getValues("amount")}` : ""}` })}
@@ -94,7 +94,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
             actions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
           >
             <RewardEarned actionType="list_asset" />
-          </TransactionSuccess>
+          </DialogTransactionSuccess>
         ) : isTerminalError ? (
           <MarketplaceErrorState
             tokenImage={tokenImage}
