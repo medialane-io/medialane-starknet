@@ -25,7 +25,7 @@ import {
   CurrencyPicker,
   DurationPicker,
   MarketplaceErrorState,
-  TransactionSuccess,
+  DialogTransactionSuccess,
   successMessages,
   MarketplaceProcessingState,
   MarketplaceDialogHero,
@@ -78,7 +78,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
           Set an amount, currency, and expiry to submit an onchain marketplace offer.
         </DialogDescription>
         {isConfirmed ? (
-          <TransactionSuccess
+          <DialogTransactionSuccess
             name={name}
             image={tokenImage}
             {...successMessages.offered({ name, price: `${form.getValues("price")} ${form.getValues("currency")}` })}
@@ -86,7 +86,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
             actions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
           >
             <RewardEarned actionType="make_offer" />
-          </TransactionSuccess>
+          </DialogTransactionSuccess>
         ) : isTerminalError ? (
           <MarketplaceErrorState
             tokenImage={tokenImage}

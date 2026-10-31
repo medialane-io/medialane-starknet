@@ -11,7 +11,7 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 import { resolveImage, formatDisplayPrice } from "@/lib/utils";
 import {
   MarketplaceProcessingState,
-  TransactionSuccess,
+  DialogTransactionSuccess,
   successMessages,
 } from "@medialane/ui";
 import { EXPLORER_URL } from "@/lib/constants";
@@ -97,7 +97,7 @@ export function CancelOrderDialog({
         </DialogDescription>
 
         {isConfirmed ? (
-          <TransactionSuccess
+          <DialogTransactionSuccess
             name={order?.token?.name || `Token #${order?.nftTokenId}`}
             image={image}
             {...successMessages.cancelled({ kind: resolvedVariant })}
