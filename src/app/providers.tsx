@@ -1,6 +1,6 @@
 "use client";
 
-import { MedialaneAppProvider, NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground, useCreatorProfile } from "@medialane/ui";
+import { MedialaneAppProvider, NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground, useCreatorProfile, IpfsGatewayFallback, PINATA_PUBLIC_GATEWAY } from "@medialane/ui";
 import { useAppAdapter } from "@/lib/use-app-adapter";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
@@ -10,6 +10,7 @@ import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
 import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
 import { resolveImage } from "@/lib/utils";
+import { IPFS_GATEWAY } from "@/lib/constants";
 
 import { MedialaneLogoFull as MedialaneLogo } from "@medialane/ui/brand-logo";
 import { NAV_COMMANDS } from "@/lib/nav-commands";
@@ -118,6 +119,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           },
         }}
       >
+        <IpfsGatewayFallback primary={IPFS_GATEWAY} fallback={PINATA_PUBLIC_GATEWAY} />
         <StarknetProvider>
           <WalletProvider>
             <WalletSessionSync>
