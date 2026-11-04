@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { getTokenBySymbol, type ApiIntentCreated, type IntentCall } from "@medialane/sdk";
-import { useMedialaneClient } from "@medialane/ui";
+import { useMedialaneClient, UserFacingError } from "@medialane/ui";
 import type { CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useWriteState } from "@/hooks/use-write-state";
@@ -137,7 +137,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             });
             const failed = checkoutRes.filter((r) => r.error);
             if (failed.length > 0) {
-                throw new Error(`${failed.length} item(s) could not be prepared: ${failed.map((f) => f.error).join("; ")}`);
+                throw new UserFacingError(failed.map((f) => f.error).join(" "));
             }
             const prepared = checkoutRes.map((r): ApiIntentCreated => ({
                 id: r.id!,
