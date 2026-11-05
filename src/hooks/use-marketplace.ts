@@ -73,7 +73,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
         return run(async () => {
             const now = Math.floor(Date.now() / 1000);
-            const intentRes = await client.api.intents.create("listing", {
+            const intentRes = await client.createIntent("listing", {
                 offerer: signer.address,
                 nftContract: assetContractAddress,
                 tokenId,
@@ -106,7 +106,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
         return run(async () => {
             const now = Math.floor(Date.now() / 1000);
-            const intentRes = await client.api.intents.create("offer", {
+            const intentRes = await client.createIntent("offer", {
                 offerer: signer.address,
                 nftContract: assetContractAddress,
                 tokenId,
@@ -158,7 +158,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         return run(async () => {
-            const intentRes = await client.api.intents.create("cancel", {
+            const intentRes = await client.createIntent("cancel", {
                 offerer: signer.address,
                 orderHash,
                 tokenStandard: asTokenStandard(tokenStandard),
