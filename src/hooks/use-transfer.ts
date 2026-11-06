@@ -26,7 +26,7 @@ export function useTransfer() {
   const client = useMedialaneClient();
   const { address } = useWallet();
   const signer = useVenueSigner();
-  const { isProcessing, txHash, setTxHash, error, isConfirmed, run, resetState } = useWriteState();
+  const { phase, txHash, setTxHash, error, run, resetState } = useWriteState();
 
   const transferToken = useCallback(
     (input: TransferInput) =>
@@ -57,8 +57,7 @@ export function useTransfer() {
   return {
     transferToken,
     walletAddress: address,
-    isProcessing,
-    isConfirmed,
+    phase,
     txHash,
     error,
     resetState,

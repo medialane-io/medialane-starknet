@@ -36,8 +36,6 @@ export function useWriteState() {
     setTxHash,
     error,
     setError,
-    isConfirmed: !isProcessing && !!txHash && !error,
-    isTerminalError: !isProcessing && !!txHash && !!error,
     run,
     resetState,
   };
