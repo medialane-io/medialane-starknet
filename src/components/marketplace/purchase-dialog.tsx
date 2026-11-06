@@ -18,7 +18,7 @@ import { EXPLORER_URL } from "@/lib/constants";
 import { resolveImage, usdValueFor } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 import { assetHref } from "@/lib/routes";
-import { DialogTransactionSuccess, MarketplaceErrorState, MarketplaceTxLink, OrderSummaryHero, successMessages } from "@medialane/ui";
+import { isBusyPhase, OrderSummaryHero, TransactionDialogStates, successMessages, type TransactionPhase } from "@medialane/ui";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { useTokenBalance } from "@/hooks/use-token-balance";
@@ -36,13 +36,15 @@ interface PurchaseDialogProps {
 export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: PurchaseDialogProps) {
   const router = useRouter();
   const { address, isConnected } = useWallet();
-  const { checkoutCart, isProcessing, isConfirmed, isTerminalError, txHash, error, resetState } = useMarketplace();
+  const { checkoutCart, phase: writePhase, txHash, error, resetState } = useMarketplace();
 
   const isOwnOrder =
     isConnected &&
     !!address &&
     normalizeAddress("STARKNET", order.offerer) === normalizeAddress("STARKNET", address);
   const [preparing, setPreparing] = useState(false);
+  const phase: TransactionPhase = preparing ? "preparing" : writePhase;
+  const busy = isBusyPhase(phase);
   const [buyError, setBuyError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [paymentSymbol, setPaymentSymbol] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     setPaymentSymbol(null);
   });
 
-  useConfetti(isConfirmed);
+  useConfetti(phase === "success");
 
   const handleBuy = async () => {
     setBuyError(null);
@@ -131,7 +133,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   };
 
   const handleClose = (nextOpen: boolean) => {
-    if (!isProcessing) onOpenChange(nextOpen);
+    if (!busy) onOpenChange(nextOpen);
   };
 
   const handleDone = () => {
@@ -152,141 +154,122 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         <DialogDescription className="sr-only">
           Review the asset, price, quantity, and transaction status for this marketplace purchase.
         </DialogDescription>
-        {isConfirmed ? (
-          <DialogTransactionSuccess
-            name={assetName}
-            image={assetImage}
-            {...successMessages.purchased({ name: order.token?.name ?? "the asset", quantity: isERC1155 ? quantity : 1 })}
-            txHash={txHash}
-            actions={[
-              { label: "View asset", href: assetHref("STARKNET", order.nftContract, order.nftTokenId), onClick: handleDone },
-              { label: "View portfolio", onClick: handleViewPortfolio },
-            ]}
-          />
-        ) : isTerminalError ? (
-          <MarketplaceErrorState
-            tokenImage={assetImage}
-            name={assetName}
-            title="Purchase failed"
-            description="The transaction was submitted, but the purchase could not be completed."
-            error={error}
-            txHash={txHash}
-            explorerUrl={EXPLORER_URL}
-            onRetry={resetState}
-            onDone={() => onOpenChange(false)}
-          />
-        ) : preparing || isProcessing ? (
-          <div className="flex flex-col">
-            {hero}
-            <div className="px-5 py-8 flex flex-col items-center text-center gap-4">
-              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-              <div>
-                <p className="font-bold text-lg">Confirming purchase...</p>
-                <p className="text-sm text-muted-foreground mt-1">Approve the wallet prompts and keep this window open.</p>
-              </div>
-              {txHash ? <MarketplaceTxLink txHash={txHash} explorerUrl={EXPLORER_URL} /> : null}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {hero}
-            <div className="px-5 py-5 space-y-4">
-              <PriceBreakdown order={order} quantity={quantity} />
+        <TransactionDialogStates
+          phase={phase}
+          asset={{ name: assetName, image: assetImage }}
+          statusMessage="Confirming purchase..."
+          statusDescription="Approve the wallet prompts and keep this window open."
+          txHash={txHash}
+          error={error}
+          success={successMessages.purchased({ name: order.token?.name ?? "the asset", quantity: isERC1155 ? quantity : 1 })}
+          successActions={[
+            { label: "View asset", href: assetHref("STARKNET", order.nftContract, order.nftTokenId), onClick: handleDone },
+            { label: "View portfolio", onClick: handleViewPortfolio },
+          ]}
+          errorTitle="Purchase failed"
+          errorDescription="The transaction was submitted, but the purchase could not be completed."
+          onRetry={resetState}
+          onDone={() => onOpenChange(false)}
+        >
+            <div className="flex flex-col">
+              {hero}
+              <div className="px-5 py-5 space-y-4">
+                <PriceBreakdown order={order} quantity={quantity} />
 
-              {isERC1155 && maxQty > 1 ? (
-                <div className="rounded-xl border border-border p-3 space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">Quantity</span>
-                    <span className="text-muted-foreground">{maxQty} available</span>
+                {isERC1155 && maxQty > 1 ? (
+                  <div className="rounded-xl border border-border p-3 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">Quantity</span>
+                      <span className="text-muted-foreground">{maxQty} available</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1}>
+                        <Minus className="h-3.5 w-3.5" />
+                      </Button>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={maxQty}
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.max(1, Math.min(maxQty, parseInt(e.target.value, 10) || 1)))}
+                        className="h-9 text-center font-semibold"
+                      />
+                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty}>
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1}>
-                      <Minus className="h-3.5 w-3.5" />
-                    </Button>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={maxQty}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, Math.min(maxQty, parseInt(e.target.value, 10) || 1)))}
-                      className="h-9 text-center font-semibold"
-                    />
-                    <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty}>
-                      <Plus className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              {isConnected && needsSwap && order.price?.currency ? (
-                <PayWithPicker
-                  orderCurrency={order.price.currency}
-                  requiredRaw={requiredRaw}
-                  walletAddress={address}
-                  selected={paymentSymbol}
-                  onSelect={setPaymentSymbol}
-                />
-              ) : null}
+                {isConnected && needsSwap && order.price?.currency ? (
+                  <PayWithPicker
+                    orderCurrency={order.price.currency}
+                    requiredRaw={requiredRaw}
+                    walletAddress={address}
+                    selected={paymentSymbol}
+                    onSelect={setPaymentSymbol}
+                  />
+                ) : null}
 
-              {error ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              ) : null}
-
-              {isOwnOrder ? (
-                <div className="space-y-2">
-                  <Alert>
+                {error ? (
+                  <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      This is your own listing — you can&apos;t buy it. To take it off the market, cancel the listing instead.
-                    </AlertDescription>
+                    <AlertDescription>{error}</AlertDescription>
                   </Alert>
-                  <Button
-                    className="w-full h-12 text-base font-semibold rounded-[11px]"
-                    variant="secondary"
-                    onClick={() => onOpenChange(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              ) : isConnected ? (
-                <div className="space-y-3">
-                  {buyError && <p role="alert" className="text-sm text-destructive">{buyError}</p>}
-                  <div className={`btn-border-animated p-[1px] rounded-xl ${!canBuy ? "opacity-50 pointer-events-none" : ""}`}>
+                ) : null}
+
+                {isOwnOrder ? (
+                  <div className="space-y-2">
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        This is your own listing — you can&apos;t buy it. To take it off the market, cancel the listing instead.
+                      </AlertDescription>
+                    </Alert>
                     <Button
-                      className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30"
-                      onClick={handleBuy}
-                      disabled={isProcessing || !canBuy}
+                      className="w-full h-12 text-base font-semibold rounded-[11px]"
+                      variant="secondary"
+                      onClick={() => onOpenChange(false)}
                     >
-                      <ShoppingCart className="h-4 w-4" />
-                      {needsSwap && !paymentSymbol ? "Select a token to pay with" : "Buy now"}
+                      Close
                     </Button>
                   </div>
-                  <div className="flex items-start justify-center gap-1.5">
-                      <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
-                      <p className="text-2xs text-center text-muted-foreground">
-                      Your asset arrives the moment your wallet confirms the trade.
+                ) : isConnected ? (
+                  <div className="space-y-3">
+                    {buyError && <p role="alert" className="text-sm text-destructive">{buyError}</p>}
+                    <div className={`btn-border-animated p-[1px] rounded-xl ${!canBuy ? "opacity-50 pointer-events-none" : ""}`}>
+                      <Button
+                        className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30"
+                        onClick={handleBuy}
+                        disabled={busy || !canBuy}
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        {needsSwap && !paymentSymbol ? "Select a token to pay with" : "Buy now"}
+                      </Button>
+                    </div>
+                    <div className="flex items-start justify-center gap-1.5">
+                        <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                        <p className="text-2xs text-center text-muted-foreground">
+                        Your asset arrives the moment your wallet confirms the trade.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="btn-border-animated p-[1px] rounded-2xl">
+                      <ConnectWallet
+                        label="Connect wallet to trade"
+                        className="w-full h-12 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                      />
+                    </div>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Your Starknet wallet is required to sign and complete the trade.
                     </p>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="btn-border-animated p-[1px] rounded-2xl">
-                    <ConnectWallet
-                      label="Connect wallet to trade"
-                      className="w-full h-12 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-                    />
-                  </div>
-                  <p className="text-center text-xs text-muted-foreground">
-                    Your Starknet wallet is required to sign and complete the trade.
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        )}
+        </TransactionDialogStates>
       </DialogContent>
     </Dialog>
   );
