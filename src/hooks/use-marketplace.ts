@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { getTokenBySymbol, type ApiIntentCreated, type IntentCall } from "@medialane/sdk";
-import { useMedialaneClient, UserFacingError } from "@medialane/ui";
+import { useMedialaneClient, UserFacingError, type TransactionPhase } from "@medialane/ui";
 import type { CheckoutItem } from "@/lib/checkout";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 import { useWriteState } from "@/hooks/use-write-state";
@@ -29,6 +29,7 @@ interface UseMarketplaceReturn {
     cancelOrder: (orderHash: string, tokenStandard?: string) => Promise<string | undefined>;
     acceptOffer: (orderHash: string, tokenStandard?: string) => Promise<string | undefined>;
 
+    phase: TransactionPhase;
     isProcessing: boolean;
     isConfirmed: boolean;
     isTerminalError: boolean;
@@ -43,7 +44,7 @@ const asTokenStandard = (value?: string): "ERC721" | "ERC1155" | undefined =>
 export function useMarketplace(): UseMarketplaceReturn {
     const signer = useVenueSigner();
     const client = useMedialaneClient();
-    const { isProcessing, isConfirmed, isTerminalError, txHash, setTxHash, error, setError, run, resetState } = useWriteState();
+    const { phase, isProcessing, isConfirmed, isTerminalError, txHash, setTxHash, error, setError, run, resetState } = useWriteState();
 
     const submitSigned = useCallback(async (intent: ApiIntentCreated): Promise<string> => {
         if (!signer) throw new Error("Connect your wallet to continue.");
@@ -190,6 +191,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         checkoutCart,
         cancelOrder,
         acceptOffer,
+        phase,
         isProcessing,
         isConfirmed,
         isTerminalError,

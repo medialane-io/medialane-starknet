@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { describeError } from "@medialane/ui";
+import { writePhase } from "@/lib/write-phase";
 
 export function useWriteState() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -29,6 +30,7 @@ export function useWriteState() {
   }, []);
 
   return {
+    phase: writePhase({ isProcessing, txHash, error }),
     isProcessing,
     txHash,
     setTxHash,
