@@ -1,17 +1,14 @@
 "use client";
 
 import { useOnOpen } from "@/hooks/use-on-open";
-import Image from "next/image";
-import { AlertCircle, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
-import { Button } from "@medialane/ui/button";
-import { Alert, AlertDescription } from "@medialane/ui/alert";
-import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { resolveImage, formatDisplayPrice } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import {
+  MarketplaceConfirmStep,
   MarketplaceProcessingState,
   DialogTransactionSuccess,
+  OrderSummaryHero,
   successMessages,
 } from "@medialane/ui";
 import { EXPLORER_URL } from "@/lib/constants";
@@ -24,41 +21,6 @@ interface CancelOrderDialogProps {
   onSuccess?: () => void;
 
   variant?: "listing" | "offer";
-}
-
-function TokenHero({ order, variant }: { order: ApiOrder; variant: "listing" | "offer" }) {
-  const image = resolveImage(order.token?.image);
-  const name = order.token?.name || `Token #${order.nftTokenId}`;
-
-  return (
-    <div>
-      <div className="flex justify-center pt-6">
-        <div className="relative h-32 w-32 rounded-2xl overflow-hidden border border-border bg-muted">
-          {image ? (
-            <Image src={image} alt={name} fill sizes="128px" className="h-full w-full object-cover" unoptimized />
-          ) : (
-            <div className="h-full w-full bg-gradient-to-br from-destructive/20 via-brand-rose/10 to-transparent flex items-center justify-center text-2xl font-bold text-muted-foreground/30">
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="flex items-end justify-between px-6 pt-3 pb-1">
-        <div className="min-w-0">
-          <p className="font-bold text-lg leading-tight truncate">{name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 capitalize">Cancel {variant}</p>
-        </div>
-        {order.price && (
-          <div className="shrink-0 text-right ml-4">
-            <p className="flex items-center gap-1.5 font-bold text-xl justify-end">
-              <CurrencyIcon symbol={order.price.currency} size={16} />
-              {formatDisplayPrice(order.price.formatted)}
-            </p>
-            <p className="text-xs text-muted-foreground">{order.price.currency}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export function CancelOrderDialog({
@@ -118,26 +80,22 @@ export function CancelOrderDialog({
 
           order && (
             <div className="space-y-0">
-              <TokenHero order={order} variant={resolvedVariant} />
-              <div className="px-6 pb-6 pt-4 space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  This will remove your {resolvedVariant} from the marketplace. This action cannot be undone.
-                </p>
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <div className="flex gap-2 pt-1">
-                  <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
-                    <X className="h-4 w-4 mr-1.5" />Keep it
-                  </Button>
-                  <Button variant="destructive" className="flex-1 h-11" onClick={handleConfirm}>
-                    Cancel {resolvedVariant}
-                  </Button>
-                </div>
-              </div>
+              <OrderSummaryHero
+                name={order.token?.name || `Token #${order.nftTokenId}`}
+                image={image}
+                subtitle={<span className="capitalize">Cancel {resolvedVariant}</span>}
+                tone="destructive"
+                price={order.price}
+              />
+              <MarketplaceConfirmStep
+                description={`This will remove your ${resolvedVariant} from the marketplace. This action cannot be undone.`}
+                error={error}
+                secondaryLabel="Keep it"
+                onSecondary={() => onOpenChange(false)}
+                primaryLabel={`Cancel ${resolvedVariant}`}
+                onPrimary={handleConfirm}
+                primaryVariant="destructive"
+              />
             </div>
           )
         )}
