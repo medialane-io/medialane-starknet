@@ -16,7 +16,7 @@ import {
   Lock,
   ArrowRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Creator Studio";

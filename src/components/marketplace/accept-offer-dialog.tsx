@@ -6,7 +6,7 @@ import { HandCoins } from "lucide-react";
 import { useConfetti } from "@/hooks/use-confetti";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { useMarketplace } from "@/hooks/use-marketplace";
-import { formatDisplayPrice, resolveImage } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
   isBusyPhase,
@@ -15,6 +15,7 @@ import {
   RewardEarned,
   TransactionDialogStates,
   successMessages,
+  formatDisplayPrice,
 } from "@medialane/ui";
 import type { ApiOrder } from "@medialane/sdk";
 

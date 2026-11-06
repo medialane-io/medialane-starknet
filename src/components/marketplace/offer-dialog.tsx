@@ -1,6 +1,6 @@
 "use client";
 
-import { RewardEarned } from "@medialane/ui";
+import { RewardEarned, usdValueFor } from "@medialane/ui";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +20,6 @@ import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
-import { usdValueFor } from "@/lib/utils";
 import {
   CurrencyPicker,
   DurationPicker,

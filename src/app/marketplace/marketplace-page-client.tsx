@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Store } from "lucide-react";
-import { PageContainer } from "@medialane/ui";
+import { PageContainer, cn } from "@medialane/ui";
 import { getTokenBySymbol } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { ListingsGrid } from "@/components/marketplace/listings-grid";
@@ -11,7 +11,6 @@ import { MarketplaceSearch, SearchInput } from "@/components/marketplace/marketp
 import { ActiveFilters, FiltersButton, FiltersDialog, useMarketplaceFilters } from "@/components/marketplace/marketplace-filters";
 import { ActivityTicker } from "@/components/shared/activity-ticker";
 import { CoinsScanList } from "@/components/coins/coins-scan-list";
-import { cn } from "@/lib/utils";
 
 export default function MarketplacePageClient({ initialOrders }: { initialOrders?: ApiOrder[] }) {
   const [view, setView] = useState<"nfts" | "tokens">("nfts");

@@ -4,7 +4,7 @@ import { ProfileLivePreview, type ProfileForm } from "@/components/settings/prof
 import { PortfolioSnapshot, RewardsSnapshot } from "@/components/settings/snapshots";
 import { useState } from "react";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCreatorProfile, useUserOrders, useCollectionsByOwner, AssetPicker, ServiceFormShell, type OwnedAsset } from "@medialane/ui";
+import { useCreatorProfile, useUserOrders, useCollectionsByOwner, AssetPicker, ServiceFormShell, type OwnedAsset, cn } from "@medialane/ui";
 import { useMyUsernameClaim } from "@/hooks/use-username-claims";
 import { useUsernameClaimForm } from "@/hooks/use-username-claim-form";
 import { InlineNote } from "@/components/shared/inline-note";
@@ -23,7 +23,7 @@ import { Textarea } from "@medialane/ui/textarea";
 import { Badge } from "@medialane/ui/badge";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { AtSign, CheckCircle2, Clock, XCircle, Loader2, Settings as SettingsIcon } from "lucide-react";
-import { cn, resolveImage } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { profileHref } from "@/lib/routes";
 
 const URL_FIELDS = ["websiteUrl", "twitterUrl", "discordUrl", "telegramUrl"] as const;

@@ -3,8 +3,7 @@
 import { useWallet } from "@/hooks/use-wallet";
 import { useCoinsByCreator } from "@/hooks/use-coins";
 import { CoinRow, CoinRowSkeleton } from "@/components/shared/coin-row";
-import { COIN_GRID } from "@medialane/ui";
-import { cn } from "@/lib/utils";
+import { COIN_GRID, cn } from "@medialane/ui";
 import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { Coins } from "lucide-react";
 import type { CoinCollectionLike } from "@medialane/ui";

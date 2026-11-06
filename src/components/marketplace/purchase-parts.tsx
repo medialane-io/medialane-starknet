@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDisplayPrice } from "@/lib/utils";
+import { formatDisplayPrice } from "@medialane/ui";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import type { ApiOrder } from "@medialane/sdk";
 import { resolveFeeConfig } from "@medialane/sdk";

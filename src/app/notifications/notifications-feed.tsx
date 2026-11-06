@@ -4,11 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, Inbox, Filter } from "lucide-react";
 import { useWallet } from "@/hooks/use-wallet";
-import { useNotifications } from "@medialane/ui";
+import { useNotifications, cn } from "@medialane/ui";
 import { NotificationRow } from "@/components/shared/notification-row";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Button } from "@medialane/ui/button";
-import { cn } from "@/lib/utils";
 import type { Notification, NotificationType } from "@medialane/ui";
 
 const FILTERS: { label: string; value: NotificationType | "" }[] = [
