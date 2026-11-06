@@ -1,10 +1,10 @@
 "use client";
 
-import { PriceBreakdown, SuccessScreen, TokenHero } from "@/components/marketplace/purchase-parts";
+import { PriceBreakdown } from "@/components/marketplace/purchase-parts";
 import { useState } from "react";
 import { useOnOpen } from "@/hooks/use-on-open";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Minus, Plus, RefreshCw, ShieldCheck, ShoppingCart } from "lucide-react";
+import { AlertCircle, Minus, Plus, RefreshCw, ShieldCheck, ShoppingCart, Zap } from "lucide-react";
 import { useConfetti } from "@/hooks/use-confetti";
 import { amountDue, orderTotal, type CheckoutItem } from "@/lib/checkout";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
@@ -15,8 +15,10 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
-import { resolveImage } from "@/lib/utils";
-import { MarketplaceErrorState, MarketplaceTxLink } from "@medialane/ui";
+import { resolveImage, usdValueFor } from "@/lib/utils";
+import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { assetHref } from "@/lib/routes";
+import { DialogTransactionSuccess, MarketplaceErrorState, MarketplaceTxLink, OrderSummaryHero, successMessages } from "@medialane/ui";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { useTokenBalance } from "@/hooks/use-token-balance";
@@ -48,6 +50,29 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   const maxQty = isERC1155
     ? Math.max(1, parseInt(order.remainingAmount ?? order.offer.startAmount ?? "1", 10))
     : 1;
+
+  const usdPrices = useUsdPrices();
+  const unitPrice = order.price?.formatted ? parseFloat(order.price.formatted) : null;
+  const totalUsd = unitPrice !== null
+    ? usdValueFor(String(unitPrice * quantity), order.price?.currency, usdPrices)
+    : null;
+  const assetName = order.token?.name || `Token #${order.nftTokenId}`;
+  const assetImage = resolveImage(order.token?.image);
+  const hero = (
+    <OrderSummaryHero
+      name={assetName}
+      image={assetImage}
+      subtitle={
+        <span className="flex items-center gap-1">
+          <Zap className="h-3 w-3 text-emerald-500" />
+          <span className="text-emerald-500">Digital Asset Ownership</span>
+        </span>
+      }
+      price={order.price}
+      quantity={quantity}
+      usdTotal={totalUsd}
+    />
+  );
 
   const requiredRaw = amountDue(order, quantity);
   const { raw: orderCurrencyBalance, isLoading: balanceLoading } = useTokenBalance(
@@ -128,11 +153,20 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           Review the asset, price, quantity, and transaction status for this marketplace purchase.
         </DialogDescription>
         {isConfirmed ? (
-          <SuccessScreen order={order} quantity={quantity} txHash={txHash} onClose={handleDone} onViewPortfolio={handleViewPortfolio} />
+          <DialogTransactionSuccess
+            name={assetName}
+            image={assetImage}
+            {...successMessages.purchased({ name: order.token?.name ?? "the asset", quantity: isERC1155 ? quantity : 1 })}
+            txHash={txHash}
+            actions={[
+              { label: "View asset", href: assetHref("STARKNET", order.nftContract, order.nftTokenId), onClick: handleDone },
+              { label: "View portfolio", onClick: handleViewPortfolio },
+            ]}
+          />
         ) : isTerminalError ? (
           <MarketplaceErrorState
-            tokenImage={resolveImage(order.token?.image)}
-            name={order.token?.name || `Token #${order.nftTokenId}`}
+            tokenImage={assetImage}
+            name={assetName}
             title="Purchase failed"
             description="The transaction was submitted, but the purchase could not be completed."
             error={error}
@@ -143,7 +177,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           />
         ) : preparing || isProcessing ? (
           <div className="flex flex-col">
-            <TokenHero order={order} quantity={quantity} />
+            {hero}
             <div className="px-5 py-8 flex flex-col items-center text-center gap-4">
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
               <div>
@@ -155,7 +189,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           </div>
         ) : (
           <div className="flex flex-col">
-            <TokenHero order={order} quantity={quantity} />
+            {hero}
             <div className="px-5 py-5 space-y-4">
               <PriceBreakdown order={order} quantity={quantity} />
 
