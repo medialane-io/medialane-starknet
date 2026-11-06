@@ -2,15 +2,37 @@
 
 import { useState } from "react";
 import { Store } from "lucide-react";
-import { PageContainer, cn } from "@medialane/ui";
+import {
+  ActiveFilters,
+  cn,
+  FiltersButton,
+  FiltersDialog,
+  MarketplaceSearch,
+  PageContainer,
+  SearchInput,
+  StatPillRow,
+  usePlatformStats,
+  useMarketplaceFilters,
+} from "@medialane/ui";
 import { getTokenBySymbol } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { ListingsGrid } from "@/components/marketplace/listings-grid";
-import { PlatformStatsBar } from "@/components/marketplace/platform-stats-bar";
-import { MarketplaceSearch, SearchInput } from "@/components/marketplace/marketplace-search";
-import { ActiveFilters, FiltersButton, FiltersDialog, useMarketplaceFilters } from "@/components/marketplace/marketplace-filters";
 import { ActivityTicker } from "@/components/shared/activity-ticker";
 import { CoinsScanList } from "@/components/coins/coins-scan-list";
+
+function PlatformStatsBar() {
+  const { stats } = usePlatformStats();
+
+  return (
+    <StatPillRow
+      items={[
+        { label: "Collections", value: stats?.collections ?? null },
+        { label: "Assets", value: stats?.tokens ?? null },
+        { label: "Sales", value: stats?.sales ?? null },
+      ]}
+    />
+  );
+}
 
 export default function MarketplacePageClient({ initialOrders }: { initialOrders?: ApiOrder[] }) {
   const [view, setView] = useState<"nfts" | "tokens">("nfts");
