@@ -31,8 +31,6 @@ interface UseMarketplaceReturn {
 
     phase: TransactionPhase;
     isProcessing: boolean;
-    isConfirmed: boolean;
-    isTerminalError: boolean;
     txHash: string | null;
     error: string | null;
     resetState: () => void;
@@ -44,7 +42,7 @@ const asTokenStandard = (value?: string): "ERC721" | "ERC1155" | undefined =>
 export function useMarketplace(): UseMarketplaceReturn {
     const signer = useVenueSigner();
     const client = useMedialaneClient();
-    const { phase, isProcessing, isConfirmed, isTerminalError, txHash, setTxHash, error, setError, run, resetState } = useWriteState();
+    const { phase, isProcessing, txHash, setTxHash, error, setError, run, resetState } = useWriteState();
 
     const submitSigned = useCallback(async (intent: ApiIntentCreated): Promise<string> => {
         if (!signer) throw new Error("Connect your wallet to continue.");
@@ -193,8 +191,6 @@ export function useMarketplace(): UseMarketplaceReturn {
         acceptOffer,
         phase,
         isProcessing,
-        isConfirmed,
-        isTerminalError,
         txHash,
         error,
         resetState,
