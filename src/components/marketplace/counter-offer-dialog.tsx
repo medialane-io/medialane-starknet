@@ -2,7 +2,6 @@
 
 import { useForm } from "react-hook-form";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
-import { usdValueFor } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, ArrowLeftRight } from "lucide-react";
@@ -23,6 +22,7 @@ import {
   MarketplaceDialogHero,
   TransactionDialogStates,
   successMessages,
+  usdValueFor,
 } from "@medialane/ui";
 
 const schema = orderFormSchema.pick({ price: true, durationSeconds: true }).extend({ message: z.string().optional() });

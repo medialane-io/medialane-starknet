@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ExternalLink, Settings } from "lucide-react";
 import { getService, normalizeAddress } from "@medialane/sdk";
 import type { ApiCoin } from "@medialane/sdk";
-import { useCoinPrice, formatCoinPrice, CoinGuarantees } from "@medialane/ui";
+import { useCoinPrice, formatCoinPrice, CoinGuarantees, cn } from "@medialane/ui";
 import { useCoinSupply } from "@/hooks/use-coin-supply";
 import { useWallet } from "@/hooks/use-wallet";
 import { Skeleton } from "@medialane/ui/skeleton";
@@ -14,7 +14,7 @@ import { ShareButton } from "@medialane/ui/share-button";
 import { CreatorChip } from "@/components/shared/creator-chip";
 import { MAX_TEAM_ALLOCATION_PERCENT } from "@medialane/sdk/starknet";
 import { useCoinGuarantees } from "@/hooks/use-coin-guarantees";
-import { resolveImage, cn } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { EXPLORER_URL } from "@/lib/constants";
 
 function formatCompact(n: number): string {

@@ -7,7 +7,7 @@ import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
 import { Label } from "@medialane/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@medialane/ui/select";
-import { useMedialaneClient, describeError, TransactionSuccess, successMessages, useCollectionsByOwner } from "@medialane/ui";
+import { useMedialaneClient, describeError, TransactionSuccess, successMessages, useCollectionsByOwner, formatDisplayPrice } from "@medialane/ui";
 import { executeIntent, mintedTokenIdFromReceipt } from "@medialane/sdk/starknet";
 import { useVenueSigner } from "@/lib/use-venue-signer";
 
@@ -15,7 +15,6 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 
 import { confirmRemixOffer } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
-import { formatDisplayPrice } from "@/lib/utils";
 import { getService } from "@medialane/sdk";
 import { GitBranch, Loader2 } from "lucide-react";
 import type { RemixOffer } from "@/types/remix-offers";

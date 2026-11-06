@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CoinRow, CoinRowSkeleton, COIN_GRID, coinKind, coinServiceIds, emptyMessages, type CoinCollectionLike } from "@medialane/ui";
+import { CoinRow, CoinRowSkeleton, COIN_GRID, coinKind, coinServiceIds, emptyMessages, type CoinCollectionLike, cn } from "@medialane/ui";
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
 import { useCoinPriceAdapter } from "./use-coin-price-adapter";
-import { cn } from "@/lib/utils";
 import { coinHref } from "@/lib/routes";
 
 type CoinFilter = "all" | "creator" | "memecoin";

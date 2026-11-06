@@ -12,7 +12,7 @@ import { HelpIcon } from "@medialane/ui/help-icon";
 import { IP_TYPES } from "@medialane/ui/data/ip";
 import { getTokenBySymbol, parseAmount, SUPPORTED_TOKENS } from "@medialane/sdk";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { cn } from "@/lib/utils";
+import { cn } from "@medialane/ui";
 
 const SORT_OPTIONS = [
   { label: "Recent", value: "recent" },

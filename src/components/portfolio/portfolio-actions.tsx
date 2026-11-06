@@ -10,7 +10,8 @@ import { ListingDialog } from "@/components/marketplace/listing-dialog";
 import { TransferDialog } from "@/components/marketplace/transfer-dialog";
 import { SUPPORTED_TOKENS } from "@/lib/constants";
 import { orderTotal } from "@/lib/checkout";
-import { resolveImage, formatDisplayPrice } from "@/lib/utils";
+import { formatDisplayPrice } from "@medialane/ui";
+import { resolveImage } from "@/lib/utils";
 
 type Context = { refresh: () => void };
 

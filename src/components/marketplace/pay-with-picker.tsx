@@ -5,7 +5,7 @@ import { SWAP_TOKENS, formatTokenAmount } from "@/utils/swap-tokens";
 import { useTokenBalance } from "@/hooks/use-token-balance";
 import { useSwapQuote } from "@/hooks/use-swap-quote";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
-import { cn } from "@/lib/utils";
+import { cn } from "@medialane/ui";
 
 interface PayWithOptionProps {
   symbol: string;

@@ -8,10 +8,9 @@ import { Dialog, DialogContent, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
 import { fireConfetti } from "@/lib/confetti";
 import { useWallet } from "@/hooks/use-wallet";
-import { useNotifications, NOTIFICATION_ICON, NOTIFICATION_COLOR, NOTIFICATION_LABEL } from "@medialane/ui";
+import { useNotifications, NOTIFICATION_ICON, NOTIFICATION_COLOR, NOTIFICATION_LABEL, cn } from "@medialane/ui";
 
 
-import { cn } from "@/lib/utils";
 import type { Notification } from "@medialane/ui";
 
 function SpotlightCard({

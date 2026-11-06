@@ -1,8 +1,8 @@
 "use client";
 
-import { ListingCard as PackageListingCard, ListingCardMenu, ListingCardSkeleton } from "@medialane/ui";
+import { ListingCard as PackageListingCard, ListingCardMenu, ListingCardSkeleton, usdValueFor } from "@medialane/ui";
 import type { ApiOrder } from "@medialane/sdk";
-import { resolveImage, usdValueFor } from "@/lib/utils";
+import { resolveImage } from "@/lib/utils";
 import { useUsdPrices } from "@/hooks/use-usd-prices";
 
 export { ListingCardSkeleton };
