@@ -66,12 +66,9 @@ export function CancelOrderDialog({
           txHash={txHash}
           error={error}
           success={successMessages.cancelled({ kind: resolvedVariant })}
-          successImage={image}
-          successName={name}
+          asset={{ name, image }}
           errorTitle={`${kindLabel} cancellation failed`}
           errorDescription={`The transaction was submitted, but this ${resolvedVariant} could not be cancelled.`}
-          errorAssetName={name}
-          errorAssetImage={image}
           onRetry={resetState}
           onDone={() => onOpenChange(false)}
         >
