@@ -5,13 +5,12 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialan
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { resolveImage } from "@/lib/utils";
 import {
+  isBusyPhase,
   MarketplaceConfirmStep,
-  MarketplaceProcessingState,
-  DialogTransactionSuccess,
   OrderSummaryHero,
+  TransactionDialogStates,
   successMessages,
 } from "@medialane/ui";
-import { EXPLORER_URL } from "@/lib/constants";
 import type { ApiOrder } from "@medialane/sdk";
 
 interface CancelOrderDialogProps {
@@ -30,7 +29,7 @@ export function CancelOrderDialog({
   onSuccess,
   variant,
 }: CancelOrderDialogProps) {
-  const { cancelOrder, isProcessing, isConfirmed, txHash, error, resetState } = useMarketplace();
+  const { cancelOrder, phase, txHash, error, resetState } = useMarketplace();
   const image = resolveImage(order?.token?.image);
 
   const resolvedVariant: "listing" | "offer" =
@@ -50,38 +49,36 @@ export function CancelOrderDialog({
   };
 
 
+  const name = order?.token?.name || `Token #${order?.nftTokenId}`;
+  const kindLabel = resolvedVariant === "listing" ? "Listing" : "Offer";
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!isProcessing) onOpenChange(v); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!isBusyPhase(phase)) onOpenChange(v); }}>
       <DialogContent className="max-w-[calc(100%-12px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl">
         <DialogTitle className="sr-only">Cancel marketplace {resolvedVariant}</DialogTitle>
         <DialogDescription className="sr-only">
           Cancel this onchain marketplace {resolvedVariant} and remove it from active trading.
         </DialogDescription>
 
-        {isConfirmed ? (
-          <DialogTransactionSuccess
-            name={order?.token?.name || `Token #${order?.nftTokenId}`}
-            image={image}
-            {...successMessages.cancelled({ kind: resolvedVariant })}
-            txHash={txHash}
-            actions={[{ label: "Done", onClick: () => onOpenChange(false) }]}
-          />
-
-        ) : isProcessing ? (
-
-          <MarketplaceProcessingState
-            title="Submitting cancellation..."
-            description="Confirm the wallet prompt and keep this window open."
-            txHash={txHash}
-            explorerUrl={EXPLORER_URL}
-          />
-
-        ) : (
-
-          order && (
+        <TransactionDialogStates
+          phase={phase}
+          statusMessage="Submitting cancellation..."
+          txHash={txHash}
+          error={error}
+          success={successMessages.cancelled({ kind: resolvedVariant })}
+          successImage={image}
+          successName={name}
+          errorTitle={`${kindLabel} cancellation failed`}
+          errorDescription={`The transaction was submitted, but this ${resolvedVariant} could not be cancelled.`}
+          errorAssetName={name}
+          errorAssetImage={image}
+          onRetry={resetState}
+          onDone={() => onOpenChange(false)}
+        >
+          {order && (
             <div className="space-y-0">
               <OrderSummaryHero
-                name={order.token?.name || `Token #${order.nftTokenId}`}
+                name={name}
                 image={image}
                 subtitle={<span className="capitalize">Cancel {resolvedVariant}</span>}
                 tone="destructive"
@@ -97,9 +94,8 @@ export function CancelOrderDialog({
                 primaryVariant="destructive"
               />
             </div>
-          )
-        )}
-
+          )}
+        </TransactionDialogStates>
       </DialogContent>
     </Dialog>
   );
