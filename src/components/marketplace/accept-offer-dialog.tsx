@@ -1,9 +1,9 @@
 "use client";
 
-import { useOnOpen } from "@/hooks/use-on-open";
+import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import { useRouter } from "next/navigation";
 import { HandCoins } from "lucide-react";
-import { useConfetti } from "@/hooks/use-confetti";
+import { useConfetti } from "@medialane/ui/utils/use-confetti";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { resolveImage } from "@/lib/utils";

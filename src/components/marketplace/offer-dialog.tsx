@@ -6,8 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, HandCoins, Layers, ShieldCheck, Zap } from "lucide-react";
-import { useConfetti } from "@/hooks/use-confetti";
-import { useOnOpen } from "@/hooks/use-on-open";
+import { useConfetti } from "@medialane/ui/utils/use-confetti";
+import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import { LISTABLE_CURRENCIES, orderFormSchema } from "@/lib/order-form";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
@@ -19,7 +19,7 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
 import { CurrencyIcon } from "@medialane/ui/currency-icon";
-import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import {
   CurrencyPicker,
   DurationPicker,
