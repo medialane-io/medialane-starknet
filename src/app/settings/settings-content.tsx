@@ -1,7 +1,7 @@
 "use client";
 
 import { ProfileLivePreview, type ProfileForm } from "@/components/settings/profile-live-preview";
-import { PortfolioSnapshot, RewardsSnapshot } from "@/components/settings/snapshots";
+import { PortfolioSnapshot, RewardsSnapshot } from "@medialane/ui";
 import { useState } from "react";
 import { useWallet } from "@/hooks/use-wallet";
 import { useCreatorProfile, useUserOrders, useCollectionsByOwner, AssetPicker, ServiceFormShell, type OwnedAsset, cn } from "@medialane/ui";
