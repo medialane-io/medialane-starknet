@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AlertCircle, ArrowLeftRight } from "lucide-react";
@@ -15,7 +15,7 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
 import { orderFormSchema } from "@/lib/order-form";
-import { useOnOpen } from "@/hooks/use-on-open";
+import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import {
   DurationPicker,
   isBusyPhase,

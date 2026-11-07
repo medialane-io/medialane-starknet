@@ -2,10 +2,10 @@
 
 import { PriceBreakdown } from "@/components/marketplace/purchase-parts";
 import { useState } from "react";
-import { useOnOpen } from "@/hooks/use-on-open";
+import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Minus, Plus, RefreshCw, ShieldCheck, ShoppingCart, Zap } from "lucide-react";
-import { useConfetti } from "@/hooks/use-confetti";
+import { useConfetti } from "@medialane/ui/utils/use-confetti";
 import { amountDue, orderTotal, type CheckoutItem } from "@/lib/checkout";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
@@ -16,7 +16,7 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { EXPLORER_URL } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
-import { useUsdPrices } from "@/hooks/use-usd-prices";
+import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import { assetHref } from "@/lib/routes";
 import { isBusyPhase, OrderSummaryHero, TransactionDialogStates, successMessages, type TransactionPhase, usdValueFor } from "@medialane/ui";
 import { normalizeAddress } from "@medialane/sdk";

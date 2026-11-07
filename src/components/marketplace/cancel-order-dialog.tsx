@@ -1,6 +1,6 @@
 "use client";
 
-import { useOnOpen } from "@/hooks/use-on-open";
+import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { resolveImage } from "@/lib/utils";

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Bell, ArrowRight, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
-import { fireConfetti } from "@/lib/confetti";
+import { fireConfetti } from "@medialane/ui/utils/media-wallet/confetti";
 import { useWallet } from "@/hooks/use-wallet";
 import { useNotifications, NOTIFICATION_ICON, NOTIFICATION_COLOR, NOTIFICATION_LABEL, cn } from "@medialane/ui";
 

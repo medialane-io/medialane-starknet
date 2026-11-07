@@ -12,7 +12,7 @@ import { confirmRemixOffer } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getService } from "@medialane/sdk";
 import type { RemixOffer } from "@/types/remix-offers";
-import { useConfetti } from "@/hooks/use-confetti";
+import { useConfetti } from "@medialane/ui/utils/use-confetti";
 import { assetHref } from "@/lib/routes";
 import { uploadJsonToIpfs } from "@/lib/ipfs-upload-client";
 import { pollUntil } from "@/lib/poll";
