@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useWallet } from "@/hooks/use-wallet";
 import { useRemixOffers } from "@/hooks/use-remix-offers";
-import { ApproveMintSheet } from "@/components/portfolio/approve-mint-sheet";
+import { ApproveMintDialog } from "@/components/portfolio/approve-mint-dialog";
 import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { GitBranch, Check, Clock } from "lucide-react";
@@ -151,7 +151,7 @@ export default function PortfolioRemixOffersPage() {
         )}
       </section>
 
-      <ApproveMintSheet
+      <ApproveMintDialog
         offer={approveOffer}
         open={approveOpen}
         onOpenChange={setApproveOpen}
