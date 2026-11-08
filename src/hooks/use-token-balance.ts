@@ -14,10 +14,14 @@ export interface TokenBalanceResult {
   refresh: () => void;
 }
 
-async function readBalance(symbol: string, owner: string): Promise<bigint> {
+export async function readBalance(symbol: string, owner: string): Promise<bigint> {
   const token = getTokenBySymbol(symbol);
   if (!token) throw new Error(`Unknown token symbol: ${symbol}`);
   return erc20Balance(getMedialaneClient().provider, token.address, owner);
+}
+
+export function tokenBalanceKey(tokenSymbol: string, walletAddress: string | undefined) {
+  return walletAddress ? (["token-balance", tokenSymbol, walletAddress] as const) : null;
 }
 
 export function useTokenBalance(
@@ -25,7 +29,7 @@ export function useTokenBalance(
   walletAddress: string | undefined
 ): TokenBalanceResult {
   const { data, error, isLoading, mutate } = useSWR(
-    walletAddress ? (["token-balance", tokenSymbol, walletAddress] as const) : null,
+    tokenBalanceKey(tokenSymbol, walletAddress),
     ([, symbol, owner]) => readBalance(symbol, owner),
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
