@@ -166,7 +166,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
-                          You can cancel your offer anytime before it's accepted.
+                          Offers can be cancelled anytime before they are accepted.
                         </p>
                       </div>
                     </div>

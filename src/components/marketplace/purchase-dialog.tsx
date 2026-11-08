@@ -250,7 +250,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                     <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
-                        Your asset arrives the moment your wallet confirms the trade.
+                        Assets arrive the moment the wallet confirms the trade.
                       </p>
                     </div>
                   </div>

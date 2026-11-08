@@ -175,7 +175,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
-                          You can cancel your listing from your portfolio anytime.
+                          Listings can be cancelled anytime from the portfolio.
                         </p>
                       </div>
                     </div>

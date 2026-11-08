@@ -5,9 +5,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialan
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { resolveImage } from "@/lib/utils";
 import {
+  CancelOrderConfirm,
   isBusyPhase,
-  MarketplaceConfirmStep,
-  OrderSummaryHero,
   TransactionDialogStates,
   successMessages,
 } from "@medialane/ui";
@@ -73,24 +72,15 @@ export function CancelOrderDialog({
           onDone={() => onOpenChange(false)}
         >
           {order && (
-            <div className="space-y-0">
-              <OrderSummaryHero
-                name={name}
-                image={image}
-                subtitle={<span className="capitalize">Cancel {resolvedVariant}</span>}
-                tone="destructive"
-                price={order.price}
-              />
-              <MarketplaceConfirmStep
-                description={`This will remove your ${resolvedVariant} from the marketplace. This action cannot be undone.`}
-                error={error}
-                secondaryLabel="Keep it"
-                onSecondary={() => onOpenChange(false)}
-                primaryLabel={`Cancel ${resolvedVariant}`}
-                onPrimary={handleConfirm}
-                primaryVariant="destructive"
-              />
-            </div>
+            <CancelOrderConfirm
+              variant={resolvedVariant}
+              name={name}
+              image={image}
+              price={order.price}
+              error={error}
+              onKeep={() => onOpenChange(false)}
+              onConfirm={handleConfirm}
+            />
           )}
         </TransactionDialogStates>
       </DialogContent>
