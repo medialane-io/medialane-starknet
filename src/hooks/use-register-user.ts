@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { getMedialaneClient } from "@/lib/medialane-client";
+import { readStored, writeStored } from "@/lib/browser-storage";
 
 type FrontendWalletType =
   | "argent" | "braavos" | "injected" | null;
@@ -16,7 +17,7 @@ export function useRegisterUser(
     if (!address) return;
 
     const sessionKey = `${SESSION_KEY_PREFIX}${address}:${walletType ?? "null"}`;
-    if (sessionStorage.getItem(sessionKey)) return;
+    if (readStored("sessionStorage", sessionKey)) return;
 
     getMedialaneClient()
       .api.account.registerUser({
@@ -24,7 +25,7 @@ export function useRegisterUser(
         walletType: walletType ?? undefined,
         chain: "STARKNET",
       })
-      .then(() => sessionStorage.setItem(sessionKey, "1"))
+      .then(() => writeStored("sessionStorage", sessionKey, "1"))
       .catch((error: unknown) => {
 
         console.error("[ml-register] failed", {

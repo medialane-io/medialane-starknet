@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAccount } from "@starknet-react/core";
 import { Button } from "@medialane/ui/button";
-import { useNetwork } from "@/components/starknet-provider";
+import { NETWORK } from "@/components/starknet-provider";
 import { useWallet } from "@/hooks/use-wallet";
 import { useActivitiesByAddress, useReceivedOffers, isWrongNetwork as computeIsWrongNetwork, useNavAccountSheet, NavThemeToggle, timeAgo } from "@medialane/ui";
 
@@ -83,7 +83,6 @@ function SettingsRow({ onNavigate }: { onNavigate: () => void }) {
 
 export function AccountPanel() {
   const { chainId, connector } = useAccount();
-  const { networkConfig } = useNetwork();
   const { address, disconnect } = useWallet();
   const { close } = useNavAccountSheet();
   const [copied, setCopied] = useState(false);
@@ -97,7 +96,7 @@ export function AccountPanel() {
 
   if (!address) return null;
 
-  const isWrongNetwork = computeIsWrongNetwork(chainId, networkConfig.chainId);
+  const isWrongNetwork = computeIsWrongNetwork(chainId, NETWORK.chainId);
   const lastActivity = activities[0];
   const offersCount = receivedOffers.length;
   const assetsCount = assetsMeta?.total ?? 0;
@@ -131,12 +130,13 @@ export function AccountPanel() {
             </button>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {walletName} · {networkConfig.name}
+            {walletName} · {NETWORK.name}
           </p>
         </div>
         <Link
-          href={`${networkConfig.explorerUrl}/address/${address}`}
+          href={`${NETWORK.explorerUrl}/address/${address}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/50 text-muted-foreground transition-all hover:text-foreground"
           aria-label="View on explorer"
         >
@@ -169,7 +169,7 @@ export function AccountPanel() {
           <div className="space-y-1">
             <p className="text-xs font-bold text-red-200">Switch network needed</p>
             <p className="text-2xs leading-relaxed text-red-200/60">
-              Switch to {networkConfig.name} in your wallet to interact with Medialane.
+              Switch to {NETWORK.name} in your wallet to interact with Medialane.
             </p>
           </div>
         </div>

@@ -22,7 +22,7 @@ export function useRemixOffers(role: "creator" | "requester", status?: string) {
     {
       refreshInterval: 30000,
       revalidateOnFocus: false,
-      onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
+      onErrorRetry: (_err, _key, _config, revalidate, { retryCount }) => {
         if (retryCount >= 2) return;
         setTimeout(() => revalidate({ retryCount }), 5000);
       },
