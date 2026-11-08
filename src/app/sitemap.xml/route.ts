@@ -2,7 +2,7 @@ import { sitemapIndexXml } from "@medialane/ui";
 import { APP_URL } from "@/lib/seo";
 import { generateSitemaps } from "../sitemap";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const sitemaps = await generateSitemaps();
