@@ -39,7 +39,7 @@ export function useTransfer() {
           throw new Error("Invalid token contract address.");
         }
 
-        const intent = await client.api.intents.create("transfer-nft", {
+        const intent = await client.createIntent("transfer-nft", {
           owner: signer.address,
           contractAddress: input.contractAddress,
           tokenId: input.tokenId,
