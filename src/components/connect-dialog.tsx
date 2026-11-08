@@ -22,8 +22,8 @@ export function useConnectDialog() {
 }
 
 export function ConnectDialog() {
-  const { connectors } = useConnect();
-  const { isConnected, isConnecting: sessionConnecting, connect } = useWallet();
+  const { connectors, connectAsync } = useConnect();
+  const { isConnected, isConnecting: sessionConnecting } = useWallet();
   const [open, setOpen] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export function ConnectDialog() {
   const handleConnectorClick = async (connector: Connector) => {
     setConnectingId(connector.id);
     try {
-      await connect(connector);
+      await connectAsync({ connector });
     } catch (err) {
       console.error("Failed to connect wallet", err);
       const friendly = describeError(err);

@@ -36,7 +36,7 @@ export function WalletSessionSync({ children }: { children: React.ReactNode }) {
       await refreshSession();
       return true;
     } catch (err) {
-      setDeclined((d) => [...d, address]);
+      setDeclined((d) => (d.includes(address) ? d : [...d, address]));
       setError(describeError(err).message);
       throw err;
     } finally {

@@ -7,10 +7,9 @@ import {
   Activity as ActivityIcon, AlertCircle, Check, ChevronRight, Copy, ExternalLink,
   HandCoins, LayoutGrid, LogOut, Settings, Wallet,
 } from "lucide-react";
-import { useAccount } from "@starknet-react/core";
 import { Button } from "@medialane/ui/button";
 import { NETWORK } from "@/components/starknet-provider";
-import { useWallet } from "@/hooks/use-wallet";
+import { useDisconnectWallet, useWallet } from "@/hooks/use-wallet";
 import { useActivitiesByAddress, useReceivedOffers, isWrongNetwork as computeIsWrongNetwork, useNavAccountSheet, NavThemeToggle, timeAgo } from "@medialane/ui";
 
 
@@ -82,8 +81,8 @@ function SettingsRow({ onNavigate }: { onNavigate: () => void }) {
 }
 
 export function AccountPanel() {
-  const { chainId, connector } = useAccount();
-  const { address, disconnect } = useWallet();
+  const { address, chainId, connector } = useWallet();
+  const disconnect = useDisconnectWallet();
   const { close } = useNavAccountSheet();
   const [copied, setCopied] = useState(false);
 

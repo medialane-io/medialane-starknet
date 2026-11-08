@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useAccount } from "@starknet-react/core";
 import { Button } from "@medialane/ui/button";
 import { Wallet, Loader2 } from "lucide-react";
 import { NETWORK } from "@/components/starknet-provider";
@@ -19,12 +18,11 @@ interface ConnectWalletProps {
 }
 
 export function ConnectWallet({ label, className, children, trigger }: ConnectWalletProps = {}) {
-  const { isConnected: injectedConnected, chainId } = useAccount();
-  const { address, isConnected, isConnecting: sessionConnecting } = useWallet();
+  const { address, isConnected, isConnecting: sessionConnecting, chainId } = useWallet();
   const { open: openAccountSheet } = useNavAccountSheet();
   const { open: openConnectDialog } = useConnectDialog();
 
-  const isWrongNetwork = injectedConnected && computeIsWrongNetwork(chainId, NETWORK.chainId);
+  const isWrongNetwork = isConnected && computeIsWrongNetwork(chainId, NETWORK.chainId);
 
   if (sessionConnecting && !isConnected) {
 

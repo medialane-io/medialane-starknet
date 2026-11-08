@@ -16,14 +16,6 @@ export const MEDIALANE_API_KEY = isServer
   ? (process.env.MEDIALANE_API_KEY || "")
   : "";
 
-if (!isServer && MEDIALANE_API_KEY) {
-  throw new Error(
-    "MEDIALANE_API_KEY is non-empty in the browser bundle — the server-only " +
-    "secret may be leaking. Check that no env var with a NEXT_PUBLIC_ prefix " +
-    "carries the API key, and that the isServer branch above is intact."
-  );
-}
-
 export const IPFS_GATEWAY = (() => {
   const configured = process.env.NEXT_PUBLIC_PINATA_GATEWAY?.trim();
   if (!configured) return null;

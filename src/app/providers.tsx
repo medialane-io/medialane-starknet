@@ -21,10 +21,9 @@ import { NavThemeToggle } from "@medialane/ui/nav-theme-toggle";
 import { NavConnectButton } from "@/components/nav-connect-button";
 import { SWRConfig } from "swr";
 import { StarknetProvider } from "@/components/starknet-provider";
-import { WalletProvider } from "@/contexts/wallet-context";
 import { UserRegistration } from "@/components/shared/user-registration";
 import { WalletSessionSync } from "@/components/wallet-session-sync";
-import { useWallet } from "@/hooks/use-wallet";
+import { useDisconnectWallet, useWallet } from "@/hooks/use-wallet";
 
 function Shell({ children }: { children: React.ReactNode }) {
 
@@ -33,7 +32,8 @@ function Shell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/asset/") ||
     pathname.startsWith("/collections/") ||
     pathname.startsWith("/creator/");
-  const { isConnected, disconnect, address } = useWallet();
+  const { isConnected, address } = useWallet();
+  const disconnect = useDisconnectWallet();
   const { profile } = useCreatorProfile(address ?? undefined);
   const themeImageUrl = suppressAmbient ? null : resolveImage(profile?.avatarImage);
   const { open: openConnectDialog } = useConnectDialog();
@@ -121,7 +121,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <IpfsGatewayFallback primary={IPFS_GATEWAY} fallback={PINATA_PUBLIC_GATEWAY} />
         <StarknetProvider>
-          <WalletProvider>
             <WalletSessionSync>
               <AppAdapter>
                 <UserRegistration />
@@ -129,7 +128,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 {!isStandalone && <NotificationSpotlight />}
               </AppAdapter>
             </WalletSessionSync>
-          </WalletProvider>
         </StarknetProvider>
       </SWRConfig>
     </ThemeProvider>
