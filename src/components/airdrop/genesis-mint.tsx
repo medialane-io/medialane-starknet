@@ -97,7 +97,7 @@ export function GenesisMint({
     setPhase("minting");
     setError(null);
     void tx.run(async (signer) => {
-      await runIntentCalls(signer, () => getMedialaneClient().api.intents.create("genesis-mint", { owner: address, recipient: address }));
+      await runIntentCalls(signer, () => getMedialaneClient().createIntent("genesis-mint", { owner: address, recipient: address }));
     });
   }, [address, tx]);
 
