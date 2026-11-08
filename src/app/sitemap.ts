@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-import { sitemapChunks, sitemapEntries } from "@medialane/ui";
-import { IP_TYPE_CONFIG } from "@/lib/ip-type-config";
+import { IP_TYPE_DATA, sitemapChunks, sitemapEntries } from "@medialane/ui";
 import { APP_URL } from "@/lib/seo";
 import { getMedialaneClient } from "@/lib/medialane-client";
 
@@ -33,7 +32,7 @@ export default async function sitemap(props: { id: string | Promise<string> }): 
     { url: `${BASE_URL}/activities`, changeFrequency: "hourly", priority: 0.6 },
   ];
 
-  const ipTypeRoutes: MetadataRoute.Sitemap = IP_TYPE_CONFIG.map(({ slug }) => ({
+  const ipTypeRoutes: MetadataRoute.Sitemap = IP_TYPE_DATA.map(({ slug }) => ({
     url: `${BASE_URL}/${slug}`,
     changeFrequency: "daily" as const,
     priority: 0.7,

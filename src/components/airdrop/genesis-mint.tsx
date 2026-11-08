@@ -8,6 +8,7 @@ import { runIntentCalls, useTransaction } from "@medialane/ui";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { getMedialaneClient } from "@/lib/medialane-client";
+import { readStored, writeStored } from "@/lib/browser-storage";
 
 export function AirdropEventCard() {
   const [errored, setErrored] = useState(false);
@@ -75,7 +76,7 @@ export function GenesisMint({
 
   useEffect(() => {
     if (!lsKey) return;
-    const stored = localStorage.getItem(lsKey);
+    const stored = readStored("localStorage", lsKey);
     if (stored) {
       setTxHash(stored);
       setPhase("success");
@@ -104,7 +105,7 @@ export function GenesisMint({
     if (tx.phase === "success" && tx.txHash) {
       setTxHash(tx.txHash);
       setPhase("success");
-      if (lsKey) localStorage.setItem(lsKey, tx.txHash);
+      if (lsKey) writeStored("localStorage", lsKey, tx.txHash);
     }
     if (tx.phase === "error") {
       setError(tx.error ?? "");
