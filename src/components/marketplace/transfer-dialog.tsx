@@ -40,7 +40,7 @@ export function TransferDialog({
       walletAddress={walletAddress}
       canTransfer={!!walletAddress}
       connectLabel="Connect wallet to transfer"
-      footerNote="Confirm in your wallet to complete the transfer."
+      footerNote="Confirm in the wallet to complete the transfer."
       tx={{ phase, txHash, error, reset: resetState }}
       onTransfer={(toAddress) => {
         void transferToken({ contractAddress, tokenId, toAddress, tokenStandard });
