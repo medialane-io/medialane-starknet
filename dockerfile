@@ -1,43 +1,27 @@
-# ──────────────────────────────────────────────────────────────
-# 1. build stage  ─ installs exact lockfile versions
-# ──────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
-
-# Re-create the app directory inside the container
 WORKDIR /app
 
-# Copy only the package manifests first (layer cache!)
-COPY package*.json ./
+RUN npm install -g bun@1.3.13
 
-# Deterministic install that ALSO ignores peer-dep conflicts
-# If you later clean up the graph, just drop "--legacy-peer-deps"
-RUN npm install --legacy-peer-deps
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# Copy the rest of your source code
 COPY . .
-
-# Build the production bundle
 RUN npm run build
 
-# ──────────────────────────────────────────────────────────────
-# 2. runtime stage  ─ minimal image that runs Next.js
-# ──────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runtime
-
-# Create non-root user for security (optional but recommended)
 RUN addgroup -S app && adduser -S app -G app
 USER app
-
 WORKDIR /app
 
-# Copy only what’s needed to run
-COPY --from=builder /app/package*.json ./
+ENV NODE_ENV=production
+ENV PORT=8080
+EXPOSE 8080
+
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./
 
-ENV NODE_ENV=production
-EXPOSE 8080
-
-# The container runs `next start`
 CMD ["npm", "start"]

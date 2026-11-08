@@ -9,6 +9,13 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+const noToast = {
+  name: "sonner",
+  importNames: ["toast"],
+  message:
+    "Messages belong beside what they describe: validation in the zod schema so FormMessage renders it, action outcomes on the action's own state, background failures in console.error.",
+};
+
 const eslintConfig = [
   {
     ignores: [
@@ -25,19 +32,7 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "react/no-unescaped-entities": "off",
-      "no-restricted-imports": [
-        "error",
-        {
-          paths: [
-            {
-              name: "sonner",
-              importNames: ["toast"],
-              message:
-                "Messages belong beside what they describe: validation in the zod schema so FormMessage renders it, action outcomes on the action's own state, background failures in console.error.",
-            },
-          ],
-        },
-      ],
+      "no-restricted-imports": ["error", { paths: [noToast] }],
     },
   },
   {
@@ -48,12 +43,7 @@ const eslintConfig = [
         "error",
         {
           paths: [
-            {
-              name: "sonner",
-              importNames: ["toast"],
-              message:
-                "Messages belong beside what they describe: validation in the zod schema so FormMessage renders it, action outcomes on the action's own state, background failures in console.error.",
-            },
+            noToast,
             {
               name: "starknet",
               importNames: ["RpcProvider"],

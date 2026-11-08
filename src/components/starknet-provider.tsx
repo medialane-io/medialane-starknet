@@ -1,9 +1,10 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { mainnet } from "@starknet-react/chains";
 import { ConnectorNotConnectedError, StarknetConfig, voyager } from "@starknet-react/core";
 import { walletConnectors } from "@/lib/wallet-connectors";
 import { getMedialaneClient } from "@/lib/medialane-client";
+import { EXPLORER_URL } from "@/lib/constants";
 import { QueryClient } from "@tanstack/react-query";
 
 function useSuppressStaleAutoConnectRejection(): void {
@@ -29,64 +30,29 @@ const queryClient = new QueryClient({
   },
 });
 
-interface NetworkContextType {
-  currentNetwork: 'starknet';
-  networkConfig: {
-    chainId: string;
-    name: string;
-    explorerUrl: string;
-  };
-}
-
-const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
-
-const NETWORK_DEFAULT: NetworkContextType = {
-  currentNetwork: 'starknet',
-  networkConfig: {
-    chainId: '23448594291968334',
-    name: 'Starknet',
-    explorerUrl: 'https://voyager.online',
-  },
+export const NETWORK = {
+  chainId: mainnet.id.toString(),
+  name: "Starknet",
+  explorerUrl: EXPLORER_URL,
 };
 
-export const useNetwork = () => {
-  const context = useContext(NetworkContext);
-  return context ?? NETWORK_DEFAULT;
-};
+const chains = [mainnet];
 
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
   useSuppressStaleAutoConnectRejection();
-  const chains = useMemo(() => [mainnet], []);
-
-  const currentNetwork = 'starknet' as const;
-
-  const networkConfigs = {
-    starknet: {
-      chainId: mainnet.id.toString(),
-      name: 'Starknet',
-      explorerUrl: 'https://voyager.online',
-    },
-  };
-
-  const networkConfig = networkConfigs[currentNetwork];
 
   const providerFactory = useCallback((_chain: unknown) => getMedialaneClient().provider, []);
   return (
-    <NetworkContext.Provider value={{
-      currentNetwork,
-      networkConfig
-    }}>
-      <StarknetConfig
-        chains={chains}
-        provider={providerFactory}
-        connectors={walletConnectors}
-        explorer={voyager}
-        queryClient={queryClient}
-        defaultChainId={mainnet.id}
-        autoConnect={true}
-      >
-        {children}
-      </StarknetConfig>
-    </NetworkContext.Provider>
+    <StarknetConfig
+      chains={chains}
+      provider={providerFactory}
+      connectors={walletConnectors}
+      explorer={voyager}
+      queryClient={queryClient}
+      defaultChainId={mainnet.id}
+      autoConnect={true}
+    >
+      {children}
+    </StarknetConfig>
   );
 }

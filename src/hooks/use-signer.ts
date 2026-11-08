@@ -3,12 +3,11 @@
 import { useMemo } from "react";
 import { useAccount } from "@starknet-react/core";
 import type { AccountInterface } from "starknet";
-import { useNetwork } from "@/components/starknet-provider";
+import { NETWORK } from "@/components/starknet-provider";
 import { assertCorrectNetwork } from "@medialane/ui";
 
 export function useSigner(): AccountInterface | undefined {
   const { account, chainId } = useAccount();
-  const { networkConfig } = useNetwork();
 
   return useMemo(() => {
     if (!account) return undefined;
@@ -16,7 +15,7 @@ export function useSigner(): AccountInterface | undefined {
       get(target, prop, receiver) {
         if (prop === "execute" || prop === "signMessage") {
           return (...args: unknown[]) => {
-            assertCorrectNetwork(chainId, networkConfig.chainId);
+            assertCorrectNetwork(chainId, NETWORK.chainId);
 
             return (target[prop] as (...a: unknown[]) => unknown).apply(target, args);
           };
@@ -24,5 +23,5 @@ export function useSigner(): AccountInterface | undefined {
         return Reflect.get(target, prop, receiver);
       },
     });
-  }, [account, chainId, networkConfig.chainId]);
+  }, [account, chainId]);
 }
