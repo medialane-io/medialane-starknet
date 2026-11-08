@@ -130,7 +130,7 @@ export function useMarketplace(): UseMarketplaceReturn {
         }
 
         return run(async () => {
-            const checkoutRes = await client.api.intents.checkout({
+            const checkoutRes = await client.createCheckout({
                 fulfiller: signer.address,
                 items: items.map((i) => ({ orderHash: i.orderHash, quantity: i.quantity })),
             });
@@ -173,7 +173,7 @@ export function useMarketplace(): UseMarketplaceReturn {
             return undefined;
         }
         return run(async () => {
-            const intentRes = await client.api.intents.create("fulfill", {
+            const intentRes = await client.createIntent("fulfill", {
                 fulfiller: signer.address,
                 orderHash,
                 tokenStandard: asTokenStandard(tokenStandard),
