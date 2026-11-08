@@ -1,4 +1,5 @@
-import { getTokenBySymbol, type ApiIntentCreated, type IntentsApi } from "@medialane/sdk";
+import { getTokenBySymbol, type ApiIntentCreated } from "@medialane/sdk";
+import type { MedialaneClient } from "@medialane/sdk/starknet";
 
 function tokenAddress(symbol: string): string {
   const token = getTokenBySymbol(symbol);
@@ -7,10 +8,10 @@ function tokenAddress(symbol: string): string {
 }
 
 export async function createSwapIntent(
-  api: { intents: Pick<IntentsApi, "create"> },
+  client: Pick<MedialaneClient, "createIntent">,
   params: { sellSymbol: string; buySymbol: string; buyAmountRaw: string; takerAddress: string },
 ): Promise<ApiIntentCreated> {
-  return api.intents.create("swap", {
+  return client.createIntent("swap", {
     taker: params.takerAddress,
     sellTokenAddress: tokenAddress(params.sellSymbol),
     buyTokenAddress: tokenAddress(params.buySymbol),
