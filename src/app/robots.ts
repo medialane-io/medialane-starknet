@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { APP_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -23,6 +22,5 @@ export default function robots(): MetadataRoute.Robots {
         "/launchpad/*/mint",
       ],
     },
-    sitemap: `${APP_URL}/sitemap.xml`,
   };
 }
