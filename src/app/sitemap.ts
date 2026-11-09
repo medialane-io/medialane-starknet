@@ -1,29 +1,10 @@
 import type { MetadataRoute } from "next";
-import { unstable_cache } from "next/cache";
-import { IP_TYPE_DATA, sitemapChunks, sitemapEntries, type SitemapKind } from "@medialane/ui";
+import { IP_TYPE_DATA } from "@medialane/ui";
 import { APP_URL } from "@/lib/seo";
-import { getMedialaneClient } from "@/lib/medialane-client";
 
 const BASE_URL = APP_URL;
-export const revalidate = 3600;
 
-const api = () => getMedialaneClient().api;
-
-const chunksOf = unstable_cache(() => sitemapChunks(api()), ["sitemap-chunks"], { revalidate });
-
-export async function generateSitemaps() {
-  if (process.env.NEXT_PHASE === "phase-production-build") return [{ id: "pages" }];
-  const chunks = await chunksOf();
-  return [{ id: "pages" }, ...chunks.map(({ kind, index }) => ({ id: `${kind}-${index}` }))];
-}
-
-export default async function sitemap(props: { id: string | Promise<string> }): Promise<MetadataRoute.Sitemap> {
-  const id = await props.id;
-  if (id !== "pages") {
-    const [kind, index] = id.split("-");
-    return sitemapEntries(api(), { kind: kind as SitemapKind, index: Number(index) }, BASE_URL);
-  }
-
+export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: "daily", priority: 1 },
     { url: `${BASE_URL}/discover`, changeFrequency: "daily", priority: 0.9 },
