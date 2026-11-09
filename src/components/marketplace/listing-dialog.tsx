@@ -81,7 +81,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!busy) onOpenChange(v); }}>
       <DialogContent className="max-w-[calc(100%-6px)] sm:max-w-md p-0 overflow-hidden gap-0 rounded-2xl flex flex-col max-h-[92svh]">
-        <DialogTitle className="sr-only">List {name} for sale</DialogTitle>
+        <DialogTitle className="sr-only">Sell {name}</DialogTitle>
         <DialogDescription className="sr-only">
           Set pricing, currency, duration, and quantity to create an onchain marketplace listing.
         </DialogDescription>
@@ -118,7 +118,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
               </div>
               <div className="px-5 py-5 space-y-4">
                 <div>
-                  <DialogTitle>List for sale</DialogTitle>
+                  <DialogTitle>Sell</DialogTitle>
                   <DialogDescription>
                     Set a fixed price and duration. Your asset stays in your wallet until a buyer settles the trade.
                   </DialogDescription>
@@ -143,7 +143,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                     {is1155 && (
                       <FormField control={form.control} name="amount" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Quantity to list</FormLabel>
+                          <FormLabel>Quantity to sell</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" min="1" placeholder="1" {...field} />
                           </FormControl>
@@ -170,7 +170,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                     {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
                     <div className="space-y-3">
                       <Button type="submit" className="w-full h-11" disabled={busy || !isConnected}>
-                        <Tag className="h-4 w-4 mr-2" />List for sale
+                        <Tag className="h-4 w-4 mr-2" />Sell
                       </Button>
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
