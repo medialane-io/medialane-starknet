@@ -26,8 +26,7 @@ function PlatformStatsBar() {
   return (
     <StatPillRow
       items={[
-        { label: "Collections", value: stats?.collections ?? null },
-        { label: "Assets", value: stats?.tokens ?? null },
+        { label: "Markets", value: stats?.markets ?? null },
         { label: "Sales", value: stats?.sales ?? null },
       ]}
     />
