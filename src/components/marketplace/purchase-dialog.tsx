@@ -105,7 +105,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     if (paymentSymbol && order.price?.currency && address) {
       setPreparing(true);
       try {
-        swap = await createSwapIntent(getMedialaneClient().api, {
+        swap = await createSwapIntent(getMedialaneClient(), {
           sellSymbol: paymentSymbol,
           buySymbol: order.price.currency,
           buyAmountRaw: amountDue(order, quantity).toString(),
