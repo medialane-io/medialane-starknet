@@ -137,7 +137,7 @@ export function ApproveMintDialog({ offer, open, onOpenChange, onSuccess }: Prop
       open={open}
       onOpenChange={onOpenChange}
       collections={eligibleCollections}
-      footerNote="Grant the license: mint the derivative and list it for the requester, in one step."
+      footerNote="Grant the license: mint the derivative and sell it to the requester, in one step."
       newAssetHref={newAssetLink}
       tx={{ phase, txHash: mintHash, error, retryable: !mintHash, reset }}
       onApprove={handleApprove}

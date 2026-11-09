@@ -243,7 +243,7 @@ export default function CreatePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 sm:gap-8">
             {[
               { value: "181", label: "Countries protected" },
-              { value: "Zero fees", label: "to mint & list" },
+              { value: "Zero fees", label: "to mint & sell" },
               { value: "Direct", label: "to your wallet" },
               { value: "Programmable", label: "royalties & licensing" },
             ].map(({ value, label }) => (
