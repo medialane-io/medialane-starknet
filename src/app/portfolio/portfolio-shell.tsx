@@ -1,7 +1,6 @@
 "use client";
 
-import { PortfolioShell as SharedPortfolioShell, PORTFOLIO_TABS } from "@medialane/ui";
-import { useRemixOffers } from "@/hooks/use-remix-offers";
+import { PortfolioShell as SharedPortfolioShell, PORTFOLIO_TABS, useRemixOffers } from "@medialane/ui";
 
 const TABS = PORTFOLIO_TABS.flatMap((t) =>
   t.key === "collections" ? [t, { key: "coins", label: "Coins", href: "/portfolio/coins" }] : [t]
