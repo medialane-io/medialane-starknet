@@ -4,7 +4,7 @@ import { ProfileLivePreview, type ProfileForm } from "@/components/settings/prof
 import { PortfolioSnapshot, RewardsSnapshot } from "@medialane/ui";
 import { useState } from "react";
 import { useWallet } from "@/hooks/use-wallet";
-import { useCreatorProfile, useUserOrders, useCollectionsByOwner, AssetPicker, ServiceFormShell, type OwnedAsset, cn } from "@medialane/ui";
+import { useCreatorProfile, useUserOrders, useCollectionsByOwner, useTokensByOwner, AssetPicker, ServiceFormShell, type OwnedAsset, cn } from "@medialane/ui";
 import { useMyUsernameClaim } from "@/hooks/use-username-claims";
 import { useUsernameClaimForm } from "@/hooks/use-username-claim-form";
 import { InlineNote } from "@/components/shared/inline-note";
@@ -12,7 +12,6 @@ import { useDraft } from "@/hooks/use-draft";
 import { useSave } from "@/hooks/use-save";
 import { UsernameInput } from "@/components/shared/username-input";
 import { VerifyWithWalletButton } from "@/components/shared/verify-with-wallet-button";
-import { useTokensByOwner } from "@/hooks/use-tokens";
 import { FastMint } from "@/components/launchpad/fast-mint";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getMedialaneClient } from "@/lib/medialane-client";
