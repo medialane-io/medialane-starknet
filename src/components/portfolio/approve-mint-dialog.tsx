@@ -8,7 +8,6 @@ import { useVenueSigner } from "@/lib/use-venue-signer";
 
 import { useMarketplace } from "@/hooks/use-marketplace";
 
-import { confirmRemixOffer } from "@/hooks/use-remix-offers";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getService } from "@medialane/sdk";
 import type { RemixOffer } from "@/types/remix-offers";
@@ -110,7 +109,7 @@ export function ApproveMintDialog({ offer, open, onOpenChange, onSuccess }: Prop
       });
       if (!orderHash) throw new Error("Could not confirm listing orderHash — check portfolio shortly");
 
-      await confirmRemixOffer(
+      await client.api.remix.confirm(
         offer.id,
         {
           remixContract: selectedCollection.contractAddress,

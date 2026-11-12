@@ -11,7 +11,7 @@ import { resolveImage } from "@/lib/utils";
 
 export function useAppAdapter(): MedialaneApp {
   const { address, isConnecting } = useWallet();
-  const { ensureSignedIn } = useAccountSession();
+  const { ensureSignedIn, session } = useAccountSession();
   const { open } = useConnectDialog();
   const signer = useVenueSigner();
   return {
@@ -20,6 +20,7 @@ export function useAppAdapter(): MedialaneApp {
     walletLoading: isConnecting,
     onRequireWallet: open,
     ensureSignedIn,
+    signedIn: !!session,
     connectLabel: "Connect wallet",
     companion: {
       title: "Trade with Google or email",
