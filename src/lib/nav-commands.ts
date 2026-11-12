@@ -1,5 +1,5 @@
 import { navGroups } from "@medialane/ui";
-import { Bell, Coins, Gift, List, Repeat2, Ticket } from "lucide-react";
+import { Coins, Gift, List, Repeat2, Ticket } from "lucide-react";
 
 export const NAV_COMMANDS = navGroups([
   {
@@ -12,7 +12,6 @@ export const NAV_COMMANDS = navGroups([
     items: [
       "collections", "coins", "creators", "activities", "rewards", "airdrop",
       { id: "claim", label: "Genesis Claim", icon: Gift, href: "/claim", keywords: ["airdrop", "claim", "free", "drop", "genesis"] },
-      { id: "notifications", label: "Notifications", icon: Bell, href: "/notifications", keywords: ["alerts", "updates", "offers"] },
       "settings",
     ],
   },

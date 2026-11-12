@@ -8,7 +8,6 @@ import { ThemeProvider } from "next-themes";
 import Link from "next/link";
 import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
-import { NotificationSpotlight } from "@/components/shared/notification-spotlight";
 import { resolveImage } from "@/lib/utils";
 import { IPFS_GATEWAY } from "@/lib/constants";
 
@@ -125,7 +124,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <AppAdapter>
                 <UserRegistration />
                 {isStandalone ? children : <Shell>{children}</Shell>}
-                {!isStandalone && <NotificationSpotlight />}
               </AppAdapter>
             </WalletSessionSync>
         </StarknetProvider>

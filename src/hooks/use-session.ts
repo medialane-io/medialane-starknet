@@ -12,7 +12,7 @@ async function fetchSession(): Promise<ApiSession | null> {
 }
 
 export function useSession(): { session: ApiSession | null; isLoading: boolean } {
-  const { data, error } = useSWR(SESSION_KEY, fetchSession, { shouldRetryOnError: false });
+  const { data, error } = useSWR(SESSION_KEY, fetchSession, { shouldRetryOnError: false, revalidateOnFocus: false, revalidateOnReconnect: false });
   return { session: data ?? null, isLoading: data === undefined && error === undefined };
 }
 

@@ -10,10 +10,9 @@ import {
 import { Button } from "@medialane/ui/button";
 import { NETWORK } from "@/components/starknet-provider";
 import { useDisconnectWallet, useWallet } from "@/hooks/use-wallet";
-import { useActivitiesByAddress, useReceivedOffers, isWrongNetwork as computeIsWrongNetwork, useNavAccountSheet, NavThemeToggle, timeAgo } from "@medialane/ui";
+import { useActivitiesByAddress, useReceivedOffers, useTokensByOwner, isWrongNetwork as computeIsWrongNetwork, useNavAccountSheet, NavThemeToggle, timeAgo } from "@medialane/ui";
 
 
-import { useTokensByOwner } from "@/hooks/use-tokens";
 import { getConnectorIconSrc } from "@/lib/wallet-connectors";
 
 import type { ApiActivity } from "@medialane/sdk";
