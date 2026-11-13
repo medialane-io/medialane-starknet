@@ -5,27 +5,25 @@ import { RewardEarned } from "@medialane/ui";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { AlertCircle, Layers, ShieldCheck, Tag, Zap } from "lucide-react";
+import { AlertCircle, Layers, ShieldCheck, Tag } from "lucide-react";
 import { useConfetti } from "@medialane/ui/utils/use-confetti";
 import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import { LISTABLE_CURRENCIES, orderFormSchema } from "@/lib/order-form";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
-import { Button } from "@medialane/ui/button";
 import { Input } from "@medialane/ui/input";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
-import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import {
-  CurrencyPicker,
+  PriceCurrencyInput,
   DurationPicker,
   isBusyPhase,
   TransactionDialogStates,
   successMessages,
-  MarketplaceDialogHero,
+  ListingAssetSummary,
 } from "@medialane/ui";
 
 const schema = orderFormSchema.extend({ amount: z.string().optional() });
@@ -52,7 +50,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { price: "", currency: "USDC", durationSeconds: 2592000, amount: "1" },
+    defaultValues: { price: "", currency: "USDC", durationSeconds: 63072000, amount: "1" },
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -100,82 +98,70 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
           onRetry={resetState}
           onDone={() => onOpenChange(false)}
         >
-            <div className="flex flex-col">
-              <MarketplaceDialogHero
-                tokenImage={tokenImage}
-                tokenName={tokenName}
-                tokenId={tokenId}
-                fallbackIcon={<Layers className="h-10 w-10 text-muted-foreground/35" />}
+            <div className="flex flex-col overflow-y-auto">
+              <ListingAssetSummary
+                name={name}
+                image={tokenImage}
+                fallbackIcon={<Tag className="h-6 w-6 text-brand-blue/40" />}
+                badge={is1155 ? (
+                  <span className="inline-flex items-center gap-1 text-2xs font-semibold px-2 py-0.5 rounded-full border border-brand-purple/40 bg-brand-purple/15 text-brand-purple">
+                    <Layers className="h-3 w-3" />
+                    Multi-edition
+                  </span>
+                ) : undefined}
               />
-              <div className="flex items-end justify-between gap-3 px-5 pt-4">
-                <div className="min-w-0">
-                  <p className="font-bold text-lg leading-tight truncate">{name}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Zap className="h-3 w-3 text-emerald-500" />
-                    <span className="text-2xs font-medium text-emerald-500">Onchain listing</span>
-                  </div>
-                </div>
-              </div>
-              <div className="px-5 py-5 space-y-4">
-                <div>
-                  <DialogTitle>Sell</DialogTitle>
-                  <DialogDescription>
-                    Set a fixed price and duration. Your asset stays in your wallet until a buyer settles the trade.
-                  </DialogDescription>
-                </div>
+              <div className="px-5 pb-5 pt-4">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField control={form.control} name="price" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{is1155 ? "Price per edition" : "Price"}</FormLabel>
-                        <div className="relative">
-                          <FormControl>
-                            <Input type="number" step="any" placeholder="0.00" className="pr-20" {...field} />
-                          </FormControl>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-                            <CurrencyIcon symbol={form.watch("currency")} size={14} />
-                            <span className="text-xs font-bold">{form.watch("currency")}</span>
-                          </div>
-                        </div>
+                        <FormControl>
+                          <PriceCurrencyInput
+                            {...field}
+                            currency={form.watch("currency")}
+                            currencies={LISTABLE_CURRENCIES}
+                            onCurrencyChange={(c) => form.setValue("currency", c, { shouldDirty: true })}
+                            disabled={busy}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     {is1155 && (
                       <FormField control={form.control} name="amount" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Quantity to sell</FormLabel>
+                          <FormLabel>Quantity</FormLabel>
                           <FormControl>
-                            <Input type="number" step="1" min="1" placeholder="1" {...field} />
+                            <Input type="number" step="1" min="1" placeholder="1" disabled={busy} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                     )}
-                    <FormField control={form.control} name="currency" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Currency</FormLabel>
-                        <FormControl>
-                          <CurrencyPicker currencies={LISTABLE_CURRENCIES} value={field.value} onChange={field.onChange} disabled={busy} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
                     <FormField control={form.control} name="durationSeconds" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Duration</FormLabel>
                         <FormControl>
-                          <DurationPicker options={DURATION_OPTIONS} value={field.value} onChange={field.onChange} disabled={busy} cols={4} />
+                          <DurationPicker options={DURATION_OPTIONS} value={field.value} onChange={field.onChange} disabled={busy} />
                         </FormControl>
                       </FormItem>
                     )} />
                     {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
-                    <div className="space-y-3">
-                      <Button type="submit" className="w-full h-11" disabled={busy || !isConnected}>
-                        <Tag className="h-4 w-4 mr-2" />Sell
-                      </Button>
+                    <div className="pt-1 space-y-2">
+                      <div className={`btn-border-animated p-[1px] rounded-xl ${(busy || !isConnected) ? "pointer-events-none" : ""}`}>
+                        <button
+                          type="submit"
+                          className="w-full h-11 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-transparent disabled:opacity-60"
+                          disabled={busy || !isConnected}
+                        >
+                          <Tag className="h-4 w-4" /> Sell
+                        </button>
+                      </div>
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
-                          Listings can be cancelled anytime from the portfolio.
+                          Listings are fully onchain and permissionless. Assets stay in the wallet until it settles.
                         </p>
                       </div>
                     </div>
