@@ -18,7 +18,7 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
 import {
-  PriceCurrencyInput,
+  CurrencyPicker,
   DurationPicker,
   isBusyPhase,
   TransactionDialogStates,
@@ -117,15 +117,17 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                       <FormItem>
                         <FormLabel>{is1155 ? "Price per edition" : "Price"}</FormLabel>
                         <FormControl>
-                          <PriceCurrencyInput
-                            {...field}
-                            currency={form.watch("currency")}
-                            currencies={LISTABLE_CURRENCIES}
-                            onCurrencyChange={(c) => form.setValue("currency", c, { shouldDirty: true })}
-                            disabled={busy}
-                          />
+                          <Input type="number" step="any" placeholder="0.00" className="h-14 rounded-xl text-2xl font-semibold tabular-nums md:text-2xl placeholder:text-muted-foreground/40" disabled={busy} {...field} />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="currency" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Currency</FormLabel>
+                        <FormControl>
+                          <CurrencyPicker currencies={LISTABLE_CURRENCIES} value={field.value} onChange={field.onChange} disabled={busy} />
+                        </FormControl>
                       </FormItem>
                     )} />
                     {is1155 && (
