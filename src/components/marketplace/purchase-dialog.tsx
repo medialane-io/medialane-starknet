@@ -17,7 +17,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { resolveImage } from "@/lib/utils";
 import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import { assetHref } from "@/lib/routes";
-import { isBusyPhase, OrderSummaryHero, TransactionDialogStates, successMessages, type TransactionPhase, usdValueFor } from "@medialane/ui";
+import { GradientButton, isBusyPhase, OrderSummaryHero, TransactionDialogStates, successMessages, type TransactionPhase, usdValueFor } from "@medialane/ui";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { useTokenBalance } from "@/hooks/use-token-balance";
@@ -236,16 +236,10 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 ) : isConnected ? (
                   <div className="space-y-3">
                     {buyError && <p role="alert" className="text-sm text-destructive">{buyError}</p>}
-                    <div className={`btn-border-animated p-[1px] rounded-xl ${!canBuy ? "opacity-50 pointer-events-none" : ""}`}>
-                      <Button
-                        className="w-full h-12 text-base font-semibold text-white rounded-[11px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] bg-background/30"
-                        onClick={handleBuy}
-                        disabled={busy || !canBuy}
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                        {needsSwap && !paymentSymbol ? "Select a token to pay with" : "Buy now"}
-                      </Button>
-                    </div>
+                    <GradientButton onClick={handleBuy} disabled={busy || !canBuy} className="bg-background/30">
+                      <ShoppingCart className="h-4 w-4" />
+                      {needsSwap && !paymentSymbol ? "Select a token to pay with" : "Buy now"}
+                    </GradientButton>
                     <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
@@ -255,12 +249,9 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="btn-border-animated p-[1px] rounded-2xl">
-                      <ConnectWallet
-                        label="Connect wallet to trade"
-                        className="w-full h-12 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-                      />
-                    </div>
+                    <GradientButton asChild big>
+                      <ConnectWallet label="Connect wallet to trade" />
+                    </GradientButton>
                     <p className="text-center text-xs text-muted-foreground">
                       Your Starknet wallet is required to sign and complete the trade.
                     </p>

@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
-import { Button } from "@medialane/ui/button";
-import { runIntentCalls, useTransaction } from "@medialane/ui";
+import { GradientButton, runIntentCalls, useTransaction } from "@medialane/ui";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { getMedialaneClient } from "@/lib/medialane-client";
@@ -133,12 +132,9 @@ export function GenesisMint({
   if (phase === "idle") {
     return (
       <div className={card}>
-        <div className="btn-border-animated p-[1px] rounded-2xl">
-          <ConnectWallet
-            label={copy.connect}
-            className="w-full h-12 text-base font-semibold bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-          />
-        </div>
+        <GradientButton asChild big>
+          <ConnectWallet label={copy.connect} />
+        </GradientButton>
       </div>
     );
   }
@@ -151,27 +147,24 @@ export function GenesisMint({
           <span>{error}</span>
         </div>
       )}
-      <div className="btn-border-animated p-[1px] rounded-2xl">
-        <Button
-          size="lg"
-          className="w-full font-bold gap-2 h-12 text-base bg-transparent text-white rounded-[15px] hover:bg-transparent hover:brightness-110 active:scale-[0.98] transition-all"
-          onClick={
-            phase === "error"
-              ? () => { tx.reset(); setPhase("ready"); setError(null); }
-              : handleMint
-          }
-          disabled={phase === "minting"}
-        >
-          {phase === "minting" && (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          )}
-          {phase === "error"
-            ? copy.retry
-            : phase === "minting"
-            ? copy.minting
-            : copy.claim}
-        </Button>
-      </div>
+      <GradientButton
+        big
+        onClick={
+          phase === "error"
+            ? () => { tx.reset(); setPhase("ready"); setError(null); }
+            : handleMint
+        }
+        disabled={phase === "minting"}
+      >
+        {phase === "minting" && (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        )}
+        {phase === "error"
+          ? copy.retry
+          : phase === "minting"
+          ? copy.minting
+          : copy.claim}
+      </GradientButton>
     </div>
   );
 }

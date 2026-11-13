@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useAccount, useDisconnect } from "@starknet-react/core";
-import { refreshSession } from "@/hooks/use-session";
+import { refreshSession } from "@medialane/ui/utils/use-session";
 import { signOut } from "@/lib/wallet-session";
 import type { WalletType } from "@/lib/wallet-types";
 

@@ -4,33 +4,29 @@ import { RewardEarned, usdValueFor } from "@medialane/ui";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { AlertCircle, HandCoins, Layers, ShieldCheck, Zap } from "lucide-react";
 import { useConfetti } from "@medialane/ui/utils/use-confetti";
 import { useOnOpen } from "@medialane/ui/utils/use-on-open";
-import { LISTABLE_CURRENCIES, orderFormSchema } from "@/lib/order-form";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
-import { Button } from "@medialane/ui/button";
-import { Input } from "@medialane/ui/input";
+import { Form } from "@medialane/ui/form";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
-import { CurrencyIcon } from "@medialane/ui/currency-icon";
 import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import {
-  CurrencyPicker,
-  DurationPicker,
+  OrderFields,
+  GradientButton,
+  orderFormSchema,
+  type OrderFormValues,
   isBusyPhase,
   TransactionDialogStates,
   successMessages,
   MarketplaceDialogHero,
 } from "@medialane/ui";
 
-const schema = orderFormSchema;
-type FormValues = z.infer<typeof schema>;
+type FormValues = OrderFormValues;
 
 interface OfferDialogProps {
   open: boolean;
@@ -52,7 +48,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
   const isCancelled = error?.toLowerCase().includes("request cancelled") ?? false;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(orderFormSchema),
     defaultValues: { price: "", currency: "USDC", durationSeconds: 604800 },
   });
 
@@ -116,40 +112,10 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                 </div>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField control={form.control} name="price" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Offer amount</FormLabel>
-                        <div className="relative">
-                          <FormControl>
-                            <Input type="number" step="any" placeholder="0.00" className="pr-20" {...field} />
-                          </FormControl>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-                            <CurrencyIcon symbol={form.watch("currency")} size={14} />
-                            <span className="text-xs font-bold">{form.watch("currency")}</span>
-                          </div>
-                        </div>
-                        {usdEquivalent && (
-                          <p className="text-xs text-muted-foreground mt-1">≈ {usdEquivalent}</p>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="currency" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Currency</FormLabel>
-                        <FormControl>
-                          <CurrencyPicker currencies={LISTABLE_CURRENCIES} value={field.value} onChange={field.onChange} disabled={busy} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="durationSeconds" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration</FormLabel>
-                        <FormControl>
-                          <DurationPicker options={DURATION_OPTIONS} value={field.value} onChange={field.onChange} disabled={busy} cols={4} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
+                    <OrderFields form={form} durationOptions={DURATION_OPTIONS} busy={busy} priceLabel="Offer price" />
+                    {usdEquivalent && (
+                      <p className="text-xs text-muted-foreground -mt-1">≈ {usdEquivalent}</p>
+                    )}
                     {error && (
                       <Alert
                         variant={isCancelled ? "default" : "destructive"}
@@ -160,9 +126,9 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                       </Alert>
                     )}
                     <div className="space-y-3">
-                      <Button type="submit" className="w-full h-11" disabled={busy || !isConnected}>
-                        <HandCoins className="h-4 w-4 mr-2" />Submit offer
-                      </Button>
+                      <GradientButton type="submit" disabled={busy || !isConnected}>
+                        <HandCoins className="h-4 w-4" />Submit offer
+                      </GradientButton>
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">

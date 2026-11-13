@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Wallet } from "lucide-react";
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
+import { GradientButton } from "@medialane/ui";
 import { Skeleton } from "@medialane/ui/skeleton";
 
 export type ConnectGateProps = {
@@ -37,12 +38,9 @@ export function ConnectGate({ children, title, subtitle, icon }: ConnectGateProp
         </p>
         <div className="flex justify-center">
 
-          <div className="btn-border-animated p-[1px] rounded-2xl w-full max-w-xs">
-            <ConnectWallet
-              label="Connect wallet"
-              className="w-full h-12 text-base bg-transparent text-white rounded-[15px] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-            />
-          </div>
+          <GradientButton asChild big wrapperClassName="max-w-xs">
+            <ConnectWallet label="Connect wallet" />
+          </GradientButton>
         </div>
       </div>
     );

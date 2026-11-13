@@ -4,30 +4,28 @@ import { RewardEarned } from "@medialane/ui";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { AlertCircle, Layers, ShieldCheck, Tag } from "lucide-react";
 import { useConfetti } from "@medialane/ui/utils/use-confetti";
 import { useOnOpen } from "@medialane/ui/utils/use-on-open";
-import { LISTABLE_CURRENCIES, orderFormSchema } from "@/lib/order-form";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
-import { Input } from "@medialane/ui/input";
+import { Form } from "@medialane/ui/form";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
 import {
-  CurrencyPicker,
-  DurationPicker,
+  OrderFields,
+  GradientButton,
+  orderFormSchema,
+  type OrderFormValues,
   isBusyPhase,
   TransactionDialogStates,
   successMessages,
   ListingAssetSummary,
 } from "@medialane/ui";
 
-const schema = orderFormSchema.extend({ amount: z.string().optional() });
-type FormValues = z.infer<typeof schema>;
+type FormValues = OrderFormValues;
 
 interface ListingDialogProps {
   open: boolean;
@@ -49,7 +47,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
   const name = tokenName || `Token #${tokenId}`;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(orderFormSchema),
     defaultValues: { price: "", currency: "USDC", durationSeconds: 63072000, amount: "1" },
   });
 
@@ -113,53 +111,18 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
               <div className="px-5 pb-5 pt-4">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField control={form.control} name="price" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{is1155 ? "Price per edition" : "Price"}</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="any" placeholder="0.00" className="h-14 rounded-xl text-2xl font-semibold tabular-nums md:text-2xl placeholder:text-muted-foreground/40" disabled={busy} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="currency" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Currency</FormLabel>
-                        <FormControl>
-                          <CurrencyPicker currencies={LISTABLE_CURRENCIES} value={field.value} onChange={field.onChange} disabled={busy} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                    {is1155 && (
-                      <FormField control={form.control} name="amount" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="1" min="1" placeholder="1" disabled={busy} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    )}
-                    <FormField control={form.control} name="durationSeconds" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration</FormLabel>
-                        <FormControl>
-                          <DurationPicker options={DURATION_OPTIONS} value={field.value} onChange={field.onChange} disabled={busy} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
+                    <OrderFields
+                      form={form}
+                      durationOptions={DURATION_OPTIONS}
+                      busy={busy}
+                      priceLabel={is1155 ? "Price per edition" : "Price"}
+                      quantity={is1155 ? {} : undefined}
+                    />
                     {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
                     <div className="pt-1 space-y-2">
-                      <div className={`btn-border-animated p-[1px] rounded-xl ${(busy || !isConnected) ? "pointer-events-none" : ""}`}>
-                        <button
-                          type="submit"
-                          className="w-full h-11 rounded-[11px] flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] bg-transparent disabled:opacity-60"
-                          disabled={busy || !isConnected}
-                        >
-                          <Tag className="h-4 w-4" /> Sell
-                        </button>
-                      </div>
+                      <GradientButton type="submit" disabled={busy || !isConnected}>
+                        <Tag className="h-4 w-4" /> Sell
+                      </GradientButton>
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
