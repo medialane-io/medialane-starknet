@@ -5,7 +5,7 @@ import { signInWithWallet } from "@medialane/sdk/starknet";
 import { describeError, UserFacingError } from "@medialane/ui";
 import { useAccount } from "@starknet-react/core";
 import { useSigner } from "@/hooks/use-signer";
-import { useSession, refreshSession } from "@/hooks/use-session";
+import { useSession, refreshSession } from "@medialane/ui/utils/use-session";
 import { SESSION_REQUIRED } from "@/lib/account-gate";
 import { MEDIALANE_BACKEND_URL } from "@/lib/constants";
 import { nextSessionStep, sessionBelongsTo, signOut, type WalletStatus } from "@/lib/wallet-session";

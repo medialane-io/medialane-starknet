@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import type { z } from "zod";
 import { AlertCircle, ArrowLeftRight } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@medialane/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@medialane/ui/form";
@@ -14,10 +14,10 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { DURATION_OPTIONS } from "@/lib/constants";
 import { resolveImage } from "@/lib/utils";
-import { orderFormSchema } from "@/lib/order-form";
 import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import {
   DurationPicker,
+  counterOfferFormSchema,
   isBusyPhase,
   MarketplaceDialogHero,
   TransactionDialogStates,
@@ -25,8 +25,7 @@ import {
   usdValueFor,
 } from "@medialane/ui";
 
-const schema = orderFormSchema.pick({ price: true, durationSeconds: true }).extend({ message: z.string().optional() });
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof counterOfferFormSchema>;
 
 interface CounterOfferDialogProps {
   open: boolean;
@@ -52,7 +51,7 @@ export function CounterOfferDialog({
   const busy = isBusyPhase(phase);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(counterOfferFormSchema),
     defaultValues: { price: "", durationSeconds: 604800, message: "" },
   });
 
@@ -119,7 +118,7 @@ export function CounterOfferDialog({
                       <FormItem>
                         <FormLabel>Duration</FormLabel>
                         <FormControl>
-                          <DurationPicker options={DURATION_OPTIONS} value={field.value} onChange={field.onChange} disabled={busy} cols={4} />
+                          <DurationPicker options={DURATION_OPTIONS} value={field.value} onChange={field.onChange} disabled={busy} />
                         </FormControl>
                       </FormItem>
                     )} />
