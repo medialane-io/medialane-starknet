@@ -38,7 +38,7 @@ export default async function CreatorPage({ params }: Props) {
       url: absoluteUrl(`/creator/${address}`),
     },
     buildBreadcrumbJsonLd([
-      { name: "Creators", path: "/creators" },
+      { name: "Accounts", path: "/creators" },
       { name: `@${address}`, path: `/creator/${address}` },
     ]),
   ];
