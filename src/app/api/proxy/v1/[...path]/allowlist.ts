@@ -22,7 +22,7 @@ export const ALLOW: Record<string, RegExp[]> = {
     /^activities\/[^/]+$/,
     /^search$/,
     /^intents\/[^/]+$/,
-    /^creators$/,
+    /^accounts$/,
     /^creators\/[^/]+\/profile$/,
     /^creators\/[^/]+\/hidden$/,
     /^creators\/by-username\/[^/]+$/,
