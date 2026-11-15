@@ -10,7 +10,7 @@ export const NAV_COMMANDS = navGroups([
   {
     heading: "Navigate",
     items: [
-      "collections", "coins", "creators", "activities", "rewards", "airdrop",
+      "collections", "coins", "accounts", "activities", "rewards", "airdrop",
       { id: "claim", label: "Genesis Claim", icon: Gift, href: "/claim", keywords: ["airdrop", "claim", "free", "drop", "genesis"] },
       "settings",
     ],

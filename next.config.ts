@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      { source: "/creators", destination: "/accounts", permanent: true },
       { source: "/asset/:contract(0x[0-9a-fA-F]+)/:tokenId", destination: "/asset/starknet/:contract/:tokenId", permanent: true },
       { source: "/collections/:contract(0x[0-9a-fA-F]+)",    destination: "/collections/starknet/:contract",    permanent: true },
       { source: "/coins/:address(0x[0-9a-fA-F]+)",           destination: "/coins/starknet/:address",            permanent: true },
