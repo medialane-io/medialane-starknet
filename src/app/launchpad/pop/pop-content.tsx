@@ -126,7 +126,7 @@ export function PopContent() {
               plain
               icon={<Award className="h-4 w-4 text-white" />}
               title="POP Credentials"
-              subtitle="Collectible badges issued by event organizers — permanent proof you took part in a bootcamp, workshop, hackathon, or conference."
+              subtitle="Immutable certificates for authenticity. Browse events or create one."
             />
           </div>
         </FadeIn>
