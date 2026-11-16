@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { PortfolioAssetActions, PortfolioOrderActions } from "@medialane/ui";
+import { ArchiveAssetDialog, type PortfolioAssetActions, type PortfolioOrderActions } from "@medialane/ui";
 import type { ApiOrder, ApiToken } from "@medialane/sdk";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { AcceptOfferDialog } from "@/components/marketplace/accept-offer-dialog";
@@ -96,11 +96,13 @@ export function useAssetActions({ refresh }: Context): PortfolioAssetActions {
   const [listOpen, setListOpen] = useState(false);
   const [transferToken, setTransferToken] = useState<ApiToken | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [archiveToken, setArchiveToken] = useState<ApiToken | null>(null);
   const handleSuccess = refresh;
 
   return {
     list: (token) => { setSelectedToken(token); setListOpen(true); },
     transfer: (token) => { setTransferToken(token); setTransferOpen(true); },
+    archive: setArchiveToken,
     cancel: async (token) => {
       const activeOrder = token.activeOrders?.[0];
       if (!activeOrder) return;
@@ -137,6 +139,18 @@ export function useAssetActions({ refresh }: Context): PortfolioAssetActions {
             tokenImage={transferToken.metadata?.image ?? null}
             tokenStandard={transferToken.standard === "ERC1155" ? "ERC1155" : "ERC721"}
             hasActiveListing={!!transferToken.activeOrders?.[0]}
+            onSuccess={handleSuccess}
+          />
+        )}
+        {archiveToken && (
+          <ArchiveAssetDialog
+            open
+            onOpenChange={(open) => { if (!open) setArchiveToken(null); }}
+            contractAddress={archiveToken.contractAddress}
+            tokenId={archiveToken.tokenId}
+            tokenName={archiveToken.metadata?.name ?? undefined}
+            tokenImage={archiveToken.metadata?.image ?? null}
+            hasActiveListing={!!archiveToken.activeOrders?.[0]}
             onSuccess={handleSuccess}
           />
         )}
