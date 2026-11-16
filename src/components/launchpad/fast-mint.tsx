@@ -1,13 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FastMint as SharedFastMint, type FastMintProps as SharedFastMintProps, useCollectionsByOwner, useMedialaneApp, useMedialaneClient } from "@medialane/ui";
 
 import { useWallet } from "@/hooks/use-wallet";
 import { useConnectDialog } from "@/components/connect-dialog";
 import { useAccountSession } from "@/components/wallet-session-sync";
 
-import { RewardEarned } from "@medialane/ui";
 import { invalidatePortfolioCache } from "@medialane/ui";
 
 export interface FastMintProps {
@@ -26,15 +24,12 @@ export function FastMint({ presentation = "inline", open = true, onClose, mediaK
   const client = useMedialaneClient();
   const { collections, mutate } = useCollectionsByOwner(walletAddress ?? null);
   const { getSigner } = useMedialaneApp();
-  const router = useRouter();
 
   return (
     <SharedFastMint
-      successFooter={<RewardEarned actionType="mint_asset" />}
       presentation={presentation}
       open={open}
       onClose={onClose}
-      onNavigate={(href) => router.push(href)}
       mediaKindLock={mediaKindLock}
       onMinted={(asset) => {
         if (walletAddress) invalidatePortfolioCache(walletAddress);
