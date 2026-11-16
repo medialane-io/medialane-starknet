@@ -125,7 +125,7 @@ export function PopContent() {
             <ServiceHeader
               plain
               icon={<Award className="h-4 w-4 text-white" />}
-              title="POP Credentials"
+              title="POP Protocol"
               subtitle="Immutable certificates for authenticity. Browse events or create one."
             />
           </div>
