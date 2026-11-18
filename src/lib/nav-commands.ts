@@ -10,7 +10,7 @@ export const NAV_COMMANDS = navGroups([
   {
     heading: "Navigate",
     items: [
-      "collections", "coins", "accounts", "activities", "rewards", "airdrop",
+      "collections", "coins", "rewards", "airdrop",
       { id: "claim", label: "Genesis Claim", icon: Gift, href: "/claim", keywords: ["airdrop", "claim", "free", "drop", "genesis"] },
       "settings",
     ],
@@ -18,11 +18,11 @@ export const NAV_COMMANDS = navGroups([
   {
     heading: "Create & Mint",
     items: [
-      "mint-ip-asset", "create-collection", "mint-editions", "create-1155", "collection-drop", "browse-drops",
+      "mint-ip-asset", "create-collection", "mint-editions", "create-1155",
       { id: "my-drops", label: "My Drops", icon: List, href: "/launchpad/drop/my-drops", keywords: ["drop", "manage", "created"] },
       "pop-create", "pop-browse",
       { id: "my-pop-events", label: "My POP Events", icon: Ticket, href: "/launchpad/pop/my-events", keywords: ["pop", "manage", "events"] },
-      "tickets-create", "tickets-browse", "club-create", "club-browse", "sponsorship-create", "sponsorship-browse",
+      "tickets-create", "club-create", "sponsorship-create",
       "launch-coin",
       { id: "claim-memecoin", label: "Claim a Memecoin", icon: Coins, href: "/launchpad/memecoin", keywords: ["memecoin", "claim", "coin", "starknet", "unrug", "token"] },
       "remix",
@@ -46,7 +46,7 @@ export const NAV_COMMANDS = navGroups([
   {
     heading: "Documentation",
     items: [
-      "docs", "docs-market", "docs-launchpad", "docs-ip", "docs-sdk", "docs-terms", "docs-privacy",
+      "docs", "docs-terms", "docs-privacy",
     ],
   },
 ]);
