@@ -1,3 +1,5 @@
+"use client";
+
 import { Lock, ShieldCheck, Wallet, KeyRound, ArrowLeftRight } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 

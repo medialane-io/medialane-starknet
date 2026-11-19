@@ -1,3 +1,5 @@
+"use client";
+
 import { Ticket, ChevronRight } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 

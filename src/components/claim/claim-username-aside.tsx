@@ -1,3 +1,5 @@
+"use client";
+
 import { AtSign, UserCircle, Sparkles, BadgeCheck } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 

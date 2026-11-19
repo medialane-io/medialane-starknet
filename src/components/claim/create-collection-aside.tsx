@@ -1,3 +1,5 @@
+"use client";
+
 import { Layers, LayoutGrid, Plus, Gift } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 
