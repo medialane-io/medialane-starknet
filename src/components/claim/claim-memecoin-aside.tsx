@@ -1,3 +1,5 @@
+"use client";
+
 import { Coins, UserCircle, TrendingUp } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 

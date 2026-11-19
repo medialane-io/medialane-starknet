@@ -1,3 +1,5 @@
+"use client";
+
 import { LayoutGrid, UserCircle, Link2 } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 

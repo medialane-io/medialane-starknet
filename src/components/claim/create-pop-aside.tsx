@@ -1,3 +1,5 @@
+"use client";
+
 import { Award, Ticket, LayoutGrid, Gift } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 

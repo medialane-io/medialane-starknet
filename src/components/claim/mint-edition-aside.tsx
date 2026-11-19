@@ -1,3 +1,5 @@
+"use client";
+
 import { Sparkles, Layers, FileCheck, Gift } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 

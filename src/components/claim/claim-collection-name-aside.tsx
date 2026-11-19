@@ -1,3 +1,5 @@
+"use client";
+
 import { Link2, Share2, LayoutGrid, Sparkles } from "lucide-react";
 import { ClaimRail } from "@medialane/ui";
 
