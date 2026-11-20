@@ -72,7 +72,7 @@ export default function AirdropPage() {
                 </div>
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.05]">
                   Creator&apos;s{" "}
-                  <span className="bg-gradient-to-r from-brand-rose to-brand-orange bg-clip-text text-transparent">
+                  <span className="text-brand-orange">
                     Fund
                   </span>
                 </h1>

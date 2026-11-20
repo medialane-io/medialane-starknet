@@ -15,7 +15,7 @@ export function AirdropEventCard() {
   return (
     <div className="relative rounded-2xl overflow-hidden border border-border/40 shadow-xl shadow-black/10 aspect-square w-full">
       {errored ? (
-        <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-purple-500/10 flex flex-col items-center justify-center gap-3">
+        <div className="w-full h-full bg-muted flex flex-col items-center justify-center gap-3">
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
             <ImageIcon className="h-7 w-7 text-primary/40" />
           </div>
