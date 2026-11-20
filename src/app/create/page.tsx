@@ -16,7 +16,7 @@ import {
   Lock,
   ArrowRight,
 } from "lucide-react";
-import { cn } from "@medialane/ui";
+import { cn, IconTile } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Creator Studio";
@@ -34,7 +34,6 @@ const FEATURES = [
     icon: Zap,
     title: "Simple sign-in",
     body: "Sign in with Google — no wallet to set up, no crypto knowledge needed.",
-    accent: "bg-brand-orange",
     border: "border-yellow-500/20",
     bg: "bg-yellow-500/5",
   },
@@ -42,7 +41,6 @@ const FEATURES = [
     icon: Rocket,
     title: "Creator Launchpad",
     body: "Launch and mint NFT Collections, Programmable IP, and Real World Assets — all in a few clicks.",
-    accent: "bg-brand-purple",
     border: "border-violet-500/20",
     bg: "bg-violet-500/5",
   },
@@ -50,7 +48,6 @@ const FEATURES = [
     icon: Store,
     title: "NFT Marketplace",
     body: "Monetize and trade digital assets with smart-contract security. Earn royalties on every secondary sale.",
-    accent: "bg-brand-blue",
     border: "border-blue-500/20",
     bg: "bg-blue-500/5",
   },
@@ -58,7 +55,6 @@ const FEATURES = [
     icon: Fingerprint,
     title: "Immutable Provenance",
     body: "Secure your intellectual property copyright with blockchain-based, timestamped proof of ownership.",
-    accent: "bg-brand-blue",
     border: "border-emerald-500/20",
     bg: "bg-emerald-500/5",
   },
@@ -66,7 +62,6 @@ const FEATURES = [
     icon: ShieldCheck,
     title: "Censorship Resistance",
     body: "Ensure your content remains permanently accessible and immutable onchain. No central authority can remove it.",
-    accent: "bg-brand-rose",
     border: "border-rose-500/20",
     bg: "bg-rose-500/5",
   },
@@ -74,7 +69,6 @@ const FEATURES = [
     icon: Lock,
     title: "Onchain Sovereignty",
     body: "Maintain complete control over your intellectual property with fully self-custodied, user-owned assets.",
-    accent: "bg-brand-purple",
     border: "border-indigo-500/20",
     bg: "bg-indigo-500/5",
   },
@@ -82,7 +76,6 @@ const FEATURES = [
     icon: Globe2,
     title: "Global Protection",
     body: "Compliant with the Berne Convention (1886) — guaranteeing authorship recognition across 181 countries.",
-    accent: "bg-brand-blue",
     border: "border-sky-500/20",
     bg: "bg-sky-500/5",
   },
@@ -90,7 +83,6 @@ const FEATURES = [
     icon: Bolt,
     title: "Atomic Settlement",
     body: "Asset transfer and payment happen simultaneously in a single transaction. No escrow, no counterparty risk.",
-    accent: "bg-brand-orange",
     border: "border-amber-500/20",
     bg: "bg-amber-500/5",
   },
@@ -98,7 +90,6 @@ const FEATURES = [
     icon: FileCode2,
     title: "Embedded Licensing",
     body: "Usage terms are encoded directly into the asset — commercial use, derivatives, territory, AI policy and more.",
-    accent: "bg-brand-maeve",
     border: "border-fuchsia-500/20",
     bg: "bg-fuchsia-500/5",
   },
@@ -106,7 +97,6 @@ const FEATURES = [
     icon: Cpu,
     title: "Onchain Composability",
     body: "Machine-readable IP permissions let games, AI models, and dApps automatically query and interact onchain.",
-    accent: "bg-brand-blue",
     border: "border-teal-500/20",
     bg: "bg-teal-500/5",
   },
@@ -114,7 +104,6 @@ const FEATURES = [
     icon: Unlink,
     title: "Claim Any Collection",
     body: "Medialane works with any ERC-721 compatible contract. Claim and manage existing collections on Starknet.",
-    accent: "bg-brand-rose",
     border: "border-orange-500/20",
     bg: "bg-orange-500/5",
   },
@@ -128,8 +117,6 @@ const ACTIONS = [
     description:
       "Upload any creative work — art, music, document or file — and anchor it onchain as a programmable IP asset.",
     ring: "hover:ring-violet-500/30",
-    iconBg: "bg-violet-500/10 group-hover:bg-violet-500/20",
-    iconColor: "text-violet-600 dark:text-violet-400",
   },
   {
     href: "/launchpad/single-editions/collection",
@@ -138,8 +125,6 @@ const ACTIONS = [
     description:
       "Launch a named NFT collection, set royalties, upload cover art and start minting assets into it instantly.",
     ring: "hover:ring-blue-500/30",
-    iconBg: "bg-blue-500/10 group-hover:bg-blue-500/20",
-    iconColor: "text-blue-600 dark:text-blue-400",
   },
 ] as const;
 
@@ -167,7 +152,7 @@ export default function CreatePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 max-w-2xl">
-          {ACTIONS.map(({ href, icon: Icon, label, description, ring, iconBg, iconColor }) => (
+          {ACTIONS.map(({ href, icon: Icon, label, description, ring }) => (
             <Link
               key={href}
               href={href}
@@ -178,14 +163,9 @@ export default function CreatePage() {
               )}
             >
 
-              <div
-                className={cn(
-                  "h-11 w-11 rounded-xl flex items-center justify-center mb-4 sm:mb-5",
-                  iconBg
-                )}
-              >
-                <Icon className={cn("h-5 w-5", iconColor)} />
-              </div>
+              <IconTile className="mb-4 sm:mb-5">
+                <Icon />
+              </IconTile>
 
               <h2 className="text-base sm:text-lg font-bold text-foreground mb-2">{label}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
@@ -206,7 +186,7 @@ export default function CreatePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-          {FEATURES.map(({ icon: Icon, title, body, accent, border, bg }) => (
+          {FEATURES.map(({ icon: Icon, title, body, border, bg }) => (
             <div
               key={title}
               className={cn(
@@ -216,14 +196,9 @@ export default function CreatePage() {
               )}
             >
 
-              <div
-                className={cn(
-                  "h-9 w-9 rounded-xl flex items-center justify-center",
-                  accent
-                )}
-              >
-                <Icon className="h-[18px] w-[18px] text-white" />
-              </div>
+              <IconTile size="sm">
+                <Icon />
+              </IconTile>
 
               <div className="space-y-1">
                 <h3 className="font-bold text-sm text-foreground">{title}</h3>

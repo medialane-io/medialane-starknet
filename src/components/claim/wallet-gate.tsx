@@ -3,6 +3,7 @@
 import { useWallet } from "@/hooks/use-wallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Lock } from "lucide-react";
+import { IconTile } from "@medialane/ui";
 
 interface WalletGateProps {
   children: React.ReactNode;
@@ -21,9 +22,9 @@ export function WalletGate({ children }: WalletGateProps) {
       </div>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-background/60 backdrop-blur-[2px]">
-        <div className="h-10 w-10 rounded-2xl bg-muted flex items-center justify-center">
-          <Lock className="h-5 w-5 text-muted-foreground" />
-        </div>
+        <IconTile>
+          <Lock />
+        </IconTile>
         <p className="text-sm font-medium text-center px-4">Connect wallet to access this claim</p>
         <ConnectWallet label="Connect wallet" />
       </div>
