@@ -1,6 +1,6 @@
 "use client";
 
-import { MedialaneAppProvider, NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground, useCreatorProfile, IpfsGatewayFallback, PINATA_PUBLIC_GATEWAY } from "@medialane/ui";
+import { MedialaneAppProvider, NavCommandMenu, NavBrandButton, NavAccountSheet, ThemeAmbientBackground, useCreatorProfile, IpfsGatewayFallback } from "@medialane/ui";
 import { useAppAdapter } from "@/lib/use-app-adapter";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
@@ -118,7 +118,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           },
         }}
       >
-        <IpfsGatewayFallback primary={IPFS_GATEWAY} fallback={PINATA_PUBLIC_GATEWAY} />
+        <IpfsGatewayFallback primary={IPFS_GATEWAY} />
         <StarknetProvider>
             <WalletSessionSync>
               <AppAdapter>
