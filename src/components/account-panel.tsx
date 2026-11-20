@@ -174,7 +174,7 @@ export function AccountPanel() {
       )}
 
       <Button
-        variant="outline"
+        variant="soft"
         onClick={handleDisconnect}
         className="group h-11 w-full border-border/40 transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
       >

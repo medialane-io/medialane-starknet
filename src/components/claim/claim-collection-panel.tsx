@@ -107,7 +107,7 @@ export function ClaimCollectionPanel({
               <Link href="/portfolio/collections">View in Portfolio</Link>
             </Button>
             <Button
-              size="sm" variant="outline"
+              size="sm" variant="soft"
               onClick={() => { setContractAddress(""); setClaimedCollection(null); setStep("input"); }}
             >
               Claim Another
@@ -183,7 +183,7 @@ export function ClaimCollectionPanel({
             <div className="flex gap-3">
               {panelError && <p role="alert" className="text-sm text-destructive">{panelError}</p>}
               <Button onClick={handleManualRequest} className="flex-1">Submit Request</Button>
-              <Button variant="outline" onClick={() => setStep("input")}>Back</Button>
+              <Button variant="soft" onClick={() => setStep("input")}>Back</Button>
             </div>
           </div>
         </div>

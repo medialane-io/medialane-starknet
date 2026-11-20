@@ -98,7 +98,7 @@ export default function CoinSettingsPage({ params }: Props) {
           )}
           <div className="flex items-center gap-3">
             <input ref={fileRef} type="file" accept={acceptFor("image")} className="hidden" onChange={handleFile} />
-            <Button variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+            <Button variant="soft" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
               {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
               {uploading ? "Uploading…" : "Upload image"}
             </Button>

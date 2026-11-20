@@ -9,7 +9,7 @@ export function VerifyWithWalletButton({ disabled = false, className }: { disabl
   return (
     <Button
       size="sm"
-      variant="outline"
+      variant="soft"
       className={className}
       disabled={isSigningIn || disabled}
       onClick={() => void signedIn()}

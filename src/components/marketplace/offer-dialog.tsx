@@ -17,7 +17,7 @@ import { resolveImage } from "@/lib/utils";
 import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import {
   OrderFields,
-  GradientButton,
+  ActionButton,
   orderFormSchema,
   type OrderFormValues,
   isBusyPhase,
@@ -126,9 +126,9 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
                       </Alert>
                     )}
                     <div className="space-y-3">
-                      <GradientButton type="submit" disabled={busy || !isConnected}>
+                      <ActionButton solid className="w-full" type="submit" disabled={busy || !isConnected}>
                         <HandCoins className="h-4 w-4" />Submit offer
-                      </GradientButton>
+                      </ActionButton>
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">

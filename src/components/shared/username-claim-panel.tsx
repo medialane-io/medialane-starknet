@@ -39,7 +39,7 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
               @{approvedUsername}
             </a>
           </div>
-          <Button size="sm" variant="outline" asChild>
+          <Button size="sm" variant="soft" asChild>
             <Link href={profileHref({ username: approvedUsername })}>
               View profile <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
             </Link>
@@ -81,7 +81,7 @@ export function UsernameClaimPanel({ bare = false }: { bare?: boolean } = {}) {
             Your claim for{" "}
             <span className="tabular-nums font-medium text-foreground">@{claim.username}</span> is pending DAO review.
           </span>
-          <Badge variant="outline" className="border-yellow-500/30 text-yellow-400 bg-yellow-500/10 ml-1">
+          <Badge variant="soft" className="border-yellow-500/30 text-yellow-400 bg-yellow-500/10 ml-1">
             Pending
           </Badge>
         </div>
