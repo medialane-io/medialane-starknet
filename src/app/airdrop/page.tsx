@@ -12,6 +12,7 @@ import { MedialaneLogoFull as MedialaneLogo } from "@medialane/ui/brand-logo";
 import { AirdropEventCard } from "@/components/airdrop/genesis-mint";
 import { AirdropClaim } from "@/components/airdrop/airdrop-claim";
 import { canonical } from "@/lib/seo";
+import { IconTile } from "@medialane/ui";
 
 export const metadata: Metadata = {
   title: "Creator's Airdrop | Medialane",
@@ -30,22 +31,16 @@ export const metadata: Metadata = {
 const EARN_GROUPS = [
   {
     icon: UserCheck,
-    color: "text-brand-blue",
-    bg: "bg-brand-blue/10",
     title: "Get started",
     desc: "Connect your wallet and confirm your claim. You're included from that point on, and it's the only requirement.",
   },
   {
     icon: PenLine,
-    color: "text-brand-purple",
-    bg: "bg-brand-purple/10",
     title: "Create",
     desc: "Publish original work, launch collections or drops. Each action adds to your XP.",
   },
   {
     icon: ShoppingCart,
-    color: "text-brand-orange",
-    bg: "bg-brand-orange/10",
     title: "Trade and engage",
     desc: "Buy, sell, collaborate. This adds to the same XP total too.",
   },
@@ -100,11 +95,11 @@ export default function AirdropPage() {
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {EARN_GROUPS.map(({ icon: Icon, color, bg, title, desc }) => (
+              {EARN_GROUPS.map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="flex flex-col gap-4 p-5 rounded-2xl border border-border/40 bg-card/30 hover:bg-card/50 transition-colors">
-                  <div className={`h-11 w-11 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
-                    <Icon className={`h-5 w-5 ${color}`} />
-                  </div>
+                  <IconTile>
+                    <Icon />
+                  </IconTile>
                   <div>
                     <p className="font-bold">{title}</p>
                     <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>

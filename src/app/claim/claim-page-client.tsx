@@ -6,7 +6,7 @@ import { Button } from "@medialane/ui/button";
 import { WalletGate } from "@/components/claim/wallet-gate";
 import { ClaimCollectionPanel } from "@/components/claim/claim-collection-panel";
 import { UsernameClaimPanel } from "@/components/shared/username-claim-panel";
-import { ServiceHeader } from "@medialane/ui";
+import { ServiceHeader, IconTile } from "@medialane/ui";
 import { ClaimBackButton } from "@/components/claim/claim-back-button";
 
 function SectionDivider({ label }: { label: string }) {
@@ -41,9 +41,9 @@ export function ClaimPageClient() {
         <SectionDivider label="Genesis drop" />
         <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-4">
           <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-xl bg-brand-purple/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Package className="h-5 w-5 text-brand-purple" />
-            </div>
+            <IconTile className="mt-0.5">
+              <Package />
+            </IconTile>
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-bold">Genesis NFT</h2>
               <p className="text-sm text-muted-foreground mt-1">
@@ -106,9 +106,9 @@ export function ClaimPageClient() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Palette className="h-4 w-4 text-primary" />
-                </div>
+                <IconTile size="sm" className="mt-0.5">
+                  <Palette />
+                </IconTile>
                 <div>
                   <p className="text-sm font-semibold">Fully branded</p>
                   <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Custom name, cover image, banner, and social links — all editable in collection settings.</p>
@@ -124,9 +124,9 @@ export function ClaimPageClient() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                </div>
+                <IconTile size="sm" className="mt-0.5">
+                  <ShieldCheck />
+                </IconTile>
                 <div>
                   <p className="text-sm font-semibold">Always accessible</p>
                   <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Permanently anchored on Starknet. No central authority can remove it.</p>
