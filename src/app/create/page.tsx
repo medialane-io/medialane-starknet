@@ -34,7 +34,7 @@ const FEATURES = [
     icon: Zap,
     title: "Simple sign-in",
     body: "Sign in with Google — no wallet to set up, no crypto knowledge needed.",
-    accent: "from-yellow-400 to-orange-400",
+    accent: "bg-brand-orange",
     border: "border-yellow-500/20",
     bg: "bg-yellow-500/5",
   },
@@ -42,7 +42,7 @@ const FEATURES = [
     icon: Rocket,
     title: "Creator Launchpad",
     body: "Launch and mint NFT Collections, Programmable IP, and Real World Assets — all in a few clicks.",
-    accent: "from-violet-500 to-purple-600",
+    accent: "bg-brand-purple",
     border: "border-violet-500/20",
     bg: "bg-violet-500/5",
   },
@@ -50,7 +50,7 @@ const FEATURES = [
     icon: Store,
     title: "NFT Marketplace",
     body: "Monetize and trade digital assets with smart-contract security. Earn royalties on every secondary sale.",
-    accent: "from-blue-400 to-cyan-400",
+    accent: "bg-brand-blue",
     border: "border-blue-500/20",
     bg: "bg-blue-500/5",
   },
@@ -58,7 +58,7 @@ const FEATURES = [
     icon: Fingerprint,
     title: "Immutable Provenance",
     body: "Secure your intellectual property copyright with blockchain-based, timestamped proof of ownership.",
-    accent: "from-emerald-400 to-teal-500",
+    accent: "bg-brand-blue",
     border: "border-emerald-500/20",
     bg: "bg-emerald-500/5",
   },
@@ -66,7 +66,7 @@ const FEATURES = [
     icon: ShieldCheck,
     title: "Censorship Resistance",
     body: "Ensure your content remains permanently accessible and immutable onchain. No central authority can remove it.",
-    accent: "from-rose-400 to-pink-500",
+    accent: "bg-brand-rose",
     border: "border-rose-500/20",
     bg: "bg-rose-500/5",
   },
@@ -74,7 +74,7 @@ const FEATURES = [
     icon: Lock,
     title: "Onchain Sovereignty",
     body: "Maintain complete control over your intellectual property with fully self-custodied, user-owned assets.",
-    accent: "from-indigo-400 to-blue-500",
+    accent: "bg-brand-purple",
     border: "border-indigo-500/20",
     bg: "bg-indigo-500/5",
   },
@@ -82,7 +82,7 @@ const FEATURES = [
     icon: Globe2,
     title: "Global Protection",
     body: "Compliant with the Berne Convention (1886) — guaranteeing authorship recognition across 181 countries.",
-    accent: "from-sky-400 to-blue-500",
+    accent: "bg-brand-blue",
     border: "border-sky-500/20",
     bg: "bg-sky-500/5",
   },
@@ -90,7 +90,7 @@ const FEATURES = [
     icon: Bolt,
     title: "Atomic Settlement",
     body: "Asset transfer and payment happen simultaneously in a single transaction. No escrow, no counterparty risk.",
-    accent: "from-amber-400 to-yellow-400",
+    accent: "bg-brand-orange",
     border: "border-amber-500/20",
     bg: "bg-amber-500/5",
   },
@@ -98,7 +98,7 @@ const FEATURES = [
     icon: FileCode2,
     title: "Embedded Licensing",
     body: "Usage terms are encoded directly into the asset — commercial use, derivatives, territory, AI policy and more.",
-    accent: "from-fuchsia-400 to-pink-500",
+    accent: "bg-brand-maeve",
     border: "border-fuchsia-500/20",
     bg: "bg-fuchsia-500/5",
   },
@@ -106,7 +106,7 @@ const FEATURES = [
     icon: Cpu,
     title: "Onchain Composability",
     body: "Machine-readable IP permissions let games, AI models, and dApps automatically query and interact onchain.",
-    accent: "from-teal-400 to-emerald-400",
+    accent: "bg-brand-blue",
     border: "border-teal-500/20",
     bg: "bg-teal-500/5",
   },
@@ -114,7 +114,7 @@ const FEATURES = [
     icon: Unlink,
     title: "Claim Any Collection",
     body: "Medialane works with any ERC-721 compatible contract. Claim and manage existing collections on Starknet.",
-    accent: "from-orange-400 to-rose-400",
+    accent: "bg-brand-rose",
     border: "border-orange-500/20",
     bg: "bg-orange-500/5",
   },
@@ -127,7 +127,6 @@ const ACTIONS = [
     label: "Mint IP Asset",
     description:
       "Upload any creative work — art, music, document or file — and anchor it onchain as a programmable IP asset.",
-    gradient: "from-violet-500 to-purple-600",
     ring: "hover:ring-violet-500/30",
     iconBg: "bg-violet-500/10 group-hover:bg-violet-500/20",
     iconColor: "text-violet-600 dark:text-violet-400",
@@ -138,7 +137,6 @@ const ACTIONS = [
     label: "Deploy Collection",
     description:
       "Launch a named NFT collection, set royalties, upload cover art and start minting assets into it instantly.",
-    gradient: "from-blue-500 to-cyan-500",
     ring: "hover:ring-blue-500/30",
     iconBg: "bg-blue-500/10 group-hover:bg-blue-500/20",
     iconColor: "text-blue-600 dark:text-blue-400",
@@ -148,10 +146,6 @@ const ACTIONS = [
 export default function CreatePage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
-
-      <div className="absolute inset-0 dark:bg-gradient-to-b dark:from-[#07000f]/80 dark:via-transparent dark:to-transparent pointer-events-none" />
-
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 space-y-12 sm:space-y-16">
 
@@ -164,7 +158,7 @@ export default function CreatePage() {
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.06] tracking-tight text-foreground">
             Mint, protect &amp;{" "}
-            <span className="gradient-text">generate revenue</span>
+            <span className="text-primary">generate revenue</span>
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
@@ -224,7 +218,7 @@ export default function CreatePage() {
 
               <div
                 className={cn(
-                  "h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-sm",
+                  "h-9 w-9 rounded-xl flex items-center justify-center",
                   accent
                 )}
               >

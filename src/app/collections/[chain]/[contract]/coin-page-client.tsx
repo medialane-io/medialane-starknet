@@ -204,7 +204,7 @@ function CoinAvatar({ url, symbol }: { url: string | null; symbol?: string | nul
     );
   }
   return (
-    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-brand-blue to-brand-purple flex items-center justify-center shrink-0">
+    <div className="h-16 w-16 rounded-full bg-brand-blue flex items-center justify-center shrink-0">
       <span className="text-xl font-bold text-white">{(symbol ?? "?").slice(0, 2).toUpperCase()}</span>
     </div>
   );
@@ -213,7 +213,6 @@ function CoinAvatar({ url, symbol }: { url: string | null; symbol?: string | nul
 function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <div className={cn("relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm", className)}>
-      <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-blue/12 via-brand-purple/8 to-transparent" />
       <div className="relative z-10 h-full">{children}</div>
     </div>
   );

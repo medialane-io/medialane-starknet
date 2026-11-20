@@ -92,7 +92,7 @@ export default function CoinSettingsPage({ params }: Props) {
             <Image src={previewUrl} alt="coin logo" width={64} height={64} unoptimized
               className="h-16 w-16 rounded-full object-cover border border-border/60" />
           ) : (
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-brand-blue to-brand-purple flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-brand-blue flex items-center justify-center">
               <span className="text-xl font-bold text-white">{(coin?.symbol ?? "?").slice(0, 2).toUpperCase()}</span>
             </div>
           )}
