@@ -91,7 +91,7 @@ export default function PortfolioRemixOffersPage() {
                   </div>
                 )}
                 {offer.status === "APPROVED" && offer.remixContract && offer.remixTokenId && (
-                  <Button size="sm" variant="outline" asChild>
+                  <Button size="sm" variant="soft" asChild>
                     <Link href={assetHref("STARKNET", offer.remixContract, offer.remixTokenId)}>View remix</Link>
                   </Button>
                 )}
@@ -137,7 +137,7 @@ export default function PortfolioRemixOffersPage() {
                   </div>
                 </div>
                 {(offer.status === "APPROVED" || offer.status === "COMPLETED") && offer.remixContract && offer.remixTokenId && (
-                  <Button size="sm" variant="outline" asChild>
+                  <Button size="sm" variant="soft" asChild>
                     <Link href={assetHref("STARKNET", offer.remixContract, offer.remixTokenId)}>
                       <GitBranch className="h-3.5 w-3.5 mr-1" />
                       {offer.status === "APPROVED" ? "Buy remix" : "View remix"}

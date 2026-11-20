@@ -189,7 +189,7 @@ export default function SettingsContent() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-medium text-foreground">Claim under review</p>
-                    <Badge variant="outline" className="border-yellow-500/40 text-yellow-700 dark:text-yellow-400 bg-yellow-500/10 text-2xs">
+                    <Badge variant="soft" className="border-yellow-500/40 text-yellow-700 dark:text-yellow-400 bg-yellow-500/10 text-2xs">
                       Pending
                     </Badge>
                   </div>

@@ -20,7 +20,7 @@ export default function NotFound() {
             Home
           </Link>
         </Button>
-        <Button variant="outline" asChild>
+        <Button variant="soft" asChild>
           <Link href="/marketplace">
             <Store className="h-4 w-4 mr-2" />
             Marketplace

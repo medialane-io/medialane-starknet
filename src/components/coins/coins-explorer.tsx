@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CoinsExplorer as UICoinsExplorer, GradientButton, Button, coinServiceIds, type CoinFilter, type CoinSort, usePriceMap } from "@medialane/ui";
+import { CoinsExplorer as UICoinsExplorer, ActionButton, Button, coinServiceIds, type CoinFilter, type CoinSort, usePriceMap } from "@medialane/ui";
 
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
 import { useCoinPriceAdapter } from "./use-coin-price-adapter";
@@ -28,15 +28,12 @@ export function CoinsExplorer({ heading = true }: { heading?: boolean }) {
       heading={heading}
       action={
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
+          <Button asChild variant="soft">
             <Link href="/launchpad/memecoin">Claim a coin</Link>
           </Button>
-          <GradientButton
-            wrapperClassName="w-auto shrink-0"
-            onClick={() => router.push("/launchpad/coin/create")}
-          >
+          <ActionButton solid className="shrink-0" onClick={() => router.push("/launchpad/coin/create")}>
             Launch a coin
-          </GradientButton>
+          </ActionButton>
         </div>
       }
     />

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { CheckCircle2, Loader2, AlertCircle, ImageIcon } from "lucide-react";
-import { GradientButton, runIntentCalls, useTransaction } from "@medialane/ui";
+import { ActionButton, runIntentCalls, useTransaction } from "@medialane/ui";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useWallet } from "@/hooks/use-wallet";
 import { getMedialaneClient } from "@/lib/medialane-client";
@@ -132,9 +132,7 @@ export function GenesisMint({
   if (phase === "idle") {
     return (
       <div className={card}>
-        <GradientButton asChild big>
-          <ConnectWallet label={copy.connect} />
-        </GradientButton>
+        <ConnectWallet trigger={<ActionButton solid big className="w-full">{copy.connect}</ActionButton>} />
       </div>
     );
   }
@@ -147,8 +145,10 @@ export function GenesisMint({
           <span>{error}</span>
         </div>
       )}
-      <GradientButton
+      <ActionButton
+        solid
         big
+        className="w-full"
         onClick={
           phase === "error"
             ? () => { tx.reset(); setPhase("ready"); setError(null); }
@@ -164,7 +164,7 @@ export function GenesisMint({
           : phase === "minting"
           ? copy.minting
           : copy.claim}
-      </GradientButton>
+      </ActionButton>
     </div>
   );
 }

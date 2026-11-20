@@ -140,7 +140,7 @@ export function ClaimPageClient() {
                   Create a collection <ArrowRight className="h-3.5 w-3.5 ml-1" />
                 </Link>
               </Button>
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="soft" size="sm" asChild>
                 <Link href="/collections">Browse collections</Link>
               </Button>
             </div>

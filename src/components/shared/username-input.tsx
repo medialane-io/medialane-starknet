@@ -37,7 +37,7 @@ export function UsernameInput({ form, disabled }: { form: UsernameClaimForm; dis
           <Button
             onClick={check}
             disabled={isChecking || disabled || input.length < 3}
-            variant="outline"
+            variant="soft"
             className="shrink-0"
           >
             {isChecking ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Checking…</> : "Check"}

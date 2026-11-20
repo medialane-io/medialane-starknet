@@ -17,7 +17,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { resolveImage } from "@/lib/utils";
 import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import { assetHref } from "@/lib/routes";
-import { GradientButton, isBusyPhase, OrderSummaryHero, TransactionDialogStates, successMessages, type TransactionPhase, usdValueFor } from "@medialane/ui";
+import { ActionButton, isBusyPhase, OrderSummaryHero, TransactionDialogStates, successMessages, type TransactionPhase, usdValueFor } from "@medialane/ui";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
 import { useTokenBalance } from "@/hooks/use-token-balance";
@@ -182,7 +182,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                       <span className="text-muted-foreground">{maxQty} available</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1}>
+                      <Button type="button" variant="soft" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1}>
                         <Minus className="h-3.5 w-3.5" />
                       </Button>
                       <Input
@@ -193,7 +193,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                         onChange={(e) => setQuantity(Math.max(1, Math.min(maxQty, parseInt(e.target.value, 10) || 1)))}
                         className="h-9 text-center font-semibold"
                       />
-                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty}>
+                      <Button type="button" variant="soft" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty}>
                         <Plus className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -236,10 +236,10 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                 ) : isConnected ? (
                   <div className="space-y-3">
                     {buyError && <p role="alert" className="text-sm text-destructive">{buyError}</p>}
-                    <GradientButton onClick={handleBuy} disabled={busy || !canBuy} className="bg-background/30">
+                    <ActionButton solid onClick={handleBuy} disabled={busy || !canBuy} className="w-full">
                       <ShoppingCart className="h-4 w-4" />
                       {needsSwap && !paymentSymbol ? "Select a token to pay with" : "Buy now"}
-                    </GradientButton>
+                    </ActionButton>
                     <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
@@ -249,9 +249,9 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <GradientButton asChild big>
+                    <ActionButton solid big asChild className="w-full">
                       <ConnectWallet label="Connect wallet to trade" />
-                    </GradientButton>
+                    </ActionButton>
                     <p className="text-center text-xs text-muted-foreground">
                       Your Starknet wallet is required to sign and complete the trade.
                     </p>

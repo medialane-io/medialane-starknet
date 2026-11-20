@@ -107,7 +107,7 @@ export function ConnectDialog() {
                   return (
                     <Button
                       key={connector.id}
-                      variant="outline"
+                      variant="soft"
                       className="w-full justify-start gap-3"
                       onClick={() => handleConnectorClick(connector)}
                       disabled={sessionConnecting || connectingId !== null}
