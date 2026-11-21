@@ -5,7 +5,7 @@ import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ShoppingCart } from "lucide-react";
 import { useConfetti } from "@medialane/ui/utils/use-confetti";
-import { amountDue, orderTotal, MARKETPLACE_FEE_BPS, type CheckoutItem } from "@/lib/checkout";
+import { orderTotal, type CheckoutItem } from "@/lib/checkout";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
@@ -43,13 +43,9 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   const [quantity, setQuantity] = useState(1);
   const [paymentSymbol, setPaymentSymbol] = useState<string | null>(null);
   const isERC1155 = order.offer.itemType === "ERC1155";
-  const maxQty = isERC1155
-    ? Math.max(1, parseInt(order.remainingAmount ?? order.offer.startAmount ?? "1", 10))
-    : 1;
 
   const assetName = order.token?.name || `Token #${order.nftTokenId}`;
   const assetImage = resolveImage(order.token?.image);
-  const requiredRaw = amountDue(order, quantity);
   const swapFrom = paymentSymbol && paymentSymbol !== order.price?.currency ? paymentSymbol : null;
 
   useOnOpen(open, () => {
@@ -76,7 +72,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
         swap = await createSwapIntent(getMedialaneClient(), {
           sellSymbol: swapFrom,
           buySymbol: order.price.currency,
-          buyAmountRaw: amountDue(order, quantity).toString(),
+          buyAmountRaw: getMedialaneClient().purchaseCost(order, quantity).total.toString(),
           takerAddress: address,
         });
       } catch {
@@ -139,14 +135,10 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           onDone={() => onOpenChange(false)}
         >
             <PurchasePanel
-              name={assetName}
+              order={order}
               image={assetImage}
-              price={order.price}
-              available={isERC1155 ? maxQty : null}
               quantity={quantity}
               onQuantityChange={setQuantity}
-              amountRaw={requiredRaw}
-              feeBps={MARKETPLACE_FEE_BPS}
               walletAddress={isConnected && !isOwnOrder ? address ?? null : null}
               payWith={paymentSymbol}
               onPayWithChange={setPaymentSymbol}
