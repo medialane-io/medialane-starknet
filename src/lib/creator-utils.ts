@@ -1,4 +1,3 @@
-
 export function addressPalette(address: string) {
   const seed = parseInt(address.slice(2, 10) || "a1b2c3d4", 16);
   const h1 = seed % 360;
