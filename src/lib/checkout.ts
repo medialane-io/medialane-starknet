@@ -18,7 +18,10 @@ export function orderTotal(order: ApiOrder, quantity: number): bigint {
   return isERC1155 ? perUnit * BigInt(quantity) : perUnit;
 }
 
+/** The platform fee on a purchase, in basis points. */
+export const MARKETPLACE_FEE_BPS = resolveFeeConfig({}).marketplaceBps;
+
 export function amountDue(order: ApiOrder, quantity: number): bigint {
   const total = orderTotal(order, quantity);
-  return total + feeAmount(total, resolveFeeConfig({}).marketplaceBps);
+  return total + feeAmount(total, MARKETPLACE_FEE_BPS);
 }
