@@ -25,10 +25,3 @@ test("ERC-1155: does NOT divide by the listing edition count (regression)", () =
 test("ERC-721: always the single consideration amount", () => {
   expect(orderTotal(order("ERC721"), 1)).toBe(ONE_STRK);
 });
-
-import { amountDue } from "@/lib/checkout";
-
-test("the amount due adds the 1% platform fee the purchase transfers", () => {
-  expect(amountDue(order("ERC721"), 1)).toBe(ONE_STRK + ONE_STRK / 100n);
-  expect(amountDue(order("ERC1155"), 3)).toBe(3n * ONE_STRK + (3n * ONE_STRK) / 100n);
-});

@@ -1,29 +1,24 @@
 "use client";
 
-import { PriceBreakdown } from "@/components/marketplace/purchase-parts";
 import { useState } from "react";
 import { useOnOpen } from "@medialane/ui/utils/use-on-open";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Minus, Plus, ShieldCheck, ShoppingCart, Zap } from "lucide-react";
+import { AlertCircle, ShoppingCart } from "lucide-react";
 import { useConfetti } from "@medialane/ui/utils/use-confetti";
-import { amountDue, orderTotal, type CheckoutItem } from "@/lib/checkout";
+import { orderTotal, type CheckoutItem } from "@/lib/checkout";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@medialane/ui/dialog";
 import { Button } from "@medialane/ui/button";
-import { Input } from "@medialane/ui/input";
 import { Alert, AlertDescription } from "@medialane/ui/alert";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { resolveImage } from "@/lib/utils";
-import { useUsdPrices } from "@medialane/ui/utils/use-usd-prices";
 import { assetHref } from "@/lib/routes";
-import { ActionButton, isBusyPhase, OrderSummaryHero, TransactionDialogStates, successMessages, type TransactionPhase, usdValueFor } from "@medialane/ui";
+import { ActionButton, isBusyPhase, PurchasePanel, TransactionDialogStates, successMessages, type TransactionPhase } from "@medialane/ui";
 import { normalizeAddress } from "@medialane/sdk";
 import type { ApiOrder } from "@medialane/sdk";
-import { useTokenBalance } from "@/hooks/use-token-balance";
 import { createSwapIntent } from "@/lib/swap-calls";
 import { getMedialaneClient } from "@/lib/medialane-client";
-import { PayWithPicker } from "@/components/marketplace/pay-with-picker";
 
 interface PurchaseDialogProps {
   order: ApiOrder;
@@ -48,41 +43,10 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
   const [quantity, setQuantity] = useState(1);
   const [paymentSymbol, setPaymentSymbol] = useState<string | null>(null);
   const isERC1155 = order.offer.itemType === "ERC1155";
-  const maxQty = isERC1155
-    ? Math.max(1, parseInt(order.remainingAmount ?? order.offer.startAmount ?? "1", 10))
-    : 1;
 
-  const usdPrices = useUsdPrices();
-  const unitPrice = order.price?.formatted ? parseFloat(order.price.formatted) : null;
-  const totalUsd = unitPrice !== null
-    ? usdValueFor(String(unitPrice * quantity), order.price?.currency, usdPrices)
-    : null;
   const assetName = order.token?.name || `Token #${order.nftTokenId}`;
   const assetImage = resolveImage(order.token?.image);
-  const hero = (
-    <OrderSummaryHero
-      name={assetName}
-      image={assetImage}
-      subtitle={
-        <span className="flex items-center gap-1">
-          <Zap className="h-3 w-3 text-emerald-500" />
-          <span className="text-emerald-500">Digital Asset Ownership</span>
-        </span>
-      }
-      price={order.price}
-      quantity={quantity}
-      usdTotal={totalUsd}
-    />
-  );
-
-  const requiredRaw = amountDue(order, quantity);
-  const { raw: orderCurrencyBalance, isLoading: balanceLoading } = useTokenBalance(
-    order.price?.currency ?? "",
-    address ?? undefined
-  );
-
-  const needsSwap = !balanceLoading && orderCurrencyBalance !== null && orderCurrencyBalance < requiredRaw;
-  const canBuy = !needsSwap || !!paymentSymbol;
+  const swapFrom = paymentSymbol && paymentSymbol !== order.price?.currency ? paymentSymbol : null;
 
   useOnOpen(open, () => {
     resetState();
@@ -99,16 +63,16 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
       setBuyError("This is your own listing, so you cannot buy it.");
       return;
     }
-    if (needsSwap && !paymentSymbol) return;
+    if (!paymentSymbol) return;
 
     let swap: Awaited<ReturnType<typeof createSwapIntent>> | undefined;
-    if (paymentSymbol && order.price?.currency && address) {
+    if (swapFrom && order.price?.currency && address) {
       setPreparing(true);
       try {
         swap = await createSwapIntent(getMedialaneClient(), {
-          sellSymbol: paymentSymbol,
+          sellSymbol: swapFrom,
           buySymbol: order.price.currency,
-          buyAmountRaw: amountDue(order, quantity).toString(),
+          buyAmountRaw: getMedialaneClient().purchaseCost(order, quantity).total.toString(),
           takerAddress: address,
         });
       } catch {
@@ -170,95 +134,48 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           onRetry={resetState}
           onDone={() => onOpenChange(false)}
         >
-            <div className="flex flex-col">
-              {hero}
-              <div className="px-5 py-5 space-y-4">
-                <PriceBreakdown order={order} quantity={quantity} />
-
-                {isERC1155 && maxQty > 1 ? (
-                  <div className="rounded-xl border border-border p-3 space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">Quantity</span>
-                      <span className="text-muted-foreground">{maxQty} available</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button type="button" variant="soft" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1}>
-                        <Minus className="h-3.5 w-3.5" />
-                      </Button>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={maxQty}
-                        value={quantity}
-                        onChange={(e) => setQuantity(Math.max(1, Math.min(maxQty, parseInt(e.target.value, 10) || 1)))}
-                        className="h-9 text-center font-semibold"
-                      />
-                      <Button type="button" variant="soft" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty}>
-                        <Plus className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-
-                {isConnected && needsSwap && order.price?.currency ? (
-                  <PayWithPicker
-                    orderCurrency={order.price.currency}
-                    requiredRaw={requiredRaw}
-                    walletAddress={address}
-                    selected={paymentSymbol}
-                    onSelect={setPaymentSymbol}
-                  />
-                ) : null}
-
-                {error ? (
-                  <Alert variant="destructive">
+            <PurchasePanel
+              order={order}
+              image={assetImage}
+              quantity={quantity}
+              onQuantityChange={setQuantity}
+              walletAddress={isConnected && !isOwnOrder ? address ?? null : null}
+              payWith={paymentSymbol}
+              onPayWithChange={setPaymentSymbol}
+              error={buyError ?? error}
+            >
+              {isOwnOrder ? (
+                <div className="space-y-2">
+                  <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>
+                      This is your own listing — you can&apos;t buy it. To take it off the market, cancel the listing instead.
+                    </AlertDescription>
                   </Alert>
-                ) : null}
-
-                {isOwnOrder ? (
-                  <div className="space-y-2">
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        This is your own listing — you can&apos;t buy it. To take it off the market, cancel the listing instead.
-                      </AlertDescription>
-                    </Alert>
-                    <Button
-                      className="w-full h-12 text-base font-semibold rounded-[11px]"
-                      variant="secondary"
-                      onClick={() => onOpenChange(false)}
-                    >
-                      Close
-                    </Button>
-                  </div>
-                ) : isConnected ? (
-                  <div className="space-y-3">
-                    {buyError && <p role="alert" className="text-sm text-destructive">{buyError}</p>}
-                    <ActionButton solid onClick={handleBuy} disabled={busy || !canBuy} className="w-full">
-                      <ShoppingCart className="h-4 w-4" />
-                      {needsSwap && !paymentSymbol ? "Select a token to pay with" : "Buy now"}
-                    </ActionButton>
-                    <div className="flex items-start justify-center gap-1.5">
-                        <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
-                        <p className="text-2xs text-center text-muted-foreground">
-                        Assets arrive the moment the wallet confirms the trade.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <ActionButton solid big asChild className="w-full">
-                      <ConnectWallet label="Connect wallet to trade" />
-                    </ActionButton>
-                    <p className="text-center text-xs text-muted-foreground">
-                      Your Starknet wallet is required to sign and complete the trade.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+                  <Button
+                    className="w-full h-12 text-base font-semibold rounded-[11px]"
+                    variant="secondary"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              ) : isConnected ? (
+                <ActionButton solid onClick={handleBuy} disabled={busy || !paymentSymbol} className="w-full">
+                  <ShoppingCart className="h-4 w-4" />
+                  Buy now
+                </ActionButton>
+              ) : (
+                <div className="space-y-2">
+                  <ActionButton solid big asChild className="w-full">
+                    <ConnectWallet label="Connect wallet to trade" />
+                  </ActionButton>
+                  <p className="text-center text-xs text-muted-foreground">
+                    Your Starknet wallet is required to sign and complete the trade.
+                  </p>
+                </div>
+              )}
+            </PurchasePanel>
         </TransactionDialogStates>
       </DialogContent>
     </Dialog>
