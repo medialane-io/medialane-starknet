@@ -1,5 +1,3 @@
-
-
 function isUserRejection(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err ?? "");
   return /reject|denied|declin|abort|cancel|refus/i.test(msg);
