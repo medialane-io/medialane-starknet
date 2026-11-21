@@ -23,7 +23,7 @@ export function NavConnectButton() {
             openConnectDialog();
           }}
         >
-          Connect
+          Account
         </ActionButton>
       )}
       <kbd className="hidden min-w-[18px] items-center justify-center rounded-md bg-muted/60 px-1.5 py-0.5 font-sans text-2xs leading-none text-muted-foreground sm:inline-flex">
