@@ -85,14 +85,14 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
           phase={phase}
           asset={{ name, image: tokenImage }}
           statusMessage="Submitting listing..."
-          statusDescription="Approve the marketplace interaction in your wallet and keep this window open."
+          statusDescription="Approve in the wallet and keep this window open."
           txHash={txHash}
           error={error}
           success={successMessages.listed({ name, price: `${form.getValues("price")} ${form.getValues("currency")}${is1155 && form.getValues("amount") && form.getValues("amount") !== "1" ? ` × ${form.getValues("amount")}` : ""}` })}
           successActions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
           successChildren={<RewardEarned actionType="list_asset" />}
           errorTitle="Listing failed"
-          errorDescription="The transaction was submitted, but the listing could not be completed."
+          errorDescription="The listing did not complete."
           onRetry={resetState}
           onDone={() => onOpenChange(false)}
         >
@@ -126,7 +126,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                       <div className="flex items-start justify-center gap-1.5">
                         <ShieldCheck className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-2xs text-center text-muted-foreground">
-                          Listings are fully onchain and permissionless. Assets stay in the wallet until it settles.
+                          Assets stay in the wallet until the sale.
                         </p>
                       </div>
                     </div>

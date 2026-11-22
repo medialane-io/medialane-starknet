@@ -20,7 +20,7 @@ import { cn, IconTile } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Creator Studio";
-const description = "Protect, manage and unlock new revenue streams for your Intellectual Property.";
+const description = "New revenue for your intellectual property.";
 
 export const metadata: Metadata = {
   title,
@@ -33,77 +33,77 @@ const FEATURES = [
   {
     icon: Zap,
     title: "Simple sign-in",
-    body: "Sign in with Google — no wallet to set up, no crypto knowledge needed.",
+    body: "Sign in with Google.",
     border: "border-yellow-500/20",
     bg: "bg-yellow-500/5",
   },
   {
     icon: Rocket,
     title: "Creator Launchpad",
-    body: "Launch and mint NFT Collections, Programmable IP, and Real World Assets — all in a few clicks.",
+    body: "Launch collections and assets in a few clicks.",
     border: "border-violet-500/20",
     bg: "bg-violet-500/5",
   },
   {
     icon: Store,
     title: "NFT Marketplace",
-    body: "Monetize and trade digital assets with smart-contract security. Earn royalties on every secondary sale.",
+    body: "Earn royalties on every resale.",
     border: "border-blue-500/20",
     bg: "bg-blue-500/5",
   },
   {
     icon: Fingerprint,
     title: "Immutable Provenance",
-    body: "Secure your intellectual property copyright with blockchain-based, timestamped proof of ownership.",
+    body: "Timestamped proof of ownership.",
     border: "border-emerald-500/20",
     bg: "bg-emerald-500/5",
   },
   {
     icon: ShieldCheck,
     title: "Censorship Resistance",
-    body: "Ensure your content remains permanently accessible and immutable onchain. No central authority can remove it.",
+    body: "Content stays onchain for good.",
     border: "border-rose-500/20",
     bg: "bg-rose-500/5",
   },
   {
     icon: Lock,
     title: "Onchain Sovereignty",
-    body: "Maintain complete control over your intellectual property with fully self-custodied, user-owned assets.",
+    body: "Self-custodied assets you control.",
     border: "border-indigo-500/20",
     bg: "bg-indigo-500/5",
   },
   {
     icon: Globe2,
     title: "Global Protection",
-    body: "Compliant with the Berne Convention (1886) — guaranteeing authorship recognition across 181 countries.",
+    body: "Authorship recognized in 181 countries.",
     border: "border-sky-500/20",
     bg: "bg-sky-500/5",
   },
   {
     icon: Bolt,
     title: "Atomic Settlement",
-    body: "Asset transfer and payment happen simultaneously in a single transaction. No escrow, no counterparty risk.",
+    body: "Asset and payment settle in one transaction.",
     border: "border-amber-500/20",
     bg: "bg-amber-500/5",
   },
   {
     icon: FileCode2,
     title: "Embedded Licensing",
-    body: "Usage terms are encoded directly into the asset — commercial use, derivatives, territory, AI policy and more.",
+    body: "Usage terms live in the asset.",
     border: "border-fuchsia-500/20",
     bg: "bg-fuchsia-500/5",
   },
   {
     icon: Cpu,
     title: "Onchain Composability",
-    body: "Machine-readable IP permissions let games, AI models, and dApps automatically query and interact onchain.",
+    body: "Apps and AI can read IP permissions onchain.",
     border: "border-teal-500/20",
     bg: "bg-teal-500/5",
   },
   {
     icon: Unlink,
     title: "Claim Any Collection",
-    body: "Medialane works with any ERC-721 compatible contract. Claim and manage existing collections on Starknet.",
+    body: "Claim existing Starknet collections.",
     border: "border-orange-500/20",
     bg: "bg-orange-500/5",
   },
@@ -115,7 +115,7 @@ const ACTIONS = [
     icon: ImagePlus,
     label: "Mint IP Asset",
     description:
-      "Upload any creative work — art, music, document or file — and anchor it onchain as a programmable IP asset.",
+      "Turn any creative work into an IP asset.",
     ring: "hover:ring-violet-500/30",
   },
   {
@@ -123,7 +123,7 @@ const ACTIONS = [
     icon: Layers,
     label: "Deploy Collection",
     description:
-      "Launch a named NFT collection, set royalties, upload cover art and start minting assets into it instantly.",
+      "Launch a collection and start minting.",
     ring: "hover:ring-blue-500/30",
   },
 ] as const;

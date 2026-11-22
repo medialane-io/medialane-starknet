@@ -7,7 +7,7 @@ const MINT_COPY: MintLandingCopy = {
   image: { src: "/genesis.jpg", alt: "Medialane Creator's Airdrop", fallback: "Medialane Airdrop 2026" },
   badge: "Creators Fund Campaign",
   headline: { lead: "Join the", highlight: "Creator's Airdrop" },
-  intro: "Medialane is an app for creators to publish, share, and monetize content. Free to join.",
+  intro: "Medialane is free to join.",
   chips: ["Free to join", "Instant"],
   learnMore: "Learn more about the campaign",
   fund: {
@@ -15,22 +15,22 @@ const MINT_COPY: MintLandingCopy = {
     cards: [
       { title: "Join for free", body: "Connect a Starknet wallet in seconds." },
       { title: "Creator fund", body: "Fund distributions for all participants." },
-      { title: "Boost your chances", body: "Create, share, and collect!" },
+      { title: "Boost your chances", body: "Create and collect" },
     ],
   },
   how: {
     eyebrow: "How it works",
     title: "Join in seconds.",
-    account: { title: "Connect your wallet", tag: "Minimum — you're in", body: "Use your Starknet wallet." },
+    account: { title: "Connect your wallet", tag: "Joined", body: "Use your Starknet wallet." },
     create: {
       tag: "Bonus",
       title: "Create content",
-      body: "Publish original work — photos, music, art, or writing. Creators get a larger share of each distribution.",
+      body: "Creators get a larger share.",
     },
     trade: {
       tag: "Biggest bonus",
       title: "Trade & collect",
-      body: "Buy, sell, and collaborate with other creators. Active participants receive the highest share.",
+      body: "Active traders get the highest share.",
     },
   },
   phases: {
@@ -39,12 +39,12 @@ const MINT_COPY: MintLandingCopy = {
     first: {
       title: "Phase 1",
       tag: "5,000 members",
-      body: "First distribution. All eligible participants get a proportional share based on their activity.",
+      body: "First distribution by activity.",
     },
     second: {
       title: "Phase 2",
       tag: "10,000 members",
-      body: "Second distribution, including all revenue since Phase 1. Activity scores recalculated from launch.",
+      body: "Second distribution of revenue since Phase 1.",
     },
     note: "Both phases are planned for the first year of the platform. Milestones are targets, not guarantees — timing depends on growth.",
   },

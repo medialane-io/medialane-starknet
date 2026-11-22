@@ -3,7 +3,7 @@ import { DropsPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Collection Drop";
-const description = "Mint limited edition drops. Set your supply cap, open a mint window, and let your community collect.";
+const description = "Launch a limited edition drop.";
 
 export const metadata: Metadata = {
   title,

@@ -3,7 +3,7 @@ import { EditionsPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Limited Editions | Launchpad";
-const description = "Mint numbered copies of your work into an editions collection you own, or create a new collection.";
+const description = "Create numbered editions of a work.";
 
 export const metadata: Metadata = {
   title,

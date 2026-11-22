@@ -17,12 +17,12 @@ import { IconTile } from "@medialane/ui";
 export const metadata: Metadata = {
   title: "Creator's Airdrop | Medialane",
   description:
-    "How the Medialane Creator's Airdrop works: what earns XP, how distributions happen, and how to join.",
+    "How the Medialane Creator's Airdrop works.",
   alternates: canonical("/airdrop"),
   openGraph: {
     title: "Creator's Airdrop | Medialane",
     description:
-      "How the Medialane Creator's Airdrop works: what earns XP, how distributions happen, and how to join.",
+      "How the Medialane Creator's Airdrop works.",
     url: "/airdrop",
     type: "website",
   },
@@ -32,17 +32,17 @@ const EARN_GROUPS = [
   {
     icon: UserCheck,
     title: "Get started",
-    desc: "Connect your wallet and confirm your claim. You're included from that point on, and it's the only requirement.",
+    desc: "Connect a wallet to join.",
   },
   {
     icon: PenLine,
     title: "Create",
-    desc: "Publish original work, launch collections or drops. Each action adds to your XP.",
+    desc: "Every creation adds XP.",
   },
   {
     icon: ShoppingCart,
     title: "Trade and engage",
-    desc: "Buy, sell, collaborate. This adds to the same XP total too.",
+    desc: "Every trade adds XP.",
   },
 ];
 
@@ -112,7 +112,7 @@ export default function AirdropPage() {
           <section className="py-10 border-t border-border/30 space-y-4">
             <div className="max-w-2xl space-y-3">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">The Creator&apos;s Fund</p>
-              <h2 className="text-2xl sm:text-3xl font-black">A public wallet, split by XP</h2>
+              <h2 className="text-2xl sm:text-3xl font-black">A public wallet split by XP</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 A share of what Medialane earns is set aside in one public wallet. Each time it
                 reaches its threshold, it&apos;s airdropped to everyone taking part, split by XP.
@@ -137,7 +137,7 @@ export default function AirdropPage() {
                   <div className="space-y-2">
                     {[
                       "Anyone who creates a free Medialane account.",
-                      "Approval-free, open to everyone.",
+                      "Open to everyone.",
                     ].map((text) => (
                       <div key={text} className="flex items-start gap-3">
                         <div className="h-5 w-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">

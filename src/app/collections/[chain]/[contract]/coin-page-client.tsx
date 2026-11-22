@@ -110,7 +110,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
                 </div>
               ) : status === "pre-launch" ? (
                 <p className="text-sm text-muted-foreground">
-                  Not trading yet. Liquidity has not been launched for this coin.
+                  Trading opens once liquidity launches.
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">Price unavailable right now.</p>

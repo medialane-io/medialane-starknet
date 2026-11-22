@@ -8,7 +8,7 @@ import { ClaimUsernameAside } from "@/components/claim/claim-username-aside";
 export const metadata: Metadata = {
   title: "Claim your Username — Medialane",
   description:
-    "Reserve your unique creator username and get a shareable creator page at medialane.io/creator/yourname.",
+    "Claim a creator username.",
   alternates: canonical("/claim/username"),
   openGraph: {
     title: "Claim your Username — Medialane",

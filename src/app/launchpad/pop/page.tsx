@@ -3,7 +3,7 @@ import { PopContent } from "./pop-content";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Proof of Participation";
-const description = "Claim your on-chain credential for events, bootcamps, and workshops.";
+const description = "Proof of attendance for events.";
 
 export const metadata: Metadata = {
   title,

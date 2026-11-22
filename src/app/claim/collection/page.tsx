@@ -8,12 +8,12 @@ import { ClaimCollectionAside } from "@/components/claim/claim-collection-aside"
 export const metadata: Metadata = {
   title: "Claim a Collection — Medialane",
   description:
-    "Already deployed an ERC-721 collection on Starknet? Claim it to link it to your Medialane profile and give it a branded collection page.",
+    "Link a Starknet collection to your profile.",
   alternates: canonical("/claim/collection"),
   openGraph: {
     title: "Claim a Collection — Medialane",
     description:
-      "Import an existing Starknet ERC-721 collection into your Medialane profile.",
+      "Link a Starknet collection to your profile.",
     type: "website",
     url: "/claim/collection",
   },
@@ -31,11 +31,11 @@ export default function ClaimCollectionPage() {
     <ClaimRouteShell
       icon={<FolderInput className="h-4 w-4 text-white" />}
       title="Claim a Collection"
-      subtitle="Import an existing Starknet ERC-721 collection into your Medialane profile."
+      subtitle="Link a Starknet collection to your profile."
       headerAccessory={urlPill}
       aside={<ClaimCollectionAside />}
     >
-      <ClaimCollectionPanel helperText="Paste the Starknet ERC-721 contract address you own — we verify ownership on-chain before it goes live." />
+      <ClaimCollectionPanel helperText="Paste the collection contract address." />
     </ClaimRouteShell>
   );
 }

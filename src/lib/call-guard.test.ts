@@ -10,7 +10,7 @@ test("calls to other contracts pass", () => {
 });
 
 test("a call to the signer's own account is rejected", () => {
-  expect(() => assertNoSelfCalls([call(other), call(account)], account)).toThrow("own wallet account");
+  expect(() => assertNoSelfCalls([call(other), call(account)], account)).toThrow("targets the wallet itself");
 });
 
 test("address padding and case do not hide a self call", () => {

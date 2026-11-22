@@ -4,7 +4,7 @@ import { CreateAssetAside } from "@/components/claim/create-asset-aside";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Mint NFT | Launchpad";
-const description = "Publish your creative work as a single-copy NFT in a collection you own.";
+const description = "Publish a single-copy work.";
 
 export const metadata: Metadata = {
   title,

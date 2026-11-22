@@ -14,11 +14,11 @@ export function MintEditionAside() {
       steps={[
         "Add the piece's details and image",
         "Choose how many editions",
-        "Mint it — zero platform fees",
+        "Mint for free",
       ]}
       trustIcon={Gift}
       trustLead="Zero platform fees."
-      trust="You keep full ownership, fully and directly — zero platform fees to mint."
+      trust="Minting is free."
     />
   );
 }

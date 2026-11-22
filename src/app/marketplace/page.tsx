@@ -4,7 +4,7 @@ import { fetchActiveOrders } from "@/lib/api-server";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Marketplace";
-const description = "Browse, buy, and license IP assets on the Medialane marketplace using Starknet wallets.";
+const description = "Buy and license IP assets on Medialane.";
 
 export const metadata: Metadata = {
   title,

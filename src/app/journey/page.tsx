@@ -3,7 +3,7 @@ import { JourneyContent } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Your Journey";
-const description = "Every level, every badge, every way to earn XP on Medialane — the whole system, explained.";
+const description = "How levels and badges work on Medialane.";
 
 export const metadata: Metadata = {
   title,

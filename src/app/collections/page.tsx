@@ -3,7 +3,7 @@ import { CollectionsPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Collections";
-const description = "Browse all onchain IP collections on Medialane — NFT, art, audio, video, and more on Starknet.";
+const description = "Browse IP collections on Medialane.";
 
 export const metadata: Metadata = {
   title,

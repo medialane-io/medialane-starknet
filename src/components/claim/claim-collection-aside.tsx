@@ -7,7 +7,7 @@ export function ClaimCollectionAside() {
   return (
     <ClaimRail
       included={[
-        { icon: LayoutGrid, title: "Branded collection page", desc: "Custom name, cover, banner and links — all editable." },
+        { icon: LayoutGrid, title: "Branded collection page", desc: "Editable name and cover." },
         { icon: UserCircle, title: "Linked to your profile", desc: "It shows up on your public profile." },
         { icon: Link2, title: "One shareable URL", desc: "Share your collection." },
       ]}
@@ -17,7 +17,7 @@ export function ClaimCollectionAside() {
         "It goes live on your profile",
       ]}
       trustLead="Non-custodial."
-      trust="Claiming only links your collection to your profile — Medialane never moves or holds your assets. They stay in your contract."
+      trust="Assets stay in the collection contract."
     />
   );
 }

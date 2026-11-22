@@ -8,11 +8,11 @@ import { ClaimCollectionNameAside } from "@/components/claim/claim-collection-na
 export const metadata: Metadata = {
   title: "Claim a Collection Name — Medialane",
   description:
-    "Give your collection a clean, memorable web address — medialane.io/collection/your-name — instead of a long contract address.",
+    "A short web address for the collection.",
   alternates: canonical("/claim/collection-name"),
   openGraph: {
     title: "Claim a Collection Name — Medialane",
-    description: "Reserve a clean, shareable URL for your collection page.",
+    description: "A short URL for the collection page.",
     type: "website",
     url: "/claim/collection-name",
   },
@@ -23,7 +23,7 @@ export default function ClaimCollectionNamePage() {
     <ClaimRouteShell
       icon={<Link2 className="h-4 w-4 text-white" />}
       title="Claim a Collection Name"
-      subtitle="Pick a collection to give it a clean, memorable URL — medialane.io/collection/your-name."
+      subtitle="Pick a collection to name its URL."
       aside={<ClaimCollectionNameAside />}
     >
       <CollectionNameClaim />

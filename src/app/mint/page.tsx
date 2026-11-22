@@ -8,14 +8,14 @@ const OG_IMAGE =
 export const metadata: Metadata = {
   title: "Creator's Airdrop — Medialane",
   description:
-    "Claim your participation record and join the Medialane Creator's Airdrop. Free for everyone — no approval, no fees. Eligible for every community fund distribution.",
+    "Join the Medialane Creator's Airdrop for free.",
   alternates: {
     canonical: "https://starknet.medialane.io/mint",
   },
   openGraph: {
     title: "Creator's Airdrop — Medialane",
     description:
-      "Claim your participation record and join the Medialane Creator's Airdrop. Free for everyone — no approval, no fees.",
+      "Join the Medialane Creator's Airdrop for free.",
     locale: "en_US",
     type: "website",
     url: "/mint",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Creator's Airdrop — Medialane",
-    description: "Claim your free participation record in the Medialane creator community fund.",
+    description: "Join the Medialane creator fund for free.",
     images: [OG_IMAGE],
   },
 };

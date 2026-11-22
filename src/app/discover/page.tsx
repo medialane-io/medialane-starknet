@@ -3,7 +3,7 @@ import { DiscoverPage } from "@/components/discover";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Discover";
-const description = "Explore trending IP assets, collections, and creators on Medialane — Creator Launchpad + NFT Marketplace.";
+const description = "Explore trending assets and creators on Medialane.";
 
 export const metadata: Metadata = {
   title,

@@ -52,7 +52,7 @@ export function ConnectDialog() {
       const friendly = describeError(err);
       setConnectError(
         friendly.isUserRejection
-          ? "Your wallet did not connect. You may have declined it, or it may need extra verification first."
+          ? "The wallet did not connect."
           : friendly.message,
       );
       setOpen(true);

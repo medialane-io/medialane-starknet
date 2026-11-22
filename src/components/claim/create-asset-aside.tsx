@@ -14,11 +14,11 @@ export function CreateAssetAside() {
       steps={[
         "Upload your work and add details",
         "Choose your licensing terms",
-        "Mint it — zero platform fees",
+        "Mint for free",
       ]}
       trustIcon={Gift}
       trustLead="Zero platform fees."
-      trust="You own it, fully and directly, and authorship is recorded permanently."
+      trust="Authorship is recorded permanently."
     />
   );
 }

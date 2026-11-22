@@ -18,7 +18,7 @@ type Step = "input" | "verifying" | "success" | "manual" | "pending";
 const isValidAddress = (a: string) => /^0x[0-9a-fA-F]{40,64}$/.test(a.trim());
 
 const DEFAULT_HELPER_TEXT =
-  "Paste the Starknet contract address you own, an NFT collection or a coin.";
+  "Paste a collection or coin contract address.";
 
 export function ClaimCollectionPanel({
   helperText,
@@ -80,7 +80,7 @@ export function ClaimCollectionPanel({
       setStep("pending");
     } catch (err) {
       console.error("collection claim request failed", err);
-      setPanelError("We could not send your request. Please try again.");
+      setPanelError("Try sending again.");
     }
   }
 
@@ -178,7 +178,7 @@ export function ClaimCollectionPanel({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="notes">Tell us about your connection to this collection</Label>
-              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="e.g. I deployed this contract on Starknet mainnet…" />
+              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Details for the review" />
             </div>
             <div className="flex gap-3">
               {panelError && <p role="alert" className="text-sm text-destructive">{panelError}</p>}

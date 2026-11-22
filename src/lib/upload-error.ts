@@ -8,7 +8,7 @@ export function uploadFailureToast(err: unknown): { title: string; description?:
     return {
       title: "Signature declined",
       description:
-        "Uploads need a one-time, free sign-in signature — it's not a transaction and costs nothing. Try again and approve the request in your wallet.",
+        "Approve the free sign-in signature to upload.",
     };
   }
   return {

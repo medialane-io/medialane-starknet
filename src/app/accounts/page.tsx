@@ -3,7 +3,7 @@ import { AccountsPage as AccountsPageClient } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Accounts";
-const description = "Browse onchain accounts on Medialane: every address with collections or assets.";
+const description = "Browse accounts on Medialane.";
 
 export const metadata: Metadata = {
   title,
