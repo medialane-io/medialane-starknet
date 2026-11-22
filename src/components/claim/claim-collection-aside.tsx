@@ -9,7 +9,7 @@ export function ClaimCollectionAside() {
       included={[
         { icon: LayoutGrid, title: "Branded collection page", desc: "Custom name, cover, banner and links — all editable." },
         { icon: UserCircle, title: "Linked to your profile", desc: "It shows up on your public profile." },
-        { icon: Link2, title: "One shareable URL", desc: "Share your collection in a single, clean link." },
+        { icon: Link2, title: "One shareable URL", desc: "Share your collection." },
       ]}
       steps={[
         "Paste your collection's contract address",
