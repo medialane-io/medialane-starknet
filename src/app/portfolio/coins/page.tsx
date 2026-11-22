@@ -41,7 +41,7 @@ export default function PortfolioCoinsPage() {
         isEmpty={coins.length === 0}
         onRetry={mutate}
         emptyTitle="No coins yet"
-        emptyDescription="Coins you launch will appear here, where you can edit their logo and description."
+        emptyDescription="Launched coins appear here."
         emptyCta={{ label: "Launch a coin", href: "/launchpad" }}
         emptyIcon={<Coins className="h-7 w-7 text-muted-foreground" />}
       >

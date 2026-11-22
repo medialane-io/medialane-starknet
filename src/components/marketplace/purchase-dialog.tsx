@@ -60,7 +60,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
     setBuyError(null);
     if (!isConnected) return;
     if (isOwnOrder) {
-      setBuyError("This is your own listing, so you cannot buy it.");
+      setBuyError("This is your listing.");
       return;
     }
     if (!paymentSymbol) return;
@@ -76,7 +76,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
           takerAddress: address,
         });
       } catch {
-        setBuyError("The price moved before the swap could be prepared. Please try again.");
+        setBuyError("The price moved. Try again.");
         return;
       } finally {
         setPreparing(false);
@@ -130,7 +130,7 @@ export function PurchaseDialog({ order, open, onOpenChange, onSuccess }: Purchas
             { label: "View portfolio", onClick: handleViewPortfolio },
           ]}
           errorTitle="Purchase failed"
-          errorDescription="The transaction was submitted, but the purchase could not be completed."
+          errorDescription="The purchase did not complete."
           onRetry={resetState}
           onDone={() => onOpenChange(false)}
         >

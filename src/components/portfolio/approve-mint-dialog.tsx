@@ -107,7 +107,7 @@ export function ApproveMintDialog({ offer, open, onOpenChange, onSuccess }: Prop
         const ordersRes = await client.api.orders.forToken(selectedCollection.contractAddress, remixTokenId).catch(() => null);
         return ordersRes?.data?.find((o) => o.status === "ACTIVE" && o.offer.itemType === "ERC721")?.orderHash;
       });
-      if (!orderHash) throw new Error("Could not confirm listing orderHash — check portfolio shortly");
+      if (!orderHash) throw new Error("Check the portfolio shortly");
 
       await client.api.remix.confirm(
         offer.id,
@@ -136,7 +136,7 @@ export function ApproveMintDialog({ offer, open, onOpenChange, onSuccess }: Prop
       open={open}
       onOpenChange={onOpenChange}
       collections={eligibleCollections}
-      footerNote="Grant the license: mint the derivative and sell it to the requester, in one step."
+      footerNote="Mint the remix and sell it to the requester."
       newAssetHref={newAssetLink}
       tx={{ phase, txHash: mintHash, error, retryable: !mintHash, reset }}
       onApprove={handleApprove}

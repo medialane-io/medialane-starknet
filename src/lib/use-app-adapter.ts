@@ -30,7 +30,7 @@ export function useAppAdapter(): MedialaneApp {
     },
     resolveImage,
     getSigner: () => {
-      if (!signer) throw new Error("Wallet not ready. Please reconnect and try again.");
+      if (!signer) throw new Error("Reconnect the wallet.");
       return signer;
     },
   };

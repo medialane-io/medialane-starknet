@@ -32,7 +32,7 @@ export function ClaimPageClient() {
             plain
             icon={<Package className="h-4 w-4 text-white" />}
             title="Claims & Drops"
-            subtitle="Exclusive drops, collections and creator pages available on Medialane."
+            subtitle="Drops, collections and creator pages."
           />
         </div>
       </div>
@@ -67,7 +67,7 @@ export function ClaimPageClient() {
         <div>
           <h2 className="text-xl font-bold mb-1">NFT Collection</h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Import an existing Starknet ERC-721 collection into your Medialane profile.
+            Link a Starknet collection to your profile.
           </p>
           <WalletGate>
             <ClaimCollectionPanel />
@@ -111,7 +111,7 @@ export function ClaimPageClient() {
                 </IconTile>
                 <div>
                   <p className="text-sm font-semibold">Fully branded</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Custom name, cover image, banner, and social links — all editable in collection settings.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Editable name and cover.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -120,7 +120,7 @@ export function ClaimPageClient() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold">One shareable link</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Share your collection, assets, and listings in a single URL — perfect for social and email.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Share your collection.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -129,7 +129,7 @@ export function ClaimPageClient() {
                 </IconTile>
                 <div>
                   <p className="text-sm font-semibold">Always accessible</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Permanently anchored on Starknet. No central authority can remove it.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Permanent on Starknet.</p>
                 </div>
               </div>
             </div>

@@ -90,7 +90,7 @@ export default function SettingsContent() {
           onChange={(e) => edit({ [key]: e.target.value })}
           className={invalid ? "border-destructive focus-visible:ring-destructive" : ""}
         />
-        {invalid && <p className="text-xs text-destructive">Must start with http://, https://, or ipfs://</p>}
+        {invalid && <p className="text-xs text-destructive">Use a web or ipfs link</p>}
         {!invalid && helper && <p className="text-xs text-muted-foreground">{helper}</p>}
       </div>
     );
@@ -261,7 +261,7 @@ export default function SettingsContent() {
             <div className="space-y-1.5">
               <Label>Avatar &amp; app theme</Label>
               <p className="text-xs text-muted-foreground">
-                Pick one of your NFTs. It becomes your avatar and a subtle background theme across Medialane.
+                Pick an NFT for the avatar and theme.
               </p>
               <AssetPicker
                 assets={ownedAssets}

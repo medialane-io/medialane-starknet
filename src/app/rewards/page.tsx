@@ -4,7 +4,7 @@ import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Rewards";
 const description =
-  "What Medialane gives back to everyone creating, collecting, and taking part.";
+  "What Medialane gives back to the community.";
 
 export const metadata: Metadata = {
   title,

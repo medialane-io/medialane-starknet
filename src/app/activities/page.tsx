@@ -22,7 +22,7 @@ export default function ActivitiesPage() {
           <span className="text-sm font-semibold">Medialane</span>
         </div>
         <h1 className="text-3xl font-bold">Onchain Activity</h1>
-        <p className="text-muted-foreground">Mint, markets, events, and more.</p>
+        <p className="text-muted-foreground">All onchain activity.</p>
       </div>
       <ActivitiesFeed />
     </PageContainer>

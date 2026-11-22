@@ -3,7 +3,7 @@ import { RemixBrowsePage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Remix | Launchpad";
-const description = "Pick a work that is open to remixing and create a licensed derivative with attribution to the original creator.";
+const description = "Remix a work with credit to its creator.";
 
 export const metadata: Metadata = {
   title,

@@ -14,10 +14,10 @@ export function ClaimMemecoinAside() {
       steps={[
         "Paste your coin's contract address",
         "We check on-chain that you own it",
-        "Ownership confirmed, your coin goes live",
+        "Live once confirmed",
       ]}
       trustLead="Stays in your wallet."
-      trust="Your coin stays in your own wallet the whole time — claiming just links it to your account."
+      trust="Claiming only links the coin to the account."
     />
   );
 }

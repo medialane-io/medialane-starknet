@@ -30,7 +30,7 @@ export function useUsernameClaimForm() {
       if (!result.available) setCheckReason(result.reason);
     } catch {
       setCheckState("idle");
-      setMessage({ tone: "error", text: "We could not check that username just now. Please try again." });
+      setMessage({ tone: "error", text: "Try checking again." });
     }
   };
 
@@ -42,13 +42,13 @@ export function useUsernameClaimForm() {
       if (result.error) {
         setMessage({ tone: "error", text: result.error });
       } else {
-        setMessage({ tone: "success", text: "Username claim submitted. The Medialane DAO team will review it shortly." });
+        setMessage({ tone: "success", text: "Claim submitted for DAO review." });
         setInput("");
         await mutateClaim();
       }
     } catch (err) {
       console.error("username claim failed", err);
-      setMessage({ tone: "error", text: "That claim could not be submitted. Please try again." });
+      setMessage({ tone: "error", text: "Try submitting again." });
     } finally {
       setClaiming(false);
     }

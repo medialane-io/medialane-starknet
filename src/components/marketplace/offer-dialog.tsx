@@ -83,7 +83,7 @@ export function OfferDialog({ open, onOpenChange, assetContract, tokenId, tokenN
           successActions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
           successChildren={<RewardEarned actionType="make_offer" />}
           errorTitle="Offer failed"
-          errorDescription="The transaction was submitted, but the offer could not be completed."
+          errorDescription="The offer did not complete."
           onRetry={resetState}
           onDone={() => onOpenChange(false)}
         >

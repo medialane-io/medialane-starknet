@@ -89,7 +89,7 @@ const POP_FEATURES = [
   {
     icon: Award,
     title: "Soulbound Credential",
-    desc: "Non-transferable — permanently tied to your wallet address on Starknet.",
+    desc: "Tied to the wallet for good.",
   },
   {
     icon: Users,
@@ -126,7 +126,7 @@ export function PopContent() {
               plain
               icon={<Award className="h-4 w-4 text-white" />}
               title="POP Protocol"
-              subtitle="Immutable certificates for authenticity. Browse events or create one."
+              subtitle="Browse events or create one."
             />
           </div>
         </FadeIn>
@@ -193,7 +193,7 @@ export function PopContent() {
                 <Award className="h-10 w-10 text-muted-foreground/20" />
               </div>
               <p className="text-sm text-muted-foreground">
-                No active POP events right now. Check back after your next event.
+                Events appear here when live.
               </p>
             </div>
           </FadeIn>

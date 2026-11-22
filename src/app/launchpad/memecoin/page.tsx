@@ -6,7 +6,7 @@ import { ClaimMemecoinAside } from "@/components/claim/claim-memecoin-aside";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Claim Memecoin";
-const description = "Already launched a coin on Starknet? Bring it to Medialane so people can discover and trade it.";
+const description = "Bring a Starknet coin to Medialane.";
 
 export const metadata: Metadata = {
   title,
@@ -21,10 +21,10 @@ export default function MemecoinClaimPage() {
       gated={false}
       icon={<Coins className="h-4 w-4 text-white" />}
       title="Claim a Memecoin"
-      subtitle="Already launched a coin on Starknet? Add it so people can discover and trade it."
+      subtitle="Add a Starknet coin for trading."
       aside={<ClaimMemecoinAside />}
     >
-      <ClaimCollectionPanel kind="coin" helperText="Paste your coin's Starknet contract address. If your wallet owns the contract it goes live immediately." />
+      <ClaimCollectionPanel kind="coin" helperText="Paste the coin contract address." />
     </ClaimRouteShell>
   );
 }

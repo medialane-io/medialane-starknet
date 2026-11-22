@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     default: "Medialane — Creator Launchpad & IP Marketplace",
     template: "%s | Medialane",
   },
-  description: "Launch, collect, and monetize NFT digital assets with Starknet wallets.",
+  description: "Launch and collect digital assets with Starknet wallets.",
   keywords: ["NFT", "IP", "Launchpad", "Starknet", "Creator", "Marketplace"],
   authors: [{ name: "Medialane" }],
   icons: {

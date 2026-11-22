@@ -85,7 +85,7 @@ export function CounterOfferDialog({
           success={successMessages.countered({ name, price: `${form.getValues("price")} ${currencySymbol}` })}
           successActions={[{ label: "Done", onClick: () => { onOpenChange(false); onSuccess?.(); } }]}
           errorTitle="Counter-offer failed"
-          errorDescription="The transaction was submitted, but the counter-offer could not be completed."
+          errorDescription="The counter-offer did not complete."
           onRetry={resetState}
           onDone={() => onOpenChange(false)}
         >

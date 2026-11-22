@@ -84,7 +84,7 @@ export function AcceptOfferDialog({ order, open, onOpenChange, onSuccess }: Acce
           ]}
           successChildren={<RewardEarned actionType="offer_accepted_seller" />}
           errorTitle="Offer acceptance failed"
-          errorDescription="The transaction could not be completed. Your asset is still yours."
+          errorDescription="The asset is still yours."
           onRetry={resetState}
           onDone={handleDone}
         >

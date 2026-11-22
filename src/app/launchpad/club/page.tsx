@@ -3,7 +3,7 @@ import { ServiceCollectionsPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "IP Club";
-const description = "Membership clubs — create tiers, mint membership cards, trade like any collection.";
+const description = "Membership clubs with tradable cards.";
 
 export const metadata: Metadata = {
   title,

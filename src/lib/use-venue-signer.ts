@@ -11,7 +11,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
 
   const signTypedData = useCallback(
     async (data: TypedData): Promise<string[]> => {
-      if (!account) throw new Error("Wallet not ready. Please reconnect and try again.");
+      if (!account) throw new Error("Reconnect the wallet.");
       const sig = await account.signMessage(data);
 
       return Array.isArray(sig) ? sig.map(String) : [String(sig.r), String(sig.s)];
@@ -21,7 +21,7 @@ export function useVenueSigner(): StarknetVenueSigner | null {
 
   const execute = useCallback(
     async (calls: Call[]): Promise<{ txHash: string }> => {
-      if (!account || !address) throw new Error("Wallet not ready. Please reconnect and try again.");
+      if (!account || !address) throw new Error("Reconnect the wallet.");
       assertNoSelfCalls(calls, address);
       const txHash = (await account.execute(calls)).transaction_hash;
       return { txHash };
