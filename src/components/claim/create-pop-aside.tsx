@@ -14,7 +14,7 @@ export function CreatePopAside() {
       steps={[
         "Add the event details and image",
         "Publish it — zero platform fees",
-        "Share the claim link with attendees",
+        "Share the link",
       ]}
       trustIcon={Gift}
       trustLead="Zero platform fees."
