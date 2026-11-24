@@ -7,7 +7,7 @@ import { Button } from "@medialane/ui/button";
 import { Skeleton } from "@medialane/ui/skeleton";
 import { GitBranch, Check, Clock } from "lucide-react";
 import { AddressDisplay } from "@medialane/ui/address-display";
-import { timeAgo, useRemixOffers } from "@medialane/ui";
+import { SectionHeading, timeAgo, useRemixOffers } from "@medialane/ui";
 import { assetHref } from "@/lib/routes";
 import type { RemixOffer } from "@/types/remix-offers";
 import Link from "next/link";
@@ -36,15 +36,17 @@ export default function PortfolioRemixOffersPage() {
     <div className="space-y-8">
 
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <GitBranch className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-muted-foreground">License Requests</h2>
-          {pendingIn.length > 0 && (
-            <span className="h-5 min-w-5 rounded-full bg-primary text-2xs font-bold text-primary-foreground flex items-center justify-center px-1">
-              {pendingIn.length}
-            </span>
-          )}
-        </div>
+        <SectionHeading
+          icon={<GitBranch />}
+          title="License Requests"
+          action={
+            pendingIn.length > 0 ? (
+              <span className="h-5 min-w-5 rounded-full bg-primary text-2xs font-bold text-primary-foreground flex items-center justify-center px-1">
+                {pendingIn.length}
+              </span>
+            ) : undefined
+          }
+        />
 
         {loadingIn ? (
           <div className="space-y-2">
@@ -102,10 +104,7 @@ export default function PortfolioRemixOffersPage() {
       </section>
 
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <GitBranch className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-muted-foreground">My License Requests</h2>
-        </div>
+        <SectionHeading icon={<GitBranch />} title="My License Requests" />
 
         {loadingOut ? (
           <div className="space-y-2">
