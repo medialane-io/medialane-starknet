@@ -6,8 +6,7 @@ import { Button } from "@medialane/ui/button";
 import { WalletGate } from "@/components/claim/wallet-gate";
 import { ClaimCollectionPanel } from "@/components/claim/claim-collection-panel";
 import { UsernameClaimPanel } from "@/components/shared/username-claim-panel";
-import { ServiceHeader, IconTile } from "@medialane/ui";
-import { ClaimBackButton } from "@/components/claim/claim-back-button";
+import { BackButton, IconTile, PageContainer, PageHeader, SectionHeading } from "@medialane/ui";
 
 function SectionDivider({ label }: { label: string }) {
   return (
@@ -23,19 +22,13 @@ function SectionDivider({ label }: { label: string }) {
 
 export function ClaimPageClient() {
   return (
-    <div className="mx-auto px-4 sm:px-6 py-12 max-w-5xl space-y-16 pb-20">
-
-      <div>
-        <ClaimBackButton />
-        <div className="mt-6">
-          <ServiceHeader
-            plain
-            icon={<Package className="h-4 w-4 text-white" />}
-            title="Claims & Drops"
-            subtitle="Drops, collections and creator pages."
-          />
-        </div>
-      </div>
+    <PageContainer variant="narrow" className="space-y-16">
+      <PageHeader
+        back={<BackButton />}
+        icon={<Package />}
+        title="Claims & Drops"
+        subtitle="Drops, collections and creator pages."
+      />
 
       <section className="space-y-8">
         <SectionDivider label="Genesis drop" />
@@ -64,11 +57,11 @@ export function ClaimPageClient() {
 
       <section className="space-y-8">
         <SectionDivider label="Claim your collection" />
-        <div>
-          <h2 className="text-xl font-bold mb-1">NFT Collection</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Link a Starknet collection to your profile.
-          </p>
+        <div className="space-y-6">
+          <SectionHeading
+            title="NFT Collection"
+            subtitle="Link a Starknet collection to your profile."
+          />
           <WalletGate>
             <ClaimCollectionPanel />
           </WalletGate>
@@ -77,12 +70,16 @@ export function ClaimPageClient() {
 
       <section className="space-y-8">
         <SectionDivider label="Claim your creator page" />
-        <div>
-          <h2 className="text-xl font-bold mb-1">Username</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Reserve your creator URL at{" "}
-            <span className="tabular-nums text-foreground">medialane.io/creator/yourname</span>.
-          </p>
+        <div className="space-y-6">
+          <SectionHeading
+            title="Username"
+            subtitle={
+              <>
+                Reserve your creator URL at{" "}
+                <span className="tabular-nums text-foreground">medialane.io/creator/yourname</span>.
+              </>
+            }
+          />
           <WalletGate>
             <UsernameClaimPanel />
           </WalletGate>
@@ -91,11 +88,11 @@ export function ClaimPageClient() {
 
       <section className="space-y-8">
         <SectionDivider label="Your collection page" />
-        <div>
-          <h2 className="text-xl font-bold mb-1">Branded Drop Page</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Every collection you deploy on Medialane gets a fully branded, shareable page — no setup required.
-          </p>
+        <div className="space-y-6">
+          <SectionHeading
+            title="Branded Drop Page"
+            subtitle="Every collection you deploy on Medialane gets a fully branded, shareable page — no setup required."
+          />
           <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-5">
 
             <div className="flex items-center gap-2 bg-muted/50 border border-border/60 rounded-lg px-3 py-2 tabular-nums text-sm max-w-md">
@@ -147,6 +144,6 @@ export function ClaimPageClient() {
           </div>
         </div>
       </section>
-    </div>
+    </PageContainer>
   );
 }

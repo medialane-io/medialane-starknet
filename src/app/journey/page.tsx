@@ -13,9 +13,5 @@ export const metadata: Metadata = {
 };
 
 export default function JourneyPage() {
-  return (
-    <div className="max-w-5xl mx-auto px-5 sm:px-8">
-      <JourneyContent startHint="Connect a wallet to start." />
-    </div>
-  );
+  return <JourneyContent startHint="Connect a wallet to start." />;
 }

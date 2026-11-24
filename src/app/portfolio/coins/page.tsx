@@ -3,7 +3,7 @@
 import { useWallet } from "@/hooks/use-wallet";
 import { useCoinsByCreator } from "@/hooks/use-coins";
 import { CoinRow, CoinRowSkeleton } from "@/components/shared/coin-row";
-import { COIN_GRID, cn } from "@medialane/ui";
+import { COIN_GRID, SectionHeading, cn } from "@medialane/ui";
 import { EmptyOrError } from "@medialane/ui/empty-or-error";
 import { Coins } from "lucide-react";
 import type { CoinCollectionLike } from "@medialane/ui";
@@ -28,12 +28,7 @@ export default function PortfolioCoinsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold">Coins</h2>
-        {coins.length > 0 && (
-          <span className="text-sm text-muted-foreground">({coins.length})</span>
-        )}
-      </div>
+      <SectionHeading title={coins.length > 0 ? `Coins (${coins.length})` : "Coins"} />
 
       <EmptyOrError
         isLoading={isLoading}

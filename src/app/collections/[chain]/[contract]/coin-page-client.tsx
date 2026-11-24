@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ExternalLink, Settings } from "lucide-react";
 import { getService, normalizeAddress } from "@medialane/sdk";
 import type { ApiCoin } from "@medialane/sdk";
-import { useCoinPrice, formatCoinPrice, CoinGuarantees, cn } from "@medialane/ui";
+import { useCoinPrice, formatCoinPrice, CoinGuarantees, PageContainer, cn } from "@medialane/ui";
 import { useCoinSupply } from "@medialane/ui/utils/use-coin-supply";
 import { useWallet } from "@/hooks/use-wallet";
 import { Skeleton } from "@medialane/ui/skeleton";
@@ -63,7 +63,7 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
         )}
       </div>
 
-      <div className="mx-auto px-4 pt-20 pb-12 max-w-3xl">
+      <PageContainer variant="narrow" className="max-w-3xl">
         <div className="grid grid-cols-1">
 
           <div className="space-y-6">
@@ -163,14 +163,14 @@ export function CoinPageClient({ coin }: { coin: ApiCoin }) {
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }
 
 export function CoinPageSkeleton() {
   return (
-    <div className="mx-auto px-4 pt-20 pb-12 max-w-3xl">
+    <PageContainer variant="narrow" className="max-w-3xl">
       <div className="grid grid-cols-1">
         <div className="space-y-6">
           <div className="flex items-center gap-4">
@@ -186,7 +186,7 @@ export function CoinPageSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

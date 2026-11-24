@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PopContent } from "./pop-content";
+import { PopPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Proof of Participation";
@@ -12,6 +12,6 @@ export const metadata: Metadata = {
   ...buildSocialMetadata({ title, description }),
 };
 
-export default function PopPage() {
-  return <PopContent />;
+export default function PopRoute() {
+  return <PopPage />;
 }

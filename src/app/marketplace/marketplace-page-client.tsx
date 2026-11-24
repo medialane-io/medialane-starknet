@@ -9,6 +9,7 @@ import {
   FiltersDialog,
   MarketplaceSearch,
   PageContainer,
+  PageHeader,
   SearchInput,
   StatPillRow,
   usePlatformStats,
@@ -39,15 +40,10 @@ export default function MarketplacePageClient({ initialOrders }: { initialOrders
   const filters = useMarketplaceFilters();
 
   return (
-    <PageContainer className="box-border max-w-full pt-20 pb-8 space-y-6">
-
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <Store className="h-6 w-6 text-primary shrink-0" />
-          <h1 className="text-3xl sm:text-4xl font-bold">Marketplace</h1>
-        </div>
+    <PageContainer className="space-y-8">
+      <PageHeader icon={<Store />} title="Marketplace">
         <PlatformStatsBar />
-      </div>
+      </PageHeader>
 
       {view === "nfts" && <ActivityTicker limit={12} />}
 

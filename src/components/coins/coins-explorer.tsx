@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CoinsExplorer as UICoinsExplorer, ActionButton, Button, coinServiceIds, type CoinFilter, type CoinSort, usePriceMap } from "@medialane/ui";
+import { CoinsPage, ActionButton, Button, coinServiceIds, type CoinFilter, type CoinSort, usePriceMap } from "@medialane/ui";
 
 import { useCoins as useCoinsData } from "@/hooks/use-coins";
 import { useCoinPriceAdapter } from "./use-coin-price-adapter";
@@ -16,16 +16,15 @@ function useCoins({ filter, sort }: { filter: CoinFilter; sort: CoinSort }) {
   return { collections: coins, isLoading, counts: meta?.counts };
 }
 
-export function CoinsExplorer({ heading = true }: { heading?: boolean }) {
+export function CoinsExplorer() {
   const router = useRouter();
 
   return (
-    <UICoinsExplorer
+    <CoinsPage
       useCoins={useCoins}
       usePrice={useCoinPriceAdapter}
       usePriceMap={usePriceMap}
       coinHref={(c) => buildCoinHref("STARKNET", c.contractAddress)}
-      heading={heading}
       action={
         <div className="flex items-center gap-2">
           <Button asChild variant="soft">

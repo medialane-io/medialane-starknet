@@ -4,6 +4,7 @@ import { InlineNote } from "@/components/shared/inline-note";
 import { use, useRef, useState } from "react";
 import Image from "next/image";
 import { normalizeAddress } from "@medialane/sdk";
+import { SectionHeading } from "@medialane/ui";
 import { acceptFor } from "@medialane/ui/utils/upload-limits";
 import { useWallet } from "@/hooks/use-wallet";
 import { useDraft } from "@/hooks/use-draft";
@@ -75,12 +76,10 @@ export default function CoinSettingsPage({ params }: Props) {
 
   return (
     <div className="space-y-8 max-w-2xl">
-      <div>
-        <h1 className="text-xl font-semibold">Coin Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Update your coin&apos;s logo and description. {coin?.symbol ? `(${coin.symbol})` : ""}
-        </p>
-      </div>
+      <SectionHeading
+        title="Coin Settings"
+        subtitle={`Update your coin's logo and description. ${coin?.symbol ? `(${coin.symbol})` : ""}`}
+      />
 
       <div className="space-y-4">
         <div>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PageContainer } from "@medialane/ui";
 import { CoinsExplorer } from "@/components/coins/coins-explorer";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
@@ -14,9 +13,5 @@ export const metadata: Metadata = {
 };
 
 export default function CoinsPage() {
-  return (
-    <PageContainer className="box-border max-w-full pt-20 pb-8 space-y-8">
-      <CoinsExplorer />
-    </PageContainer>
-  );
+  return <CoinsExplorer />;
 }

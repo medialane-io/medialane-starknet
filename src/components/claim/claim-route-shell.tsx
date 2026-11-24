@@ -1,5 +1,4 @@
-import { ServiceFormShell } from "@medialane/ui";
-import { ClaimBackButton } from "@/components/claim/claim-back-button";
+import { BackButton, ServiceFormShell } from "@medialane/ui";
 import { WalletGate } from "@/components/claim/wallet-gate";
 
 interface ClaimRouteShellProps {
@@ -25,7 +24,7 @@ export function ClaimRouteShell({ icon, title, subtitle, headerAccessory, gated 
       subtitle={subtitle}
       headerAccessory={headerAccessory}
       aside={aside}
-      backSlot={<ClaimBackButton />}
+      backSlot={<BackButton />}
     >
       {gatedChildren}
     </ServiceFormShell>
