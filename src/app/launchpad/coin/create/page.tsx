@@ -2,8 +2,8 @@
 
 import { CoinCreate } from "@medialane/ui";
 import { coinHref } from "@/lib/routes";
-import { CreateCoinAside } from "@/components/claim/create-coin-aside";
+import { CreateAside } from "@medialane/ui/create-aside";
 
 export default function CoinCreatePage() {
-  return <CoinCreate aside={<CreateCoinAside />} tradeHref={(address) => coinHref("STARKNET", address)} />;
+  return <CoinCreate aside={<CreateAside kind="coin" />} tradeHref={(address) => coinHref("STARKNET", address)} />;
 }
