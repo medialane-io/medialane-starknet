@@ -3,7 +3,7 @@ import { SponsorshipContent } from "./sponsorship-content";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "IP Sponsorship";
-const description = "Sponsorship offers and licenses anchored to Medialane assets.";
+const description = "Sponsorship offers and licenses for works on Medialane.";
 
 export const metadata: Metadata = {
   title,

@@ -1,8 +1,8 @@
 "use client";
 
 import { PopCreate } from "@medialane/ui";
-import { CreatePopAside } from "@/components/claim/create-pop-aside";
+import { CreateAside } from "@medialane/ui/create-aside";
 
 export default function CreatePOPPage() {
-  return <PopCreate aside={<CreatePopAside />} />;
+  return <PopCreate aside={<CreateAside kind="pop" />} />;
 }

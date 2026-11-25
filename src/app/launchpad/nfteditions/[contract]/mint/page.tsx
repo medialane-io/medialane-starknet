@@ -2,9 +2,9 @@
 
 import { use } from "react";
 import { EditionMint } from "@medialane/ui";
-import { MintEditionAside } from "@/components/claim/mint-edition-aside";
+import { CreateAside } from "@medialane/ui/create-aside";
 
 export default function MintIP1155Page({ params }: { params: Promise<{ contract: string }> }) {
   const { contract } = use(params);
-  return <EditionMint contract={contract} aside={<MintEditionAside />} />;
+  return <EditionMint contract={contract} aside={<CreateAside kind="mintEdition" />} />;
 }
