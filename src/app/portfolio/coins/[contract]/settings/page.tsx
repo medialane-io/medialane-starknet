@@ -1,39 +1,31 @@
 "use client";
 
 import { InlineNote } from "@/components/shared/inline-note";
-import { use, useRef, useState } from "react";
-import Image from "next/image";
+import { use } from "react";
 import { normalizeAddress } from "@medialane/sdk";
-import { SectionHeading } from "@medialane/ui";
-import { acceptFor } from "@medialane/ui/utils/upload-limits";
+import { ImageUploadField, SectionHeading, useImageUpload } from "@medialane/ui";
 import { useWallet } from "@/hooks/use-wallet";
 import { useDraft } from "@/hooks/use-draft";
 import { useSave } from "@/hooks/use-save";
-import { useAccountSession } from "@/components/wallet-session-sync";
 import { useCoin, updateCoinProfile } from "@/hooks/use-coins";
-import { uploadFileToIpfs } from "@/lib/ipfs-upload-client";
-import { uploadFailureToast } from "@/lib/upload-error";
 import { Button } from "@medialane/ui/button";
 import { Label } from "@medialane/ui/label";
 import { Textarea } from "@medialane/ui/textarea";
 import { resolveImage } from "@/lib/utils";
-import { Loader2, Upload } from "lucide-react";
 
 interface Props { params: Promise<{ contract: string }> }
 
 export default function CoinSettingsPage({ params }: Props) {
   const { contract } = use(params);
   const { address: walletAddress } = useWallet();
-  const { ensureSignedIn } = useAccountSession();
   const { coin, isLoading, mutate } = useCoin(contract);
 
-  const [uploading, setUploading] = useState(false);
-  const { saving, message: saveMessage, setMessage: setSaveMessage, save } = useSave();
+  const { saving, message: saveMessage, save } = useSave();
   const { draft: { image, description }, edit } = useDraft<{ image: string | null; description: string }>({
     image: coin?.image ?? null,
     description: coin?.description ?? "",
   });
-  const fileRef = useRef<HTMLInputElement>(null);
+  const upload = useImageUpload({ onChange: (uri) => edit({ image: uri }) });
 
   const isCreator =
     walletAddress && coin?.creator &&
@@ -47,32 +39,13 @@ export default function CoinSettingsPage({ params }: Props) {
     );
   }
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      await ensureSignedIn();
-      const { uri } = await uploadFileToIpfs(file, "image");
-      edit({ image: uri });
-    } catch (err) {
-      console.error("coin image upload failed", err);
-      const t = uploadFailureToast(err);
-      setSaveMessage({ tone: "error", text: t.description ?? t.title });
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
-
   async function handleSave() {
+    if (!upload.confirm()) return;
     await save("Coin profile updated.", async () => {
       await updateCoinProfile(contract, { image, description: description || null });
       await mutate();
     });
   }
-
-  const previewUrl = resolveImage(image);
 
   return (
     <div className="space-y-8 max-w-2xl">
@@ -86,27 +59,8 @@ export default function CoinSettingsPage({ params }: Props) {
           <h3 className="text-sm font-semibold text-foreground">Logo</h3>
           <p className="text-xs text-muted-foreground mt-0.5">Shown on the coin page and in discovery.</p>
         </div>
-        <div className="border-t border-border pt-4 flex items-center gap-4">
-          {previewUrl ? (
-            <Image src={previewUrl} alt="coin logo" width={64} height={64} unoptimized
-              className="h-16 w-16 rounded-full object-cover border border-border/60" />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-brand-blue flex items-center justify-center">
-              <span className="text-xl font-bold text-white">{(coin?.symbol ?? "?").slice(0, 2).toUpperCase()}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-3">
-            <input ref={fileRef} type="file" accept={acceptFor("image")} className="hidden" onChange={handleFile} />
-            <Button variant="soft" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-              {uploading ? "Uploading…" : "Upload image"}
-            </Button>
-            {image && (
-              <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => edit({ image: null })}>
-                Remove
-              </button>
-            )}
-          </div>
+        <div className="border-t border-border pt-4">
+          <ImageUploadField upload={upload} ariaLabel="Logo" alt="coin logo" currentImage={resolveImage(image)} round />
         </div>
       </div>
 
@@ -123,7 +77,7 @@ export default function CoinSettingsPage({ params }: Props) {
       </div>
 
       <InlineNote message={saveMessage} />
-      <Button onClick={handleSave} disabled={saving || uploading || isLoading}>
+      <Button onClick={handleSave} disabled={saving || upload.uploading || isLoading}>
         {saving ? "Saving…" : "Save Changes"}
       </Button>
     </div>
