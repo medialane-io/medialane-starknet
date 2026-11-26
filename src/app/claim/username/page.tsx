@@ -3,7 +3,7 @@ import { AtSign } from "lucide-react";
 import { canonical } from "@/lib/seo";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { UsernameClaimPanel } from "@/components/shared/username-claim-panel";
-import { ClaimUsernameAside } from "@/components/claim/claim-username-aside";
+import { PageAside } from "@medialane/ui/page-aside";
 
 export const metadata: Metadata = {
   title: "Claim your Username — Medialane",
@@ -24,7 +24,7 @@ export default function ClaimUsernamePage() {
       icon={<AtSign className="h-4 w-4 text-white" />}
       title="Claim your Username"
       subtitle="Reserve your creator URL at medialane.io/creator/yourname."
-      aside={<ClaimUsernameAside />}
+      aside={<PageAside kind="claimUsername" />}
     >
       <UsernameClaimPanel bare />
     </ClaimRouteShell>

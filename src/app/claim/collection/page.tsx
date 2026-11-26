@@ -3,7 +3,7 @@ import { FolderInput, Globe } from "lucide-react";
 import { canonical } from "@/lib/seo";
 import { ClaimRouteShell } from "@/components/claim/claim-route-shell";
 import { ClaimCollectionPanel } from "@/components/claim/claim-collection-panel";
-import { ClaimCollectionAside } from "@/components/claim/claim-collection-aside";
+import { PageAside } from "@medialane/ui/page-aside";
 
 export const metadata: Metadata = {
   title: "Claim a Collection — Medialane",
@@ -33,7 +33,7 @@ export default function ClaimCollectionPage() {
       title="Claim a Collection"
       subtitle="Link a Starknet collection to your profile."
       headerAccessory={urlPill}
-      aside={<ClaimCollectionAside />}
+      aside={<PageAside kind="claimCollection" />}
     >
       <ClaimCollectionPanel helperText="Paste the collection contract address." />
     </ClaimRouteShell>
