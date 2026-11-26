@@ -3,8 +3,8 @@ import { SingleEditionMint } from "@medialane/ui";
 import { PageAside } from "@medialane/ui/page-aside";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
-const title = "Publish a work | Launchpad";
-const description = "Publish a single-copy work.";
+const title = "Single NFT | Launchpad";
+const description = "Create an immutable NFT with licensing for your content.";
 
 export const metadata: Metadata = {
   title,

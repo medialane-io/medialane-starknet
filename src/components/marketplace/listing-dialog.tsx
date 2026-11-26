@@ -115,7 +115,7 @@ export function ListingDialog({ open, onOpenChange, assetContract, tokenId, toke
                       form={form}
                       durationOptions={DURATION_OPTIONS}
                       busy={busy}
-                      priceLabel={is1155 ? "Price per edition" : "Price"}
+                      priceLabel={is1155 ? "Price per copy" : "Price"}
                       quantity={is1155 ? {} : undefined}
                     />
                     {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}

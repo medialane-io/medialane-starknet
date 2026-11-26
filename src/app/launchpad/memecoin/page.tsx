@@ -5,14 +5,14 @@ import { ClaimCollectionPanel } from "@/components/claim/claim-collection-panel"
 import { PageAside } from "@medialane/ui/page-aside";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
-const title = "Claim Memecoin";
-const description = "Bring a Starknet coin to Medialane.";
+const title = "Existing Memecoin";
+const description = "Connect a memecoin you've already launched to your creator profile.";
 
 export const metadata: Metadata = {
   title,
   description,
   alternates: canonical("/launchpad/memecoin"),
-  ...buildSocialMetadata({ title, description, imageAlt: "Claim a Memecoin on Medialane" }),
+  ...buildSocialMetadata({ title, description, imageAlt: "Existing Memecoin on Medialane" }),
 };
 
 export default function MemecoinClaimPage() {
@@ -20,8 +20,8 @@ export default function MemecoinClaimPage() {
     <ClaimRouteShell
       gated={false}
       icon={<Coins className="h-4 w-4 text-white" />}
-      title="Claim a Memecoin"
-      subtitle="Add a Starknet coin for trading."
+      title="Existing Memecoin"
+      subtitle="Connect a memecoin you've already launched to your creator profile."
       aside={<PageAside kind="claimMemecoin" />}
     >
       <ClaimCollectionPanel kind="coin" helperText="Paste the coin contract address." />

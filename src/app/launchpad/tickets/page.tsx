@@ -3,7 +3,7 @@ import { ServiceCollectionsPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "IP Tickets";
-const description = "Create tradable event tickets.";
+const description = "Create event tickets with verifiable ownership and validity, which holders can resell.";
 
 export const metadata: Metadata = {
   title,

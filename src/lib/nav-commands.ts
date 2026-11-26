@@ -1,5 +1,5 @@
 import { navGroups } from "@medialane/ui";
-import { Coins, Gift, List, Repeat2, Ticket } from "lucide-react";
+import { Coins, Gift, Repeat2 } from "lucide-react";
 
 export const NAV_COMMANDS = navGroups([
   {
@@ -16,16 +16,12 @@ export const NAV_COMMANDS = navGroups([
     ],
   },
   {
-    heading: "Create & Mint",
+    heading: "Creator Launchpad",
     items: [
-      "mint-ip-asset", "create-collection", "mint-editions", "create-1155",
-      { id: "my-drops", label: "My Drops", icon: List, href: "/launchpad/drop/my-drops", keywords: ["drop", "manage", "created"] },
-      "pop-create", "pop-browse",
-      { id: "my-pop-events", label: "My POP Events", icon: Ticket, href: "/launchpad/pop/my-events", keywords: ["pop", "manage", "events"] },
-      "tickets-create", "club-create", "sponsorship-create",
+      "mint-ip-asset", "mint-editions", "remix", "create-collection", "create-1155", "nft-drop",
       "launch-coin",
-      { id: "claim-memecoin", label: "Claim a Memecoin", icon: Coins, href: "/launchpad/memecoin", keywords: ["memecoin", "claim", "coin", "starknet", "unrug", "token"] },
-      "remix",
+      { id: "claim-memecoin", label: "Existing Memecoin", icon: Coins, href: "/launchpad/memecoin", keywords: ["memecoin", "claim", "coin", "starknet", "unrug", "token"] },
+      "pop-create", "tickets-create", "club-create", "sponsorship-create",
     ],
   },
   {

@@ -16,15 +16,32 @@ Ready (Argent), Braavos, Cartridge Controller, MetaMask, Keplr, Fordefi and Xver
 
 ## Creator Launchpad
 
-- **Single editions and collections:** publish a work once, inside a collection you own.
-- **Limited editions:** release a work in numbered copies.
-- **Collection Drops:** timed releases with your price and supply.
-- **Remix:** licensed derivatives with credit and royalties flowing back to the original.
-- **Creator Coins:** launch a coin with a public trading pool, or claim a coin you already launched.
-- **POP:** permanent, non-transferable badges for events, communities and milestones.
-- **IP Tickets:** verifiable tickets for events and access.
-- **IP Club:** membership cards with tiers and validity windows.
-- **IP Sponsorship:** sponsors bid for a license on your work, settled directly between you.
+**NFTs**
+- **Single NFT:** Create an immutable NFT with licensing for your content.
+- **Limited Edition NFT:** Create an immutable, licensed NFT in multiple copies for your audience to collect and trade.
+- **NFT Remix:** Create a new NFT from an existing one, with its own license and recorded credit to the original.
+
+**Collections**
+- **NFT Collection:** Create an onchain collection you own for a series, project or catalog.
+- **Limited Edition NFT Collection:** Set up your own contract for releasing multiple limited editions as one series.
+- **NFT Drop:** Launch a new collection your audience can get directly from you, for free or at your price.
+
+**Coins**
+- **Creator Coin:** Create a coin to build your community, launched with its own liquidity pair.
+
+**Membership**
+- **POP Protocol:** Issue soulbound certificates as lasting proof of participation and achievement.
+- **IP Tickets:** Create event tickets with verifiable ownership and validity, which holders can resell.
+- **IP Club:** Create memberships that give your community access to the benefits you offer.
+
+**Licensing**
+- **IP Sponsorship:** Create an onchain deal where a sponsor pays an NFT's creator and receives a license.
+
+**Claims**
+- **Username:** Claim your name and get a public creator page to share.
+- **Existing Collection:** Bring a collection you already own to your profile and manage its page.
+- **Collection Address:** Give your collection a short, memorable link that's easy to share.
+- **Existing Memecoin:** Connect a memecoin you've already launched to your creator profile.
 
 ## Coins
 
