@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SingleEditionMint } from "@medialane/ui";
-import { CreateAside } from "@medialane/ui/create-aside";
+import { PageAside } from "@medialane/ui/page-aside";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Publish a work | Launchpad";
@@ -14,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function SingleEditionsPage() {
-  return <SingleEditionMint aside={<CreateAside kind="asset" />} />;
+  return <SingleEditionMint aside={<PageAside kind="asset" />} />;
 }
