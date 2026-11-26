@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { PopPage } from "@medialane/ui";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
-const title = "Proof of Participation";
-const description = "Proof of attendance for events.";
+const title = "POP Protocol";
+const description = "Issue soulbound certificates as lasting proof of participation and achievement.";
 
 export const metadata: Metadata = {
   title,

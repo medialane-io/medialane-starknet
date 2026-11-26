@@ -6,13 +6,13 @@ import { CollectionNameClaim } from "@medialane/ui";
 import { PageAside } from "@medialane/ui/page-aside";
 
 export const metadata: Metadata = {
-  title: "Claim a Collection Name — Medialane",
+  title: "Collection Address — Medialane",
   description:
     "A short web address for the collection.",
   alternates: canonical("/claim/collection-name"),
   openGraph: {
-    title: "Claim a Collection Name — Medialane",
-    description: "A short URL for the collection page.",
+    title: "Collection Address — Medialane",
+    description: "Give your collection a short, memorable link that's easy to share.",
     type: "website",
     url: "/claim/collection-name",
   },
@@ -22,8 +22,8 @@ export default function ClaimCollectionNamePage() {
   return (
     <ClaimRouteShell
       icon={<Link2 className="h-4 w-4 text-white" />}
-      title="Claim a Collection Name"
-      subtitle="Pick a collection to name its URL."
+      title="Collection Address"
+      subtitle="Give your collection a short, memorable link that's easy to share."
       aside={<PageAside kind="claimCollectionName" />}
     >
       <CollectionNameClaim />

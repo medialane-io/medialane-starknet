@@ -59,7 +59,7 @@ export function ClaimPageClient() {
         <SectionDivider label="Claim your collection" />
         <div className="space-y-6">
           <SectionHeading
-            title="NFT Collection"
+            title="Existing Collection"
             subtitle="Link a Starknet collection to your profile."
           />
           <WalletGate>

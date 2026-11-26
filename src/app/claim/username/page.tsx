@@ -6,12 +6,12 @@ import { UsernameClaimPanel } from "@/components/shared/username-claim-panel";
 import { PageAside } from "@medialane/ui/page-aside";
 
 export const metadata: Metadata = {
-  title: "Claim your Username — Medialane",
+  title: "Username — Medialane",
   description:
     "Claim a creator username.",
   alternates: canonical("/claim/username"),
   openGraph: {
-    title: "Claim your Username — Medialane",
+    title: "Username — Medialane",
     description: "Reserve your creator page URL at medialane.io/creator/yourname.",
     type: "website",
     url: "/claim/username",
@@ -22,7 +22,7 @@ export default function ClaimUsernamePage() {
   return (
     <ClaimRouteShell
       icon={<AtSign className="h-4 w-4 text-white" />}
-      title="Claim your Username"
+      title="Username"
       subtitle="Reserve your creator URL at medialane.io/creator/yourname."
       aside={<PageAside kind="claimUsername" />}
     >

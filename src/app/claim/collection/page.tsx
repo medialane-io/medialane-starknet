@@ -6,12 +6,12 @@ import { ClaimCollectionPanel } from "@/components/claim/claim-collection-panel"
 import { PageAside } from "@medialane/ui/page-aside";
 
 export const metadata: Metadata = {
-  title: "Claim a Collection — Medialane",
+  title: "Existing Collection — Medialane",
   description:
     "Link a Starknet collection to your profile.",
   alternates: canonical("/claim/collection"),
   openGraph: {
-    title: "Claim a Collection — Medialane",
+    title: "Existing Collection — Medialane",
     description:
       "Link a Starknet collection to your profile.",
     type: "website",
@@ -30,8 +30,8 @@ export default function ClaimCollectionPage() {
   return (
     <ClaimRouteShell
       icon={<FolderInput className="h-4 w-4 text-white" />}
-      title="Claim a Collection"
-      subtitle="Link a Starknet collection to your profile."
+      title="Existing Collection"
+      subtitle="Bring a collection you already own to your profile and manage its page."
       headerAccessory={urlPill}
       aside={<PageAside kind="claimCollection" />}
     >

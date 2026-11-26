@@ -3,7 +3,7 @@ import { LaunchpadContent } from "./launchpad-content";
 import { canonical, buildSocialMetadata } from "@/lib/seo";
 
 const title = "Launchpad";
-const description = "Launch drops and collections on Medialane.";
+const description = "Create NFTs, collections and coins on Medialane.";
 
 export const metadata: Metadata = {
   title,

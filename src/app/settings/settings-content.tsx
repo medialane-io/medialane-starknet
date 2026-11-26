@@ -246,7 +246,7 @@ export default function SettingsContent() {
                 value={form.bio}
                 onChange={(e) => edit({ bio: e.target.value })}
                 rows={3}
-                placeholder="Tell the world about yourself and your work…"
+                placeholder="Tell the world about yourself and what you create…"
               />
             </div>
           </div>

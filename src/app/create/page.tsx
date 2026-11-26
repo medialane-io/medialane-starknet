@@ -113,17 +113,17 @@ const ACTIONS = [
   {
     href: "/launchpad/single-editions",
     icon: ImagePlus,
-    label: "Mint IP Asset",
+    label: "Create Single NFT",
     description:
-      "Turn any creative work into an IP asset.",
+      "Create an immutable NFT with licensing for your content.",
     ring: "hover:ring-violet-500/30",
   },
   {
     href: "/launchpad/single-editions/collection",
     icon: Layers,
-    label: "Deploy Collection",
+    label: "Create NFT Collection",
     description:
-      "Launch a collection and start minting.",
+      "Create an onchain collection you own for a series, project or catalog.",
     ring: "hover:ring-blue-500/30",
   },
 ] as const;
