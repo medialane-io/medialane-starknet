@@ -4,11 +4,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@medialane/ui"],
   },
-  webpack: (config) => {
-    config.experiments = { ...config.experiments, asyncWebAssembly: true };
-    return config;
-  },
-  serverExternalPackages: ["@cartridge/connector", "@cartridge/controller", "@cartridge/controller-wasm"],
+  serverExternalPackages: ["@cartridge/connector", "@cartridge/controller"],
   images: {
     unoptimized: true,
   },

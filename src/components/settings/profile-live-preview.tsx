@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import Image from "next/image";
 import { useRewards, LevelBadge } from "@medialane/ui";
 import { Settings as Globe, Twitter, ArrowUpRight } from "lucide-react";

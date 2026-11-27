@@ -8,6 +8,12 @@ interface Props {
   params: Promise<{ ipType: string }>;
 }
 
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return IP_TYPE_DATA.map(({ slug }) => ({ ipType: slug }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { ipType } = await params;
   const config = IP_TYPE_DATA.find((type) => type.slug === ipType);

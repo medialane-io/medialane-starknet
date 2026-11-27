@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import {
   Activity as ActivityIcon, AlertCircle, Check, ChevronRight, Copy, ExternalLink,
   HandCoins, LayoutGrid, LogOut, Settings, Wallet,

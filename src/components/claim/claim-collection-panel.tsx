@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAccountSession } from "@/components/wallet-session-sync";
 import { getMedialaneClient } from "@/lib/medialane-client";

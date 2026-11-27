@@ -6,7 +6,11 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 60;
+export const revalidate = 300;
+
+export function generateStaticParams() {
+  return [];
+}
 
 export default async function CollectionSlugPage({ params }: Props) {
   const { slug } = await params;

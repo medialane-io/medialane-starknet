@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import { CoinsPage, ActionButton, Button, coinServiceIds, type CoinFilter, type CoinSort, usePriceMap } from "@medialane/ui";
 
 import { useCoins as useCoinsData } from "@/hooks/use-coins";

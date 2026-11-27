@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import { Package, Globe, Share2, ShieldCheck, Palette, ArrowRight } from "lucide-react";
 import { Button } from "@medialane/ui/button";
 import { WalletGate } from "@/components/claim/wallet-gate";
