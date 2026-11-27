@@ -6,7 +6,11 @@ import { chainFromSlug, coinHref } from "@/lib/routes";
 import { JsonLd } from "@medialane/ui/json-ld";
 import CollectionPageClient from "@/app/collections/[chain]/[contract]/collection-page-client";
 
-export const revalidate = 60;
+export const revalidate = 300;
+
+export function generateStaticParams() {
+  return [];
+}
 
 interface Props {
   params: Promise<{ chain: string; address: string }>;

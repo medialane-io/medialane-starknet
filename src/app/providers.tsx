@@ -5,7 +5,7 @@ import { useAppAdapter } from "@/lib/use-app-adapter";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import { LogIn, LogOut } from "lucide-react";
 import type { NavCommandGroup } from "@medialane/ui";
 import { resolveImage } from "@/lib/utils";

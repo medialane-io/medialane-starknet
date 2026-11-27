@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import Image from "next/image";
 import { useCreatorProfile, profileIdentity, cn } from "@medialane/ui";
 

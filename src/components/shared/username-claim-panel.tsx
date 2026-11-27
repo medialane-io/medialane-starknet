@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 import { useWallet } from "@/hooks/use-wallet";
 import { useMyUsernameClaim } from "@/hooks/use-username-claims";
 import { useUsernameClaimForm } from "@/hooks/use-username-claim-form";

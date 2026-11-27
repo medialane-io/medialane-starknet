@@ -10,7 +10,7 @@ import { AddressDisplay } from "@medialane/ui/address-display";
 import { SectionHeading, timeAgo, useRemixOffers } from "@medialane/ui";
 import { assetHref } from "@/lib/routes";
 import type { RemixOffer } from "@/types/remix-offers";
-import Link from "next/link";
+import Link from "@medialane/ui/link";
 
 export default function PortfolioRemixOffersPage() {
   const { address: walletAddress } = useWallet();

@@ -4,7 +4,11 @@ import { absoluteUrl, canonical, buildBreadcrumbJsonLd, buildSocialMetadata } fr
 import { JsonLd } from "@medialane/ui/json-ld";
 import CreatorUsernamePageClient from "./creator-username-client";
 
-export const revalidate = 60;
+export const revalidate = 300;
+
+export function generateStaticParams() {
+  return [];
+}
 
 interface Props {
   params: Promise<{ address: string }>;
